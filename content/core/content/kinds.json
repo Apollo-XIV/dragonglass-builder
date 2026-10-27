@@ -1,0 +1,106 @@
+[
+  {
+    "id": "core:kind:kind", "kind": "kind", "name": "Kind", "source": "core",
+    "key": "kind", "label": "Kind", "plural": "Kinds", "tab": null, "order": 0,
+    "text": "Declares a kind of content, including how the builder and sheet present it."
+  },
+  {
+    "id": "core:kind:stat-path", "kind": "kind", "name": "Stat Path", "source": "core",
+    "key": "stat-path", "label": "Stat Path", "plural": "Stat Paths", "tab": null, "order": 0,
+    "text": "Declares a target a modifier can point at."
+  },
+  {
+    "id": "core:kind:sourcebook", "kind": "kind", "name": "Sourcebook", "source": "core",
+    "key": "sourcebook", "label": "Sourcebook", "plural": "Sourcebooks", "tab": null, "order": 0
+  },
+
+  {
+    "id": "core:kind:species", "kind": "kind", "name": "Species", "source": "core",
+    "key": "species", "label": "Species", "plural": "Species", "tab": null,
+    "display": "card", "browsable": true, "order": 10,
+    "aliases": ["race", "lineage", "ancestry"]
+  },
+  {
+    "id": "core:kind:species-trait", "kind": "kind", "name": "Species Trait", "source": "core",
+    "key": "species-trait", "label": "Species Trait", "plural": "Species Traits",
+    "tab": "features", "display": "list", "order": 11,
+    "aliases": ["racial-trait", "race-trait"]
+  },
+  {
+    "id": "core:kind:class", "kind": "kind", "name": "Class", "source": "core",
+    "key": "class", "label": "Class", "plural": "Classes", "tab": null,
+    "display": "card", "browsable": true, "order": 20
+  },
+  {
+    "id": "core:kind:class-feature", "kind": "kind", "name": "Class Feature", "source": "core",
+    "key": "class-feature", "label": "Class Feature", "plural": "Class Features",
+    "tab": "features", "display": "list", "order": 21
+  },
+  {
+    "id": "core:kind:subclass", "kind": "kind", "name": "Subclass", "source": "core",
+    "key": "subclass", "label": "Subclass", "plural": "Subclasses", "tab": null,
+    "display": "card", "browsable": true, "order": 22,
+    "aliases": ["archetype"]
+  },
+  {
+    "id": "core:kind:subclass-feature", "kind": "kind", "name": "Subclass Feature", "source": "core",
+    "key": "subclass-feature", "label": "Subclass Feature", "plural": "Subclass Features",
+    "tab": "features", "display": "list", "order": 23
+  },
+  {
+    "id": "core:kind:background", "kind": "kind", "name": "Background", "source": "core",
+    "key": "background", "label": "Background", "plural": "Backgrounds", "tab": null,
+    "display": "card", "browsable": true, "order": 30
+  },
+  {
+    "id": "core:kind:background-feature", "kind": "kind", "name": "Background Feature", "source": "core",
+    "key": "background-feature", "label": "Background Feature", "plural": "Background Features",
+    "tab": "features", "display": "list", "order": 31
+  },
+  {
+    "id": "core:kind:feat", "kind": "kind", "name": "Feat", "source": "core",
+    "key": "feat", "label": "Feat", "plural": "Feats", "tab": "features",
+    "display": "list", "browsable": true, "order": 40
+  },
+  {
+    "id": "core:kind:feature", "kind": "kind", "name": "Feature", "source": "core",
+    "key": "feature", "label": "Feature", "plural": "Features", "tab": "features",
+    "display": "list", "order": 41
+  },
+  {
+    "id": "core:kind:fighting-style", "kind": "kind", "name": "Fighting Style", "source": "core",
+    "key": "fighting-style", "label": "Fighting Style", "plural": "Fighting Styles",
+    "tab": "features", "display": "list", "browsable": true, "order": 42
+  },
+  {
+    "id": "core:kind:spell", "kind": "kind", "name": "Spell", "source": "core",
+    "key": "spell", "label": "Spell", "plural": "Spells", "tab": "spells",
+    "display": "table", "browsable": true, "order": 50
+  },
+  {
+    "id": "core:kind:item", "kind": "kind", "name": "Item", "source": "core",
+    "key": "item", "label": "Item", "plural": "Items", "tab": "inventory",
+    "display": "table", "browsable": true, "order": 60
+  },
+  {
+    "id": "core:kind:tool", "kind": "kind", "name": "Tool", "source": "core",
+    "key": "tool", "label": "Tool", "plural": "Tools", "tab": null,
+    "display": "list", "browsable": true, "order": 70,
+    "text": "A tool a character can be proficient with. Chosen through proficiency choices."
+  },
+  {
+    "id": "core:kind:language", "kind": "kind", "name": "Language", "source": "core",
+    "key": "language", "label": "Language", "plural": "Languages", "tab": null,
+    "display": "list", "browsable": true, "order": 71
+  },
+  {
+    "id": "core:kind:skill", "kind": "kind", "name": "Skill", "source": "core",
+    "key": "skill", "label": "Skill", "plural": "Skills", "tab": null,
+    "display": "list", "order": 72
+  },
+  {
+    "id": "core:kind:condition", "kind": "kind", "name": "Condition", "source": "core",
+    "key": "condition", "label": "Condition", "plural": "Conditions", "tab": null,
+    "display": "list", "browsable": true, "order": 80
+  }
+]

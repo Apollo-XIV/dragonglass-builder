@@ -1,0 +1,142 @@
+{
+  "id": "srd:class:paladin",
+  "kind": "class",
+  "name": "Paladin",
+  "source": "srd",
+  "page": 28,
+  "key": "paladin",
+  "hitDie": "d10",
+  "primaryAbility": ["str", "cha"],
+  "tags": ["srd-class"],
+  "text": "Whether sworn before a god's altar, in the sacred glade before nature spirits, or in a moment of desperation and grief with the dead as the only witness, a paladin's oath is a powerful bond.\n\n**Hit Dice:** 1d10 per paladin level.\n**Hit Points at 1st Level:** 10 + your Constitution modifier.\n**Hit Points at Higher Levels:** 1d10 (or 6) + your Constitution modifier per paladin level after 1st.",
+  "multiclassRequires": {
+    "text": "Strength 13 and Charisma 13",
+    "all": [
+      { "type": "ability", "ability": "str", "min": 13 },
+      { "type": "ability", "ability": "cha", "min": 13 }
+    ]
+  },
+  "spellcasting": {
+    "ability": "cha",
+    "progression": "half",
+    "type": "prepared",
+    "list": "paladin-spell",
+    "startsAt": 2,
+    "notes": "You prepare a list of paladin spells that are available for you to cast, choosing from the paladin spell list. You can use a holy symbol as a spellcasting focus."
+  },
+  "tables": {
+    "lay-on-hands": [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100],
+    "divine-smite-dice": [0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+  },
+  "levels": {
+    "1": {
+      "modifiers": [
+        { "target": "proficiencies.armor", "op": "include", "value": ["light", "medium", "heavy", "shields"], "text": "Armor: all armor, shields." },
+        { "target": "proficiencies.weapon", "op": "include", "value": ["simple", "martial"], "text": "Weapons: simple weapons, martial weapons." },
+        { "target": "saves.wis", "op": "proficiency", "value": "proficient" },
+        { "target": "saves.cha", "op": "proficiency", "value": "proficient" }
+      ],
+      "grants": ["srd:paladin:divine-sense", "srd:paladin:lay-on-hands"],
+      "choices": [
+        {
+          "id": "srd:class:paladin:skills",
+          "name": "Paladin Skills",
+          "count": 2,
+          "from": {
+            "kind": "skill",
+            "ids": [
+              "srd:skill:athletics",
+              "srd:skill:insight",
+              "srd:skill:intimidation",
+              "srd:skill:medicine",
+              "srd:skill:persuasion",
+              "srd:skill:religion"
+            ]
+          },
+          "text": "Choose two from Athletics, Insight, Intimidation, Medicine, Persuasion, and Religion."
+        }
+      ]
+    },
+    "2": {
+      "grants": ["srd:paladin:spellcasting", "srd:paladin:divine-smite"],
+      "choices": [
+        {
+          "id": "srd:paladin:fighting-style",
+          "name": "Fighting Style",
+          "count": 1,
+          "from": { "kind": "fighting-style", "tags": ["paladin-fighting-style"] },
+          "text": "You adopt a particular style of fighting as your specialty."
+        }
+      ]
+    },
+    "3": {
+      "grants": ["srd:paladin:divine-health"],
+      "choices": [
+        {
+          "id": "srd:paladin:sacred-oath",
+          "name": "Sacred Oath",
+          "count": 1,
+          "from": { "kind": "subclass", "tags": ["paladin-subclass"] },
+          "text": "You swear the oath that binds you as a paladin forever."
+        }
+      ]
+    },
+    "4": {
+      "choices": [
+        {
+          "id": "srd:paladin:asi-4",
+          "name": "Ability Score Improvement",
+          "count": 1,
+          "from": { "kind": ["feat", "feature"], "tags": ["ability-score-improvement", "general-feat"] },
+          "text": "You can increase one ability score by 2, or two ability scores by 1 each, or take a feat. You can't increase an ability score above 20."
+        }
+      ]
+    },
+    "5": { "grants": ["srd:paladin:extra-attack"] },
+    "6": { "grants": ["srd:paladin:aura-of-protection"] },
+    "8": {
+      "choices": [
+        {
+          "id": "srd:paladin:asi-8",
+          "name": "Ability Score Improvement",
+          "count": 1,
+          "from": { "kind": ["feat", "feature"], "tags": ["ability-score-improvement", "general-feat"] }
+        }
+      ]
+    },
+    "10": { "grants": ["srd:paladin:aura-of-courage"] },
+    "11": { "grants": ["srd:paladin:improved-divine-smite"] },
+    "12": {
+      "choices": [
+        {
+          "id": "srd:paladin:asi-12",
+          "name": "Ability Score Improvement",
+          "count": 1,
+          "from": { "kind": ["feat", "feature"], "tags": ["ability-score-improvement", "general-feat"] }
+        }
+      ]
+    },
+    "14": { "grants": ["srd:paladin:cleansing-touch"] },
+    "16": {
+      "choices": [
+        {
+          "id": "srd:paladin:asi-16",
+          "name": "Ability Score Improvement",
+          "count": 1,
+          "from": { "kind": ["feat", "feature"], "tags": ["ability-score-improvement", "general-feat"] }
+        }
+      ]
+    },
+    "18": { "grants": ["srd:paladin:aura-improvements"] },
+    "19": {
+      "choices": [
+        {
+          "id": "srd:paladin:asi-19",
+          "name": "Ability Score Improvement",
+          "count": 1,
+          "from": { "kind": ["feat", "feature"], "tags": ["ability-score-improvement", "general-feat"] }
+        }
+      ]
+    }
+  }
+}

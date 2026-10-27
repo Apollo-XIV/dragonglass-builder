@@ -1,0 +1,12 @@
+{
+  "kind": "spells",
+  "schemaVersion": 1,
+  "spells": [
+    { "id": "srd:spell:bless", "class": "srd:class:paladin", "prepared": true },
+    { "id": "srd:spell:cure-wounds", "class": "srd:class:paladin", "prepared": true },
+    { "id": "srd:spell:shield-of-faith", "class": "srd:class:paladin", "prepared": false },
+    { "id": "srd:spell:divine-favor", "class": "srd:class:paladin", "prepared": false },
+    { "id": "srd:spell:aid", "class": "srd:class:paladin", "prepared": true },
+    { "id": "srd:spell:magic-weapon", "class": "srd:class:paladin", "prepared": false }
+  ]
+}

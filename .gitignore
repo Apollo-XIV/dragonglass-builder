@@ -1,0 +1,14 @@
+node_modules/
+main.js
+*.js.map
+.vitest/
+
+# The test vault ships its content and characters, but not Obsidian's own state.
+vault/.obsidian/workspace*
+vault/.obsidian/appearance.json
+vault/.obsidian/core-plugins*.json
+vault/.obsidian/hotkeys.json
+vault/.obsidian/plugins/dragonglass-builder/main.js
+vault/.obsidian/plugins/dragonglass-builder/styles.css
+vault/.obsidian/plugins/dragonglass-builder/manifest.json
+vault/.obsidian/plugins/dragonglass-builder/source-cache.json

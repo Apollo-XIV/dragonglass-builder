@@ -1,0 +1,290 @@
+[
+  {
+    "id": "srd:language:common",
+    "kind": "language",
+    "name": "Common",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Common"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:dwarvish",
+    "kind": "language",
+    "name": "Dwarvish",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Dwarvish"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:elvish",
+    "kind": "language",
+    "name": "Elvish",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Elvish"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:giant",
+    "kind": "language",
+    "name": "Giant",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Giant"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:gnomish",
+    "kind": "language",
+    "name": "Gnomish",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Gnomish"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:goblin",
+    "kind": "language",
+    "name": "Goblin",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Goblin"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:halfling",
+    "kind": "language",
+    "name": "Halfling",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Halfling"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:orc",
+    "kind": "language",
+    "name": "Orc",
+    "source": "srd",
+    "tags": [
+      "standard-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Orc"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:abyssal",
+    "kind": "language",
+    "name": "Abyssal",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Abyssal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:celestial",
+    "kind": "language",
+    "name": "Celestial",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Celestial"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:draconic",
+    "kind": "language",
+    "name": "Draconic",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Draconic"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:deep-speech",
+    "kind": "language",
+    "name": "Deep Speech",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Deep Speech"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:infernal",
+    "kind": "language",
+    "name": "Infernal",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Infernal"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:primordial",
+    "kind": "language",
+    "name": "Primordial",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Primordial"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:sylvan",
+    "kind": "language",
+    "name": "Sylvan",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Sylvan"
+        ]
+      }
+    ]
+  },
+  {
+    "id": "srd:language:undercommon",
+    "kind": "language",
+    "name": "Undercommon",
+    "source": "srd",
+    "tags": [
+      "exotic-language"
+    ],
+    "modifiers": [
+      {
+        "target": "languages",
+        "op": "include",
+        "value": [
+          "Undercommon"
+        ]
+      }
+    ]
+  }
+]

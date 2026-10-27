@@ -1,0 +1,6 @@
+{
+  "id": "core",
+  "name": "Dragonglass Core",
+  "description": "Kind definitions and stat paths every source relies on. Ships with the plugin.",
+  "sourcebooks": ["core"]
+}

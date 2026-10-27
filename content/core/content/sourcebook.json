@@ -1,0 +1,10 @@
+{
+  "id": "core",
+  "kind": "sourcebook",
+  "name": "Dragonglass Core Definitions",
+  "source": "core",
+  "abbreviation": "CORE",
+  "version": "1",
+  "license": "MIT",
+  "attribution": "Dragonglass Builder core definitions."
+}

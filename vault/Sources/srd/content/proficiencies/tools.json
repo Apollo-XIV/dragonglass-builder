@@ -1,0 +1,11 @@
+[
+  { "id": "srd:tool:smiths-tools", "kind": "tool", "name": "Smith's Tools", "source": "srd",
+    "tags": ["artisans-tools", "dwarf-tool"],
+    "modifiers": [{ "target": "proficiencies.tool", "op": "include", "value": ["srd:tool:smiths-tools"] }] },
+  { "id": "srd:tool:brewers-supplies", "kind": "tool", "name": "Brewer's Supplies", "source": "srd",
+    "tags": ["artisans-tools", "dwarf-tool"],
+    "modifiers": [{ "target": "proficiencies.tool", "op": "include", "value": ["srd:tool:brewers-supplies"] }] },
+  { "id": "srd:tool:masons-tools", "kind": "tool", "name": "Mason's Tools", "source": "srd",
+    "tags": ["artisans-tools", "dwarf-tool"],
+    "modifiers": [{ "target": "proficiencies.tool", "op": "include", "value": ["srd:tool:masons-tools"] }] }
+]

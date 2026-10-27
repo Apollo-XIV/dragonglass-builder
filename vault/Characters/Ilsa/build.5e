@@ -1,0 +1,73 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Ilsa Stonebrook",
+  "xp": 6500,
+  "level": 5,
+  "species": "srd:species:dwarf",
+  "background": "srd:background:acolyte",
+  "abilities": {
+    "method": "point-buy",
+    "base": {
+      "str": 16,
+      "dex": 10,
+      "con": 14,
+      "int": 8,
+      "wis": 12,
+      "cha": 14
+    }
+  },
+  "levels": [
+    {
+      "class": "srd:class:paladin",
+      "hp": "max",
+      "choices": {
+        "srd:class:paladin:skills": [
+          "srd:skill:athletics",
+          "srd:skill:persuasion"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:paladin:fighting-style": [
+          "srd:fighting-style:defense"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:paladin:sacred-oath": [
+          "srd:subclass:oath-of-devotion"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:paladin:asi-4": [
+          "srd:feature:ability-score-improvement"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd:species:dwarf:tool-proficiency": [
+      "srd:tool:smiths-tools"
+    ],
+    "srd:background:acolyte:languages": [
+      "srd:language:elvish",
+      "srd:language:celestial"
+    ]
+  }
+}

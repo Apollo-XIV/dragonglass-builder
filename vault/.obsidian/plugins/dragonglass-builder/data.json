@@ -1,0 +1,11 @@
+{
+  "sources": [
+    { "id": "srd", "type": "vault", "location": "Sources/srd", "name": "SRD 5.1 (test slice)", "enabled": true }
+  ],
+  "caching": "smart",
+  "enforceRequirements": false,
+  "charactersFolder": "Characters",
+  "defaultHp": "average",
+  "layout": { "accent": "", "compact": false, "showBreakdowns": true, "playMode": false },
+  "writeDebounceMs": 400
+}

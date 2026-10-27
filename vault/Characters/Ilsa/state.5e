@@ -1,0 +1,23 @@
+{
+  "kind": "state",
+  "schemaVersion": 1,
+  "checkpoint": {
+    "damage": 0,
+    "tempHp": 0,
+    "tempMaxHp": [],
+    "spent": { "slots": {}, "hitDice": {}, "resources": {} },
+    "effects": [],
+    "conditions": [],
+    "exhaustion": 0,
+    "deathSaves": { "successes": 0, "failures": 0 },
+    "concentration": null,
+    "inspiration": false,
+    "t": "2026-10-27T18:00:00Z"
+  },
+  "events": [
+    { "t": "2026-10-27T19:42:00Z", "type": "damage", "amount": 12 },
+    { "t": "2026-10-27T19:43:10Z", "type": "spend", "target": "slots.1", "amount": 1 },
+    { "t": "2026-10-27T19:44:02Z", "type": "spend", "target": "srd:paladin:lay-on-hands", "amount": 8 },
+    { "t": "2026-10-27T19:45:00Z", "type": "effect.start", "effect": "srd:devotion:sacred-weapon" }
+  ]
+}
