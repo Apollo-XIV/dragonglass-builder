@@ -3,7 +3,7 @@
   "schemaVersion": 1,
   "name": "Ilsa Stonebrook",
   "xp": 6500,
-  "level": 5,
+  "level": 6,
   "species": "srd:species:dwarf",
   "background": "srd:background:acolyte",
   "abilities": {
@@ -48,12 +48,17 @@
     },
     {
       "class": "srd:class:paladin",
-      "hp": "average",
+      "hp": "max",
       "choices": {
         "srd:paladin:asi-4": [
           "srd:feature:ability-score-improvement"
         ]
       }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {}
     },
     {
       "class": "srd:class:paladin",
