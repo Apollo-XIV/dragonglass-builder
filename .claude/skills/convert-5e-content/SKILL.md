@@ -28,7 +28,8 @@ specification for this task; this file only describes the loop around it.
 6. **Resolve a character.** A validator cannot tell you that a number is wrong. Write or
    update a test that resolves a character using the new content and asserts the numbers
    you would check on a printed sheet — HP, AC, save bonuses, resource maxima, slot
-   counts. `tests/srd-content.test.ts` is the model. Then `npm test`.
+   counts. `tests/srd/paladin.test.ts` is the model, and a new class gets its own
+   `tests/srd/<class>.test.ts` rather than editing a shared file. Then `npm test`.
 7. **Report** what you mechanised, what you deliberately left as text, and why.
 
 ## Rules that are easy to get wrong
