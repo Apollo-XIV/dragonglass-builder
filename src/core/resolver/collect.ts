@@ -114,11 +114,26 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     diagnostics: [],
   };
 
+  /**
+   * Keyed by occurrence, not by element id. An element can legitimately appear in
+   * a character more than once — the same Ability Score Improvement taken at
+   * class levels 4, 8 and 12, or one `repeatable` option answered twice — and
+   * each appearance owns its own subtree. Keying on the id alone swallowed every
+   * appearance after the first, which is why an ASI at level 8 used to go
+   * missing entirely. Within one occurrence the graph is still walked once, so a
+   * grant cycle terminates. See docs/schema.md, "Occurrences".
+   */
   const visited = new Set<string>();
   /** Class element id -> build level index for each class level, 1-based. */
   const levelIndexOf = new Map<string, number[]>();
   /** Elements with their own `levels` map, grouped by the class that governs them. */
   const progressionsByClass = new Map<string, Element[]>();
+  /**
+   * Elements whose `levels` map is keyed by total character level: a 2024
+   * species staging its traits. Gathered as they are met and walked afterwards,
+   * because total level is only known once the build's levels have been counted.
+   */
+  const characterProgressions: Element[] = [];
 
   interface Ctx {
     origin: string[];
@@ -126,6 +141,18 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     levelIndex?: number;
     level?: number;
     class?: string;
+    /**
+     * Which appearance of an element this is. Empty for anything reached
+     * directly from the build — a species, a background, a class — and one per
+     * pick for anything reached through a choice. Grants inherit it, so an
+     * occurrence's whole subtree shares one key.
+     */
+    occurrence?: string;
+  }
+
+  /** One pick's occurrence key: which choice, answered where, and which pick. */
+  function occurrenceFor(def: ChoiceDef, ctx: Ctx, pick: number): string {
+    return `${def.id}@${ctx.scope}:${ctx.levelIndex ?? "build"}#${pick}`;
   }
 
   function missing(id: string, where: string): void {
@@ -156,13 +183,20 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         class: ctx.class,
         chosen,
       });
-      for (const id of chosen) visit(id, { ...ctx, origin: [...ctx.origin, el.id] });
+      chosen.forEach((id, pick) =>
+        visit(id, {
+          ...ctx,
+          origin: [...ctx.origin, el.id],
+          occurrence: occurrenceFor(def, ctx, pick),
+        }),
+      );
     }
   }
 
   function visit(id: string, ctx: Ctx): void {
-    if (visited.has(id)) return;
-    visited.add(id);
+    const key = `${ctx.occurrence ?? ""}\u0000${id}`;
+    if (visited.has(key)) return;
+    visited.add(key);
     const el = index.get(id);
     if (!el) {
       missing(id, ctx.origin.length ? ctx.origin[ctx.origin.length - 1] : "the build");
@@ -184,21 +218,43 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     for (const grant of el.grants ?? [])
       visit(grantId(grant), { ...ctx, origin: [...ctx.origin, id] });
 
-    // A chosen element with its own level progression (a subclass) rides along with
-    // the class that offered it, catching up to that class's current level.
-    if (el.levels && el.kind !== "class" && ctx.class) {
-      const list = progressionsByClass.get(ctx.class) ?? [];
-      if (!list.some((e) => e.id === el.id)) list.push(el);
-      progressionsByClass.set(ctx.class, list);
-      const upTo = ctx.level ?? 0;
-      for (let l = 1; l <= upTo; l++) applyLevelEntry(el, l, ctx.class);
+    if (el.levels && el.kind !== "class") {
+      if (el.levelsBy === "character") {
+        // Staged against total character level, which isn't known yet.
+        if (!characterProgressions.some((e) => e.id === el.id)) characterProgressions.push(el);
+      } else if (ctx.class) {
+        // A chosen element with its own level progression (a subclass) rides along
+        // with the class that offered it, catching up to that class's current level.
+        const list = progressionsByClass.get(ctx.class) ?? [];
+        if (!list.some((e) => e.id === el.id)) list.push(el);
+        progressionsByClass.set(ctx.class, list);
+        const upTo = ctx.level ?? 0;
+        for (let l = 1; l <= upTo; l++) applyLevelEntry(el, l, ctx.class);
+      } else {
+        // A `levels` map keyed by class level on something no class governs: it
+        // would be read by nothing at all. Saying so is the whole point — this
+        // used to be silent, and a converter would never find out.
+        result.diagnostics.push({
+          severity: "warning",
+          code: "unknown-part",
+          message: `"${el.id}" declares levels that nothing reads. Add \`levelsBy: "character"\` to stage it against character level.`,
+          subject: el.id,
+        });
+      }
     }
   }
 
-  function applyLevelEntry(owner: Element, level: number, classId: string): void {
+  /**
+   * One level's worth of an element's progression. `classId` is omitted when the
+   * element stages against total character level, in which case the level and
+   * the build level index are the same thing — total level *is* how many build
+   * levels there are, so a species trait gained at level 5 belongs to the fifth
+   * one, and rides along with it when that level is removed.
+   */
+  function applyLevelEntry(owner: Element, level: number, classId?: string): void {
     const entry = (owner.levels as Record<string, LevelEntry> | undefined)?.[String(level)];
     if (!entry) return;
-    const levelIndex = levelIndexOf.get(classId)?.[level - 1];
+    const levelIndex = classId ? levelIndexOf.get(classId)?.[level - 1] : level - 1;
     const from: PartSource = { element: owner, level, class: classId };
 
     for (const key of LEVEL_PART_KEYS) {
@@ -231,7 +287,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         class: classId,
         chosen,
       });
-      for (const id of chosen) visit(id, ctx);
+      chosen.forEach((id, pick) => visit(id, { ...ctx, occurrence: occurrenceFor(def, ctx, pick) }));
     }
   }
 
@@ -269,6 +325,15 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     // Subclasses chosen earlier gain their feature for this level too.
     for (const prog of progressionsByClass.get(cls.id) ?? []) applyLevelEntry(prog, level, cls.id);
   });
+
+  // --- elements staged against total character level ------------------------
+
+  // A worklist, because a staged entry can grant something that stages too.
+  const totalLevel = Math.max(build.levels?.length ?? 0, 0) || build.level || 0;
+  for (let i = 0; i < characterProgressions.length; i++) {
+    const owner = characterProgressions[i];
+    for (let level = 1; level <= totalLevel; level++) applyLevelEntry(owner, level);
+  }
 
   for (const [id, level] of counts) {
     const element = index.get(id);

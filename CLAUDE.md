@@ -4,10 +4,23 @@ An Obsidian plugin for D&D 5e: a data-driven character builder and an interactiv
 character sheet. Built from `Obsidian 5e Builder & Sheet Design Spec.md`, which is the
 authority on intent — read it before making a design decision.
 
+Three documents are authoritative, each over its own territory:
+
+| Document | Authority on |
+| --- | --- |
+| `Obsidian 5e Builder & Sheet Design Spec.md` | Intent, and everything not below |
+| `docs/schema.md` | The content format: elements, parts, choices, stat paths |
+| `mobile-ux-spec.md` | The narrow layout |
+
+`docs/schema.md` is the one to read before touching `src/core/types.ts`, the validator, or
+any content. It defines the choice model — options are elements, nesting is how a
+parametrised decision is expressed, and an element picked twice is two occurrences — which
+is the part most easily broken by accident.
+
 ## Commands
 
 ```sh
-npm test                                   # vitest, 196 tests
+npm test                                   # vitest
 npm run typecheck                          # tsc --noEmit
 npm run build                              # bundle content, typecheck, build main.js
 npm run dev                                # watch build into vault/
@@ -160,9 +173,11 @@ it just wrote, and reloads for anything else.
 
 - `tests/expr`, `tests/content`, `tests/state`, `tests/resolver` cover the engine with
   synthetic fixtures.
-- `tests/srd-content.test.ts` resolves the real content in `content/` and asserts the
-  numbers longhand. It catches content mistakes as well as code mistakes — when you
-  convert content, add to it.
+- `tests/srd/` resolves the real content in `content/` and asserts the numbers
+  longhand: `sources.test.ts` for source-wide checks, then one file per class
+  (`paladin.test.ts`). It catches content mistakes as well as code mistakes — when you
+  convert a class, add its own file rather than editing a shared one, so parallel
+  conversion sessions never touch the same test.
 - `tests/store.test.ts` runs the store against an in-memory vault adapter.
 - `tests/ui.test.tsx` renders the sheet and builder to static markup, so a crash in a
   panel fails a test instead of showing a blank pane. It covers both layouts.
@@ -180,5 +195,6 @@ one the user's next launch opens.
 
 ## Converting content
 
-Use the `convert-5e-content` skill, which reads `docs/conversion-guide.md`. Never write
+Use the `convert-5e-content` skill, which reads `docs/conversion-guide.md` for how to
+decide what text becomes, and `docs/schema.md` for what the fields mean. Never write
 into `content/core/` — that is the plugin's own kind and stat-path definitions.

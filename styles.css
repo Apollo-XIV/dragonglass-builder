@@ -2289,6 +2289,21 @@
   font-size: 12px;
 }
 
+/* Features that arrived with the character's level rather than from the class:
+   a species trait staged at level 5. Set apart so a player can see which. */
+.dg-layout .dg-level-features.is-staged {
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 6px;
+}
+
+/* How many of a repeatable option are taken: "x2" on an ASI's ability row. */
+.dg-layout .dg-option-count {
+  color: var(--text-accent);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
 .dg-layout .dg-option-tag {
   color: var(--text-muted);
   font-size: 11px;

@@ -94,6 +94,28 @@ function validateChoice(c: unknown, subject: string | undefined, path: string, o
         err("invalid-element", "`from` needs at least one of kind, tags, allTags, ids", subject, path),
       );
   }
+  if (ch.repeatable !== undefined && typeof ch.repeatable !== "boolean")
+    out.push(err("invalid-element", "choice `repeatable` must be a boolean", subject, path));
+  if (ch.repeatable === true && typeof ch.count === "number" && ch.count < 2)
+    out.push(
+      warn(
+        "invalid-element",
+        "`repeatable` does nothing on a choice that only makes one pick",
+        subject,
+        path,
+      ),
+    );
+  if (ch.maxPer !== undefined && (typeof ch.maxPer !== "number" || ch.maxPer < 1))
+    out.push(err("invalid-element", "choice `maxPer` must be a number of at least 1", subject, path));
+  if (ch.maxPer !== undefined && ch.repeatable !== true)
+    out.push(
+      warn(
+        "invalid-element",
+        "`maxPer` does nothing without `repeatable`, since each option can only be taken once",
+        subject,
+        path,
+      ),
+    );
   if (ch.requires) validateRequirement(ch.requires, subject, `${path}.requires`, out);
 }
 
@@ -283,6 +305,22 @@ export function validateElement(raw: unknown): ValidationResult {
 
   // Class and subclass progressions carry the same parts, keyed by level.
   if (el.levels !== undefined) {
+    if (el.levelsBy !== undefined && el.levelsBy !== "class" && el.levelsBy !== "character")
+      out.push(err("invalid-element", '`levelsBy` must be "class" or "character"', subject, "levelsBy"));
+    // A `levels` map on anything but a class defaults to class level, which only
+    // gets read if a class governs the element. That is right for a subclass and
+    // almost never right for a species, so say so once — and setting `levelsBy`
+    // either way silences it, which is the escape hatch for a custom
+    // class-governed kind.
+    if (el.levelsBy === undefined && el.kind !== "class" && el.kind !== "subclass")
+      out.push(
+        warn(
+          "unknown-part",
+          `\`levels\` on a "${String(el.kind)}" is read against class level, so nothing reads it unless a class grants this element. Set \`levelsBy: "character"\` to stage it against character level, or "class" to say you meant this.`,
+          subject,
+          "levels",
+        ),
+      );
     if (!el.levels || typeof el.levels !== "object" || Array.isArray(el.levels)) {
       out.push(err("invalid-element", "levels must be a map of level to entry", subject, "levels"));
     } else {

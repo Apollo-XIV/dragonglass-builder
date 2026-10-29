@@ -1,0 +1,92 @@
+[
+  {
+    "id": "srd:ability-point:str",
+    "kind": "ability-point",
+    "name": "Strength +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Strength score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.str.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "srd:ability-point:dex",
+    "kind": "ability-point",
+    "name": "Dexterity +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Dexterity score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.dex.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "srd:ability-point:con",
+    "kind": "ability-point",
+    "name": "Constitution +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Constitution score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.con.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "srd:ability-point:int",
+    "kind": "ability-point",
+    "name": "Intelligence +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Intelligence score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.int.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "srd:ability-point:wis",
+    "kind": "ability-point",
+    "name": "Wisdom +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Wisdom score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.wis.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  },
+  {
+    "id": "srd:ability-point:cha",
+    "kind": "ability-point",
+    "name": "Charisma +1",
+    "source": "srd",
+    "page": 23,
+    "text": "Your Charisma score increases by 1.",
+    "modifiers": [
+      {
+        "target": "abilities.cha.score",
+        "op": "add",
+        "value": 1
+      }
+    ]
+  }
+]

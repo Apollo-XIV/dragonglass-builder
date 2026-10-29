@@ -199,6 +199,11 @@ Quiet until the forge is lit.
 
 ## Rules content format
 
+> **`docs/schema.md` is the authority on the content format.** This section is the
+> intent behind it and a readable introduction; where the two disagree, the schema
+> reference wins. Field-level questions — what `repeatable` means, where a nested
+> choice's answer is stored, which ops exist — are answered there.
+
 All rules content is made of **elements**: JSON objects with an id, a kind, a source, rules text, and optional **parts**. A feature is a container of independent parts, because 5e often lumps several separately triggered mechanics into one named feature. The engine handles each part on its own.
 
 ### Element fields
@@ -274,6 +279,7 @@ Any modifier can take an optional `when`. Modifiers without `when` fold into the
 ### Choices and requirements
 
 - A choice has an `id`, a `count`, and a `from` filter by `kind`, `tags` and/or explicit `ids`. Options come from every loaded source, so homebrew carrying the right tag appears automatically.
+- A choice's options are elements, and a chosen element declares its own choices in turn. Nesting is how a parametrised decision is expressed — pick Ability Score Improvement, which then asks which abilities to raise — and `repeatable` lets one option be picked more than once. See `docs/schema.md`, "The choice model".
 - `requires` takes `all`, `any` and `not` lists of predicates: class level, total level, ability minimum, has element, has proficiency.
 - Enforcement is optional, behind a builder toggle.
 - With enforcement off, unmet requirements show as a warning on the option rather than hiding it.
@@ -319,7 +325,7 @@ Any modifier can take an optional `when`. Modifiers without `when` fold into the
 ### Stat paths and operations
 
 - Core stat paths include `abilities.<ability>.score`, `saves.<ability>`, `checks.<ability>`, `skills.<skill>`, `ac`, `hp.max`, `speed.<mode>`, `senses.<sense>`, `initiative`, `proficiencyBonus`, `resistances`, `immunities`, `vulnerabilities`, `languages`, `proficiencies.<type>`, `damage.<scope>` and `spellcasting.<class>.dc`. Sources can declare new stat paths and resources.
-- Operations: `add`, `set`, `min` (a floor), `advantage`, `disadvantage`, `include` (add to a set), `proficiency` (half, proficient, expertise), and `base` for competing formulas.
+- Operations: `add`, `set`, `min` (a floor), `max` (a ceiling), `advantage`, `disadvantage`, `include` (add to a set), `proficiency` (half, proficient, expertise), and `base` for competing formulas.
 - Stacking: `base` candidates compete and the highest wins, which is how armour, Unarmored Defense and Mage Armor coexist. Modifiers sharing a `stackKey` don't stack; the highest applies.
 
 ### Expressions

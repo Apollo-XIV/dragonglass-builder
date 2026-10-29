@@ -1,13 +1,17 @@
 /**
- * End-to-end over the real content in content/: the converted SRD slice resolved by
- * the real resolver. This is the test that catches content mistakes as well as code
- * mistakes, which is why the numbers below are written out longhand.
+ * The Paladin, end to end over the real content in `content/`: the converted SRD
+ * slice resolved by the real resolver.
+ *
+ * This is the test that catches content mistakes as well as code mistakes, which
+ * is why the numbers below are written out longhand. Every converted class wants
+ * a file like this one, and writing the numbers is the point — stating what the
+ * AC and the save DC should be is where a wrong mechanisation becomes visible.
  */
 
 import { describe, expect, it } from "vitest";
-import { resolve } from "../src/core/resolver/resolve";
-import type { BuildFile, InventoryFile, SpellsFile, StateFile } from "../src/core/types";
-import { srdIndex } from "./helpers";
+import { resolve } from "../../src/core/resolver/resolve";
+import type { BuildFile, InventoryFile, SpellsFile, StateFile } from "../../src/core/types";
+import { srdIndex } from "../helpers";
 
 const content = srdIndex();
 
@@ -24,7 +28,12 @@ function paladin(level: number, choices: Record<string, string[]> = {}): BuildFi
   if (level >= 3 && choices["srd:paladin:sacred-oath"])
     levels[2].choices = { "srd:paladin:sacred-oath": choices["srd:paladin:sacred-oath"] };
   if (level >= 4 && choices["srd:paladin:asi-4"])
-    levels[3].choices = { "srd:paladin:asi-4": choices["srd:paladin:asi-4"] };
+    levels[3].choices = {
+      "srd:paladin:asi-4": choices["srd:paladin:asi-4"],
+      // The ASI element's own nested choice is answered at the same level, which
+      // is where it was asked.
+      ...(choices["srd:asi:points"] ? { "srd:asi:points": choices["srd:asi:points"] } : {}),
+    };
 
   return {
     kind: "build",
@@ -48,6 +57,9 @@ const FULL_CHOICES = {
   "srd:paladin:fighting-style": ["srd:fighting-style:defense"],
   "srd:paladin:sacred-oath": ["srd:subclass:oath-of-devotion"],
   "srd:paladin:asi-4": ["srd:feature:ability-score-improvement"],
+  // Both points into Intelligence, which nothing else here depends on, so the
+  // ASI is spent and Ilsa genuinely has no choice left open.
+  "srd:asi:points": ["srd:ability-point:int", "srd:ability-point:int"],
 };
 
 const inventory: InventoryFile = {
@@ -74,31 +86,6 @@ const spells: SpellsFile = {
   ],
 };
 
-describe("the converted content loads cleanly", () => {
-  it("has no errors from either source", () => {
-    const errors = content.diagnostics.filter((d) => d.severity === "error");
-    expect(errors).toEqual([]);
-  });
-
-  it("has no unresolved references or unknown kinds", () => {
-    const bad = content.diagnostics.filter(
-      (d) => d.code === "unresolved-reference" || d.code === "unknown-kind" || d.code === "missing-source",
-    );
-    expect(bad).toEqual([]);
-  });
-
-  it("declares its sourcebooks with attribution", () => {
-    const srd = content.sourcebook("srd");
-    expect(srd?.abbreviation).toBe("SRD");
-    expect(srd?.license).toBe("CC-BY-4.0");
-    expect(srd?.attribution).toContain("Wizards of the Coast");
-  });
-
-  it("exposes every kind the test slice uses", () => {
-    for (const kind of ["species", "species-trait", "class", "class-feature", "subclass", "subclass-feature", "background", "spell", "item", "tool", "language", "skill", "fighting-style"])
-      expect(content.kindDef(kind), kind).toBeDefined();
-  });
-});
 
 describe("Ilsa, dwarf paladin of Devotion", () => {
   const character = resolve({ content, build: paladin(5, FULL_CHOICES), inventory, spells });
@@ -118,6 +105,9 @@ describe("Ilsa, dwarf paladin of Devotion", () => {
     expect(character.abilities.con.mod).toBe(3);
     expect(character.abilities.str.mod).toBe(3);
     expect(character.proficiencyBonus.value).toBe(3);
+    // 8 at point buy, plus the two points from the level-4 improvement.
+    expect(character.abilities.int.score.value).toBe(10);
+    expect(character.abilities.int.mod).toBe(0);
   });
 
   it("has 49 hit points: 13 at first level then four levels of 9", () => {
@@ -404,14 +394,61 @@ describe("degradation", () => {
     expect(empty.hp.max.value).toBe(49 - 5 * 1); // no +2 CON from the dwarf
     expect(empty.level).toBe(5);
   });
+});
 
-  it("resolves an empty build without throwing", () => {
-    const blank = resolve({
+
+describe("the ability score improvement", () => {
+  const ASI = ["srd:feature:ability-score-improvement"];
+
+  it("offers the six ability points once taken, and nothing before", () => {
+    const before = resolve({ content, build: paladin(3, {}) });
+    expect(before.pendingChoices.some((c) => c.id === "srd:asi:points")).toBe(false);
+
+    const after = resolve({ content, build: paladin(4, { "srd:paladin:asi-4": ASI }) });
+    const points = after.pendingChoices.find((c) => c.id === "srd:asi:points");
+    expect(points?.count).toBe(2);
+    expect(points?.definition.repeatable).toBe(true);
+    expect(points?.options.map((o) => o.name).sort()).toEqual([
+      "Charisma +1",
+      "Constitution +1",
+      "Dexterity +1",
+      "Intelligence +1",
+      "Strength +1",
+      "Wisdom +1",
+    ]);
+  });
+
+  it("puts both points in one ability: Strength 16 becomes 18", () => {
+    const character = resolve({
       content,
-      build: { kind: "build", schemaVersion: 1, level: 0, abilities: { method: "manual", base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } }, levels: [] },
+      build: paladin(4, {
+        "srd:paladin:asi-4": ASI,
+        "srd:asi:points": ["srd:ability-point:str", "srd:ability-point:str"],
+      }),
     });
-    expect(blank.level).toBe(0);
-    expect(blank.ac.value).toBe(10);
-    expect(blank.hp.max.value).toBe(1);
+    expect(character.abilities.str.score.value).toBe(18);
+    expect(character.abilities.str.mod).toBe(4);
+  });
+
+  it("splits them across two abilities: Strength 17, Charisma 15", () => {
+    const character = resolve({
+      content,
+      build: paladin(4, {
+        "srd:paladin:asi-4": ASI,
+        "srd:asi:points": ["srd:ability-point:str", "srd:ability-point:cha"],
+      }),
+    });
+    expect(character.abilities.str.score.value).toBe(17);
+    expect(character.abilities.cha.score.value).toBe(15);
+    // Charisma is the paladin's casting ability, so the save DC follows: 8 + 2
+    // proficiency + 2 from a 15.
+    expect(character.spellcasting?.classes[0].dc.value).toBe(12);
+  });
+
+  it("reports the points as still open when the level is taken but nothing spent", () => {
+    const character = resolve({ content, build: paladin(4, { "srd:paladin:asi-4": ASI }) });
+    const points = character.pendingChoices.find((c) => c.id === "srd:asi:points");
+    expect(points?.complete).toBe(false);
+    expect(character.abilities.str.score.value).toBe(16);
   });
 });

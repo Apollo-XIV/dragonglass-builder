@@ -5,53 +5,70 @@
     "name": "Defense",
     "source": "srd",
     "page": 23,
-    "tags": ["paladin-fighting-style", "fighter-fighting-style", "ranger-fighting-style"],
+    "tags": [
+      "paladin-fighting-style",
+      "fighter-fighting-style",
+      "ranger-fighting-style"
+    ],
     "text": "While you are wearing armor, you gain a +1 bonus to AC.",
     "modifiers": [
       {
         "target": "ac",
         "op": "add",
         "value": 1,
-        "when": { "text": "while wearing armour", "context": "wearing-armour" }
+        "when": {
+          "text": "while wearing armour",
+          "context": "wearing-armour"
+        }
       }
     ]
   },
-
   {
     "id": "srd:fighting-style:dueling",
     "kind": "fighting-style",
     "name": "Dueling",
     "source": "srd",
     "page": 23,
-    "tags": ["paladin-fighting-style", "fighter-fighting-style", "ranger-fighting-style"],
+    "tags": [
+      "paladin-fighting-style",
+      "fighter-fighting-style",
+      "ranger-fighting-style"
+    ],
     "text": "When you are wielding a melee weapon in one hand and no other weapons, you gain a +2 bonus to damage rolls with that weapon.",
     "modifiers": [
       {
         "target": "damage.weapon.melee",
         "op": "add",
         "value": 2,
-        "when": { "text": "wielding a melee weapon in one hand and no other weapon", "context": "dueling" }
+        "when": {
+          "text": "wielding a melee weapon in one hand and no other weapon",
+          "context": "dueling"
+        }
       }
     ]
   },
-
   {
     "id": "srd:fighting-style:great-weapon-fighting",
     "kind": "fighting-style",
     "name": "Great Weapon Fighting",
     "source": "srd",
     "page": 23,
-    "tags": ["paladin-fighting-style", "fighter-fighting-style"],
+    "tags": [
+      "paladin-fighting-style",
+      "fighter-fighting-style"
+    ],
     "text": "When you roll a 1 or 2 on a damage die for an attack you make with a melee weapon that you are wielding with two hands, you can reroll the die and must use the new roll. The weapon must have the two-handed or versatile property for you to gain this benefit."
   },
-
   {
     "id": "srd:fighting-style:protection",
     "kind": "fighting-style",
     "name": "Protection",
     "source": "srd",
     "page": 23,
-    "tags": ["paladin-fighting-style", "fighter-fighting-style"],
+    "tags": [
+      "paladin-fighting-style",
+      "fighter-fighting-style"
+    ],
     "text": "When a creature you can see attacks a target other than you that is within 5 feet of you, you can use your reaction to impose disadvantage on the attack roll. You must be wielding a shield.",
     "actions": [
       {
@@ -63,15 +80,27 @@
       }
     ]
   },
-
   {
     "id": "srd:feature:ability-score-improvement",
     "kind": "feature",
     "name": "Ability Score Improvement",
     "source": "srd",
     "page": 23,
-    "tags": ["ability-score-improvement"],
-    "text": "You can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1 each. As normal, you can't increase an ability score above 20 using this feature.\n\nRecord the increase on the Core tab by raising the relevant base score.",
-    "notes": "Score increases are applied by editing the ability scores, so point buy, rolled scores and improvements all live in one place."
+    "tags": [
+      "ability-score-improvement"
+    ],
+    "text": "You can increase one ability score of your choice by 2, or you can increase two ability scores of your choice by 1 each. As normal, you can't increase an ability score above 20 using this feature.",
+    "choices": [
+      {
+        "id": "srd:asi:points",
+        "name": "Ability increases",
+        "count": 2,
+        "repeatable": true,
+        "from": {
+          "kind": "ability-point"
+        },
+        "text": "Two points to spend: one point each in two abilities, or both in one."
+      }
+    ]
   }
 ]

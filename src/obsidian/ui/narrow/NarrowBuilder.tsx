@@ -216,6 +216,8 @@ function PendingChoiceRow({
           options: optionsFor(choice),
           selected: choice.chosen,
           count: choice.count,
+          repeatable: choice.definition.repeatable,
+          maxPer: choice.definition.maxPer,
           enforce: plugin.settings.enforceRequirements,
           onCommit: write,
           extra: choice.chosen.length ? { label: "Clear", onClick: () => write([]) } : undefined,
@@ -425,8 +427,10 @@ function LevelCard({
   const sheet = useSheet();
   const change = useBuildChange(store);
   const build = store.data.build;
-  // Level cards tick and detent while scrolling, but get no rail icon of their
-  // own: twenty icons would be a scrollbar, not a rail (spec 4.3, 7.3).
+  // Registered so Review can jump straight to this card, and for nothing else:
+  // no rail icon (twenty icons would be a scrollbar, not a rail), and no tick or
+  // detent either — on a phone a stop every card made scrolling the builder a
+  // fight (spec 4.3, 7.3).
   const ref = useMinorStop(`level-${index}`);
   if (!build) return null;
 
@@ -437,6 +441,13 @@ function LevelCard({
   const chosenIds = new Set(choices.flatMap((c) => c.chosen));
   const automatic = character.elements.filter(
     (element) => element.class === level.class && element.level === classLevel && !chosenIds.has(element.id),
+  );
+  // Anything staged against character level rather than a class — a species
+  // trait that arrives at 5 — belongs to this card too, since this is the level
+  // that brought it. Shown apart from the class's own features because it did
+  // not come from the class, and a player reading the card should see which.
+  const staged = character.elements.filter(
+    (element) => element.class === undefined && element.level === index + 1 && !chosenIds.has(element.id),
   );
   const inactive = store.index ? inactivePicks(store.index, build).filter((p) => p.levelIndex === index) : [];
 
@@ -495,6 +506,14 @@ function LevelCard({
         </div>
       ) : null}
 
+      {staged.length ? (
+        <div className="dg-level-features is-staged">
+          {staged.map((feature) => (
+            <FeatureChip key={feature.id} feature={feature} />
+          ))}
+        </div>
+      ) : null}
+
       {choices.map((choice) => (
         <PendingChoiceRow key={`${choice.id}-${index}`} choice={choice} store={store} nameOf={nameOf} />
       ))}
@@ -533,7 +552,6 @@ function LevelButtons({ store, character }: { store: CharacterStore; character: 
   const picker = usePicker();
   const { plugin } = usePlugin();
   const change = useBuildChange(store);
-  const controller = useScrollController();
   const index = store.index;
   const build = store.data.build;
   if (!build || !index) return null;
@@ -546,10 +564,11 @@ function LevelButtons({ store, character }: { store: CharacterStore; character: 
     return "average";
   };
 
+  // Adding a level leaves the scroll where it is (spec 7.5). The button is at
+  // the bottom of the levels, so the new card appears right where the player is
+  // already looking; carrying them to it read as the view jumping ahead of them.
   const add = (classId: string): void => {
     change({ type: "add-level", class: classId, hp: hpFor(classId) });
-    // The new card is what the player wants to look at next (spec 7.5).
-    requestAnimationFrame(() => controller.goTo(`level-${build.levels.length}`));
   };
 
   const multiclass = (): void =>
@@ -650,6 +669,7 @@ function PlannedSection({ store, character }: { store: CharacterStore; character
               character={character}
             />
           ))}
+          {filter === "all" ? <PlannedStaged store={store} character={character} count={shown} /> : null}
           <button className="dg-level-button is-multiclass" onClick={() => setShown((n) => n + PLANNED_PAGE)}>
             Show more levels
           </button>
@@ -718,6 +738,99 @@ interface LevelEntryShape {
   grants?: Grant[];
   choices?: ChoiceDef[];
   text?: string;
+}
+
+export interface StagedCard {
+  owner: Element;
+  level: number;
+  entry: LevelEntryShape;
+}
+
+/**
+ * What a character has still to gain from anything staged against character
+ * level, above the level it has now.
+ *
+ * Owners are found by what they declare rather than by their kind, so a
+ * background or a feat that stages itself is looked ahead to as readily as a
+ * species. `count` is per owner, so one species with many entries cannot crowd
+ * out another.
+ */
+export function upcomingStaged(
+  elements: { element: Element }[],
+  total: number,
+  count: number,
+): StagedCard[] {
+  const owners = new Map<string, Element & { levels?: Record<string, LevelEntryShape> }>();
+  for (const resolved of elements) {
+    const element = resolved.element as Element & { levels?: Record<string, LevelEntryShape> };
+    if (element.levelsBy === "character" && element.levels) owners.set(element.id, element);
+  }
+
+  const cards: StagedCard[] = [];
+  for (const owner of owners.values()) {
+    let found = 0;
+    for (let level = total + 1; level <= 20 && found < count; level++) {
+      const entry = owner.levels?.[String(level)];
+      if (!entry) continue;
+      cards.push({ owner, level, entry });
+      found += 1;
+    }
+  }
+  return cards;
+}
+
+/**
+ * What is coming from something staged against character level rather than a
+ * class — a species whose traits arrive as the character grows (spec 7.6).
+ *
+ * Read-only look-ahead, like the class cards beside it. It reads the content
+ * directly rather than the resolved character, because the point is the levels
+ * the character has *not* reached yet.
+ */
+function PlannedStaged({
+  store,
+  character,
+  count,
+}: {
+  store: CharacterStore;
+  character: ResolvedCharacter;
+  count: number;
+}): ReactNode {
+  const index = store.index;
+  const build = store.data.build;
+  if (!index || !build) return null;
+
+  const cards = upcomingStaged(character.elements, build.levels?.length ?? 0, count);
+  if (cards.length === 0) return null;
+
+  return (
+    <>
+      {cards.map(({ owner, level, entry }) => (
+        <div className="dg-level-card is-planned" key={`${owner.id}-${level}`}>
+          <div className="dg-level-card-head">
+            <strong>
+              {owner.name} · level {level}
+            </strong>
+            <span className="dg-level-chip is-planned">planned</span>
+          </div>
+          {(entry.grants ?? []).map((grant) => {
+            const id = typeof grant === "string" ? grant : grant.id;
+            const element = index.get(id);
+            return (
+              <ReadRow
+                key={id}
+                title={element?.name ?? id}
+                subtitle="look ahead"
+                text={typeof element?.text === "string" ? element.text : undefined}
+                className="dg-level-feature"
+              />
+            );
+          })}
+          {entry.text ? <p className="dg-muted">{entry.text}</p> : null}
+        </div>
+      ))}
+    </>
+  );
 }
 
 function PlannedEntry({

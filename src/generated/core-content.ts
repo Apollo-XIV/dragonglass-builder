@@ -255,6 +255,19 @@ export const CORE_ELEMENTS: Element[] = [
     "order": 72
   },
   {
+    "id": "core:kind:ability-point",
+    "kind": "kind",
+    "name": "Ability point",
+    "source": "core",
+    "key": "ability-point",
+    "label": "Ability point",
+    "plural": "Ability points",
+    "tab": null,
+    "display": "list",
+    "order": 73,
+    "text": "One point of increase to a single ability score, as an element a choice can offer. Untabbed, like skills and languages: it is a mechanism a feature spends, not a feature in its own right."
+  },
+  {
     "id": "core:kind:condition",
     "kind": "kind",
     "name": "Condition",
@@ -286,7 +299,8 @@ export const CORE_ELEMENTS: Element[] = [
     "valueType": "number",
     "label": "Ability score",
     "floor": 0,
-    "text": "The six ability scores. Modifiers derive from them; there is no separate path for a modifier."
+    "text": "The six ability scores. Modifiers derive from them; there is no separate path for a modifier. `softMax` is advisory: increases stop at 20 by the rules, but items raise scores past it, so the builder asks rather than refuses.",
+    "softMax": 20
   },
   {
     "id": "core:stat:save",

@@ -12,7 +12,9 @@ import { join } from "node:path";
 import { indexFromDisk } from "../src/node/load-source";
 import { resolve } from "../src/core/resolver/resolve";
 import type { ResolvedCharacter } from "../src/core/resolver/resolved";
-import type { BuildFile, InventoryFile, SpellsFile, StateFile } from "../src/core/types";
+import type { BuildFile, Element, InventoryFile, SpellsFile, StateFile } from "../src/core/types";
+import type { ContentIndex } from "../src/core/content";
+import { testIndex } from "./helpers";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { Sheet } from "../src/obsidian/ui/Sheet";
@@ -20,6 +22,7 @@ import { Builder } from "../src/obsidian/ui/Builder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
 import { PendingChoiceList } from "../src/obsidian/ui/builder-choices";
 import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
+import { upcomingStaged } from "../src/obsidian/ui/narrow/NarrowBuilder";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 import { CONTENT_ROOT } from "./helpers";
 
@@ -38,7 +41,16 @@ const build: BuildFile = {
     { class: "srd:class:paladin", hp: "max", choices: { "srd:class:paladin:skills": ["srd:skill:athletics", "srd:skill:persuasion"] } },
     { class: "srd:class:paladin", hp: "average", choices: { "srd:paladin:fighting-style": ["srd:fighting-style:defense"] } },
     { class: "srd:class:paladin", hp: "average", choices: { "srd:paladin:sacred-oath": ["srd:subclass:oath-of-devotion"] } },
-    { class: "srd:class:paladin", hp: "average", choices: { "srd:paladin:asi-4": ["srd:feature:ability-score-improvement"] } },
+    {
+      class: "srd:class:paladin",
+      hp: "average",
+      // The improvement and the two points it then asks for: both answers live
+      // at the level that asked them.
+      choices: {
+        "srd:paladin:asi-4": ["srd:feature:ability-score-improvement"],
+        "srd:asi:points": ["srd:ability-point:int", "srd:ability-point:int"],
+      },
+    },
     { class: "srd:class:paladin", hp: "average", choices: {} },
   ],
   choices: {
@@ -90,6 +102,24 @@ const details = {
   ],
   raw: "",
 };
+
+/** A store whose content and build are entirely ours, for a feature the SRD slice has no example of. */
+function makeStoreWith(index: ContentIndex, buildFile: BuildFile): CharacterStore {
+  const host: StoreHost = {
+    app: {
+      vault: { adapter: { getResourcePath: (p: string) => `app://local/${p}`, exists: async () => false }, on: () => ({}), offref: () => undefined },
+    } as never,
+    indexFor: async () => index,
+    enforceRequirements: () => false,
+    writeDebounceMs: () => 0,
+  };
+  const store = new CharacterStore(host, "Characters/Staged");
+  store.data = { sheet: { kind: "sheet", schemaVersion: 1 }, build: buildFile };
+  store.index = index;
+  store.loading = false;
+  store.resolved = resolve({ content: index, build: buildFile });
+  return store;
+}
 
 function makeStore(overrides: Partial<CharacterStore["data"]> = {}): CharacterStore {
   const host: StoreHost = {
@@ -533,5 +563,74 @@ describe("the narrow builder", () => {
     expect(freshHtml).not.toContain("Save changes");
     // With no class taken, the first button offers one rather than a level.
     expect(freshHtml).toContain("+ First class");
+  });
+});
+
+describe("species features staged by character level", () => {
+  const BOOK: Element = {
+    id: "stage", kind: "sourcebook", name: "Staged Book", source: "stage", abbreviation: "STG",
+  } as Element;
+  const BREATH: Element = {
+    id: "stage:trait:breath", kind: "species-trait", name: "Breath Weapon", source: "stage",
+    text: "You exhale destruction.",
+  };
+  const WINGS: Element = {
+    id: "stage:trait:wings", kind: "species-trait", name: "Draconic Flight", source: "stage",
+    text: "You sprout wings.",
+  };
+  const SPECIES: Element = {
+    id: "stage:species:dragonborn", kind: "species", name: "Dragonborn", source: "stage",
+    levelsBy: "character",
+    levels: { "1": { grants: [BREATH.id] }, "5": { grants: [WINGS.id] } },
+  };
+  const CLASS: Element = {
+    id: "stage:class:fighter", kind: "class", name: "Fighter", source: "stage", hitDie: "d10",
+  };
+  const index = testIndex([BOOK, BREATH, WINGS, SPECIES, CLASS]);
+  const at = (levels: number): BuildFile => ({
+    kind: "build", schemaVersion: 1, name: "Kriv", level: levels, species: SPECIES.id,
+    abilities: { method: "manual", base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
+    levels: Array.from({ length: levels }, () => ({ class: CLASS.id, hp: "average" as const })),
+  });
+
+  function builderHtml(levels: number): string {
+    const store = makeStoreWith(index, at(levels));
+    return render(
+      createElement(NarrowRoot, {
+        store,
+        character: store.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "builder" as const,
+      }),
+      store,
+    );
+  }
+
+  it("shows a trait on the level card that brought it", () => {
+    expect(builderHtml(5)).toContain("Draconic Flight");
+  });
+
+  it("does not show it on a character who hasn't got there yet", () => {
+    const early = builderHtml(4);
+    expect(early).toContain("Breath Weapon");
+    expect(early).not.toContain("Draconic Flight");
+  });
+
+  it("looks ahead to what has not arrived yet", () => {
+    // Planned is collapsed by default, so the look-ahead is tested where its
+    // logic lives rather than through the markup.
+    const owned = [{ element: SPECIES }];
+    const ahead = upcomingStaged(owned, 4, 3);
+    expect(ahead.map((c) => c.level)).toEqual([5]);
+    expect(ahead[0].owner.name).toBe("Dragonborn");
+  });
+
+  it("has nothing left to look ahead to once the last entry is reached", () => {
+    expect(upcomingStaged([{ element: SPECIES }], 5, 3)).toEqual([]);
+  });
+
+  it("ignores an element that doesn't stage itself", () => {
+    const classStaged: Element = { ...SPECIES, id: "stage:other", levelsBy: "class" };
+    expect(upcomingStaged([{ element: classStaged }], 1, 3)).toEqual([]);
   });
 });

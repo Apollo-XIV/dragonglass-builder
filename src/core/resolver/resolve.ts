@@ -810,6 +810,22 @@ function resolveChoices(
         subject: owner.id,
       });
 
+    // Too many of one option. The picks are kept and the excess reported, like
+    // any other pick that no longer fits: a hand-edited file is told what is
+    // wrong with it rather than quietly obeyed or quietly rewritten.
+    for (const [id, taken] of overCap(declared.chosen, definition)) {
+      const cap = definition.maxPer as number;
+      for (let i = cap; i < taken; i++) invalid.push(id);
+      diagnostics.push({
+        severity: "warning",
+        code: "choice-invalid",
+        message: `${definition.name ?? definition.id} takes "${
+          content.get(id)?.name ?? id
+        }" ${taken} times, and allows at most ${cap}`,
+        subject: owner.id,
+      });
+    }
+
     out.push({
       id: definition.id,
       name: definition.name ?? defaultChoiceName(definition, content),
@@ -830,6 +846,17 @@ function resolveChoices(
     });
   }
   return out;
+}
+
+/**
+ * Options taken more often than `maxPer` allows, with how many times each was
+ * taken. Empty unless the choice declares a cap.
+ */
+function overCap(chosen: string[], definition: DeclaredChoice["definition"]): [string, number][] {
+  if (typeof definition.maxPer !== "number") return [];
+  const counts = new Map<string, number>();
+  for (const id of chosen) counts.set(id, (counts.get(id) ?? 0) + 1);
+  return [...counts].filter(([, taken]) => taken > definition.maxPer!);
 }
 
 function defaultChoiceName(definition: DeclaredChoice["definition"], content: ContentIndex): string {

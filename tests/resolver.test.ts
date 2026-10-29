@@ -181,6 +181,85 @@ describe("collection", () => {
   });
 });
 
+describe("staging against character level", () => {
+  const BREATH: Element = { id: "test:trait:breath", kind: "species-trait", name: "Breath", source: "test" };
+  const WINGS: Element = {
+    id: "test:trait:wings",
+    kind: "species-trait",
+    name: "Wings",
+    source: "test",
+    modifiers: [{ target: "speed.fly", op: "add", value: 30 }],
+  };
+  const DRAGONBORN: Element = {
+    id: "test:species:dragonborn",
+    kind: "species",
+    name: "Dragonborn",
+    source: "test",
+    levelsBy: "character",
+    levels: { "1": { grants: [BREATH.id] }, "5": { grants: [WINGS.id] } },
+  };
+  const content = testIndex([...BASE_ELEMENTS, BREATH, WINGS, DRAGONBORN]);
+  const at = (level: number) => resolve({ content, build: fighter(level, { species: DRAGONBORN.id }) });
+
+  it("gives a species its level-1 trait straight away", () => {
+    expect(at(1).elements.map((e) => e.id)).toContain(BREATH.id);
+  });
+
+  it("withholds a later trait until the character level arrives", () => {
+    expect(at(4).elements.map((e) => e.id)).not.toContain(WINGS.id);
+    expect(at(4).speed.fly?.value ?? 0).toBe(0);
+  });
+
+  it("applies it at that level, modifiers and all", () => {
+    expect(at(5).elements.map((e) => e.id)).toContain(WINGS.id);
+    expect(at(5).speed.fly?.value).toBe(30);
+  });
+
+  it("attributes it to the character level rather than to a class", () => {
+    const wings = at(5).elements.find((e) => e.id === WINGS.id)!;
+    expect(wings.level).toBe(5);
+    expect(wings.class).toBeUndefined();
+  });
+
+  it("counts total level across classes, not one class's levels", () => {
+    // Three fighter levels and two rogue ones is a level-5 character, so the
+    // trait arrives even though neither class reached 5.
+    const ROGUE: Element = { id: "test:class:rogue", kind: "class", name: "Rogue", source: "test", hitDie: "d8" };
+    const index = testIndex([...BASE_ELEMENTS, BREATH, WINGS, DRAGONBORN, ROGUE]);
+    const multi = build({
+      species: DRAGONBORN.id,
+      abilities: { method: "manual", base: scores() },
+      levels: [
+        { class: "test:class:fighter", hp: "average" },
+        { class: "test:class:fighter", hp: "average" },
+        { class: "test:class:fighter", hp: "average" },
+        { class: ROGUE.id, hp: "average" },
+        { class: ROGUE.id, hp: "average" },
+      ],
+    });
+    const r = resolve({ content: index, build: multi });
+    expect(r.elements.map((e) => e.id)).toContain(WINGS.id);
+    // and no class reached level 5
+    expect(r.classes.map((c) => c.level).sort()).toEqual([2, 3]);
+  });
+
+  it("says so when a levels map would be read by nothing", () => {
+    // No basis declared and no class to govern it: silently ignored before, and
+    // the silence was the bug.
+    const silent: Element = {
+      id: "test:species:silent",
+      kind: "species",
+      name: "Silent",
+      source: "test",
+      levels: { "5": { grants: [WINGS.id] } },
+    };
+    const index = testIndex([...BASE_ELEMENTS, WINGS, silent]);
+    const r = resolve({ content: index, build: fighter(5, { species: silent.id }) });
+    expect(r.elements.map((e) => e.id)).not.toContain(WINGS.id);
+    expect(r.diagnostics.some((d) => d.message.includes("declares levels that nothing reads"))).toBe(true);
+  });
+});
+
 describe("stats", () => {
   it("computes ability scores, modifiers and proficiency bonus", () => {
     const content = testIndex(BASE_ELEMENTS);

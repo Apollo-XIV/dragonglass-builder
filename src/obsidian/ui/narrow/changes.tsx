@@ -17,6 +17,8 @@ import {
   type ChangeReport,
   type InactivePick,
 } from "../../../core/resolver/validity";
+import { capBreaches, newBreaches, type CapBreach } from "../../../core/resolver/caps";
+import { resolve } from "../../../core/resolver/resolve";
 import type { CharacterStore } from "../../character-store";
 import { useSheet } from "./sheet";
 
@@ -35,15 +37,27 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange) => 
     };
 
     const report = previewChange(index, build, change);
-    if (isEmptyReport(report)) {
+    // What the change would do to a stat the rules cap: an ability score past
+    // 20. Resolved from the build the change produces, so the question is about
+    // the result rather than about the pick.
+    const breaches = breachesFrom(store, change);
+
+    if (isEmptyReport(report) && breaches.length === 0) {
       apply();
       return;
     }
 
+    // One sheet, whatever the change costs. Two confirmations in a row for one
+    // tap is how a builder teaches people to stop reading them.
     sheet.open({
-      title: "This affects other choices",
+      title: report.removed.length || report.invalidated.length ? "This affects other choices" : "Above the usual maximum",
       subtitle: describeChange(change),
-      body: () => <ReportBody report={report} />,
+      body: () => (
+        <>
+          {breaches.length > 0 ? <CapGroup breaches={breaches} /> : null}
+          {isEmptyReport(report) ? null : <ReportBody report={report} />}
+        </>
+      ),
       actions: () => (
         <>
           <button className="dg-sheet-button" onClick={sheet.close}>
@@ -62,6 +76,51 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange) => 
       ),
     });
   };
+}
+
+/**
+ * Soft caps a change would newly cross.
+ *
+ * This resolves the prospective character, which is the only honest way to
+ * answer "what would this do to my Strength" — the increase may come from
+ * anywhere, and the builder has no business knowing that ability points are the
+ * thing that usually causes it.
+ */
+function breachesFrom(store: CharacterStore, change: BuildChange): CapBreach[] {
+  const index = store.index;
+  const build = store.data.build;
+  const before = store.resolved;
+  if (!index || !build || !before) return [];
+  const next = commitChange(index, build, change).build;
+  const after = resolve({
+    content: index,
+    build: next,
+    inventory: store.data.inventory,
+    spells: store.data.spells,
+  });
+  return newBreaches(capBreaches(before, index), capBreaches(after, index));
+}
+
+function CapGroup({ breaches }: { breaches: CapBreach[] }): ReactNode {
+  return (
+    <section className="dg-change-group">
+      <h4>Above the usual maximum</h4>
+      <p className="dg-muted">
+        The rules stop increases at {breaches[0].softMax}. Items and some features go past it, so this is allowed —
+        it just is not usually.
+      </p>
+      <ul>
+        {breaches.map((breach) => (
+          <li key={breach.path}>
+            <strong>
+              {breach.label} {breach.value}
+            </strong>
+            <span className="dg-muted"> — over {breach.softMax}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 function describeChange(change: BuildChange): string {

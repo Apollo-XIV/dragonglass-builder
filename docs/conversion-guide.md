@@ -12,6 +12,10 @@ on.
 Run `npm run validate -- <source-dir>` on everything you write. It is the same
 validator the plugin runs on load, so if it passes, the plugin will load it.
 
+> **`docs/schema.md` is the authority on the content format.** This guide teaches how
+> to decide what a piece of book text should become; the schema reference defines what
+> the fields mean. Where they disagree, the schema reference wins.
+
 ---
 
 ## 1. The shape of an element

@@ -46,7 +46,12 @@ export interface Filter {
   tags?: string[];
   /** Element must carry all of these tags. */
   allTags?: string[];
-  /** Explicit ids. Combined with kind/tags as a union: ids are always eligible. */
+  /**
+   * Explicit ids, ANDed with the rest like every other criterion: they narrow
+   * the candidates the other criteria then filter, they do not union in
+   * alongside them. `{ kind: "feat", ids: ["srd:feature:asi"] }` matches
+   * nothing, because that element is not a feat.
+   */
   ids?: string[];
   /** Ids to exclude from whatever the rest of the filter matched. */
   exclude?: string[];
@@ -61,6 +66,15 @@ export interface ChoiceDef {
   requires?: Requirement;
   /** May the same option be picked twice? Defaults to false. */
   repeatable?: boolean;
+  /**
+   * The most times any one option may be taken. Only meaningful alongside
+   * `repeatable`, and defaults to `count` — that is, no cap beyond the budget.
+   *
+   * This is what makes "either +2 to one or +1 to two" a budget of points
+   * rather than a list of outcomes: three points among three abilities with
+   * `maxPer: 2` is exactly the 2024 background rule.
+   */
+  maxPer?: number;
   text?: string;
   notes?: string;
 }
@@ -215,6 +229,15 @@ export interface Element {
   requires?: Requirement;
   page?: number | string;
 
+  /**
+   * Parts keyed by level, for anything that gains things as it goes. Classes and
+   * subclasses read it against their own class level; anything else must set
+   * `levelsBy: "character"` to be read at all.
+   */
+  levels?: Record<string, LevelEntry>;
+  /** What `levels` counts. Defaults to `class`. */
+  levelsBy?: LevelBasis;
+
   grants?: Grant[];
   choices?: ChoiceDef[];
   modifiers?: Modifier[];
@@ -250,6 +273,16 @@ export interface KindElement extends Element {
   browsable?: boolean;
   order?: number;
 }
+
+/**
+ * Whether an element's `levels` map is keyed by the level of the class that
+ * governs it, or by the character's total level.
+ *
+ * Defaults to `class`, which is every 2014 element: a subclass catches up to
+ * the class that offered it. A 2024 species stages its traits against total
+ * character level instead, and says so.
+ */
+export type LevelBasis = "class" | "character";
 
 /** A level entry in a class or subclass progression. */
 export interface LevelEntry {
@@ -628,4 +661,13 @@ export interface StatPathElement extends Element {
   label?: string;
   /** Lowest value the stat can take after modifiers, e.g. 0 for speed. */
   floor?: number;
+  /**
+   * The value this stat is not *expected* to exceed: 20 for an ability score.
+   *
+   * Advisory, and deliberately not enforced by the engine — a Tome of Clear
+   * Thought legitimately takes a score past 20, and a table may houserule the
+   * cap anywhere. The builder asks for confirmation when a change would cross
+   * it; nothing clamps.
+   */
+  softMax?: number;
 }
