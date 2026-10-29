@@ -78,8 +78,6 @@ export const RAIL = {
 /** Scroll ticks (spec 4.3). */
 export const TICK = {
   haptic: 8,
-  /** Lighter than a section tick, for builder level cards. */
-  levelHaptic: 6,
   /** At most one tick this often. */
   rateLimit: 70,
   /** How long the section label flashes beside the rail. */

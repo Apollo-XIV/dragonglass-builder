@@ -13,7 +13,10 @@ export interface Stop {
   id: string;
   /** Scroll offset that puts this stop's header at the top of the viewport. */
   start: number;
-  /** Minor stops tick and detent but get no rail icon (spec 4.3, 7.3). */
+  /**
+   * A position `goTo` can address that scrolling never stops at: no rail icon,
+   * no tick, no snap. Builder level cards are the only ones (spec 7.3).
+   */
   minor?: boolean;
 }
 
@@ -140,4 +143,17 @@ export function approach(current: number, target: number, factor: number): numbe
   const next = current + (target - current) * factor;
   // Below a pixel the easing would crawl forever; land on the target instead.
   return Math.abs(target - next) < 0.5 ? target : next;
+}
+
+/**
+ * Where a glide should finish, given a target measured off the layout.
+ *
+ * `getBoundingClientRect` reports fractions; `scrollTop` holds whole pixels. The
+ * difference is why a glide needs a defined end rather than easing towards the
+ * measurement: the nearest pixel the element can actually hold, clamped to what
+ * the document can scroll to. See `scroller.tsx` for the loop that needs it.
+ */
+export function glideLanding(target: number, maxScroll: number): number {
+  const limit = Math.max(0, maxScroll);
+  return Math.min(Math.max(Math.round(target), 0), limit);
 }

@@ -10,6 +10,7 @@ import {
   activeStop,
   approach,
   crossedStop,
+  glideLanding,
   nearestStop,
   railProgress,
   scrubTarget,
@@ -215,5 +216,34 @@ describe("layout.5e, the per-character layer", () => {
     expect(resolveAccent(settings, undefined)).toBe("#336699");
     expect(resolveAccent(settings, { kind: "layout", schemaVersion: 1, accent: "#ff0000" })).toBe("#ff0000");
     expect(resolveAccent(DEFAULT_SETTINGS, undefined)).toBe("");
+  });
+});
+
+describe("ending a glide", () => {
+  it("lands on a pixel the element can hold, not on the fractional measurement", () => {
+    // Stops are measured with getBoundingClientRect, so they carry fractions;
+    // scrollTop does not. Easing towards the fraction never arrives.
+    expect(glideLanding(1688.21875, 3168)).toBe(1688);
+    expect(glideLanding(1687.5, 3168)).toBe(1688);
+  });
+
+  it("never asks for a position past the end of the document", () => {
+    // Content below the target can shrink while the glide is running, which is
+    // what adding a level does to the Planned queue.
+    expect(glideLanding(1688.2, 1200)).toBe(1200);
+    expect(glideLanding(-20, 1200)).toBe(0);
+    expect(glideLanding(500, 0)).toBe(0);
+  });
+
+  it("stalls rather than crawls once a step is smaller than a pixel", () => {
+    // The dead band that hung the scroll: from 1686 towards 1688.21875 the step
+    // is 0.44px, which scrollTop rounds away, so the loop can neither move nor
+    // satisfy `next === target`. Reaching the target is not a termination
+    // condition the loop can rely on.
+    const step = approach(1686, 1688.21875, RAIL.glideFactor);
+    expect(step).toBeGreaterThan(1686);
+    expect(step).toBeLessThan(1687);
+    expect(step).not.toBe(1688.21875);
+    expect(Math.round(step)).toBe(1686);
   });
 });

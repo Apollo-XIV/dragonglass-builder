@@ -148,9 +148,9 @@ A vertical icon rail on the thumb side of the screen. It scrolls to sections and
 
 - **[Decided]** Scroll ticks are on by default. When a section header reaches the top during ordinary scrolling, fire a short haptic and flash the section label beside the rail for about 650ms. The label is the visual fallback where haptics are unavailable.
 - **[Proposed]** Rate limit ticks to one per 70ms. Do not tick during programmatic scrolling or rail scrubbing (scrubbing has its own detents).
-- **[Proposed]** In the builder, individual level cards also tick and detent (section 7.4), with a lighter haptic than section ticks.
+- **[Decided]** Individual level cards in the builder do **not** tick or detent. Tried on a phone: a stop every card made scrolling the builder a fight, and the cards are close enough together that the feedback said nothing. They stay addressable by id so Review can jump to one (section 7.3), but scrolling past one is not an event.
 - **[Decided]** Snapping is on by default and optional. The grab must be wider than the browser's native proximity snap.
-- **[Proposed]** Implementation: do not use CSS scroll-snap. On `scrollend`, if a section (or level) start is within the grab distance, glide to it. Default grab distance 20 to 25% of viewport height, exposed as a setting. Suspend while the rail is being touched and during programmatic scrolls.
+- **[Proposed]** Implementation: do not use CSS scroll-snap. On `scrollend`, if a section start is within the grab distance, glide to it. Default grab distance 20 to 25% of viewport height, exposed as a setting. Suspend while the rail is being touched and during programmatic scrolls.
 
 ### 4.4 Icon sets and order
 
@@ -227,7 +227,7 @@ Below the last level card:
 
 ### 7.5 Level up
 
-Pressing a class level button appends a level for that class, applies any queued picks for that class level, scrolls the new card into view and briefly highlights it. **[Decided]** that queued picks are applied on level-up. The scroll and highlight are **[Proposed]**.
+Pressing a class level button appends a level for that class and applies any queued picks for that class level. **[Decided]** that queued picks are applied on level-up. **[Decided]** that the scroll stays where it is: the level buttons sit directly below the last card, so the new one appears where the player is already looking, and carrying them to it read as the view jumping ahead of them. A brief highlight on the new card is still **[Proposed]**.
 
 ### 7.6 Planned
 

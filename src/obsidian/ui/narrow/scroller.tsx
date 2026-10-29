@@ -20,7 +20,16 @@ import { Icon } from "../components";
 import { RAIL, TICK, UI } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHaptics } from "./platform";
-import { activeStop, approach, crossedStop, nearestStop, railProgress, tailSpace, type Stop } from "./scroll";
+import {
+  activeStop,
+  approach,
+  crossedStop,
+  glideLanding,
+  nearestStop,
+  railProgress,
+  tailSpace,
+  type Stop,
+} from "./scroll";
 
 export interface SectionSpec {
   id: string;
@@ -73,8 +82,11 @@ export function useScrollState(): ScrollState {
 }
 
 /**
- * Registers a stop that ticks and detents but gets no rail icon: a builder level
- * card (spec 4.3, 7.3).
+ * Registers a position the rail can be sent to without it becoming a place
+ * scrolling stops: a builder level card (spec 7.3), which Review's "jump to this
+ * choice" addresses by id. Scrolling past one is not an event — it neither ticks
+ * nor snaps — because a card every hundred pixels made the whole builder buzz
+ * and grab on a real phone.
  */
 const RegisterContext = createContext<(id: string, el: HTMLElement | null) => void>(() => {});
 
@@ -179,20 +191,38 @@ export function NarrowScroller({
           return;
         }
         const factor = m.mode === "chase" ? RAIL.chaseFactor : RAIL.glideFactor;
-        const next = approach(el.scrollTop, m.target, factor);
+        // Re-clamped every frame, not just when the motion starts: content can
+        // shrink under a running glide — adding a level consumes the Planned
+        // queue below it — and a target past the end of a shorter document is
+        // one the element can never reach.
+        const target = Math.min(m.target, maxScroll());
+        const from = el.scrollTop;
+        const next = approach(from, target, factor);
         el.scrollTop = next;
-        if (next === m.target && m.mode === "glide") {
-          m.frame = 0;
-          m.mode = "idle";
-          m.intent = undefined;
-          return;
-        }
-        // A chase keeps running while the finger is down, even once it has
-        // arrived, so the next pointermove is picked up without restarting.
-        if (next === m.target && m.mode === "chase" && !m.scrubbing) {
-          m.frame = 0;
-          m.mode = "idle";
-          return;
+
+        // Arrival is read back off the element, not assumed from what we asked
+        // for. `scrollTop` is quantised to a whole pixel while a measured target
+        // is fractional, so once the remaining distance is small enough that the
+        // step rounds away, the element stops moving and every later frame
+        // computes the same step: the loop spins forever and pins the scroll
+        // against the reader. A frame that moved nothing is the end of the
+        // motion, and it lands on the nearest pixel it can hold.
+        const stalled = el.scrollTop === from;
+        if (next === target || stalled) {
+          if (m.mode === "glide") {
+            if (stalled) el.scrollTop = glideLanding(target, maxScroll());
+            m.frame = 0;
+            m.mode = "idle";
+            m.intent = undefined;
+            return;
+          }
+          // A chase keeps running while the finger is down, even once it has
+          // arrived, so the next pointermove is picked up without restarting.
+          if (!m.scrubbing) {
+            m.frame = 0;
+            m.mode = "idle";
+            return;
+          }
         }
         m.frame = requestAnimationFrame(step);
       };
@@ -257,8 +287,7 @@ export function NarrowScroller({
     const onScroll = (): void => {
       const m = motion.current;
       const position = container.scrollTop;
-      const all = readStops();
-      const major = all.filter((s) => !s.minor);
+      const major = majorStops();
       const index = m.intent ?? activeStop(major, position);
       setState((prev) => {
         const progress = railProgress(major, position, maxScroll());
@@ -274,15 +303,14 @@ export function NarrowScroller({
       m.lastPosition = position;
       if (!settings.scrollTicks || m.mode !== "idle" || m.scrubbing) return;
 
-      const arrived = crossedStop(all, previous, position);
+      const arrived = crossedStop(major, previous, position);
       if (arrived === undefined) return;
       const now = Date.now();
       if (arrived === m.lastStop || now - m.lastTick < TICK.rateLimit) return;
       m.lastStop = arrived;
       m.lastTick = now;
-      const stop = all[arrived];
-      haptics.buzz(stop.minor ? TICK.levelHaptic : TICK.haptic);
-      if (!stop.minor) flash(stop.id);
+      haptics.buzz(TICK.haptic);
+      flash(major[arrived].id);
     };
 
     /**
@@ -295,9 +323,12 @@ export function NarrowScroller({
       const m = motion.current;
       if (!settings.snap || m.scrubbing || m.wheeling || m.mode !== "idle") return;
       const grab = (container.clientHeight * settings.snapGrabPercent) / 100;
-      const index = nearestStop(readStops(), container.scrollTop, grab);
+      // Sections only. Level cards are addressable but not stopping points, so a
+      // release settles onto the section it is in rather than the nearest card.
+      const stops = majorStops();
+      const index = nearestStop(stops, container.scrollTop, grab);
       if (index === undefined) return;
-      const target = readStops()[index].start;
+      const target = stops[index].start;
       if (Math.abs(target - container.scrollTop) > 1) run("glide", target);
     };
     const onScrollEnd = (): void => settle();
@@ -307,15 +338,23 @@ export function NarrowScroller({
       m.snapTimer = window.setTimeout(settle, 140);
     };
 
-    const onWheel = (): void => {
-      motion.current.wheeling = true;
+    // Scrolling by hand overrules a glide. Leaving it running means two things
+    // driving `scrollTop` in the same frame, and the hand loses every time:
+    // the view hauls itself back to where the glide was going.
+    const takeOver = (): void => {
       // Scrolling by hand answers "where am I" for yourself.
       motion.current.intent = undefined;
+      if (motion.current.mode === "glide") stopMotion();
+    };
+
+    const onWheel = (): void => {
+      motion.current.wheeling = true;
+      takeOver();
     };
     // A finger (or a pen) going down hands control back to the fling rules.
     const onPointerDown = (event: PointerEvent): void => {
       if (event.pointerType !== "mouse") motion.current.wheeling = false;
-      motion.current.intent = undefined;
+      takeOver();
     };
 
     const supportsScrollEnd = "onscrollend" in window;
@@ -336,7 +375,16 @@ export function NarrowScroller({
       if (m.flashTimer) window.clearTimeout(m.flashTimer);
       if (m.snapTimer) window.clearTimeout(m.snapTimer);
     };
-  }, [readStops, maxScroll, run, haptics, settings.scrollTicks, settings.snap, settings.snapGrabPercent]);
+  }, [
+    majorStops,
+    maxScroll,
+    run,
+    stopMotion,
+    haptics,
+    settings.scrollTicks,
+    settings.snap,
+    settings.snapGrabPercent,
+  ]);
 
   /**
    * Space after the last section, so its header can actually reach the top.
