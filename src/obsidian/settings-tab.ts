@@ -1,7 +1,8 @@
 import { Notice, PluginSettingTab, Setting, type App } from "obsidian";
 import type DragonglassPlugin from "../main";
 import type { SourceRef } from "../core/types";
-import { describeSource, parseSourceInput, suggestSourceId, type CacheTier } from "./settings";
+import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
+import { HOLD } from "./ui/narrow/constants";
 
 export class DragonglassSettingTab extends PluginSettingTab {
   constructor(
@@ -131,6 +132,126 @@ export class DragonglassSettingTab extends PluginSettingTab {
           this.plugin.settings.layout.playMode = value;
           await this.plugin.saveSettings();
         }),
+      );
+
+    containerEl.createEl("h2", { text: "Narrow layout" });
+    containerEl.createEl("p", {
+      cls: "setting-item-description",
+      text:
+        "The narrow layout is used on phones, on vertically held tablets and in any pane under about 900px wide. " +
+        "It replaces the tabs with one scroll and a navigation rail. A character can override any of these for " +
+        "itself in its layout.5e file, which also carries its accent colour.",
+    });
+
+    const narrow = <K extends keyof NarrowSettings>(key: K, value: NarrowSettings[K]): Promise<void> => {
+      this.plugin.settings.narrow[key] = value;
+      return this.plugin.saveSettings();
+    };
+
+    new Setting(containerEl)
+      .setName("Layout")
+      .setDesc("Auto follows the width of the pane the character is open in.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({ auto: "Auto", narrow: "Narrow", desktop: "Desktop" })
+          .setValue(this.plugin.settings.narrow.layout)
+          .onChange(async (value) => narrow("layout", value as NarrowSettings["layout"])),
+      );
+
+    new Setting(containerEl)
+      .setName("Desktop layout needs landscape")
+      .setDesc("Keeps a large tablet held vertically on the narrow layout, even though it is wide enough.")
+      .addToggle((toggle) =>
+        toggle
+          .setValue(this.plugin.settings.narrow.desktopNeedsLandscape)
+          .onChange(async (value) => narrow("desktopNeedsLandscape", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Rail side")
+      .setDesc("Which thumb the navigation rail sits under.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({ right: "Right", left: "Left" })
+          .setValue(this.plugin.settings.narrow.railSide)
+          .onChange(async (value) => narrow("railSide", value as NarrowSettings["railSide"])),
+      );
+
+    new Setting(containerEl)
+      .setName("Rail height")
+      .setDesc("Middle is vertically centred. Low sits just above Obsidian's floating toolbar.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({ middle: "Middle", low: "Low" })
+          .setValue(this.plugin.settings.narrow.railHeight)
+          .onChange(async (value) => narrow("railHeight", value as NarrowSettings["railHeight"])),
+      );
+
+    new Setting(containerEl)
+      .setName("Tapping a rail icon")
+      .setDesc("Glide scrolls to the section; jump goes there at once.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions({ glide: "Glide", jump: "Jump" })
+          .setValue(this.plugin.settings.narrow.railTap)
+          .onChange(async (value) => narrow("railTap", value as NarrowSettings["railTap"])),
+      );
+
+    new Setting(containerEl)
+      .setName("Scroll ticks")
+      .setDesc("A short buzz and a label flash when a section header reaches the top.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.narrow.scrollTicks).onChange(async (value) => narrow("scrollTicks", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Snap to sections")
+      .setDesc("When scrolling stops near the start of a section, settle onto it.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.narrow.snap).onChange(async (value) => narrow("snap", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Snap distance")
+      .setDesc("How close counts as near, as a percentage of the screen height.")
+      .addSlider((slider) =>
+        slider
+          .setLimits(5, 40, 1)
+          .setDynamicTooltip()
+          .setValue(this.plugin.settings.narrow.snapGrabPercent)
+          .onChange(async (value) => narrow("snapGrabPercent", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Hold time")
+      .setDesc("How long to hold a number or a row before its details open.")
+      .addSlider((slider) =>
+        slider
+          .setLimits(HOLD.minMs, HOLD.maxMs, 10)
+          .setDynamicTooltip()
+          .setValue(this.plugin.settings.narrow.holdMs)
+          .onChange(async (value) => narrow("holdMs", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Haptics")
+      .setDesc("Short vibrations for rolls, holds and section ticks. Android only; everything has a visual counterpart.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.narrow.haptics).onChange(async (value) => narrow("haptics", value)),
+      );
+
+    new Setting(containerEl)
+      .setName("Show info buttons")
+      .setDesc("Adds a visible button to every holdable row, for when long-pressing is awkward.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.narrow.infoButtons).onChange(async (value) => narrow("infoButtons", value)),
+      );
+
+    new Setting(containerEl)
+      .setName('"Hold to read" hint')
+      .setDesc("Teaches the hold gesture the first couple of times a read-only row is tapped.")
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.narrow.holdHint).onChange(async (value) => narrow("holdHint", value)),
       );
 
     containerEl.createEl("h2", { text: "Advanced" });

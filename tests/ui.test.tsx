@@ -19,6 +19,7 @@ import { Sheet } from "../src/obsidian/ui/Sheet";
 import { Builder } from "../src/obsidian/ui/Builder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
 import { PendingChoiceList } from "../src/obsidian/ui/builder-choices";
+import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 import { CONTENT_ROOT } from "./helpers";
 
@@ -339,5 +340,198 @@ describe("choice rendering", () => {
     expect(choice?.invalid).toEqual(["srd:spell:bless"]);
     const staleHtml = render(createElement(PendingChoiceList, { store: stale, character: staleCharacter }), stale);
     expect(staleHtml).toContain("no longer fits this choice");
+  });
+});
+
+
+describe("the narrow layout", () => {
+  const store = makeStore();
+  const character = store.resolved as ResolvedCharacter;
+  const html = render(
+    createElement(NarrowRoot, {
+      store,
+      character,
+      settings: DEFAULT_SETTINGS.narrow,
+      mode: "sheet" as const,
+    }),
+    store,
+  );
+
+  it("renders one scroll of sections rather than tabs", () => {
+    expect(html).toContain("dg-narrow-scroll");
+    expect(html).not.toContain("dg-tabs");
+  });
+
+  it("highlights the active section with one sliding spotlight, not a lit button", () => {
+    // The rail is a single object with a light on it: the buttons stay
+    // transparent and uniform, and one element moves.
+    expect(html.match(/dg-rail-spot/g)).toHaveLength(1);
+    expect(html).toContain('class="dg-rail-icon is-active"');
+    expect(html).toContain("dg-rail-dock");
+  });
+
+  it("gives every section a sticky header and a rail icon", () => {
+    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Skills and saves", "Details"]) {
+      expect(html, label).toContain(`>${label}<`);
+      expect(html, `${label} rail icon`).toContain(`aria-label="${label}"`);
+    }
+    expect(html).toContain("dg-sticky-head");
+    expect(html).toContain("dg-rail");
+  });
+
+  it("shows ability checks and skills as outlined roll boxes", () => {
+    expect(html).toContain("dg-roll-box");
+    expect(html).toContain('aria-label="Strength check"');
+    expect(html).toContain('aria-label="Athletics check"');
+    expect(html).toContain('aria-label="Dexterity save"');
+  });
+
+  it("shows an equipped weapon as a hit box and a filled damage box", () => {
+    expect(html).toContain('aria-label="Longsword attack"');
+    expect(html).toContain('aria-label="Longsword damage"');
+    expect(html).toContain("dg-roll-box is-dice");
+  });
+
+  it("shows hit points from the live state, flagged low", () => {
+    expect(html).toContain("37 / 49");
+    // 37 of 49 is above half, so the amber treatment stays off.
+    expect(html).not.toContain("dg-n-hp-figure is-low");
+  });
+
+  it("shows resources as pill targets rather than steppers", () => {
+    expect(html).toContain("dg-resource-pill");
+    expect(html).toContain("Lay on Hands");
+  });
+
+  it("offers the spell filter chips", () => {
+    // A level chip appears for each spell level present, so this paladin gets
+    // Lv 1 and Lv 2 and no Cantrip chip.
+    for (const label of ["All", "Lv 1", "Lv 2", "Ritual", "Conc."]) expect(html, label).toContain(`>${label}<`);
+  });
+
+  it("offers a details affordance for screen readers on every holdable row", () => {
+    expect(html).toContain("View details");
+  });
+
+  it("leaves out a section the character has nothing for", () => {
+    const noSpells = makeStore({ spells: { kind: "spells", schemaVersion: 1, spells: [] } });
+    const bare = render(
+      createElement(NarrowRoot, {
+        store: noSpells,
+        character: noSpells.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "sheet" as const,
+      }),
+      noSpells,
+    );
+    // The paladin still casts, so Spells stays; a character with no inventory
+    // loses Inventory from the page and from the rail together.
+    const noGear = makeStore({ inventory: { kind: "inventory", schemaVersion: 1, items: [], currency: {} } });
+    const noGearHtml = render(
+      createElement(NarrowRoot, {
+        store: noGear,
+        character: noGear.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "sheet" as const,
+      }),
+      noGear,
+    );
+    expect(bare).toContain(">Spells<");
+    expect(noGearHtml).not.toContain('aria-label="Inventory"');
+  });
+});
+
+describe("the narrow builder", () => {
+  const store = makeStore();
+  const character = store.resolved as ResolvedCharacter;
+  const html = render(
+    createElement(NarrowRoot, {
+      store,
+      character,
+      settings: DEFAULT_SETTINGS.narrow,
+      mode: "builder" as const,
+    }),
+    store,
+  );
+
+  it("lays the builder out in dependency order with no tabs", () => {
+    expect(html).not.toContain("dg-tabs");
+    const order = ["Origin", "Levels", "Planned", "Spells", "Equipment", "Details", "Review"].map((label) =>
+      html.indexOf(`>${label}<`),
+    );
+    expect(order.every((i) => i >= 0)).toBe(true);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("shows species and background as choice rows", () => {
+    expect(html).toContain("dg-choice-row");
+    expect(html).toContain(">Dwarf<");
+    expect(html).toContain(">Acolyte<");
+  });
+
+  it("shows one card per level taken, with the class and class level", () => {
+    expect(html.match(/dg-level-card(?!-)/g)).toHaveLength(5);
+    expect(html).toContain("Level 1");
+    expect(html).toContain("Paladin 5");
+  });
+
+  it("makes each level card a scroll stop without giving it a rail icon", () => {
+    // Five cards, seven rail icons: the levels tick and detent but don't get
+    // their own icons (spec 4.3).
+    expect(html.match(/dg-rail-icon/g)).toHaveLength(7);
+  });
+
+  it("offers one class button plus multiclass for a single-class character", () => {
+    expect(html).toContain("+ Paladin level");
+    expect(html).toContain("+ Multiclass");
+    expect(html).not.toContain("is-pair");
+  });
+
+  it("keeps Planned collapsed, with a summary of what is queued", () => {
+    expect(html).toContain("0 queued · Paladin 6+");
+    expect(html).not.toContain("Show more levels");
+  });
+
+  it("marks a level with an unresolved choice", () => {
+    const partial = makeStore({
+      build: { ...build, levels: build.levels.map((l, i) => (i === 1 ? { ...l, choices: {} } : l)) },
+    });
+    const partialHtml = render(
+      createElement(NarrowRoot, {
+        store: partial,
+        character: partial.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "builder" as const,
+      }),
+      partial,
+    );
+    expect(partialHtml).toContain("1 to choose");
+    expect(partialHtml).toContain("dg-choice-row is-empty");
+  });
+
+  it("treats an existing character as an edit: nothing is written until you save", () => {
+    // Spec 7.9: Finish becomes "Save changes" once the character exists, and
+    // with nothing changed there is nothing to save.
+    expect(html).toContain("No unsaved changes");
+    expect(html).not.toContain("Finish");
+  });
+
+  it("saves live while a character is being made for the first time", () => {
+    const fresh = makeStore({
+      build: { ...build, levels: [], species: undefined, background: undefined, choices: {} },
+    });
+    const freshHtml = render(
+      createElement(NarrowRoot, {
+        store: fresh,
+        character: fresh.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "builder" as const,
+      }),
+      fresh,
+    );
+    expect(freshHtml).toContain("Finish");
+    expect(freshHtml).not.toContain("Save changes");
+    // With no class taken, the first button offers one rather than a level.
+    expect(freshHtml).toContain("+ First class");
   });
 });

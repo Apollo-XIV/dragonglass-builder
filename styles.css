@@ -1067,3 +1067,1309 @@
     break-inside: avoid;
   }
 }
+
+/* ==========================================================================
+ * The narrow layout: phones, vertical tablets and side panes.
+ *
+ * Driven by mobile-ux-spec.md. Three rules shape all of it: the colours are
+ * Obsidian's variables so the sheet follows the theme; the layout owns its own
+ * scrolling container, because sticky section headers only work if the scroller
+ * is one of ours; and every rule that styles a <button> carries two classes.
+ *
+ * That last one is not a style choice. Obsidian fills every button that isn't a
+ * `clickable-icon` at specificity (0,1,1), so a single-class rule of ours loses
+ * and the button keeps `--interactive-normal`. Chips, rows and rail icons all
+ * came out as grey chips because of it. Hence the `.dg-layout` prefix on button
+ * selectors below: drop it and the fill comes back.
+ * ========================================================================== */
+
+.dragonglass.is-narrow {
+  /* The narrow layout owns the only scroller on screen. The view's own element
+   * must therefore stop scrolling and become the frame it lives in, or the page
+   * ends up with two scrollbars: one that moves the content and one that moves
+   * the content plus the rail. */
+  position: relative;
+  overflow: hidden;
+}
+
+/* Absolute rather than height: 100%, because `view-content` is a flex column and
+ * a percentage height against it is not reliable. */
+.dragonglass.is-narrow .dg-root {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  padding: 0;
+  overflow: hidden;
+}
+
+.dg-layout {
+  height: 100%;
+}
+
+.dg-layout[data-layout="narrow"] {
+  position: relative;
+  height: 100%;
+  /* Nothing in the narrow layout scrolls horizontally: whole-page horizontal
+   * swipes belong to Obsidian's sidebars (spec 2.4). */
+  overflow: hidden;
+}
+
+.dg-narrow {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  --dg-hold-scale: 0.97;
+}
+
+.dg-narrow-scroll {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
+  /* The rail is the scroll position indicator (spec 4.1), so a scrollbar beside
+   * it would say the same thing twice. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.dg-narrow-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+.dg-narrow-content {
+  padding-left: var(--size-4-3);
+  padding-right: var(--size-4-3);
+}
+
+.dg-narrow-section {
+  /* The sticky header is the section's own heading, so the section itself must
+   * not establish a containing block that would trap it. */
+  padding-bottom: var(--size-4-4);
+}
+
+/* -- Sticky section headers (spec 5) ------------------------------------- */
+
+.dg-sticky-head {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+  padding-left: var(--size-4-3);
+  background: var(--background-primary);
+  border-bottom: 1px solid var(--background-modifier-border);
+  /* Full-bleed, so the strip reads as a divider rather than a card that stops
+   * short of the rail. */
+  margin-left: calc(-1 * var(--size-4-3));
+}
+
+.dg-sticky-head h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.dg-sticky-status {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* -- Navigation rail (spec 4) -------------------------------------------- */
+
+/* The dock positions and fades. It does not clip, so the label bubble can sit
+ * outside the pill. */
+.dg-rail-dock {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 8;
+  transition: opacity 180ms ease;
+}
+
+.dg-rail-dock[data-height="low"] {
+  top: auto;
+  bottom: calc(var(--size-4-4) + 56px);
+  transform: none;
+}
+
+.dg-rail {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  border-radius: 999px;
+  background: var(--background-secondary);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  /* The pill is the mask: the position track runs to its edge and the rounded
+   * corners cut it, so the track belongs to the rail rather than hanging off it. */
+  overflow: hidden;
+  /* The rail handles its own vertical gesture; the page must not also scroll. */
+  touch-action: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* The highlight is one element that slides, not a state on each button. It sits
+ * behind the icons, which is only visible because they are transparent: anything
+ * that gives them a fill of their own hides it. */
+.dg-rail-spot {
+  position: absolute;
+  border-radius: var(--radius-m);
+  background: var(--dg-accent);
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.dg-layout .dg-rail-icon {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-m);
+  /* Every icon looks the same at rest; the spotlight behind them is what moves.
+   * The icons are Obsidian's, which colour themselves from --icon-color, so that
+   * is what has to follow us rather than `color` alone. */
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  --icon-color: currentColor;
+  line-height: 1;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Obsidian gives every button a fill of its own on hover, focus and press. On
+ * the rail that fill is what makes the icons look like separate controls, so all
+ * three states defer to the spotlight. */
+.dg-layout .dg-rail-icon:hover,
+.dg-layout .dg-rail-icon:focus,
+.dg-layout .dg-rail-icon:focus-visible,
+.dg-layout .dg-rail-icon:active {
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+}
+
+.dg-layout .dg-rail-icon .dg-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.dg-layout .dg-rail-icon.is-active,
+.dg-layout .dg-rail-icon.is-active:hover {
+  color: var(--text-on-accent);
+}
+
+.dg-rail-pip {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  border-radius: 50%;
+  background: var(--text-warning);
+}
+
+.dg-rail-track {
+  position: absolute;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+}
+
+.dg-rail-dock[data-side="right"] .dg-rail-track {
+  left: 0;
+}
+
+.dg-rail-dock[data-side="left"] .dg-rail-track {
+  right: 0;
+}
+
+.dg-rail-thumb {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--dg-accent);
+}
+
+.dg-rail-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  padding: 0 var(--size-4-3);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary-alt);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+}
+
+.dg-rail-label[data-side="right"] {
+  right: calc(100% + 6px);
+}
+
+.dg-rail-label[data-side="left"] {
+  left: calc(100% + 6px);
+}
+
+/* Obsidian's buttons are one line tall by design (`height: var(--input-height)`,
+ * `white-space: nowrap`). The narrow layout uses buttons for things that are
+ * shaped like content — a row with a label above a value, an ability with its
+ * score under it — so those have to be released from both, or the text spills
+ * out of the box and lands on whatever is underneath. */
+.dg-layout .dg-n-ability,
+.dg-layout .dg-choice-row,
+.dg-layout .dg-option,
+.dg-layout .dg-review-link,
+.dg-layout .dg-planned-toggle,
+.dg-layout .dg-n-tile,
+.dg-layout .dg-toast,
+.dg-layout .dg-read-row {
+  height: auto;
+  white-space: normal;
+}
+
+/* -- Tap targets and the hold gesture (spec 3.1, 3.2) -------------------- */
+
+.dg-target {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+.dg-layout .dg-roll-box,
+.dg-read-row,
+.dg-layout .dg-resource-pill {
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition: transform 120ms ease;
+}
+
+.dg-layout .dg-roll-box {
+  display: inline-grid;
+  place-items: center;
+  padding: 0 var(--size-4-2);
+  border-radius: var(--radius-m);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  /* Outlined for d20 rolls (spec 3.1.2). */
+  background: transparent;
+  border: 1px solid var(--dg-accent);
+  color: var(--text-normal);
+  box-shadow: none;
+}
+
+.dg-layout .dg-roll-box.is-dice {
+  /* Filled for damage and healing. */
+  background: var(--dg-accent);
+  border-color: transparent;
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-read-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  min-height: 48px;
+  padding: var(--size-4-1) var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background: transparent;
+}
+
+.dg-read-row.is-unavailable {
+  opacity: 0.55;
+}
+
+.dg-read-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+
+.dg-read-title {
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dg-read-subtitle {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dg-read-row.is-prepared .dg-read-title::before {
+  content: "● ";
+  color: var(--dg-accent);
+}
+
+/* The fill is flat, not a gradient, and starts late enough that a tap never
+ * shows it (spec 3.2). */
+.is-holding {
+  transform: scale(var(--dg-hold-scale, 0.97));
+}
+
+.is-holding::after {
+  content: "";
+  position: absolute;
+  /* Inset by less than the row's text gutter, so the sweep clears the edge of
+   * the screen and still leaves a few pixels between its own left edge and the
+   * text. Flush with either one reads as a bar rather than a highlight. Boxes
+   * and pills override this: there the fill crossing the whole target is the
+   * point. */
+  inset: 2px var(--size-4-1);
+  border-radius: var(--radius-s);
+  transform: scaleX(0);
+  transform-origin: left center;
+  background: var(--dg-accent);
+  opacity: 0.22;
+  pointer-events: none;
+  animation: dg-hold-fill var(--dg-hold-time, 330ms) linear var(--dg-hold-delay, 120ms) forwards;
+}
+
+.dg-layout .dg-roll-box.is-holding::after,
+.dg-layout .dg-resource-pill.is-holding::after {
+  inset: 0;
+  border-radius: 0;
+}
+
+.is-held::after {
+  transform: scaleX(1);
+  animation: none;
+}
+
+@keyframes dg-hold-fill {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.dg-layout .dg-info-button {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+/* A real, focusable control for screen readers, with no visual footprint
+ * (spec 3.7). */
+.dg-layout .dg-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.dg-layout .dg-resource-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 32px;
+  padding: 0 var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 999px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dg-pip-row {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.dg-pip-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid var(--dg-accent);
+}
+
+.dg-pip-dot.is-filled {
+  background: var(--dg-accent);
+}
+
+.dg-pip-count {
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-ui-smaller);
+}
+
+/* -- Bottom sheet (spec 3.3) -------------------------------------------- */
+
+.dg-sheet-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+}
+
+.dg-sheet-scrim {
+  position: absolute;
+  inset: 0;
+  background: var(--background-modifier-cover, rgba(0, 0, 0, 0.45));
+  animation: dg-fade-in 140ms ease;
+}
+
+.dg-bottom-sheet {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  /* The tail of the padding clears whatever the host floats along the bottom —
+   * Obsidian's toolbar on mobile, the status bar on desktop. The sheet's buttons
+   * are the point of it, so they are the last thing that may end up underneath
+   * something else. */
+  padding: 0 var(--size-4-4) calc(var(--size-4-4) + 44px);
+  background: var(--background-primary);
+  border-top-left-radius: var(--radius-l);
+  border-top-right-radius: var(--radius-l);
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.3);
+  animation: dg-rise 180ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  transition: transform 160ms ease;
+}
+
+.dg-sheet-grip {
+  display: grid;
+  place-items: center;
+  padding: var(--size-4-2) 0;
+  touch-action: none;
+  cursor: grab;
+}
+
+.dg-sheet-handle {
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+}
+
+.dg-sheet-head h3 {
+  margin: 0;
+}
+
+.dg-sheet-subtitle {
+  margin: 2px 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-sheet-body {
+  overflow-y: auto;
+  padding: var(--size-4-2) 0;
+}
+
+.dg-sheet-total {
+  margin: var(--size-4-2) 0;
+  font-size: 2.4em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-sheet-formula {
+  margin: 0 0 var(--size-4-2);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-sheet-actions {
+  display: flex;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.dg-layout .dg-sheet-button {
+  flex: 1;
+  min-height: 44px;
+}
+
+.dg-layout .dg-sheet-button.is-primary {
+  background: var(--dg-accent);
+  color: var(--text-on-accent);
+}
+
+.dg-explain {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dg-explain li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0 var(--size-4-2);
+  padding: var(--size-4-1) 0;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.dg-explain li.is-suppressed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.dg-explain-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-explain-source {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dg-explain-notes {
+  list-style: none;
+  margin: var(--size-4-2) 0 0;
+  padding: 0;
+}
+
+.dg-explain-notes li {
+  padding: var(--size-4-1) 0;
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-uses {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-3) 0;
+}
+
+.dg-stepper {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.dg-layout .dg-stepper button {
+  width: 40px;
+  height: 40px;
+}
+
+.dg-uses-count {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Toast (spec 3.5) --------------------------------------------------- */
+
+.dg-layout .dg-toast-layer {
+  position: absolute;
+  /* Clear of the title bar above and of the content either side: a toast that
+   * touches an edge reads as part of the chrome. */
+  top: var(--size-4-4);
+  left: var(--size-4-4);
+  right: var(--size-4-4);
+  z-index: 30;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.dg-layout .dg-toast {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-4);
+  width: 100%;
+  max-width: 32rem;
+  padding: var(--size-4-3) var(--size-4-4);
+  border-radius: var(--radius-m);
+  background: var(--background-secondary-alt);
+  border: 1px solid var(--background-modifier-border);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  pointer-events: auto;
+  text-align: left;
+  animation: dg-drop 160ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.dg-layout .dg-toast-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.dg-layout .dg-toast-label {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-muted);
+}
+
+.dg-layout .dg-toast-detail {
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-layout .dg-toast-total {
+  font-size: 1.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-layout .dg-toast-tag {
+  padding: 2px var(--size-4-2);
+  border-radius: 999px;
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-layout .dg-toast-tag.is-crit {
+  background: var(--color-green);
+  color: var(--text-on-accent);
+}
+
+.dg-layout .dg-toast-tag.is-fumble {
+  background: var(--color-red);
+  color: var(--text-on-accent);
+}
+
+.dg-layout .dg-toast-tag.is-warn {
+  background: var(--text-warning);
+  color: var(--text-on-accent);
+}
+
+@keyframes dg-rise {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@keyframes dg-drop {
+  from {
+    transform: translateY(-120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes dg-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* -- Sheet content ------------------------------------------------------ */
+
+.dg-n-hp {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  padding: var(--size-4-2) 0;
+}
+
+.dg-layout .dg-n-hp-step {
+  width: 48px;
+  height: 48px;
+  font-size: 1.4em;
+}
+
+.dg-n-hp-figure {
+  flex: 1;
+  border-bottom: none;
+  justify-content: center;
+}
+
+.dg-n-hp-figure .dg-read-title {
+  font-size: 1.8em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Amber at half HP or below (spec 2.3). */
+.dg-n-hp-figure.is-low .dg-read-title {
+  color: var(--text-warning);
+}
+
+.dg-n-temp {
+  color: var(--text-accent);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-n-hp-editor input {
+  width: 100%;
+  min-height: 44px;
+  font-size: 1.2em;
+  text-align: center;
+}
+
+.dg-n-hp-buttons {
+  display: flex;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+}
+
+.dg-n-stat-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+  padding-bottom: var(--size-4-2);
+}
+
+.dg-n-tile {
+  display: flex;
+  flex: 1 1 4.5rem;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+/* A tile holding a roll box would otherwise frame a frame: the box carries the
+ * outline that means "this is rollable", so the tile around it steps back. */
+.dg-n-tile:has(.dg-roll-box) {
+  border-color: transparent;
+}
+
+.dg-n-tile.dg-read-row {
+  border-bottom: 1px solid var(--background-modifier-border);
+  min-height: 0;
+}
+
+.dg-n-tile .dg-read-main {
+  align-items: center;
+  flex: 0;
+}
+
+.dg-n-tile .dg-read-title {
+  font-size: 1.3em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-n-tile-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* Six abilities, three across (spec 6). */
+.dg-layout .dg-n-ability-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) 0;
+}
+
+.dg-layout .dg-n-ability {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--size-4-1);
+  padding: var(--size-4-2) 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  /* The sheet renders this as a div and the builder as a button, and they have
+   * to look identical: the builder's is only a button because tapping it opens
+   * the score editor. */
+  background: transparent;
+  box-shadow: none;
+}
+
+.dg-layout button.dg-n-ability:hover {
+  background: var(--background-modifier-hover);
+}
+
+.dg-layout .dg-n-ability-name {
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+}
+
+.dg-layout .dg-n-ability-score {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-n-chips {
+  display: flex;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+  /* The one place horizontal scrolling is allowed (spec 2.4). */
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.dg-n-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.dg-layout .dg-n-chip {
+  flex: 0 0 auto;
+  min-height: 32px;
+  padding: 0 var(--size-4-3);
+  border-radius: 999px;
+  border: 1px solid var(--background-modifier-border);
+  background: transparent;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+.dg-layout .dg-n-chip.is-active,
+.dg-layout .dg-n-chip.is-action {
+  background: var(--dg-accent);
+  border-color: transparent;
+  color: var(--text-on-accent);
+}
+
+.dg-n-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--text-warning);
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-n-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+  padding-bottom: var(--size-4-2);
+}
+
+.dg-n-slot {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-1);
+}
+
+.dg-n-slot-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dg-n-saves {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--size-4-2);
+  padding-bottom: var(--size-4-3);
+}
+
+.dg-n-save,
+.dg-n-skill {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  min-height: 48px;
+}
+
+.dg-n-skill {
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.dg-n-save-name,
+.dg-n-skill-name {
+  flex: 1;
+}
+
+.dg-n-skill-ability {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+/* A plain marker, not a checkbox: proficiency isn't editable from the sheet. */
+.dg-n-prof {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid var(--text-muted);
+}
+
+.dg-n-prof.is-on,
+.dg-n-prof.is-proficient {
+  background: var(--dg-accent);
+  border-color: var(--dg-accent);
+}
+
+.dg-n-prof.is-expertise {
+  background: var(--dg-accent);
+  border: 3px double var(--text-on-accent);
+}
+
+.dg-n-detail-section h4 {
+  margin: var(--size-4-3) 0 var(--size-4-1);
+}
+
+/* -- Builder (narrow) ---------------------------------------------------- */
+
+/* A decision to make, a decision made. Both are one row; an unmade one carries a
+ * dashed accent border so it reads as a gap (spec 7.3). */
+.dg-layout .dg-choice-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  width: 100%;
+  min-height: 48px;
+  margin-bottom: var(--size-4-1);
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.dg-layout .dg-choice-row.is-empty {
+  border-style: dashed;
+  border-color: var(--dg-accent);
+}
+
+.dg-choice-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dg-choice-label {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.dg-choice-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dg-choice-value.is-placeholder {
+  color: var(--dg-accent);
+}
+
+.dg-choice-invalid {
+  color: var(--text-warning);
+  font-size: 12px;
+}
+
+.dg-choice-chevron {
+  color: var(--text-muted);
+  font-size: 1.2em;
+}
+
+.dg-level-card {
+  margin-bottom: var(--size-4-3);
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+/* Planned cards are lighter: they are not part of the character yet (spec 7.6). */
+.dg-level-card.is-planned {
+  border-style: dashed;
+  background: transparent;
+  opacity: 0.85;
+}
+
+.dg-level-card-head {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding-bottom: var(--size-4-1);
+}
+
+.dg-level-chip {
+  padding: 1px var(--size-4-2);
+  border-radius: 999px;
+  background: var(--background-modifier-border);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-level-chip.is-planned {
+  background: transparent;
+  border: 1px dashed var(--background-modifier-border);
+  color: var(--text-muted);
+}
+
+.dg-level-todo {
+  padding: 1px var(--size-4-2);
+  border-radius: 999px;
+  border: 1px solid var(--text-warning);
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-layout .dg-level-remove {
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+.dg-level-features .dg-read-row {
+  min-height: 40px;
+  border-bottom: none;
+}
+
+.dg-level-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+}
+
+/* Two classes sit side by side; three or more stay stacked (spec 7.4). */
+.dg-level-buttons.is-pair {
+  flex-flow: row wrap;
+}
+
+.dg-level-buttons.is-pair .dg-level-button {
+  flex: 1 1 40%;
+}
+
+.dg-level-buttons.is-pair .dg-level-button.is-multiclass {
+  flex-basis: 100%;
+}
+
+.dg-layout .dg-level-button {
+  width: 100%;
+  background: var(--dg-accent);
+  color: var(--text-on-accent);
+  font-weight: 500;
+}
+
+.dg-layout .dg-level-button.is-multiclass {
+  background: transparent;
+  border: 1px dashed var(--dg-accent);
+  color: var(--text-normal);
+  box-shadow: none;
+}
+
+.dg-layout .dg-planned-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--size-4-2);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.dg-layout .dg-review-link {
+  display: flex;
+  flex-direction: column;
+  /* Obsidian centres a button's children; in a column that centres the text. */
+  align-items: flex-start;
+  gap: 2px;
+  width: 100%;
+  min-height: 48px;
+  padding: var(--size-4-2);
+  border: none;
+  border-bottom: 1px solid var(--background-modifier-border);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.dg-layout .dg-n-ability-total {
+  font-size: 1.3em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-score-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1) 0;
+}
+
+.dg-layout .dg-score-row button {
+  width: 40px;
+  height: 40px;
+}
+
+.dg-score-value {
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* -- Choice sheets (spec 7.7) ------------------------------------------- */
+
+.dg-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-1);
+}
+
+.dg-layout .dg-option {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+  min-height: 48px;
+  padding: var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+.dg-layout .dg-option.is-selected {
+  border-color: var(--dg-accent);
+  background: var(--background-modifier-hover);
+}
+
+.dg-layout .dg-option.is-selected .dg-option-name::before {
+  content: "✓ ";
+  color: var(--dg-accent);
+}
+
+.dg-layout .dg-option-main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dg-layout .dg-option-warning {
+  color: var(--text-warning);
+  font-size: 12px;
+}
+
+.dg-layout .dg-option-tag {
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+
+.dg-layout .dg-sheet-button.is-destructive {
+  background: var(--background-modifier-error);
+  color: var(--text-on-accent);
+}
+
+/* -- Invalid picks and change reports (spec 7.8) ------------------------- */
+
+/* Kept, inert, and visibly so: an invalid pick is not an error, it is a pick
+ * waiting for something to be chosen again. */
+.dg-layout .dg-choice-row.is-invalid {
+  border-style: dashed;
+  border-color: var(--text-warning);
+  opacity: 0.8;
+}
+
+.dg-invalid-tag {
+  flex: 0 0 auto;
+  padding: 1px var(--size-4-2);
+  border-radius: 999px;
+  border: 1px solid var(--text-warning);
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-change-group h4 {
+  margin: var(--size-4-3) 0 var(--size-4-1);
+}
+
+.dg-change-group ul {
+  margin: var(--size-4-2) 0 0;
+  padding-left: var(--size-4-4);
+}
+
+.dg-change-group li {
+  padding: 2px 0;
+}
+
+/* -- Drafts and saving (spec 7.9) ---------------------------------------- */
+
+.dg-draft-banner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  margin: var(--size-4-2) 0;
+  padding: var(--size-4-3);
+  border: 1px solid var(--text-warning);
+  border-radius: var(--radius-m);
+}
+
+.dg-draft-text {
+  color: var(--text-warning);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-draft-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}
+
+.dg-save-row {
+  display: flex;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+}
+
+.dg-save-row .dg-level-button {
+  flex: 1;
+}
+
+.dg-diff {
+  margin: 0;
+  padding-left: var(--size-4-4);
+}
+
+.dg-diff li {
+  padding: 2px 0;
+  font-size: var(--font-ui-smaller);
+}

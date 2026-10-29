@@ -7,7 +7,14 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { join } from "node:path";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
-import { parseDetails, serialiseDetails, resolvePaths, detectKindFixture } from "./helpers-obsidian";
+import {
+  parseDetails,
+  serialiseDetails,
+  resolvePaths,
+  detectKindFixture,
+  counterpartKind,
+  switchLabel,
+} from "./helpers-obsidian";
 import { indexFromDisk } from "../src/node/load-source";
 import type { ContentIndex } from "../src/core/content";
 import { CONTENT_ROOT } from "./helpers";
@@ -283,5 +290,126 @@ describe("file paths and kind detection", () => {
         kinds: { "magic.5e": "spells" },
       }),
     ).toBe("spells");
+  });
+});
+
+describe("edit sessions", () => {
+  /**
+   * Spec 7.9: editing an existing character is ephemeral. The point is not that
+   * the write is delayed — it is that the character on disk is untouched until
+   * the player says so, so opening the builder to read something can never cost
+   * them the build they already have.
+   */
+  it("keeps the file untouched while a session is open", async () => {
+    const { store, adapter } = await loadStore();
+    store.beginEdit();
+    store.mutateBuild((build) => ({ ...build, name: "Someone else" }));
+    await store.flush();
+
+    expect(store.data.build?.name).toBe("Someone else");
+    expect(JSON.parse(adapter.files.get("Characters/Ilsa/build.5e")!).name).toBe("Ilsa");
+    expect(adapter.writes).not.toContain("Characters/Ilsa/build.5e");
+  });
+
+  it("resolves from the working copy, so the view shows the edit", async () => {
+    const { store } = await loadStore();
+    store.beginEdit();
+    store.mutateBuild((build) => ({ ...build, levels: build.levels.slice(0, 1), level: 1 }));
+    expect(store.resolved?.level).toBe(1);
+  });
+
+  it("writes everything the session touched on save", async () => {
+    const { store, adapter } = await loadStore();
+    store.beginEdit();
+    store.mutateBuild((build) => ({ ...build, name: "Someone else" }));
+    store.commitEdit();
+    await store.flush();
+
+    expect(JSON.parse(adapter.files.get("Characters/Ilsa/build.5e")!).name).toBe("Someone else");
+    expect(store.editing).toBe(false);
+  });
+
+  it("goes back to the file on discard", async () => {
+    const { store, adapter } = await loadStore();
+    store.beginEdit();
+    store.mutateBuild((build) => ({ ...build, name: "Someone else" }));
+    store.discardEdit();
+    await store.flush();
+
+    expect(store.data.build?.name).toBe("Ilsa");
+    expect(store.resolved?.level).toBe(2);
+    expect(adapter.writes).not.toContain("Characters/Ilsa/build.5e");
+  });
+
+  it("lets live play through: the sheet's hit points are not part of the edit", async () => {
+    const { store, adapter } = await loadStore();
+    store.beginEdit();
+    store.appendEvents({ t: "2026-10-28T10:00:00Z", type: "damage", amount: 5 });
+    await store.flush();
+
+    // State is outside the session, so a pane showing the sheet still works
+    // while the builder holds an unsaved rebuild.
+    expect(adapter.writes).toContain("Characters/Ilsa/state.5e");
+    expect(store.editing).toBe(true);
+  });
+
+  it("notices the character changing underneath an open session", async () => {
+    const { store, adapter } = await loadStore();
+    store.beginEdit();
+    store.mutateBuild((build) => ({ ...build, name: "Someone else" }));
+
+    adapter.files.set("Characters/Ilsa/build.5e", JSON.stringify({ ...BUILD, name: "Changed on another device" }));
+    await store.load();
+
+    // The work in progress survives, and the builder can warn before saving
+    // over what arrived.
+    expect(store.data.build?.name).toBe("Someone else");
+    expect(store.editBaseMoved).toBe(true);
+    expect(store.editBase?.build?.name).toBe("Changed on another device");
+  });
+
+  it("restores a draft into the working copy without touching the file", async () => {
+    const { store, adapter } = await loadStore();
+    const draft = { ...BUILD, name: "From yesterday" } as never;
+    store.restoreEdit({ build: draft });
+    await store.flush();
+
+    expect(store.data.build?.name).toBe("From yesterday");
+    expect(JSON.parse(adapter.files.get("Characters/Ilsa/build.5e")!).name).toBe("Ilsa");
+  });
+});
+
+describe("switching between the sheet and the builder", () => {
+  /**
+   * The two viewers are two files, so switching is opening the other one. Only
+   * those two are two views of the same thing; the rest are single files with
+   * one editor each and have nothing to switch to.
+   */
+  it("pairs the sheet with the builder and nothing else", () => {
+    expect(counterpartKind("sheet")).toBe("build");
+    expect(counterpartKind("build")).toBe("sheet");
+    for (const kind of ["state", "spells", "inventory", "sources", "details", "layout", "gallery"] as const)
+      expect(counterpartKind(kind), kind).toBeUndefined();
+  });
+
+  it("names the destination, not the current view", () => {
+    expect(switchLabel("build")).toBe("Edit character");
+    expect(switchLabel("sheet")).toBe("Open sheet");
+  });
+
+  it("follows the manifest to a renamed build file", async () => {
+    // The switch resolves its target through the store's paths, so a character
+    // whose build lives somewhere else still switches correctly.
+    const { store } = await loadStore({
+      "Characters/Ilsa/sheet.5e": JSON.stringify({
+        kind: "sheet",
+        schemaVersion: 1,
+        name: "Ilsa",
+        files: { build: "levels.5e" },
+      }),
+      "Characters/Ilsa/levels.5e": JSON.stringify(BUILD),
+    });
+    expect(store.paths.byKind.build).toBe("Characters/Ilsa/levels.5e");
+    expect(store.data.build?.name).toBe("Ilsa");
   });
 });

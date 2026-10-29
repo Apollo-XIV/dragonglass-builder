@@ -1,4 +1,4 @@
-import type { SourceRef } from "../core/types";
+import type { LayoutFile, NarrowPrefs, SourceRef } from "../core/types";
 
 export type CacheTier = "none" | "smart" | "all";
 
@@ -13,6 +13,53 @@ export interface LayoutSettings {
   playMode: boolean;
 }
 
+/** The rail sections a layout can offer, in the spec's default order (4.4). */
+export const SHEET_RAIL_ORDER = [
+  "overview",
+  "actions",
+  "spells",
+  "inventory",
+  "features",
+  "skills",
+  "details",
+] as const;
+
+export const BUILDER_RAIL_ORDER = [
+  "origin",
+  "levels",
+  "planned",
+  "spells",
+  "equipment",
+  "details",
+  "review",
+] as const;
+
+/**
+ * The narrow (phone, vertical tablet, side pane) layout. The shape lives in
+ * core, because `layout.5e` carries the same fields per character; these are
+ * the plugin-wide values every character falls back to.
+ */
+export type NarrowSettings = NarrowPrefs;
+
+/**
+ * Resolves the preferences for one character: the character's own `layout.5e`
+ * first, then the plugin's settings (spec: Styling). An override of `undefined`
+ * is not an override — a character that says nothing about the rail follows the
+ * plugin, which is what makes a plugin-wide change take effect everywhere.
+ */
+export function resolveNarrow(settings: NarrowSettings, layout?: LayoutFile): NarrowSettings {
+  if (!layout?.narrow) return settings;
+  const resolved = { ...settings };
+  for (const [key, value] of Object.entries(layout.narrow))
+    if (value !== undefined) Object.assign(resolved, { [key]: value });
+  return resolved;
+}
+
+/** The accent colour for a character: its own, then the plugin's, then the theme's. */
+export function resolveAccent(settings: DragonglassSettings, layout?: LayoutFile): string {
+  return layout?.accent?.trim() || settings.layout.accent.trim() || "";
+}
+
 export interface DragonglassSettings {
   /** Vault-wide sources, highest priority first. */
   sources: SourceRef[];
@@ -24,6 +71,7 @@ export interface DragonglassSettings {
   /** Default hit point method for new levels. */
   defaultHp: "max" | "average" | "roll";
   layout: LayoutSettings;
+  narrow: NarrowSettings;
   /** Milliseconds to wait before writing after a state change. */
   writeDebounceMs: number;
 }
@@ -40,6 +88,22 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     showBreakdowns: true,
     playMode: false,
   },
+  narrow: {
+    layout: "auto",
+    desktopNeedsLandscape: true,
+    railSide: "right",
+    railHeight: "middle",
+    railTap: "glide",
+    scrollTicks: true,
+    snap: true,
+    snapGrabPercent: 22,
+    holdMs: 450,
+    haptics: true,
+    infoButtons: false,
+    holdHint: true,
+    sheetSections: [...SHEET_RAIL_ORDER],
+    builderSections: [...BUILDER_RAIL_ORDER],
+  },
   writeDebounceMs: 400,
 };
 
@@ -49,6 +113,7 @@ export function withDefaults(stored: Partial<DragonglassSettings> | null | undef
     ...DEFAULT_SETTINGS,
     ...stored,
     layout: { ...DEFAULT_SETTINGS.layout, ...(stored?.layout ?? {}) },
+    narrow: { ...DEFAULT_SETTINGS.narrow, ...(stored?.narrow ?? {}) },
     sources: stored?.sources ?? [],
   };
 }

@@ -34,6 +34,22 @@ export const DEFAULT_FILE_NAMES: Record<FileKind, string> = {
   gallery: "gallery.5e",
 };
 
+/**
+ * The other half of a character. The sheet is for playing and the builder is
+ * for changing, and those are the only two kinds that are two views of the same
+ * thing — the rest are single files with one editor each.
+ */
+export function counterpartKind(kind: FileKind): FileKind | undefined {
+  if (kind === "sheet") return "build";
+  if (kind === "build") return "sheet";
+  return undefined;
+}
+
+/** What the menu item for switching to `kind` should say. */
+export function switchLabel(kind: FileKind): string {
+  return kind === "build" ? "Edit character" : "Open sheet";
+}
+
 /** Section headers `details.5e` is expected to carry, in display order. */
 export const DETAIL_SECTIONS = [
   "Backstory",

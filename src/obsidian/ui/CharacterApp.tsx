@@ -4,10 +4,15 @@
  * `sheet.5e`, the builder for `build.5e`, and a focused editor for the rest.
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { FileKind } from "../../core/types";
 import type { CharacterStore } from "../character-store";
-import { StoreContext, useStoreVersion } from "./context";
+import type { NarrowSettings } from "../settings";
+import { StoreContext, usePlugin, useStoreVersion } from "./context";
+import { resolveNarrow } from "../settings";
+import { useLayoutMode } from "./narrow/layout-mode";
+import { NarrowRoot } from "./narrow/NarrowRoot";
+import { useShell } from "./narrow/platform";
 import { Diagnostics, Empty, Section, Tabs } from "./components";
 import { Sheet } from "./Sheet";
 import { Builder } from "./Builder";
@@ -24,11 +29,58 @@ export function CharacterApp({
   path: string;
 }): ReactNode {
   useStoreVersion(store);
+  const { plugin } = usePlugin();
+  const shell = useShell();
+  const ref = useRef<HTMLDivElement>(null);
+  // A character's own layout.5e wins over the plugin's settings, which win over
+  // the defaults.
+  const narrow = resolveNarrow(plugin.settings.narrow, store.data.layout);
+  // The decision is made from this element's width, not the window's, so the
+  // same character in a side pane gets the narrow layout (spec 1.2).
+  const mode = useLayoutMode(ref, narrow);
+
+  useEffect(() => shell.setLayout(mode), [shell, mode]);
 
   return (
     <StoreContext.Provider value={store}>
-      <Viewer store={store} kind={kind} path={path} />
+      <div className="dg-layout" data-layout={mode} ref={ref}>
+        {mode === "narrow" ? (
+          <NarrowViewer store={store} kind={kind} path={path} narrow={narrow} />
+        ) : (
+          <Viewer store={store} kind={kind} path={path} />
+        )}
+      </div>
     </StoreContext.Provider>
+  );
+}
+
+/**
+ * The narrow layout covers the two viewers a phone actually uses. The focused
+ * single-file editors (state, sources, a bare inventory) are rare enough on a
+ * phone that they keep the ordinary layout rather than each growing a rail.
+ */
+function NarrowViewer({
+  store,
+  kind,
+  path,
+  narrow,
+}: {
+  store: CharacterStore;
+  kind: FileKind;
+  path: string;
+  narrow: NarrowSettings;
+}): ReactNode {
+  const character = store.resolved;
+  if (store.loading || !character || (kind !== "sheet" && kind !== "build"))
+    return <Viewer store={store} kind={kind} path={path} />;
+
+  return (
+    <NarrowRoot
+      store={store}
+      character={character}
+      settings={narrow}
+      mode={kind === "build" ? "builder" : "sheet"}
+    />
   );
 }
 

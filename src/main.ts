@@ -18,11 +18,33 @@ import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
 import { SourceManager } from "./obsidian/sources";
 import { DRAGONGLASS_VIEW, DragonglassFileView } from "./obsidian/view";
+import type { Draft, DraftStore } from "./obsidian/ui/narrow/drafts";
 import { NewCharacterModal } from "./obsidian/modals/new-character";
 
 export default class DragonglassPlugin extends Plugin {
   settings: DragonglassSettings = DEFAULT_SETTINGS;
   sources!: SourceManager;
+
+  /**
+   * Builder drafts, by character folder (spec 7.9). They live in the plugin's
+   * own data rather than in the vault, because the whole point of a draft is
+   * that the character's files still say what the character is.
+   */
+  private drafts: Record<string, Draft> = {};
+  private draftTimer = 0;
+
+  readonly draftStore: DraftStore = {
+    get: (folder) => this.drafts[folder],
+    set: (folder, draft) => {
+      this.drafts[folder] = draft;
+      this.scheduleDraftSave();
+    },
+    clear: (folder) => {
+      if (!(folder in this.drafts)) return;
+      delete this.drafts[folder];
+      this.scheduleDraftSave();
+    },
+  };
 
   /** One store per character folder, shared by every view showing that character. */
   private stores = new Map<string, { store: CharacterStore; refs: number }>();
@@ -42,7 +64,8 @@ export default class DragonglassPlugin extends Plugin {
     this.addCommand({
       id: "new-character",
       name: "New character",
-      callback: () => new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder)).open(),
+      callback: () =>
+        new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder, "build")).open(),
     });
 
     this.addCommand({
@@ -75,18 +98,44 @@ export default class DragonglassPlugin extends Plugin {
   onunload(): void {
     for (const { store } of this.stores.values()) void store.dispose();
     this.stores.clear();
+    // A draft that only exists in the debounce timer would be lost on reload.
+    if (this.draftTimer) {
+      window.clearTimeout(this.draftTimer);
+      this.draftTimer = 0;
+      void this.persist();
+    }
   }
 
   // -- settings --------------------------------------------------------------
 
   async loadSettings(): Promise<void> {
-    this.settings = withDefaults(await this.loadData());
+    const stored = (await this.loadData()) as
+      | (Partial<DragonglassSettings> & { drafts?: Record<string, Draft> })
+      | null;
+    this.drafts = stored?.drafts ?? {};
+    const { drafts, ...settings } = stored ?? {};
+    void drafts;
+    this.settings = withDefaults(settings);
   }
 
   async saveSettings(): Promise<void> {
-    await this.saveData(this.settings);
+    await this.persist();
     this.sources.setTier(this.settings.caching);
     await this.reloadSources();
+  }
+
+  /** Settings and drafts share one data file, so both are written together. */
+  private async persist(): Promise<void> {
+    await this.saveData({ ...this.settings, drafts: this.drafts });
+  }
+
+  /** A draft is touched on every edit; the disk doesn't need to hear each one. */
+  private scheduleDraftSave(): void {
+    if (this.draftTimer) window.clearTimeout(this.draftTimer);
+    this.draftTimer = window.setTimeout(() => {
+      this.draftTimer = 0;
+      void this.persist();
+    }, 800);
   }
 
   /** Drops every cached index so the next resolve picks up new content. */
@@ -172,11 +221,17 @@ export default class DragonglassPlugin extends Plugin {
     return folder;
   }
 
-  async openCharacter(folder: string): Promise<void> {
-    const path = normalizePath(`${folder}/${DEFAULT_FILE_NAMES.sheet}`);
+  /**
+   * Opens one of a character's files in a tab. A brand new character opens in
+   * the builder, because there is nothing to play yet; everything else opens
+   * the sheet. Moving between the two afterwards happens in place, from the
+   * view's own pane menu.
+   */
+  async openCharacter(folder: string, kind: FileKind = "sheet"): Promise<void> {
+    const path = normalizePath(`${folder}/${DEFAULT_FILE_NAMES[kind]}`);
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) {
-      new Notice(`No sheet.5e in ${folder}`);
+      new Notice(`No ${DEFAULT_FILE_NAMES[kind]} in ${folder}`);
       return;
     }
     await this.app.workspace.getLeaf(true).openFile(file);

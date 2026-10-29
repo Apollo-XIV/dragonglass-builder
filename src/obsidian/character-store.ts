@@ -15,6 +15,7 @@ import type {
   Diagnostic,
   FileKind,
   InventoryFile,
+  LayoutFile,
   SheetFile,
   SourcesFile,
   SpellsFile,
@@ -40,8 +41,13 @@ export interface CharacterData {
   spells?: SpellsFile;
   inventory?: InventoryFile;
   sources?: SourcesFile;
+  /** Per-character styling and layout overrides (post-MVP in the design spec). */
+  layout?: LayoutFile;
   details?: DetailsDocument;
 }
+
+/** The kinds the store actually keeps parsed, which is what a session covers. */
+export type DataKind = keyof CharacterData;
 
 export interface StoreHost {
   app: App;
@@ -67,6 +73,15 @@ export class CharacterStore {
   get dirty(): boolean {
     return this.pending.size > 0;
   }
+
+  /**
+   * An open edit session (spec 7.9). While one is active, writes to the kinds it
+   * covers are held in memory instead of reaching the file, so someone trying a
+   * different build — or just reading what a feat would do — does not overwrite
+   * the character they already have. Kinds outside it still write through, which
+   * is what keeps the sheet's hit points working in another pane.
+   */
+  private session?: { base: CharacterData; kinds: Set<DataKind>; touched: Set<DataKind>; baseMoved: boolean };
 
   private listeners = new Set<StoreListener>();
   private pending = new Map<string, string>();
@@ -103,7 +118,7 @@ export class CharacterStore {
     Object.assign(this.paths, paths);
 
     const data: CharacterData = { sheet: manifest };
-    for (const kind of ["build", "state", "spells", "inventory", "sources"] as const) {
+    for (const kind of ["build", "state", "spells", "inventory", "sources", "layout"] as const) {
       const path = paths.byKind[kind];
       if (!path || !(await adapter.exists(path))) continue;
       const text = await adapter.read(path);
@@ -119,6 +134,17 @@ export class CharacterStore {
       const text = await adapter.read(detailsPath);
       this.lastWritten.set(detailsPath, text);
       data.details = parseDetails(text);
+    }
+
+    // A reload underneath an open session moves the base without disturbing the
+    // work in progress; the builder warns about it when the player saves.
+    const session = this.session;
+    if (session) {
+      // A copy, because the working copy is written back over `data` next and
+      // the base has to keep saying what arrived from disk.
+      session.base = { ...data };
+      session.baseMoved = true;
+      for (const kind of session.touched) Object.assign(data, { [kind]: this.data[kind] });
     }
 
     this.data = data;
@@ -254,6 +280,65 @@ export class CharacterStore {
     };
   }
 
+  // -- edit sessions ---------------------------------------------------------
+
+  get editing(): boolean {
+    return this.session !== undefined;
+  }
+
+  /** The kinds whose working copy differs from what is on disk. */
+  get editedKinds(): DataKind[] {
+    return [...(this.session?.touched ?? [])];
+  }
+
+  /** What the session started from, for a draft's base-version check. */
+  get editBase(): CharacterData | undefined {
+    return this.session?.base;
+  }
+
+  /** True when the files changed underneath an open session. */
+  get editBaseMoved(): boolean {
+    return this.session?.baseMoved ?? false;
+  }
+
+  beginEdit(kinds: DataKind[] = ["build", "spells", "inventory"]): void {
+    if (this.session) return;
+    this.session = { base: { ...this.data }, kinds: new Set(kinds), touched: new Set(), baseMoved: false };
+    this.notify();
+  }
+
+  /** Writes the working copy and ends the session. */
+  commitEdit(): void {
+    const session = this.session;
+    if (!session) return;
+    this.session = undefined;
+    const changes: Partial<CharacterData> = {};
+    for (const kind of session.touched) Object.assign(changes, { [kind]: this.data[kind] });
+    if (Object.keys(changes).length) this.updateMany(changes);
+    else this.notify();
+  }
+
+  /** Throws the working copy away and goes back to what is on disk. */
+  discardEdit(): void {
+    const session = this.session;
+    if (!session) return;
+    this.session = undefined;
+    this.data = session.base;
+    this.recompute();
+    this.notify();
+  }
+
+  /** Replaces the working copy wholesale, for resuming a saved draft. */
+  restoreEdit(changes: Partial<CharacterData>): void {
+    if (!this.session) this.beginEdit();
+    const session = this.session;
+    if (!session) return;
+    this.data = { ...this.data, ...changes };
+    for (const kind of Object.keys(changes) as DataKind[]) session.touched.add(kind);
+    this.recompute();
+    this.notify();
+  }
+
   // -- mutations -------------------------------------------------------------
 
   /** Updates one JSON file and reresolves. Several calls in a tick write together. */
@@ -261,6 +346,14 @@ export class CharacterStore {
     this.data = { ...this.data, [kind]: next };
     const path = this.paths.byKind[kind as FileKind];
     if (!path) return;
+    // Inside a session this kind goes no further than memory: the view resolves
+    // and redraws from the working copy, and the file is untouched until save.
+    if (this.session?.kinds.has(kind)) {
+      this.session.touched.add(kind);
+      this.recompute();
+      this.notify();
+      return;
+    }
     const text = kind === "details" ? serialiseDetails(next as DetailsDocument) : serialiseJson(next);
     this.pending.set(path, text);
     this.recompute();
