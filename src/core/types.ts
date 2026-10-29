@@ -355,6 +355,51 @@ export interface CharacterFile {
   schemaVersion: number;
 }
 
+/**
+ * The narrow layout's preferences. They are declared here rather than with the
+ * plugin's settings because `layout.5e` can carry them per character, and both
+ * layers have to agree on the shape. Styling and layout resolve in the order
+ * the design spec gives: `layout.5e`, then plugin settings, then defaults.
+ */
+export interface NarrowPrefs {
+  /** Auto follows the view's own width; the others force one layout. */
+  layout: "auto" | "narrow" | "desktop";
+  /** Also require width >= height for the desktop layout. */
+  desktopNeedsLandscape: boolean;
+  railSide: "left" | "right";
+  railHeight: "middle" | "low";
+  railTap: "glide" | "jump";
+  scrollTicks: boolean;
+  snap: boolean;
+  /** Snap grab distance, as a percentage of viewport height. */
+  snapGrabPercent: number;
+  /** How long to hold before details open. */
+  holdMs: number;
+  haptics: boolean;
+  infoButtons: boolean;
+  holdHint: boolean;
+  /** Rail section order, by section id. */
+  sheetSections: string[];
+  builderSections: string[];
+}
+
+/**
+ * Per-character styling and layout. Everything is optional: whatever a
+ * character does not state follows the plugin's settings, and whatever the
+ * plugin does not state follows the theme.
+ */
+export interface LayoutFile extends CharacterFile {
+  kind: "layout";
+  /** CSS colour; overrides the plugin's accent for this character. */
+  accent?: string;
+  /** Vault path or URL, for a character with its own backdrop. */
+  background?: string;
+  /** Gallery image ids to show on the sheet. */
+  images?: string[];
+  /** Per-character narrow-layout overrides. */
+  narrow?: Partial<NarrowPrefs>;
+}
+
 export type AbilityMethod = "point-buy" | "standard-array" | "rolled" | "manual";
 export type HpChoice = "max" | "average" | number;
 
@@ -363,6 +408,13 @@ export interface BuildLevel {
   /** Subclass is recorded as a choice, not here, so the choice id stays authoritative. */
   hp: HpChoice;
   choices?: Record<string, string[]>;
+}
+
+/** A queued build: picks made for a class level the character hasn't reached. */
+export interface PlannedLevel {
+  class: string;
+  classLevel: number;
+  choices: Record<string, string[]>;
 }
 
 export interface BuildFile extends CharacterFile {
@@ -379,6 +431,13 @@ export interface BuildFile extends CharacterFile {
   levels: BuildLevel[];
   /** Choices not tied to a class level: species, background, feats. */
   choices?: Record<string, string[]>;
+  /**
+   * Picks for class levels not yet taken, applied on level-up (spec 7.6). Keyed
+   * by class and class level, never by character level, so taking a level of one
+   * class leaves the other classes' plans where they were. An ordered plan across
+   * classes, if it ever arrives, is an extra list rather than a change here.
+   */
+  planned?: PlannedLevel[];
   /** Free-form notes the builder never touches. */
   notes?: string;
 }

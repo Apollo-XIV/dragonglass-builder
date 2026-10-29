@@ -14,6 +14,42 @@ export { ExprError, parseExpression } from "./expr/parser";
 export { resolve, resourceKey, allAnnotations } from "./resolver/resolve";
 export type { ResolveInput, ResolveOptions } from "./resolver/resolve";
 export * from "./resolver/resolved";
+export {
+  explainStat,
+  explainSet,
+  explainParts,
+  explainContribution,
+  formulaFor,
+  signedText,
+} from "./resolver/explain";
+export type { Explanation, ExplainRow, ExplainNote, RollKind } from "./resolver/explain";
+export {
+  addLevel,
+  removeLevel,
+  classLevels,
+  classLevelAt,
+  plannedFor,
+  setPlannedChoice,
+  changesStartingClass,
+  nextClassLevels,
+} from "./resolver/levels";
+export {
+  previewChange,
+  commitChange,
+  applyChange,
+  inactivePicks,
+  storedPicks,
+  liveChoiceIds,
+  isEmptyReport,
+  EMPTY_REPORT,
+} from "./resolver/validity";
+export type { BuildChange, ChangeReport, InactivePick, PickRef } from "./resolver/validity";
+export { diffBuilds } from "./resolver/diff";
+export type { BuildDiff } from "./resolver/diff";
+export { weaponAttacks } from "./resolver/attacks";
+export type { WeaponAttack, AttackPart } from "./resolver/attacks";
+export { rollNotation, rollDie, describeRoll, defaultRng } from "./dice";
+export type { RollResult, RollOptions, DieRoll, Rng } from "./dice";
 export { armorModifiers, answerFor } from "./resolver/collect";
 export {
   casterLevel,
