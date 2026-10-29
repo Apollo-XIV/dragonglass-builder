@@ -36,9 +36,15 @@ So: **never open a converted JSON file to check it.** Run the commands and read 
    | Species, backgrounds, feats | `srd-origin-converter` |
    | A class and its subclass | `srd-class-converter` |
 
-   Each prompt must name: the exact content to convert, the exact file to write, where the
-   SRD text for it is, and that it must not touch any other file. Give it the source text
-   location rather than pasting the text.
+   Each prompt must name: the exact content to convert, the exact file to write, the
+   `npm run srd:section` invocation that reaches its text, and that it must not touch any
+   other file. **Never paste SRD text into a prompt** — the agents have the reader, and the
+   source is 14MB.
+
+   For spells, read `srd:section -- "Spell Lists"` **once yourself** and pass each agent the
+   class tags for its own spells. It is the one piece of cross-cutting data in the whole
+   wave, and having thirty agents re-derive it is both wasteful and a way to get thirty
+   slightly different answers.
 
    **Parallelism.** Spells and equipment: dispatch in batches of up to four, because they
    write disjoint files. **Classes: one at a time.** A class conversion is long, makes a

@@ -8,6 +8,42 @@ description: Convert D&D 5e rules text (a class, species, background, feat, spel
 Read `docs/conversion-guide.md` in this repo **before writing any JSON**. It is the
 specification for this task; this file only describes the loop around it.
 
+## Reading the unconverted SRD
+
+When the text comes from `srd-unconverted/srd-source.json` rather than being pasted to
+you: **do not open that file.** It is 14MB of PDF-extraction nodes carrying x/y
+coordinates, and reading it will exhaust your context without telling you anything.
+
+Two commands give you the rules text instead:
+
+```sh
+npm run srd:outline                       # the whole heading tree, with node indexes
+npm run srd:outline -- Berserker          # just headings matching a term
+npm run srd:section -- "Barbarian"        # one section, as readable text
+npm run srd:section -- "Dwarf" --at 19    # disambiguate when a name matches twice
+```
+
+A section runs from its heading to the next heading at the same depth or shallower, so
+asking for a class gives you its features, its progression table **and** its subclass in
+one go — the Barbarian is about 8KB of text. Tables come out pipe-delimited with their
+real column headings, which is what you need to build a `tables` block.
+
+Where things live:
+
+| Content | How to reach it |
+| --- | --- |
+| A class | `srd:section -- "Barbarian"` — the whole class, subclass included |
+| A species | `srd:section -- "Dwarf"` (under the `Races` heading) |
+| A spell | `srd:section -- "Acid Arrow"` — each of the 323 spells is its own heading |
+| Which classes may cast a spell | `srd:section -- "Spell Lists"` — read this once, it drives every spell's tags |
+| Equipment | `srd:section -- "Weapons"`, `"Armor"`, `"Adventuring Gear"`, `"Tools"` |
+| Magic items | `srd:section -- "Magic Items A-Z"` |
+| Feats | `srd:section -- "Feats"` |
+
+Asking for something enormous (`"Spell Descriptions"`, `"Monsters (A)"`) truncates at
+120k characters and tells you to read the sub-headings one at a time. That is the signal
+to narrow, not to retry.
+
 ## The loop
 
 1. **Read the guide.** `docs/conversion-guide.md`. Pay attention to §3 (phrasing cues),

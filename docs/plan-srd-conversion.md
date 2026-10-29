@@ -6,6 +6,34 @@ written. Written to be handed to a fresh session along with the SRD text.
 Read `docs/schema.md` first — it is the authority on the format — and
 `docs/conversion-guide.md` for how to decide what a piece of text becomes.
 
+## The source, and how to read it
+
+`srd-unconverted/srd-source.json` is a PDF extraction: one flat array of 13,353 document
+nodes — 25 h1, 104 h2, 306 h3, 1,749 h4, 10,722 paragraphs and 446 tables — each carrying
+x/y coordinates. It is 14MB, it is gitignored, and **nothing should open it directly.**
+
+`npm run srd:outline` and `npm run srd:section -- "<heading>"` render it as text. A section
+runs to the next heading of equal or shallower depth, which lines up almost exactly with
+the units of work below:
+
+| Unit | Command | Size |
+| --- | --- | --- |
+| One class, subclass and progression table included | `srd:section -- "Barbarian"` | ~8KB |
+| One species | `srd:section -- "Dwarf"` | small |
+| One spell (323 of them, each its own h4) | `srd:section -- "Acid Arrow"` | ~1KB |
+| The class spell lists | `srd:section -- "Spell Lists"` | read once; drives every spell's tags |
+| Equipment | `srd:section -- "Weapons"` / `"Armor"` / `"Adventuring Gear"` / `"Tools"` | small |
+
+The 446 tables matter: they come through pipe-delimited with their real column headings, so
+a class's progression is readable rather than needing reconstruction. That is what makes
+`tables` blocks tractable in wave 1.
+
+Two things the extraction does to watch for. Headings carry stray spacing from the PDF
+(`Appendix PH -A`), so match loosely. And a spell's fields arrive as running text rather
+than labelled rows — `Duration: Instantaneous` can be followed immediately by the first
+sentence of the description, so read the boundary carefully rather than splitting on
+newlines.
+
 ## The recommendation, in one paragraph
 
 **Convert all of it, but in four waves, with a hard stop after wave 1.** Nothing in the
@@ -70,9 +98,12 @@ A new family of options wants a tag named the same way.
 
 The foundation layer: most volume, least judgement, highest dependency.
 
-- **All SRD spells.** Shape is nearly fixed — `spellLevel`, `school`, `castingTime`,
+- **All 323 SRD spells.** Shape is nearly fixed — `spellLevel`, `school`, `castingTime`,
   `range`, `components`, `duration`, `concentration`, `ritual`, `higherLevels`, text. Damage
-  as dice notation. Tag each with every class list it appears on.
+  as dice notation. Tag each with every class list it appears on, which means reading
+  `Spell Lists` **once** up front and handing each agent the tags for its own spells rather
+  than making all of them re-derive it. Partition by spell level — cantrips, 1st, 2nd … 9th
+  — which gives ten files of roughly thirty spells each.
 - **All weapons, armour and adventuring gear.** `weapon` and `armor` blocks drive attacks
   and AC, which the resolver already computes, so these are immediately testable.
 - Skip magic items for now; they come with wave 3.

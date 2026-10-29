@@ -5,7 +5,10 @@
       "Bash(npm run validate *)",
       "Bash(npm test)",
       "Bash(npm run typecheck)",
-      "Bash(npx vitest run *)"
+      "Bash(npx vitest run *)",
+      "Bash(npm run srd:outline)",
+      "Bash(npm run srd:outline *)",
+      "Bash(npm run srd:section *)"
     ]
   }
 }

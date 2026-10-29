@@ -11,7 +11,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc -noEmit -skipLibCheck",
     "validate": "tsx src/cli/validate.ts",
-    "bundle:content": "node scripts/bundle-content.mjs"
+    "bundle:content": "node scripts/bundle-content.mjs",
+    "srd:outline": "node scripts/srd.mjs outline",
+    "srd:section": "node scripts/srd.mjs section"
   },
   "keywords": [
     "obsidian",
