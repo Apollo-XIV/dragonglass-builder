@@ -73,7 +73,15 @@ export function Tabs({
 }
 
 /** Renders markdown through Obsidian, so links, embeds and callouts all work. */
-export function Markdown({ source, sourcePath = "" }: { source: string; sourcePath?: string }): ReactNode {
+export function Markdown({
+  source,
+  sourcePath = "",
+  className,
+}: {
+  source: string;
+  sourcePath?: string;
+  className?: string;
+}): ReactNode {
   const { app, view } = usePlugin();
   const ref = useRef<HTMLDivElement>(null);
 
@@ -84,7 +92,7 @@ export function Markdown({ source, sourcePath = "" }: { source: string; sourcePa
     void MarkdownRenderer.render(app, source, el, sourcePath, view);
   }, [app, source, sourcePath, view]);
 
-  return <div className="dg-markdown" ref={ref} />;
+  return <div className={className ? `dg-markdown ${className}` : "dg-markdown"} ref={ref} />;
 }
 
 function describeContribution(row: Contribution): string {
@@ -238,7 +246,7 @@ export function ElementInfo({
   overriddenBy,
   compact,
 }: {
-  element: ResolvedElement | { id: string; name: string; kind: string; abbreviation?: string; page?: number | string; text?: string; tags?: string[] };
+  element: ResolvedElement | { id: string; name: string; kind: string; abbreviation?: string; page?: number | string; text?: string; fluff?: string; tags?: string[] };
   overriddenBy?: string;
   compact?: boolean;
 }): ReactNode {
@@ -250,6 +258,7 @@ export function ElementInfo({
         {badge ? <Pill>{badge}</Pill> : null}
         {overriddenBy ? <Pill tone="info">overridden by {overriddenBy}</Pill> : null}
       </div>
+      {element.fluff && !compact ? <Markdown source={element.fluff} className="dg-fluff" /> : null}
       {element.text && !compact ? <Markdown source={element.text} /> : null}
       {element.tags?.length && !compact ? (
         <div className="dg-tags">

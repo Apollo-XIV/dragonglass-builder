@@ -450,6 +450,21 @@ describe("stats", () => {
 });
 
 describe("choices", () => {
+  it("carries an option's fluff alongside its text, and tolerates its absence", () => {
+    const content = testIndex(
+      BASE_ELEMENTS.map((e) =>
+        (e as { id: string }).id === "test:style:defense"
+          ? { ...e, text: "+1 AC in armour.", fluff: "Learned in a hard school." }
+          : e,
+      ),
+    );
+    const options = resolve({ content, build: fighter(3) }).pendingChoices.find((c) => c.id === "test:fighter:style")!.options;
+    const defense = options.find((o) => o.id === "test:style:defense");
+    expect(defense?.fluff).toBe("Learned in a hard school.");
+    expect(defense?.text).toBe("+1 AC in armour.");
+    expect(options.find((o) => o.id === "test:style:locked")?.fluff).toBeUndefined();
+  });
+
   it("returns an unmade choice with its options", () => {
     const content = testIndex(BASE_ELEMENTS);
     const r = resolve({ content, build: fighter(3) });

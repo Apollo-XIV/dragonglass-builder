@@ -57,6 +57,7 @@ export function optionsFor(choice: PendingChoice): PickerOption[] {
     id: option.id,
     name: option.name,
     text: option.text,
+    fluff: option.fluff,
     tag: option.abbreviation,
     warnings: option.warnings,
     allowed: option.allowed,

@@ -216,6 +216,7 @@ function FeatureChip({ feature }: { feature: ResolvedElement }): ReactNode {
       title={feature.name}
       subtitle={feature.kind.replace(/-/g, " ")}
       text={feature.text}
+      fluff={feature.fluff}
       className="dg-level-feature"
     />
   );
@@ -258,6 +259,7 @@ function LevelButtons({
           id: cls.id,
           name: cls.name,
           text: typeof cls.text === "string" ? cls.text : undefined,
+          fluff: typeof cls.fluff === "string" ? cls.fluff : undefined,
           tag: index.abbreviation(cls.source),
           // Shown whether or not enforcement is on: a player multiclassing into
           // a class they don't qualify for should at least be told.

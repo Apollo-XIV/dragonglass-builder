@@ -209,6 +209,12 @@ export interface Element {
   /** Must reference a loaded sourcebook element. */
   source: string;
   text?: string;
+  /**
+   * Setting and flavour, as markdown: what the thing is in the world, not what it
+   * does. Optional enhancement — a source may leave it out entirely (a published
+   * build can strip it), so nothing may depend on it being there. Never rules text.
+   */
+  fluff?: string;
   tags?: string[];
   requires?: Requirement;
   page?: number | string;

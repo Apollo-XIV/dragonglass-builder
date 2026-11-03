@@ -14,6 +14,8 @@ export interface DetailSpec {
   /** "Wizard 1 · Class feature", "look ahead". */
   subtitle?: string;
   text?: string;
+  /** Setting prose, shown above the rules text where a source has it. */
+  fluff?: string;
   /** Source abbreviation and page, where known. */
   tag?: string;
   page?: string | number;

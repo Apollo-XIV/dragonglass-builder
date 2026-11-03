@@ -27,6 +27,7 @@ export interface PickerOption {
   id: string;
   name: string;
   text?: string;
+  fluff?: string;
   /** Source abbreviation: SRD, PHB. */
   tag?: string;
   /** Unmet prerequisites. Shown as an amber note; only enforced if asked. */
@@ -269,6 +270,7 @@ export function PickerBody({
                             title: option.name,
                             tag: option.tag,
                             text: option.text,
+                            fluff: option.fluff,
                             subtitle: option.warnings?.join("; "),
                           }
                         : undefined,
@@ -364,8 +366,11 @@ function OptionRow({
         title: option.name,
         subtitle: option.tag,
         body: () =>
-          option.text ? (
-            <Markdown source={option.text} />
+          option.text || option.fluff ? (
+            <>
+              {option.fluff ? <Markdown source={option.fluff} className="dg-fluff" /> : null}
+              {option.text ? <Markdown source={option.text} /> : null}
+            </>
           ) : (
             <p className="dg-muted">No rules text.</p>
           ),

@@ -271,6 +271,8 @@ export function validateElement(raw: unknown): ValidationResult {
     out.push(err("invalid-element", "tags must be an array of strings", subject, "tags"));
   if (el.text !== undefined && typeof el.text !== "string")
     out.push(err("invalid-element", "text must be a string", subject, "text"));
+  if (el.fluff !== undefined && typeof el.fluff !== "string")
+    out.push(warn("invalid-element", "fluff must be a string; ignored", subject, "fluff"));
 
   if (el.grants !== undefined) {
     if (!Array.isArray(el.grants)) out.push(err("invalid-element", "grants must be an array", subject, "grants"));

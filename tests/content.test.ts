@@ -324,3 +324,26 @@ describe("requirements", () => {
     expect(checkRequirement(undefined, ctx).met).toBe(true);
   });
 });
+
+describe("fluff is an optional enhancement", () => {
+  const species = (fluff?: unknown) => ({
+    id: "srd:species:dwarf", kind: "species", name: "Dwarf", source: "srd",
+    ...(fluff === undefined ? {} : { fluff }),
+  });
+
+  it("is not required", () => {
+    const r = validateElement(species());
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics).toHaveLength(0);
+  });
+
+  it("accepts a string", () => {
+    expect(validateElement(species("Kingdoms rich in ancient grandeur.")).diagnostics).toHaveLength(0);
+  });
+
+  it("warns about anything else and keeps the element", () => {
+    const r = validateElement(species(["not", "markdown"]));
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics.map((d) => d.path)).toContain("fluff");
+  });
+});

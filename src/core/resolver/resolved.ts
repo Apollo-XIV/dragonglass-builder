@@ -34,6 +34,7 @@ export interface ResolvedElement {
   abbreviation?: string;
   page?: number | string;
   text?: string;
+  fluff?: string;
   tags: string[];
   /** Class level this came from, when it came from a class progression. */
   level?: number;
@@ -190,6 +191,7 @@ export interface ChoiceOption {
   abbreviation?: string;
   page?: number | string;
   text?: string;
+  fluff?: string;
   tags: string[];
   /** False when `requires` isn't met. With enforcement off this is a warning only. */
   allowed: boolean;

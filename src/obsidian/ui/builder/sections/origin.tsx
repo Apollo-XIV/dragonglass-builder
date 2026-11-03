@@ -151,6 +151,7 @@ export function OriginSection({
         id: element.id,
         name: element.name,
         text: typeof element.text === "string" ? element.text : undefined,
+        fluff: typeof element.fluff === "string" ? element.fluff : undefined,
         tag: index.abbreviation(element.source),
       })),
       selected: current ? [current] : [],

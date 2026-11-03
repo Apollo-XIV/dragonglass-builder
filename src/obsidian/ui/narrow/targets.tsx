@@ -63,16 +63,19 @@ function ExplainLine({ row }: { row: ExplainRow }): ReactNode {
 /** Rules text, with the arithmetic behind any derived number it mentions. */
 export function TextBody({
   text,
+  fluff,
   formula,
   sourcePath,
 }: {
   text?: string;
+  fluff?: string;
   formula?: string;
   sourcePath?: string;
 }): ReactNode {
   return (
     <>
       {formula ? <p className="dg-sheet-formula">{formula}</p> : null}
+      {fluff ? <Markdown source={fluff} sourcePath={sourcePath} className="dg-fluff" /> : null}
       {text ? <Markdown source={text} sourcePath={sourcePath} /> : <p className="dg-muted">No rules text.</p>}
     </>
   );
@@ -217,6 +220,7 @@ export function ReadRow({
   title,
   subtitle,
   text,
+  fluff,
   formula,
   children,
   onTap,
@@ -226,6 +230,7 @@ export function ReadRow({
   /** "Wizard 1 · Class feature". */
   subtitle?: string;
   text?: string;
+  fluff?: string;
   formula?: string;
   /** Tap targets inside the row; they stop the row's own hold. */
   children?: ReactNode;
@@ -242,7 +247,7 @@ export function ReadRow({
     sheet.open({
       title,
       subtitle,
-      body: () => <TextBody text={text} formula={formula} />,
+      body: () => <TextBody text={text} fluff={fluff} formula={formula} />,
     });
 
   const { handlers } = useHold({

@@ -46,6 +46,7 @@ by `kind`, attributed to a `source`, and carrying optional **parts**.
 | `text` | Strongly recommended | Rules text. Always displayable, and the fallback for anything the parts cannot express. |
 | `tags` | No | What choices and browsing filter on. |
 | `requires` | No | Prerequisites. Enforced only when the builder's toggle is on. |
+| `fluff` | No | Setting prose as markdown: what the thing is in the world, not what it does. An optional enhancement — a source may omit it (a published build can strip it), so nothing may depend on it. Shown above `text` wherever an element is read; rules never go here. |
 | `page` | No | Number or string, shown as a badge: "PHB 48". |
 | `levels` | No | Parts keyed by level, for anything that gains things as it goes. |
 | `levelsBy` | No | What `levels` counts: `class` (default) or `character`. |
