@@ -660,11 +660,43 @@ export function InventorySection({ character }: { character: ResolvedCharacter }
   );
 }
 
+/** Kinds that carry a class but are not the class's own features. */
+const NOT_CLASS_KINDS = new Set(["skill", "language", "tool", "feat"]);
+
 export function FeaturesSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const byKey = new Map(character.resources.map((r) => [r.source, r] as const));
+  const [filter, setFilter] = useState("all");
+  const all = featureList(character);
+  const label = (kind: string): string => store.index?.kindLabel(kind, true) ?? kind;
+  const groupOf = (f: (typeof all)[number]): { id: string; label: string } => {
+    const kind = f.kind.split(":").pop() ?? f.kind;
+    // Species, Subspecies and Species Trait read as one thing to a player; so do
+    // Background and Background Feature.
+    if (kind.includes("species")) return { id: "species", label: "Species" };
+    if (kind.includes("background")) return { id: "background", label: "Background" };
+    // Anything that came down a class's progression is that class's, whatever
+    // its kind: the class itself, its subclass, its features, and what they
+    // granted (metamagic). Proficiencies and feats keep their own chip.
+    if (f.class && !NOT_CLASS_KINDS.has(kind)) {
+      const name = character.classes.find((c) => c.id === f.class)?.name ?? f.class;
+      return { id: `class:${f.class}`, label: name };
+    }
+    return { id: f.kind, label: label(f.kind) };
+  };
+  const groups = new Map<string, string>();
+  for (const f of all) {
+    const g = groupOf(f);
+    if (!groups.has(g.id)) groups.set(g.id, g.label);
+  }
+  const kinds = [...groups.keys()];
+  const chips = [{ id: "all", label: "All" }, ...kinds.map((id) => ({ id, label: groups.get(id) ?? id }))];
+  // A filter whose kind has since gone (a level removed) falls back to everything.
+  const active = kinds.includes(filter) ? filter : "all";
+  const features = all.filter((f) => active === "all" || groupOf(f).id === active);
   return (
     <>
-      {featureList(character).map((feature) => {
+      {kinds.length > 1 ? <ChipRow chips={chips} active={active} onPick={setFilter} /> : null}
+      {features.map((feature) => {
         const resource = byKey.get(feature.id);
         return (
           <ReadRow

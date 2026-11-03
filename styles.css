@@ -1923,6 +1923,12 @@
   padding-bottom: 2px;
 }
 
+/* A fade on the right edge while there are more chips to scroll to. */
+.dg-n-chips.has-more {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+  mask-image: linear-gradient(to right, #000 calc(100% - 2.5rem), transparent);
+}
+
 .dg-n-chips::-webkit-scrollbar {
   display: none;
 }
@@ -3604,6 +3610,13 @@
   grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
   gap: 0 var(--d-gap);
   align-content: start;
+}
+
+.dg-d-tab-body > .dg-n-chips {
+  /* An overflow container's automatic minimum height is 0, so the grid was
+   * free to squash the row to a sliver. */
+  min-height: 36px;
+  flex-shrink: 0;
 }
 
 .dg-d-tab-body > .dg-n-chips,
