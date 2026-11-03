@@ -20,7 +20,7 @@ import {
 import { capBreaches, newBreaches, type CapBreach } from "../../../core/resolver/caps";
 import { resolve } from "../../../core/resolver/resolve";
 import type { CharacterStore } from "../../character-store";
-import { useSheet } from "./sheet";
+import { useSheet } from "../narrow/sheet";
 
 export function useBuildChange(store: CharacterStore): (change: BuildChange) => void {
   const sheet = useSheet();

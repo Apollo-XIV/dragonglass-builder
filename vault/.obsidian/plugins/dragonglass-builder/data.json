@@ -16,7 +16,8 @@
     "accent": "",
     "compact": false,
     "showBreakdowns": true,
-    "playMode": false
+    "playMode": false,
+    "pins": []
   },
   "narrow": {
     "layout": "auto",

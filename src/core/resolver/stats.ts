@@ -10,7 +10,7 @@
  * `when` never fold into the value — they attach as annotations.
  */
 
-import { ABILITIES, SKILLS, type Ability, type Diagnostic, type Modifier, type ProficiencyLevel } from "../types";
+import { ABILITIES, type Ability, type Diagnostic, type Modifier, type ProficiencyLevel } from "../types";
 import type { ContentIndex } from "../content";
 import { evaluate, type ExprContext } from "../expr/evaluate";
 import type { PartSource } from "./collect";
@@ -41,6 +41,8 @@ export interface StatEngineOptions {
   totalLevel: number;
   classLevel(ref: string): number;
   table(ref: string, column: string): number | undefined;
+  /** Short keys of the classes this character casts from, for the fan-out. */
+  spellcastingKeys?: readonly string[];
 }
 
 const PROFICIENCY_ORDER: ProficiencyLevel[] = ["none", "half", "proficient", "expertise"];
@@ -64,12 +66,38 @@ export function proficiencyMultiplier(level: ProficiencyLevel): number {
   }
 }
 
-/** "saves.all" and "skills.all" fan out to every member of the family. */
-export function expandTarget(target: string): string[] {
+/** The members of each open family, for the `.all` fan-outs below. */
+export interface TargetFamilies {
+  /**
+   * Which skills exist. Content's business, not the engine's — a source that adds
+   * a skill gets it covered by "skills.all" without the engine learning its name.
+   */
+  skills?: readonly string[];
+  /**
+   * The short keys of the classes this character casts from. The character's, not
+   * content's: "spellcasting.all.dc" on a Rod of the Pact Keeper has to mean the
+   * classes the holder actually casts with, and a fighter holding it gets nothing.
+   */
+  spellcasting?: readonly string[];
+}
+
+/**
+ * "saves.all" and friends fan out to every member of the family.
+ *
+ * `attacks.all` is deliberately absent: `resolver/attacks.ts` reads it directly
+ * when it assembles an attack, because the member there is the weapon in hand
+ * rather than anything knowable here.
+ */
+export function expandTarget(target: string, families: TargetFamilies = {}): string[] {
   if (target === "saves.all") return ABILITIES.map((a) => `saves.${a}`);
   if (target === "checks.all") return ABILITIES.map((a) => `checks.${a}`);
-  if (target === "skills.all") return Object.keys(SKILLS).map((s) => `skills.${s}`);
+  if (target === "skills.all") return (families.skills ?? []).map((s) => `skills.${s}`);
   if (target === "abilities.all.score") return ABILITIES.map((a) => `abilities.${a}.score`);
+  // "spellcasting.all.dc" and "spellcasting.all.attack"
+  const spellcasting = target.match(/^spellcasting\.all\.(dc|attack)$/);
+  if (spellcasting) {
+    return (families.spellcasting ?? []).map((key) => `spellcasting.${key}.${spellcasting[1]}`);
+  }
   return [target];
 }
 
@@ -83,7 +111,10 @@ export class StatEngine {
 
   constructor(private readonly opts: StatEngineOptions) {
     for (const input of opts.modifiers) {
-      for (const target of expandTarget(input.mod.target)) {
+      for (const target of expandTarget(input.mod.target, {
+        skills: opts.index.skillKeys(),
+        spellcasting: opts.spellcastingKeys,
+      })) {
         const list = this.byPath.get(target) ?? [];
         list.push(target === input.mod.target ? input : { ...input, mod: { ...input.mod, target } });
         this.byPath.set(target, list);
@@ -268,6 +299,7 @@ export class StatEngine {
     const baseCandidates: Candidate[] = [];
     const setValues: Candidate[] = [];
     const adds: Candidate[] = [];
+    const multipliers: Candidate[] = [];
     const floors: Candidate[] = [];
     const ceilings: Candidate[] = [];
     let advantage = false;
@@ -311,11 +343,22 @@ export class StatEngine {
         case "base":
         case "set":
         case "add":
+        case "multiply":
         case "min":
         case "max": {
           const { value, row } = this.evaluateFor(mod.value as string | number, { ...meta, op: mod.op }, mod.stackKey);
           const bucket: { value: number; row: Contribution; stackKey?: string }[] =
-            mod.op === "base" ? baseCandidates : mod.op === "set" ? setValues : mod.op === "add" ? adds : mod.op === "min" ? floors : ceilings;
+            mod.op === "base"
+              ? baseCandidates
+              : mod.op === "set"
+                ? setValues
+                : mod.op === "add"
+                  ? adds
+                  : mod.op === "multiply"
+                    ? multipliers
+                    : mod.op === "min"
+                      ? floors
+                      : ceilings;
           bucket.push({ value, row, stackKey: mod.stackKey });
           break;
         }
@@ -358,6 +401,13 @@ export class StatEngine {
     }
 
     // Modifiers sharing a stackKey don't stack; the largest applies.
+    const bestMultiplierByKey = new Map<string, { value: number; row: Contribution }>();
+    for (const multiplier of multipliers) {
+      if (!multiplier.stackKey) continue;
+      const current = bestMultiplierByKey.get(multiplier.stackKey);
+      if (!current || multiplier.value > current.value) bestMultiplierByKey.set(multiplier.stackKey, multiplier);
+    }
+
     const bestByKey = new Map<string, { value: number; row: Contribution }>();
     for (const add of adds) {
       if (!add.stackKey) continue;
@@ -371,6 +421,19 @@ export class StatEngine {
       if (!applied) add.row.suppressedBy = winner?.row.sourceName;
       if (applied) value += add.value;
       breakdown.push(add.row);
+    }
+
+    // Multiplication comes after the bonuses, because "your speed is doubled"
+    // doubles the speed you have, and before the clamps, because a floor still
+    // holds afterwards. Several multipliers compose, the way several bonuses
+    // accumulate; the result rounds down, as 5e rounds down.
+    for (const multiplier of multipliers) {
+      const winner = multiplier.stackKey ? bestMultiplierByKey.get(multiplier.stackKey) : undefined;
+      const applied = !multiplier.stackKey || winner === multiplier;
+      multiplier.row.applied = applied;
+      if (!applied) multiplier.row.suppressedBy = winner?.row.sourceName;
+      if (applied) value = Math.floor(value * multiplier.value);
+      breakdown.push(multiplier.row);
     }
 
     for (const floor of floors) {

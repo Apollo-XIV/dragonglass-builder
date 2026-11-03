@@ -14,11 +14,12 @@ import {
   folderOf,
   serialiseJson,
 } from "./obsidian/character-files";
+import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
 import { SourceManager } from "./obsidian/sources";
 import { DRAGONGLASS_VIEW, DragonglassFileView } from "./obsidian/view";
-import type { Draft, DraftStore } from "./obsidian/ui/narrow/drafts";
+import type { Draft, DraftStore } from "./obsidian/ui/builder/drafts";
 import { NewCharacterModal } from "./obsidian/modals/new-character";
 
 export default class DragonglassPlugin extends Plugin {
@@ -52,6 +53,7 @@ export default class DragonglassPlugin extends Plugin {
 
   async onload(): Promise<void> {
     await this.loadSettings();
+    registerGameIcons();
     this.sources = new SourceManager(this.app, this.manifest.dir ?? "", this.settings.caching);
 
     // Obsidian binds one view type per extension, so the single view reads each
@@ -61,11 +63,15 @@ export default class DragonglassPlugin extends Plugin {
 
     this.addSettingTab(new DragonglassSettingTab(this.app, this));
 
+    const newCharacter = () =>
+      new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder, "build")).open();
+
+    this.addRibbonIcon("dg-d20", "New character", newCharacter);
+
     this.addCommand({
       id: "new-character",
       name: "New character",
-      callback: () =>
-        new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder, "build")).open(),
+      callback: newCharacter,
     });
 
     this.addCommand({

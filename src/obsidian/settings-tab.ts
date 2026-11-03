@@ -134,6 +134,26 @@ export class DragonglassSettingTab extends PluginSettingTab {
         }),
       );
 
+    new Setting(containerEl)
+      .setName("Pinned resources")
+      .setDesc(
+        "Resources the desktop sheet keeps in its stat cluster, most wanted first, comma separated. " +
+          "A resource id, a pool key, or a slot target (\"slots.3\", \"pact\"). A character's own layout.5e " +
+          "pins come first, and anything left over is chosen from the content's own pin weights.",
+      )
+      .addText((text) =>
+        text
+          .setPlaceholder("srd:barbarian:rage:rages, slots.1")
+          .setValue(this.plugin.settings.layout.pins.join(", "))
+          .onChange(async (value) => {
+            this.plugin.settings.layout.pins = value
+              .split(",")
+              .map((pin) => pin.trim())
+              .filter(Boolean);
+            await this.plugin.saveSettings();
+          }),
+      );
+
     containerEl.createEl("h2", { text: "Narrow layout" });
     containerEl.createEl("p", {
       cls: "setting-item-description",
@@ -278,7 +298,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
           "GitHub sources should be pinned to a tag or commit.",
       )
       .addText((text) =>
-        text.setPlaceholder("owner/repo or Sources/my-homebrew").onChange((value) => {
+        text.setPlaceholder("owner/repo, Sources/my-homebrew, or /home/me/dnd/my-homebrew").onChange((value) => {
           input = value;
         }),
       )

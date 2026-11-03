@@ -307,6 +307,16 @@
   color: var(--text-success);
 }
 
+.dg-button.is-cta {
+  background: var(--dg-accent);
+  border-color: var(--dg-accent);
+  color: var(--text-on-accent);
+}
+
+.dg-mono {
+  font-family: var(--font-monospace);
+}
+
 .dg-link {
   background: none;
   border: none;
@@ -344,6 +354,8 @@
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--dg-radius);
   color: var(--text-normal);
+  flex: 1;
+  min-width: 10rem;
   padding: 0.35rem 0.5rem;
 }
 
@@ -624,12 +636,6 @@
   white-space: nowrap;
 }
 
-.dg-score-grid {
-  display: grid;
-  gap: var(--size-2-3);
-  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
-}
-
 .dg-score {
   display: flex;
   flex-direction: column;
@@ -702,20 +708,6 @@
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.dg-pick-list {
-  display: grid;
-  gap: 0.2rem;
-  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
-  max-height: 24rem;
-  overflow-y: auto;
-}
-
-.dg-pick-list li {
-  align-items: center;
-  display: flex;
-  gap: var(--size-2-2);
 }
 
 .dg-resource-grid,
@@ -913,25 +905,6 @@
   width: 4rem;
 }
 
-.dg-level-choices {
-  margin-top: var(--size-2-3);
-}
-
-.dg-gained {
-  color: var(--text-muted);
-  font-size: var(--font-ui-smaller);
-  margin-top: 0.3rem;
-}
-
-.dg-gained li::after {
-  content: "·";
-  margin-left: var(--size-2-3);
-}
-
-.dg-gained li:last-child::after {
-  content: "";
-}
-
 .dg-timeline-level.is-empty {
   opacity: 0.55;
 }
@@ -946,6 +919,19 @@
 
 .dg-source-page {
   max-width: 44rem;
+}
+
+.dg-location-input {
+  flex: 1;
+  min-width: 16rem;
+}
+
+.dg-new-source {
+  background: var(--d-surface, var(--background-secondary));
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--dg-radius);
+  margin-bottom: var(--size-2-3);
+  padding: var(--size-4-2);
 }
 
 .dg-attribution {
@@ -1208,12 +1194,15 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  border-radius: 999px;
+  /* The same token as the icons and the spotlight, so the pill's corner and the
+   * highlight flush inside it are the one curve rather than two. */
+  border-radius: var(--radius-m);
+  /* No padding: the spotlight reaches the pill's edges on all four sides. */
+  padding: 0;
   background: var(--background-secondary);
   border: 1px solid var(--background-modifier-border);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
-  /* The pill is the mask: the position track runs to its edge and the rounded
-   * corners cut it, so the track belongs to the rail rather than hanging off it. */
+  /* The pill is the mask, so the spotlight is cut by its rounded corners. */
   overflow: hidden;
   /* The rail handles its own vertical gesture; the page must not also scroll. */
   touch-action: none;
@@ -1226,6 +1215,9 @@
  * that gives them a fill of their own hides it. */
 .dg-rail-spot {
   position: absolute;
+  top: 0;
+  left: 0;
+  /* The same token as the pill it sits flush inside, so the two corners agree. */
   border-radius: var(--radius-m);
   background: var(--dg-accent);
   transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -1278,28 +1270,6 @@
   right: 4px;
   border-radius: 50%;
   background: var(--text-warning);
-}
-
-.dg-rail-track {
-  position: absolute;
-  border-radius: 999px;
-  background: var(--background-modifier-border);
-}
-
-.dg-rail-dock[data-side="right"] .dg-rail-track {
-  left: 0;
-}
-
-.dg-rail-dock[data-side="left"] .dg-rail-track {
-  right: 0;
-}
-
-.dg-rail-thumb {
-  position: absolute;
-  left: 0;
-  width: 100%;
-  border-radius: 999px;
-  background: var(--dg-accent);
 }
 
 .dg-rail-label {
@@ -1785,6 +1755,17 @@
     opacity: 0;
   }
   to {
+    opacity: 1;
+  }
+}
+
+@keyframes dg-dialog-in {
+  from {
+    transform: translate(-50%, -50%) scale(0.96);
+    opacity: 0;
+  }
+  to {
+    transform: translate(-50%, -50%) scale(1);
     opacity: 1;
   }
 }
@@ -2387,4 +2368,1963 @@
 .dg-diff li {
   padding: 2px 0;
   font-size: var(--font-ui-smaller);
+}
+
+/* ==========================================================================
+ * The desktop layout: panes 900px wide and up.
+ *
+ * Driven by `dragonglass desktop sheet spec.md`. Everything here takes its
+ * colour, radius and spacing from Obsidian's variables through the five custom
+ * properties declared on `.dg-desk`, so there is one gutter, one radius scale
+ * and one type scale and the sheet follows the user's theme in both modes.
+ *
+ * The same rule as the narrow layout applies to buttons: Obsidian fills every
+ * bare <button> at specificity (0,1,1), so a one-class rule of ours loses. Every
+ * selector below that styles a button carries two classes for that reason.
+ * ========================================================================== */
+
+.dg-desk {
+  /* One spacing scale. Every gap and padding in the layout is one of these. */
+  --d-gap: var(--size-4-3);
+  --d-gap-tight: var(--size-4-2);
+  --d-pad: var(--size-4-3);
+
+  /* One radius scale. */
+  --d-radius: var(--radius-s);
+  --d-radius-box: var(--radius-m);
+  --d-radius-pill: 999px;
+
+  /* One type scale: big values share a size, labels share a smaller one. */
+  --d-value: 1.5rem;
+  --d-value-small: 1.0625rem;
+  --d-label: 0.6875rem;
+
+  /* Surfaces, as one elevation ladder. The page is the floor, a box sits one
+   * step above it and a tile one step above that, which is the separation the
+   * sketch reads with. Each step is a mix towards the text colour rather than a
+   * named variable, because only a mix moves in the right direction in both a
+   * light and a dark theme — and only a ladder keeps a tile inside a box
+   * distinct from a tile on the page. */
+  --d-surface: color-mix(in srgb, var(--background-secondary) 96%, var(--text-normal));
+  --d-tile: color-mix(in srgb, var(--background-secondary) 86%, var(--text-normal));
+  --d-tile-hover: color-mix(in srgb, var(--background-secondary) 78%, var(--text-normal));
+  --d-surface-sunken: var(--background-primary);
+  --d-border: var(--background-modifier-border);
+
+  /* The colour roles, matched to the narrow layout's tokens. */
+  --d-hp: var(--color-red);
+  --d-heal: var(--color-green);
+  --d-temp: var(--color-blue);
+  --d-tempmax: var(--color-purple);
+  --d-set: var(--color-orange);
+  --d-accent: var(--dg-accent, var(--interactive-accent));
+
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-gap);
+  /* Definite, not a minimum: the tabs panel and the Skills box fill the pane and
+   * scroll inside themselves, and only `height` bounds a 1fr row. With
+   * `min-height` the grid sizes to its content and the page scrolls instead. */
+  height: 100%;
+  max-width: 96rem;
+  margin: 0 auto;
+  padding: var(--d-gap);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The sheet wants the pane, not the readable width the focused editors use.
+ * Past its own max width it centres, which is the same thing Obsidian does. */
+.dragonglass:has(.dg-desk) {
+  position: relative;
+  overflow: hidden;
+}
+
+.dragonglass:has(.dg-desk) .dg-root {
+  position: absolute;
+  inset: 0;
+  max-width: none;
+  padding: 0;
+  overflow-y: auto;
+}
+
+/* -- The two rows -------------------------------------------------------- */
+
+.dg-desk-grid {
+  display: grid;
+  /* Two columns, each its own stack. The left one is the identity column over a
+   * pair of rows (Skills beside Senses and Proficiencies); the right is the stat
+   * cluster and HP panel over the tabs panel. Neither column's height sets the
+   * other's row boundaries, so a short column's boxes take the space rather than
+   * leaving it empty. The left column stops growing at its own widths; the right
+   * takes the rest, as the spec asks. */
+  grid-template-columns: auto minmax(20rem, 1fr);
+  grid-template-rows: 1fr;
+  gap: var(--d-gap);
+  flex: 1;
+  min-height: 0;
+}
+
+.dg-desk-right {
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-gap);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Skills and the Senses/Proficiencies pair share the rows under the identity
+ * column. Skills is column 1 and the stacked pair column 2, and the identity
+ * column spans both. The pair's min-content carries the row floor, so the bottom
+ * row never shrinks below a readable Skills box. */
+.dg-desk-left {
+  display: grid;
+  grid-template-columns: minmax(10rem, 16rem) minmax(8rem, 12rem);
+  grid-template-rows: auto minmax(18rem, 1fr);
+  gap: var(--d-gap);
+  min-width: 0;
+  min-height: 0;
+}
+
+.dg-desk-identity {
+  grid-column: 1 / 3;
+  grid-row: 1;
+}
+
+.dg-desk-vitals {
+  /* Sized by its content, never shrunk to make room for the tabs panel. */
+  flex: none;
+  display: flex;
+  gap: var(--d-gap);
+  align-items: stretch;
+  min-width: 0;
+  /* A floor and a ceiling, not a height. The vitals row is sized by its own
+   * content; the floor keeps the vial legible, and the ceiling is what stops the
+   * HP register — which has a whole session's worth of rows in it — from
+   * setting that height instead. Past 9.5rem the cluster's `align-content:
+   * stretch` was spending the slack padding its tiles rather than handing it
+   * to the tabs panel below. */
+  min-height: 7rem;
+  max-height: 11rem;
+}
+
+/* Both stop growing where they stop reading better: past that the extra width
+ * is the tabs panel's, as it is in the row below. */
+.dg-desk-vitals .dg-d-cluster {
+  flex: 1 1 17rem;
+  min-width: 0;
+  max-width: 24rem;
+}
+
+.dg-desk-vitals .dg-hp-panel {
+  flex: 1 1 13rem;
+  /* The register is a column of balances, leaders and deltas on one line each.
+   * Rows no longer wrap, so below this they ellipsise rather than reflowing. */
+  min-width: 13rem;
+  max-width: 30rem;
+  min-height: 0;
+}
+
+/* The wrappers are flex so their one child fills the row: a grid item stretches,
+ * but a block child of it does not, and the Skills box would then size to its
+ * eighteen rows and hang off the bottom of the pane. */
+.dg-desk-skills {
+  grid-column: 1;
+  grid-row: 2;
+  display: flex;
+  min-height: 0;
+}
+
+.dg-desk-skills > *,
+.dg-desk-tabs > * {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.dg-desk-stack {
+  grid-column: 2;
+  grid-row: 2;
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-gap);
+  min-height: 0;
+}
+
+/* Senses is a short list and Proficiencies a long one, so the first takes what
+ * it needs and the second takes the rest. */
+.dg-desk-stack > :first-child {
+  flex: 0 1 auto;
+  max-height: 45%;
+}
+
+.dg-desk-stack > :last-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.dg-desk-tabs {
+  /* Takes whatever height the vitals leave, however short or tall that is. */
+  flex: 1 1 0;
+  display: flex;
+  min-height: 0;
+}
+
+/* -- Header band --------------------------------------------------------- */
+
+.dg-d-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
+  align-items: start;
+  column-gap: var(--d-gap);
+  row-gap: var(--d-gap-tight);
+  padding-bottom: var(--d-gap-tight);
+}
+
+/* The avatar overlaps down out of the band, so the chips sit beside its lower
+ * half rather than under the whole tile. */
+.dg-d-avatar {
+  grid-row: 1 / 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: var(--d-radius-box);
+  color: var(--text-on-accent);
+  font-size: var(--d-value);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+.dg-d-identity {
+  grid-column: 2;
+  min-width: 0;
+}
+
+.dg-d-name {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.dg-d-subline {
+  margin: 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+.dg-d-header-actions {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  gap: var(--d-gap-tight);
+  align-items: center;
+}
+
+.dg-layout .dg-d-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-4-1);
+  height: var(--input-height);
+  padding: 0 var(--size-4-3);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius);
+  background: var(--d-surface);
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-small);
+}
+
+.dg-layout .dg-d-button:hover {
+  background: var(--background-modifier-hover);
+  border-color: var(--background-modifier-border-hover);
+}
+
+/* Inspiration must read as on or off from across the table. */
+.dg-layout .dg-d-button.is-inspired {
+  background: var(--d-accent);
+  border-color: var(--d-accent);
+  color: var(--text-on-accent);
+}
+
+/* -- Status chips -------------------------------------------------------- */
+
+.dg-d-chips {
+  grid-column: 2 / 4;
+  grid-row: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--d-gap-tight);
+  align-items: center;
+}
+
+.dg-d-chip,
+.dg-layout .dg-d-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  height: 1.5rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius-pill);
+  /* A chip sits on the page beside the ability tiles, so it is a tile surface
+   * and not a box one — one rung of the ladder per thing the eye compares. */
+  background: var(--d-tile);
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* Icons here are sized in rem, not em: the label is 11px, and an icon set as a
+ * fraction of that is a smudge rather than a glyph. */
+.dg-d-chip .dg-icon svg,
+.dg-d-chip .dg-icon {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.dg-layout .dg-d-chip.is-concentration {
+  border-color: var(--d-set);
+  color: var(--d-set);
+}
+
+.dg-layout .dg-d-chip.is-condition {
+  border-color: var(--color-yellow);
+  color: var(--color-yellow);
+}
+
+.dg-layout .dg-d-chip.is-add {
+  border-style: dashed;
+}
+
+.dg-layout .dg-d-chip:hover {
+  background: var(--background-modifier-hover);
+}
+
+.dg-d-chip-x {
+  opacity: 0;
+}
+
+.dg-layout .dg-d-chip:hover .dg-d-chip-x {
+  opacity: 0.7;
+}
+
+/* -- Menus (Rest, conditions) -------------------------------------------- */
+
+.dg-d-menu-anchor {
+  position: relative;
+}
+
+.dg-d-menu {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  right: 0;
+  min-width: 15rem;
+  padding: var(--size-4-1);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius-box);
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-s);
+}
+
+.dg-layout .dg-d-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--d-gap-tight);
+  width: 100%;
+  padding: var(--size-4-2);
+  border: none;
+  border-radius: var(--d-radius);
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+}
+
+.dg-layout .dg-d-menu-item:hover {
+  background: var(--background-modifier-hover);
+}
+
+.dg-d-menu-item span {
+  display: flex;
+  flex-direction: column;
+}
+
+.dg-d-menu-item small,
+.dg-d-menu-dice-label {
+  color: var(--text-muted);
+  font-size: var(--d-label);
+}
+
+.dg-d-menu-dice {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--d-gap-tight);
+  align-items: center;
+  padding: var(--size-4-1) var(--size-4-2) var(--size-4-2);
+}
+
+.dg-d-menu.is-conditions {
+  left: 0;
+  right: auto;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 2px;
+  min-width: 18rem;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.dg-layout .dg-d-menu-row {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1) var(--size-4-2);
+  border: none;
+  border-radius: var(--d-radius);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  text-align: left;
+  text-transform: capitalize;
+}
+
+.dg-layout .dg-d-menu-row:hover {
+  background: var(--background-modifier-hover);
+}
+
+.dg-layout .dg-d-menu-row.is-on {
+  background: var(--d-accent);
+  color: var(--text-on-accent);
+}
+
+.dg-layout .dg-d-menu-row.is-immune {
+  color: var(--text-faint);
+}
+
+.dg-d-menu-row.is-exhaustion {
+  grid-column: 1 / 3;
+  align-items: center;
+}
+
+.dg-d-menu-row.is-exhaustion input {
+  width: 4rem;
+}
+
+/* -- Shared tile and target language ------------------------------------- */
+
+/* Nothing rollable carries an outline at rest: the hover state is the whole of
+ * the affordance, and the target is the value, never the row around it. */
+.dg-layout .dg-d-target {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.15em;
+  padding: 0.1em 0.3em;
+  /* Obsidian gives every bare <button> a fixed `height` at (0,1,1). Every
+   * rollable here is a button that sizes to its own content — a tile is two
+   * lines tall — so the height is undone once, for the whole family. Without
+   * this an ability tile's fill stops partway down and its label hangs out of
+   * the bottom of it. The few targets that do want a set height declare one. */
+  height: auto;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius);
+  background: transparent;
+  box-shadow: none;
+  color: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+.dg-layout .dg-d-target:hover,
+.dg-layout .dg-d-target:focus-visible {
+  border-color: var(--d-accent);
+  background: var(--background-modifier-hover);
+}
+
+.dg-d-value {
+  font-size: var(--d-value);
+  font-weight: 600;
+  line-height: 1.05;
+}
+
+.dg-d-unit {
+  color: var(--text-muted);
+  font-size: var(--d-label);
+}
+
+.dg-d-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25em;
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.dg-d-label .dg-icon,
+.dg-d-label .dg-icon svg {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+
+.dg-d-empty {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* A rule with its name set into it, as in the sketch. */
+.dg-d-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--d-gap-tight);
+  margin: var(--d-gap-tight) 0 var(--size-4-1);
+  color: var(--text-faint);
+  font-size: var(--d-label);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dg-d-divider::before,
+.dg-d-divider::after {
+  content: "";
+  flex: 1;
+  border-top: 1px solid var(--d-border);
+}
+
+/* -- Identity column ------------------------------------------------------ */
+
+.dg-d-abilities {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--d-gap-tight);
+}
+
+/* The fill is the tile, so there is no border to go with it: a border plus a
+ * fill at this size reads as two edges rather than one surface. The hover
+ * accent outline is drawn inside, so taking it does not move the tile. */
+.dg-layout .dg-d-ability {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+  /* Roughly square, as in the sketch: the modifier is the thing being read and
+   * it wants air around it, not a tile cut to the height of its own text. */
+  min-height: 3.5rem;
+  padding: var(--size-4-2) 0.2rem;
+  border-color: transparent;
+  border-radius: var(--d-radius-box);
+  background: var(--d-tile);
+}
+
+.dg-layout .dg-d-ability:hover,
+.dg-layout .dg-d-ability:focus-visible {
+  border-color: var(--d-accent);
+  background: var(--d-tile-hover);
+}
+
+/* A grid, not a wrapping row: six pills under six tiles is the arrangement, and
+ * when the column is too narrow for six they reflow to three and three rather
+ * than leaving one of them orphaned across the full width. */
+.dg-d-saves {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(3.9rem, 1fr));
+  gap: var(--size-4-1);
+}
+
+.dg-layout .dg-d-save {
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  height: 1.75rem;
+  /* The pip sits at the pill's left edge, so the content is padded away from it
+   * on that side only and the six pills still centre their own text. */
+  padding: 0 0.35rem;
+  border-color: transparent;
+  border-radius: var(--d-radius-pill);
+  background: var(--d-tile);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-layout .dg-d-save:hover,
+.dg-layout .dg-d-save:focus-visible {
+  border-color: var(--d-accent);
+  background: var(--d-tile-hover);
+}
+
+/* The pip is the proficiency marker; the accent outline repeats it for the
+ * saves a character is actually trained in, as the sketch does. */
+.dg-layout .dg-d-save.is-proficient {
+  border-color: var(--d-accent);
+  background: color-mix(in srgb, var(--d-accent) 12%, var(--d-tile));
+}
+
+.dg-d-save-name {
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  letter-spacing: 0.04em;
+}
+
+.dg-d-save-value {
+  font-weight: 600;
+}
+
+.dg-d-pip {
+  width: 0.5rem;
+  height: 0.5rem;
+  border: 1px solid var(--text-faint);
+  border-radius: 50%;
+  flex: none;
+}
+
+.dg-d-pip.is-on,
+.dg-d-pip.is-proficient {
+  border-color: var(--d-accent);
+  background: var(--d-accent);
+}
+
+/* Expertise is the pip with a ring around it; half proficiency fills half of
+ * it. Both have to be legible at 8px, so neither is a new shape. */
+.dg-d-pip.is-expertise {
+  border-color: var(--d-accent);
+  background: var(--d-accent);
+  box-shadow: 0 0 0 2px var(--background-primary), 0 0 0 3px var(--d-accent);
+}
+
+.dg-d-pip.is-half {
+  border-color: var(--d-accent);
+  background: linear-gradient(to right, var(--d-accent) 50%, transparent 50%);
+}
+
+/* -- Situational notes ---------------------------------------------------- */
+
+.dg-d-notes {
+  margin: var(--d-gap-tight) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.dg-d-note {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-d-note em {
+  min-width: 0;
+}
+
+/* One badge shape for all three kinds. A letter, a d20-and-letter and a signed
+ * number are different widths, so the badge is a pill with a minimum rather
+ * than a circle — otherwise "A" is an ellipse and "+1" a lozenge, and the
+ * column of them reads as three unrelated things. */
+.dg-d-note-badge {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2em;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.3rem;
+  border-radius: var(--d-radius-pill);
+  background: var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  font-weight: 600;
+}
+
+/* At 11px type a 0.8em icon is a speck. The d20 has to be the badge's height to
+ * read as a die at all, so it is sized against the badge, not against the text
+ * beside it. */
+.dg-d-note-badge .dg-icon,
+.dg-d-note-badge .dg-icon svg {
+  width: 0.95rem;
+  height: 0.95rem;
+}
+
+.dg-d-note.is-advantage .dg-d-note-badge {
+  background: color-mix(in srgb, var(--d-heal) 25%, transparent);
+  color: var(--d-heal);
+}
+
+.dg-d-note.is-disadvantage .dg-d-note-badge {
+  background: color-mix(in srgb, var(--d-hp) 25%, transparent);
+  color: var(--d-hp);
+}
+
+/* -- Standing boxes ------------------------------------------------------- */
+
+.dg-d-box {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius-box);
+  background: var(--d-surface);
+}
+
+/* Centred and ruled off, so a box title and the "Abilities" divider beside it
+ * are plainly the same kind of label. */
+.dg-d-box-title {
+  margin: 0 0 var(--size-4-1);
+  padding: var(--size-4-2) var(--d-pad) var(--size-4-2);
+  border-bottom: 1px solid var(--d-border);
+  color: var(--text-faint);
+  font-size: var(--d-label);
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.dg-d-box-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--d-pad) var(--size-4-2);
+}
+
+.dg-d-skill,
+.dg-d-sense,
+.dg-d-prof-group {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: 0.1rem 0;
+}
+
+/* Block, not flex: `text-overflow` has no effect on the anonymous text inside a
+ * flex container, so as a flex box these names hard-clipped mid-letter in a
+ * narrow pane instead of ellipsising. The icon some of them carry is inline. */
+.dg-d-skill-name,
+.dg-d-sense-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dg-d-skill-name .dg-icon,
+.dg-d-sense-name .dg-icon {
+  margin-right: 0.3rem;
+  vertical-align: -0.15em;
+}
+
+.dg-d-skill-ability {
+  color: var(--text-faint);
+  font-size: var(--d-label);
+  letter-spacing: 0.04em;
+}
+
+.dg-layout .dg-d-skill-value,
+.dg-layout .dg-d-sense-value {
+  min-width: 2.4rem;
+  justify-content: flex-end;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.dg-d-prof-group {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--size-4-1) 0;
+}
+
+.dg-d-group-label {
+  color: var(--text-faint);
+  font-size: var(--d-label);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.dg-d-group-values {
+  font-size: var(--font-ui-smaller);
+  line-height: 1.35;
+}
+
+/* -- Stat cluster --------------------------------------------------------- */
+
+.dg-d-cluster {
+  display: grid;
+  /* Two small tiles and one wide one per row, which is the sketch's shape and
+   * also what the hit dice and the pins need. */
+  /* The small tiles have a preferred width and a floor, not a fixed width: at
+   * 900px the cluster and the HP panel together are wider than the column they
+   * share, and something has to give before they overlap. */
+  grid-template-columns: repeat(2, minmax(2.5rem, 4rem)) minmax(3.5rem, 1fr);
+  /* Both rows the same height, as in the sketch. `auto` let the pins row — whose
+   * names wrap to two lines — grow taller than the row of plain numbers beside
+   * it, and the cluster then read as two unrelated bands. */
+  grid-template-rows: repeat(2, minmax(4rem, 1fr));
+  gap: var(--d-gap-tight);
+  align-content: stretch;
+  /* The pins below size themselves against the cluster rather than the pane. */
+  container-type: inline-size;
+  container-name: cluster;
+}
+
+/* The value and its label are one object, so they stay centred together: the
+ * row's height is the identity column's, which is taller than these tiles need,
+ * and pinning the label to the bottom edge of that slack reads as two things
+ * rather than one. */
+.dg-d-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+  padding: var(--d-gap-tight) var(--size-4-1);
+  border: 1px solid transparent;
+  border-radius: var(--d-radius-box);
+  background: var(--d-tile);
+  /* Nothing spills past a tile's edge. The hover card is portalled out of the
+   * tree, so clipping here costs nothing and a long hit-dice line in a narrow
+   * pane stops at the tile instead of crossing the one beside it. */
+  overflow: hidden;
+  min-width: 0;
+  text-align: center;
+}
+
+/* Wide only means it spans the third column. It still centres its value and
+ * label the way the small tiles do, so the two rows read as one cluster. */
+.dg-d-tile.is-wide {
+  grid-column: 3;
+}
+
+/* Takes the room above the label and centres the value in it, so the main
+ * number sits in the middle of the box and the label stays on the bottom edge
+ * whatever else the tile holds. */
+.dg-d-tile-value {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.dg-d-tile-extra {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem;
+  color: var(--text-faint);
+  font-size: var(--d-label);
+}
+
+/* Row direction so two pools sit side by side when the tile has room, and
+ * wrap under one another (rather than clip) when it doesn't. */
+.dg-d-hitdice {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem 0.6rem;
+}
+
+/* The total wraps under the remaining count rather than being clipped by the
+ * tile when the pane is narrow: "6" alone would not say which pool it is. */
+.dg-d-hitdice-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+.dg-layout .dg-d-count {
+  padding: 0 0.3rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius);
+  background: var(--d-surface-sunken);
+  box-shadow: none;
+  color: var(--text-normal);
+  font-size: var(--d-value);
+  font-weight: 600;
+  line-height: 1.1;
+}
+
+.dg-layout .dg-d-count:hover {
+  border-color: var(--d-accent);
+}
+
+.dg-d-count-input {
+  width: 2.5rem;
+  padding: 0 0.2rem;
+  font-size: var(--d-value-small);
+  text-align: center;
+}
+
+.dg-d-hitdice-total {
+  color: var(--text-muted);
+  font-size: var(--d-value-small);
+}
+
+/* -- Pinned resources ----------------------------------------------------- */
+
+/* One tile split in two, not two tiles in a tile: the slots are divided by a
+ * rule rather than each carrying a surface of its own, which is what stops the
+ * pins reading as a nested box. */
+.dg-d-tile.is-pins {
+  flex-direction: row;
+  align-items: stretch;
+  gap: 0;
+  padding: var(--size-4-2) 0;
+}
+
+.dg-d-pin {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 0.35rem;
+  padding: 0 var(--size-4-2);
+  /* The tile centres its own value; a slot's name is a list heading and ranges
+   * over one line or two, so it is ragged-right whichever it is. */
+  text-align: left;
+}
+
+.dg-d-pin + .dg-d-pin {
+  border-left: 1px solid var(--d-border);
+}
+
+.dg-d-pin.is-empty {
+  background: transparent;
+}
+
+.dg-d-pin-name {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  text-transform: uppercase;
+  /* Two lines rather than an ellipsis: "Channel Divinity" has to be readable,
+   * and the slot is only ever a few words wide. The two lines are reserved
+   * whether or not they are used, so a one-line name beside a two-line one
+   * still lines its pips up with it. */
+  min-height: 2.4em;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.dg-d-pin-die {
+  padding: 0 0.3rem;
+  border-radius: var(--d-radius);
+  background: var(--d-surface-sunken);
+  color: var(--text-normal);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.dg-d-pin-pips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.2rem;
+}
+
+.dg-layout .dg-d-use {
+  width: 0.7rem;
+  height: 0.7rem;
+  padding: 0;
+  border: 1px solid var(--text-faint);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dg-layout .dg-d-use.is-on {
+  border-color: var(--d-accent);
+  background: var(--d-accent);
+}
+
+.dg-d-pin-count {
+  display: flex;
+  align-items: baseline;
+  gap: 0.25rem;
+  font-size: var(--d-value-small);
+  font-weight: 600;
+}
+
+.dg-d-pin-count small {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+/* The cluster is what the pins measure themselves against, not the pane: a
+ * side-by-side pair needs about 17rem between them, and below that the two
+ * names collide with the rule dividing them. The desktop layout only promises
+ * 900px, and at 900px the cluster is narrower than that. */
+@container cluster (max-width: 17rem) {
+  .dg-d-tile.is-pins {
+    flex-direction: column;
+    padding: 0 var(--size-4-2);
+  }
+
+  .dg-d-pin {
+    justify-content: center;
+    padding: 0;
+  }
+
+  /* Stacked, the rule between them runs the other way, and a name that had two
+   * lines reserved for alignment no longer needs them. */
+  .dg-d-pin + .dg-d-pin {
+    border-left: none;
+    border-top: 1px solid var(--d-border);
+  }
+
+  .dg-d-pin-name {
+    min-height: 0;
+    -webkit-line-clamp: 1;
+  }
+}
+
+.dg-layout .dg-d-pin-step {
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 1;
+}
+
+/* -- Hover cards ---------------------------------------------------------- */
+
+/* Portalled out of the tree, so it is positioned against the window and not
+ * clipped by whichever box it decorates. */
+.dg-d-hovercard {
+  position: fixed;
+  z-index: 60;
+  padding: var(--size-4-2);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius-box);
+  background: var(--background-secondary);
+  box-shadow: var(--shadow-s);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  pointer-events: none;
+}
+
+.dg-d-hovercard-formula {
+  margin: 0;
+  font-weight: 500;
+}
+
+.dg-d-hovercard-rows {
+  margin: var(--size-4-1) 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text-muted);
+}
+
+.dg-d-hovercard-rows li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--size-4-2);
+}
+
+.dg-d-hovercard-rows li.is-suppressed {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.dg-d-hovercard-note {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin: var(--size-4-1) 0 0;
+  color: var(--text-muted);
+}
+
+.dg-d-hovercard-note.is-advantage {
+  color: var(--d-heal);
+}
+
+.dg-d-hovercard-note.is-disadvantage {
+  color: var(--d-hp);
+}
+
+.dg-d-hovercard-hint {
+  margin: var(--size-4-2) 0 0;
+  color: var(--text-faint);
+  font-size: var(--d-label);
+}
+
+/* -- Tabs panel ----------------------------------------------------------- */
+
+.dg-d-tabs-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+/* The bar scrolls sideways when the tabs outgrow it; the fades say so. */
+.dg-d-tabbar {
+  position: relative;
+}
+
+.dg-d-tabbar::before,
+.dg-d-tabbar::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 1px;
+  width: 1.5rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+
+.dg-d-tabbar::before {
+  left: 0;
+  background: linear-gradient(to right, var(--background-primary), transparent);
+}
+
+.dg-d-tabbar::after {
+  right: 0;
+  background: linear-gradient(to left, var(--background-primary), transparent);
+}
+
+.dg-d-tabbar.has-left::before,
+.dg-d-tabbar.has-right::after {
+  opacity: 1;
+}
+
+.dg-d-tabstrip {
+  display: flex;
+  gap: 2px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  border-bottom: 1px solid var(--d-border);
+}
+
+.dg-d-tabstrip::-webkit-scrollbar {
+  height: 0;
+  display: none;
+}
+
+.dg-layout .dg-d-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: var(--size-4-2) var(--d-pad);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: var(--d-radius-box) var(--d-radius-box) 0 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+  white-space: nowrap;
+}
+
+.dg-layout .dg-d-tab:hover {
+  color: var(--text-normal);
+  background: var(--background-modifier-hover);
+}
+
+/* The active tab is attached to the body below it, folder-style: same surface,
+ * and the shared border is painted over by the tab itself. */
+.dg-layout .dg-d-tab.is-active {
+  border-color: var(--d-border);
+  background: var(--d-surface);
+  color: var(--text-normal);
+  font-weight: 600;
+  margin-bottom: -1px;
+  padding-bottom: calc(var(--size-4-2) + 1px);
+}
+
+.dg-d-tab-badge {
+  min-width: 1.1rem;
+  padding: 0 0.3rem;
+  border-radius: var(--d-radius-pill);
+  background: var(--d-accent);
+  color: var(--text-on-accent);
+  font-size: var(--d-label);
+  text-align: center;
+}
+
+.dg-d-tab-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--d-pad);
+  border: 1px solid var(--d-border);
+  border-top: none;
+  border-radius: 0 var(--d-radius-box) var(--d-radius-box) var(--d-radius-box);
+  background: var(--d-surface);
+}
+
+/* The reused narrow sections are built for one column of a phone; the extra
+ * width is spent on columns rather than on longer lines. Rows are
+ * self-contained, so flowing them into tracks costs nothing and halves the
+ * scrolling; the chips, slots and casting stats stay full width above them. */
+.dg-d-tab-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+  gap: 0 var(--d-gap);
+  align-content: start;
+}
+
+.dg-d-tab-body > .dg-n-chips,
+.dg-d-tab-body > .dg-n-stat-row,
+.dg-d-tab-body > .dg-n-slots,
+.dg-d-tab-body > .dg-n-banner,
+.dg-d-tab-body > .dg-muted,
+.dg-d-tab-body > .dg-section,
+.dg-d-tab-body > .dg-markdown,
+.dg-d-tab-body > .dg-empty,
+.dg-d-tab-body > .dg-n-effects {
+  grid-column: 1 / -1;
+}
+
+.dg-d-tab-body .dg-read-row {
+  padding-left: var(--size-4-1);
+  padding-right: var(--size-4-1);
+}
+
+.dg-d-tab-body .dg-n-slots {
+  flex-wrap: wrap;
+}
+
+/* The spellcasting tiles are built to fill a phone's width; here they sit at
+ * their own size at the left rather than stretching a DC across the panel. */
+.dg-d-tab-body .dg-n-stat-row {
+  justify-content: flex-start;
+}
+
+.dg-d-tab-body .dg-n-stat-row > .dg-n-tile {
+  flex: 0 1 11rem;
+}
+
+/* The desktop sheet bodies are dialogs, not bottom sheets: a card in the middle
+ * of the pane, since there is no thumb to reach it with. Everything inside is
+ * the narrow layout's own markup. */
+.dg-layout[data-layout="desktop"] .dg-bottom-sheet {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  width: min(32rem, calc(100% - 4rem));
+  transform: translate(-50%, -50%);
+  border-radius: var(--radius-l);
+  /* dg-rise slides up from the bottom edge, which only reads right against the
+   * narrow sheet's own position: absolute, inset via left/right/bottom. Centred
+   * with left/top 50% and a transform, its keyframes would override that
+   * transform for the animation's duration and the dialog would open off to one
+   * side before snapping to centre when the animation ended. */
+  animation: dg-dialog-in 160ms ease;
+}
+
+.dg-layout[data-layout="desktop"] .dg-sheet-grip {
+  display: none;
+}
+
+/* The bottom padding exists to clear a phone's floating toolbar; a dialog in the
+ * middle of a pane has nothing to clear. */
+.dg-layout[data-layout="desktop"] .dg-bottom-sheet {
+  padding: 0 var(--size-4-4) var(--size-4-4);
+}
+
+/* The note and the feature it comes from are two columns, not one sentence. */
+.dg-layout[data-layout="desktop"] .dg-explain-notes li,
+.dg-layout[data-layout="desktop"] .dg-explain li {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--size-4-3);
+}
+
+/* Toasts come from the narrow layout, where the only chrome is above them. On a
+ * desktop pane the top centre is the stat cluster, so they take the top right
+ * corner and their own width instead of the pane's. */
+.dg-layout[data-layout="desktop"] .dg-toast-layer {
+  justify-content: flex-end;
+}
+
+.dg-layout[data-layout="desktop"] .dg-toast {
+  width: auto;
+  min-width: 14rem;
+  max-width: 24rem;
+}
+
+/* The menu rows need air between a label and the line under it. */
+.dg-d-menu-item small {
+  line-height: 1.4;
+  padding-top: 1px;
+}
+
+/* ==========================================================================
+ * The hit point panel: vial and register. Shared by both layouts.
+ * ========================================================================== */
+
+.dg-hp-panel {
+  display: flex;
+  gap: var(--size-4-2);
+  align-items: stretch;
+  min-width: 12rem;
+  padding: var(--size-4-2);
+  border: 1px solid var(--d-border, var(--background-modifier-border));
+  border-radius: var(--d-radius-box, var(--radius-m));
+  background: var(--d-surface, var(--background-primary-alt));
+}
+
+/* The rows and the readout are one card, not two: the readout is the last line
+ * of the till roll, so the rule between them sits inside the card rather than
+ * being the gap between two of them. */
+.dg-hp-right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-surface-sunken, var(--background-primary));
+  overflow: hidden;
+}
+
+/* -- The vial ------------------------------------------------------------- */
+
+/* The empty part of the vial is a track, not a surface: it reads as the space
+ * the fill has yet to reach, so it is darker than the panel rather than
+ * lighter. */
+.dg-hp-vial {
+  position: relative;
+  flex: none;
+  width: 2.75rem;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-surface-sunken, var(--background-primary));
+  box-shadow: inset 0 0 0 1px var(--d-border, var(--background-modifier-border));
+  overflow: hidden;
+}
+
+.dg-hp-vial > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.dg-hp-fill {
+  background: var(--d-hp, var(--color-red));
+}
+
+/* A pending gain sits above the fill in the healing colour; a pending loss
+ * leaves a dashed ghost at the level it is about to leave. */
+.dg-hp-gain {
+  background: color-mix(in srgb, var(--d-heal, var(--color-green)) 70%, transparent);
+}
+
+.dg-hp-ghost {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--d-hp, var(--color-red)) 35%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+  border-top: 1px dashed var(--d-hp, var(--color-red));
+}
+
+.dg-hp-temp {
+  background: var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-temp-ghost {
+  background: repeating-linear-gradient(
+    -45deg,
+    color-mix(in srgb, var(--d-temp, var(--color-blue)) 35%, transparent) 0 3px,
+    transparent 3px 6px
+  );
+  border-top: 1px dashed var(--d-temp, var(--color-blue));
+}
+
+/* Temp max HP moves the ceiling: a tinted band above the dashed base-max line
+ * when positive, a blocked-off cap when negative. */
+/* A pending temp pool is the same blue, outlined rather than filled: it has not
+ * happened yet. */
+.dg-hp-temp-gain {
+  background: color-mix(in srgb, var(--d-temp, var(--color-blue)) 45%, transparent);
+  border-top: 1px dashed var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-tempmax-band {
+  background: color-mix(in srgb, var(--d-tempmax, var(--color-purple)) 28%, transparent);
+}
+
+.dg-hp-blocked {
+  background: repeating-linear-gradient(
+    45deg,
+    color-mix(in srgb, var(--d-tempmax, var(--color-purple)) 40%, transparent) 0 4px,
+    transparent 4px 8px
+  );
+}
+
+.dg-hp-basemax-line {
+  height: 0;
+  border-top: 1px dashed var(--text-muted);
+}
+
+/* -- Death saves ---------------------------------------------------------- */
+
+.dg-hp-death {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4-2);
+  width: 2.5rem;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--background-modifier-border);
+}
+
+.dg-hp-death-label {
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  color: var(--text-muted);
+  font-size: var(--d-label, 0.6875rem);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.dg-hp-death.is-dead .dg-hp-death-label {
+  color: var(--d-hp, var(--color-red));
+}
+
+.dg-hp-death.is-stable .dg-hp-death-label {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-hp-death-pips {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dg-layout .dg-hp-pip {
+  width: 0.75rem;
+  height: 0.75rem;
+  padding: 0;
+  border: 1px solid var(--text-faint);
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+
+.dg-layout .dg-hp-pip.is-success.is-on {
+  border-color: var(--d-heal, var(--color-green));
+  background: var(--d-heal, var(--color-green));
+}
+
+.dg-layout .dg-hp-pip.is-failure.is-on {
+  border-color: var(--d-hp, var(--color-red));
+  background: var(--d-hp, var(--color-red));
+}
+
+.dg-hp-death-divider {
+  width: 0.9rem;
+  border-top: 1px solid var(--text-faint);
+}
+
+/* -- The register --------------------------------------------------------- */
+
+.dg-hp-register {
+  flex: 1;
+  /* Zero, not a minimum: the rows scroll, so the panel's height is whatever the
+   * row above it allows rather than whatever the log has accumulated. */
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Maximum hit points head the register the way a statement heads with the
+ * figure everything below it is measured against, so it is set larger than the
+ * running balances rather than level with them.
+ *
+ * There is no rule under it. The rows fading as they pass beneath is what says
+ * the register continues, and a border drawn across that fade cuts the column
+ * of balances in two — the head reads as a separate panel instead of as the
+ * first line of the same roll. */
+.dg-hp-register-head {
+  display: flex;
+  gap: 0.3rem;
+  align-items: baseline;
+  /* The figure grew into the padding that used to clear it, so the top is set
+   * off the card's edge and the bottom left tight — the fade below is doing the
+   * separating there, and air on both sides would push the first row down. */
+  padding: var(--size-4-1) var(--size-4-2) 0.15rem;
+  color: var(--text-muted);
+  font-size: var(--d-value-small, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* The temp max is an annotation on the maximum, not a second figure, so it
+ * stays at the size of the deltas it will be logged beside. */
+.dg-hp-register-tempmax {
+  color: var(--d-tempmax, var(--color-purple));
+  font-size: var(--font-ui-smaller);
+  font-weight: 400;
+}
+
+/* The rows fade out towards the top rather than stopping: the fade is what says
+ * the older entries are still there. */
+.dg-hp-register-rows {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 0 var(--size-4-2) 0.15rem;
+  scrollbar-width: none;
+  mask-image: linear-gradient(to bottom, transparent 0, black 1rem);
+  /* A till roll grows from the bottom: with fewer rows than fit, flex-end keeps
+   * them resting on the floor of the box instead of stranded at its ceiling, and
+   * new rows push the stack up rather than appending below empty space. */
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.dg-hp-register-rows::-webkit-scrollbar {
+  width: 0;
+  display: none;
+}
+
+/* One line per entry, always: the leader is what joins a balance to its delta,
+ * and a row that wraps loses it. */
+/* A fresh row's height grows from nothing rather than popping in at full size,
+ * so the rows above it ride up with the growth instead of jumping to their new
+ * position the instant the row is inserted and only then fading in on top of
+ * already-settled neighbours. The grid-track trick is what makes an animation
+ * to "auto" height possible: a flex or block box can't transition to content
+ * height, but a single 0fr -> 1fr grid row can. */
+.dg-hp-register-row {
+  display: grid;
+  grid-template-rows: 1fr;
+  flex: none;
+  animation: dg-hp-row-in 320ms ease-out;
+}
+
+.dg-hp-register-row-inner {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 0.2rem;
+  font-size: var(--font-ui-smaller);
+  line-height: 1.5;
+  min-height: 0;
+  overflow: hidden;
+}
+
+@keyframes dg-hp-row-in {
+  from {
+    grid-template-rows: 0fr;
+    opacity: 0;
+  }
+  to {
+    grid-template-rows: 1fr;
+    opacity: 1;
+  }
+}
+
+.dg-hp-register-balance {
+  flex: none;
+  color: var(--text-muted);
+}
+
+/* The dotted leader that joins a balance to its delta, as on a till roll. */
+.dg-hp-register-leader {
+  flex: 1;
+  align-self: center;
+  border-bottom: 1px dotted var(--text-faint);
+  min-width: 1rem;
+}
+
+.dg-hp-register-deltas {
+  flex: 0 1 auto;
+  min-width: 0;
+  display: flex;
+  gap: 0.3rem;
+  white-space: nowrap;
+}
+
+.dg-hp-register-note,
+.dg-hp-register-empty {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* A note is prose where the deltas are figures, so it is the one thing in a row
+ * that gives way rather than pushing the row wider. */
+.dg-hp-register-note {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dg-hp-register-empty {
+  margin: 0 0 0.15rem;
+}
+
+/* The colour roles, in the one place they all appear at once. */
+.dg-hp-delta.is-damage {
+  color: var(--d-hp, var(--color-red));
+}
+
+.dg-hp-delta.is-heal {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-hp-delta.is-temp {
+  color: var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-delta.is-tempMax {
+  color: var(--d-tempmax, var(--color-purple));
+}
+
+.dg-hp-delta.is-set {
+  color: var(--d-set, var(--color-orange));
+}
+
+/* -- Readout and calc ------------------------------------------------------ */
+
+.dg-hp-readout {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1) var(--size-4-2);
+  border-top: 1px solid var(--d-border, var(--background-modifier-border));
+}
+
+.dg-layout .dg-hp-figure {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.25rem;
+  padding: 0 0.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+}
+
+.dg-layout .dg-hp-figure:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
+}
+
+/* A pending entry dims the readout: the number shown is what it would become. */
+.dg-layout .dg-hp-figure.is-pending {
+  opacity: 0.6;
+}
+
+.dg-hp-current {
+  font-size: var(--d-value, 1.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.dg-hp-temp-text {
+  color: var(--d-temp, var(--color-blue));
+  font-size: var(--font-ui-smaller);
+}
+
+/* "+/−" is a figure on the same line as the current hit points, not a control
+ * beside them, so it is set at their weight and carries no edge until you
+ * reach for it.
+ *
+ * It takes the rest of the line rather than sitting at the end of it, because
+ * it is the closed state of the calc box: clicking anywhere in that run of
+ * space opens the input, and the input then occupies exactly the same ground. */
+.dg-layout .dg-hp-calc-open {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.2rem;
+  padding: 0 0.3rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  font-size: var(--d-value-small, 1.0625rem);
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dg-layout .dg-hp-calc-open:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
+  color: var(--text-normal);
+}
+
+.dg-hp-calc {
+  margin-left: auto;
+  min-width: 0;
+  flex: 1;
+}
+
+/* The coloured copy of what was typed sits under a transparent input, so the
+ * tokens take their role colours without reimplementing a text editor. */
+.dg-hp-calc-field {
+  position: relative;
+}
+
+/* Right-aligned, so an entry grows leftwards from where the "+/−" it replaced
+ * was sitting instead of starting at the far side of the panel from it. */
+.dg-hp-calc-ink,
+.dg-hp-calc-input {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.1rem 0.35rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--d-radius, var(--radius-s));
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-small);
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-align: right;
+}
+
+.dg-hp-calc-ink {
+  position: absolute;
+  inset: 0;
+  border-color: transparent;
+  white-space: pre;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.dg-hp-calc-input {
+  position: relative;
+  background: transparent;
+  color: transparent;
+  caret-color: var(--text-normal);
+}
+
+.dg-hp-token.is-damage {
+  color: var(--d-hp, var(--color-red));
+}
+
+.dg-hp-token.is-heal {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-hp-token.is-temp {
+  color: var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-token.is-tempMax {
+  color: var(--d-tempmax, var(--color-purple));
+}
+
+.dg-hp-token.is-set {
+  color: var(--d-set, var(--color-orange));
+}
+
+.dg-hp-calc-error {
+  margin: 0.2rem 0 0;
+  color: var(--text-error);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-hp-symbols {
+  display: flex;
+  gap: 0.2rem;
+  padding-top: 0.2rem;
+}
+
+.dg-layout .dg-hp-symbol {
+  flex: 1;
+  height: 2rem;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--d-radius, var(--radius-s));
+  background: transparent;
+  box-shadow: none;
+  font-family: var(--font-monospace);
+}
+
+/* -- Desktop builder ----------------------------------------------------- */
+
+/* The tabs panel is the sheet's own; the builder only changes what is in it. */
+.dg-b {
+  gap: var(--d-gap-tight);
+}
+
+.dg-b-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--d-gap);
+}
+
+.dg-b-dirty {
+  margin-right: 0.4rem;
+  color: var(--color-orange);
+}
+
+.dg-layout .dg-d-button.is-primary {
+  background: var(--d-accent);
+  color: var(--text-on-accent);
+  border-color: transparent;
+}
+
+/* Main column and reading sidebar. The sidebar is the desktop's answer to a hold,
+ * so it wants to be there without taking the work area. */
+.dg-b-main {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  gap: var(--d-gap);
+}
+
+.dg-b-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--d-pad);
+  border: 1px solid var(--d-border);
+  border-top: none;
+  border-radius: 0 var(--d-radius-box) var(--d-radius-box) var(--d-radius-box);
+  background: var(--d-surface);
+  display: flex;
+  flex-direction: column;
+  gap: var(--d-gap);
+}
+
+.dg-b-subhead {
+  margin: var(--d-gap) 0 var(--d-gap-tight);
+  color: var(--text-muted);
+  font-size: var(--d-label);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dg-b-detail {
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--d-pad);
+  border: 1px solid var(--d-border);
+  border-radius: var(--d-radius-box);
+  background: var(--d-surface);
+}
+
+.dg-b-detail h3 {
+  margin: 0 0 var(--size-4-1);
+}
+
+.dg-b-source {
+  margin: 0 0 var(--d-gap-tight);
+  color: var(--text-faint);
+  font-size: var(--d-label);
+}
+
+.dg-d-tab-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--color-orange);
+}
+
+.dg-read-row.is-readable {
+  cursor: default;
+}
+
+.dg-read-row.is-readable:hover,
+.dg-read-row.is-readable:focus-visible {
+  background: var(--d-tile-hover);
+  outline: none;
+}
+
+/* A choice's options, open under its row. What is hovered is read in the sidebar. */
+.dg-picker-inline {
+  background: var(--d-surface-sunken, var(--background-secondary));
+  border-radius: var(--radius-m);
+  margin: var(--size-2-2) 0 var(--size-4-2);
+  padding: var(--size-4-2);
+}
+
+
+.dg-hp-choice label {
+  align-items: center;
+  display: inline-flex;
+  gap: var(--size-4-2);
+}
+
+.dg-hp-choice .dg-select.is-inline {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.dg-layout .dg-diagnostics-toggle {
+  background: none;
+  box-shadow: none;
+  height: auto;
+}
+
+.dg-layout .dg-row-remove {
+  background: none;
+  border: none;
+  box-shadow: none;
+  color: var(--text-faint);
+  cursor: pointer;
+  height: auto;
+  padding: var(--size-2-1) var(--size-4-2);
+}
+
+.dg-layout .dg-row-remove:hover {
+  color: var(--text-error);
+}
+
+.dg-picker-search {
+  display: grid;
+  gap: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+}
+
+.dg-picker-search input[type="search"],
+.dg-picker-search input[type="text"] {
+  width: 100%;
+}
+
+.dg-score-input {
+  background: transparent;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  text-align: center;
+  width: 3.5rem;
 }

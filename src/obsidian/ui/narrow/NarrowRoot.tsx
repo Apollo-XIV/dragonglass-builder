@@ -11,13 +11,19 @@ import { useEffect, type ReactNode } from "react";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import type { NarrowSettings } from "../../settings";
 import type { CharacterStore } from "../../character-store";
+import { DetailContext } from "../builder/detail";
+import { FeaturesContext, NO_FEATURES } from "../builder/features";
 import { NarrowSettingsContext } from "./context";
 import { NarrowBuilder } from "./NarrowBuilder";
 import { NarrowSheet } from "./NarrowSheet";
 import { SheetHost } from "./sheet";
 import { useShell } from "./platform";
-import { BuilderSessionProvider, useBuilderSession } from "./session";
+import { BuilderSessionProvider, useBuilderSession } from "../builder/session";
+import { ReadRow } from "./targets";
 import { ToastHost } from "./toast";
+
+/** Narrow reads by holding a row, and turns on nothing beyond the shared builder. */
+const NARROW_DETAIL = { Row: ReadRow, mode: "hold" as const };
 
 export function NarrowRoot({
   store,
@@ -34,6 +40,8 @@ export function NarrowRoot({
     <NarrowSettingsContext.Provider value={settings}>
       <ToastHost>
         <SheetHost>
+          <DetailContext.Provider value={NARROW_DETAIL}>
+          <FeaturesContext.Provider value={NO_FEATURES}>
           <BuilderSessionProvider store={store} active={mode === "builder"}>
             <Hud character={character} mode={mode} />
             {mode === "sheet" ? (
@@ -42,6 +50,8 @@ export function NarrowRoot({
               <NarrowBuilder store={store} character={character} />
             )}
           </BuilderSessionProvider>
+          </FeaturesContext.Provider>
+          </DetailContext.Provider>
         </SheetHost>
       </ToastHost>
     </NarrowSettingsContext.Provider>

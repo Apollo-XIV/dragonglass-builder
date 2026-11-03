@@ -759,3 +759,267 @@ describe("inventory", () => {
     expect(r.diagnostics.some((d) => d.code === "unresolved-reference")).toBe(true);
   });
 });
+
+describe("skills come from content", () => {
+  const ATHLETICS: Element = {
+    id: "test:skill:athletics", kind: "skill", name: "Athletics", source: "test",
+    ability: "str",
+    modifiers: [{ target: "skills.athletics", op: "proficiency", value: "proficient" }],
+  };
+  const PILOTING: Element = {
+    id: "test:skill:piloting", kind: "skill", name: "Piloting", source: "test", ability: "dex",
+  };
+  /** A skill whose key is not its id's last segment, the way a class's `key` works. */
+  const SLEIGHT: Element = {
+    id: "test:skill:sleight", kind: "skill", name: "Sleight of Hand", source: "test",
+    key: "sleight-of-hand", ability: "dex",
+  };
+  const KEEN: Element = {
+    id: "test:feature:keen", kind: "feature", name: "Keen", source: "test",
+    modifiers: [{ target: "skills.all", op: "advantage" }],
+  };
+  /** Species exist here only to carry a grant into the character. */
+  const grantor = (id: string, grants: string[]): Element => ({
+    id, kind: "species", name: "Grantor", source: "test", grants,
+  });
+
+  const base = [TEST_BOOK, CLASS_FIGHTER, SECOND_WIND];
+
+  it("builds the skill list from the declared skills, under their own keys and names", () => {
+    const content = testIndex([...base, ATHLETICS, PILOTING, SLEIGHT]);
+    const character = resolve({ content, build: fighter(1) });
+    expect(character.skills.map((s) => s.key).sort()).toEqual([
+      "athletics", "piloting", "sleight-of-hand",
+    ]);
+    expect(character.skills.find((s) => s.key === "sleight-of-hand")!.name).toBe("Sleight of Hand");
+  });
+
+  it("rolls a skill against the ability its own element declares", () => {
+    const content = testIndex([...base, PILOTING]);
+    const character = resolve({
+      content,
+      build: fighter(1, { abilities: { method: "manual", base: scores({ dex: 16, str: 8 }) } }),
+    });
+    const piloting = character.skills.find((s) => s.key === "piloting")!;
+    expect(piloting.ability).toBe("dex");
+    expect(piloting.stat.value).toBe(3);
+    expect(piloting.passive).toBe(13);
+  });
+
+  it("grants proficiency through the skill element's own modifier", () => {
+    const abilities = { method: "manual" as const, base: scores({ str: 14 }) };
+
+    const without = testIndex([...base, ATHLETICS]);
+    expect(
+      resolve({ content: without, build: fighter(1, { abilities }) })
+        .skills.find((s) => s.key === "athletics")!.stat.value,
+    ).toBe(2);
+
+    const granted = testIndex([...base, ATHLETICS, grantor("test:species:athlete", ["test:skill:athletics"])]);
+    expect(
+      resolve({ content: granted, build: fighter(1, { abilities, species: "test:species:athlete" }) })
+        .skills.find((s) => s.key === "athletics")!.stat.value,
+    ).toBe(4);
+  });
+
+  it("fans skills.all out over a skill the engine has never heard of", () => {
+    const content = testIndex([
+      ...base, PILOTING, KEEN, grantor("test:species:watcher", ["test:feature:keen"]),
+    ]);
+    const character = resolve({
+      content,
+      build: fighter(1, { species: "test:species:watcher" }),
+    });
+    expect(character.skills.find((s) => s.key === "piloting")!.stat.advantage).toBe("advantage");
+  });
+
+  it("has an empty skill list when no source declares a skill", () => {
+    const content = testIndex(base);
+    expect(resolve({ content, build: fighter(1) }).skills).toEqual([]);
+  });
+});
+
+describe("spellcasting.all fans out over the classes a character casts with", () => {
+  const WIZARD: Element = {
+    id: "test:class:wizard", kind: "class", name: "Wizard", source: "test", key: "wizard",
+    hitDie: "d6",
+    spellcasting: { ability: "int", progression: "full", type: "spellbook", list: "wizard-spell" },
+    levels: { "1": {} },
+  };
+  const CLERIC: Element = {
+    id: "test:class:cleric", kind: "class", name: "Cleric", source: "test", key: "cleric",
+    hitDie: "d8",
+    spellcasting: { ability: "wis", progression: "full", type: "prepared", list: "cleric-spell" },
+    levels: { "1": {} },
+  };
+  /** A Rod of the Pact Keeper is the real case: +1 to DC and attack, any class. */
+  const ROD: Element = {
+    id: "test:item:rod", kind: "item", name: "Rod", source: "test", itemType: "rod",
+    modifiers: [
+      { target: "spellcasting.all.dc", op: "add", value: 1 },
+      { target: "spellcasting.all.attack", op: "add", value: 1 },
+    ],
+  };
+  const holder = (id: string): Element => ({
+    id, kind: "species", name: "Holder", source: "test", grants: ["test:item:rod"],
+  });
+
+  const abilities = { method: "manual" as const, base: scores({ int: 16, wis: 16, str: 10 }) };
+  const levelsOf = (...classes: string[]) =>
+    classes.map((c) => ({ class: c, hp: "average" as const, choices: {} as Record<string, string[]> }));
+
+  it("reaches the one class a single-classed caster has", () => {
+    const content = testIndex([TEST_BOOK, WIZARD, ROD, holder("test:species:holder")]);
+    const plain = resolve({
+      content,
+      build: build({ abilities, levels: levelsOf("test:class:wizard"), level: 1 }),
+    });
+    const withRod = resolve({
+      content,
+      build: build({
+        abilities,
+        levels: levelsOf("test:class:wizard"),
+        level: 1,
+        species: "test:species:holder",
+      }),
+    });
+
+    const wizard = (c: typeof plain) => c.spellcasting!.classes.find((x) => x.name === "Wizard")!;
+    expect(wizard(plain).dc.value).toBe(13); // 8 + 2 prof + 3 int
+    expect(wizard(withRod).dc.value).toBe(14);
+    expect(wizard(withRod).attack.value).toBe(wizard(plain).attack.value + 1);
+  });
+
+  it("reaches every class a multiclassed caster has", () => {
+    const content = testIndex([TEST_BOOK, WIZARD, CLERIC, ROD, holder("test:species:holder")]);
+    const character = resolve({
+      content,
+      build: build({
+        abilities,
+        levels: levelsOf("test:class:wizard", "test:class:cleric"),
+        level: 2,
+        species: "test:species:holder",
+      }),
+    });
+
+    expect(character.spellcasting!.classes).toHaveLength(2);
+    for (const cls of character.spellcasting!.classes) {
+      // 8 + 2 prof + 3 (int or wis) + 1 from the rod
+      expect(cls.dc.value, cls.name).toBe(14);
+    }
+  });
+
+  it("does nothing for a character who casts with nothing", () => {
+    const content = testIndex([TEST_BOOK, CLASS_FIGHTER, SECOND_WIND, ROD, holder("test:species:holder")]);
+    const character = resolve({
+      content,
+      build: fighter(1, { species: "test:species:holder" }),
+    });
+    // The modifier fans out to no paths at all rather than landing somewhere wrong.
+    expect(character.spellcasting?.classes ?? []).toEqual([]);
+    expect(Object.keys(character.stats).filter((p) => p.startsWith("spellcasting."))).toEqual([]);
+  });
+
+  it("still lets a modifier name one class directly", () => {
+    const content = testIndex([
+      TEST_BOOK, WIZARD, CLERIC,
+      {
+        id: "test:item:wand", kind: "item", name: "Wand", source: "test",
+        modifiers: [{ target: "spellcasting.wizard.dc", op: "add", value: 2 }],
+      },
+      { id: "test:species:wandholder", kind: "species", name: "Holder", source: "test", grants: ["test:item:wand"] },
+    ]);
+    const character = resolve({
+      content,
+      build: build({
+        abilities,
+        levels: levelsOf("test:class:wizard", "test:class:cleric"),
+        level: 2,
+        species: "test:species:wandholder",
+      }),
+    });
+    const byName = Object.fromEntries(character.spellcasting!.classes.map((c) => [c.name, c.dc.value]));
+    expect(byName).toEqual({ Wizard: 15, Cleric: 13 });
+  });
+});
+
+describe("the multiply op", () => {
+  const boots = (modifiers: Element["modifiers"]): Element[] => [
+    TEST_BOOK,
+    CLASS_FIGHTER,
+    SECOND_WIND,
+    { id: "test:item:boots", kind: "item", name: "Boots", source: "test", modifiers },
+    { id: "test:species:booted", kind: "species", name: "Booted", source: "test", grants: ["test:item:boots"], modifiers: [{ target: "speed.walk", op: "base", value: 30 }] },
+  ];
+  const booted = (modifiers: Element["modifiers"]) =>
+    resolve({
+      content: testIndex(boots(modifiers)),
+      build: fighter(1, { species: "test:species:booted" }),
+    });
+
+  it("multiplies the value", () => {
+    expect(booted([{ target: "speed.walk", op: "multiply", value: 2 }]).speed.walk!.value).toBe(60);
+  });
+
+  it("applies after the bonuses, because it doubles the speed you have", () => {
+    const character = booted([
+      { target: "speed.walk", op: "add", value: 10 },
+      { target: "speed.walk", op: "multiply", value: 2 },
+    ]);
+    expect(character.speed.walk!.value).toBe(80);
+  });
+
+  it("rounds down, the way 5e rounds down", () => {
+    // 30 halved is 15; 25 halved is 12.
+    expect(booted([{ target: "speed.walk", op: "multiply", value: 0.5 }]).speed.walk!.value).toBe(15);
+    const slower = resolve({
+      content: testIndex([
+        ...boots([{ target: "speed.walk", op: "multiply", value: 0.5 }]).slice(0, 4),
+        { id: "test:species:booted", kind: "species", name: "Booted", source: "test", grants: ["test:item:boots"], modifiers: [{ target: "speed.walk", op: "base", value: 25 }] },
+      ]),
+      build: fighter(1, { species: "test:species:booted" }),
+    });
+    expect(slower.speed.walk!.value).toBe(12);
+  });
+
+  it("is still subject to a floor and a ceiling", () => {
+    const floored = booted([
+      { target: "speed.walk", op: "multiply", value: 0 },
+      { target: "speed.walk", op: "min", value: 5 },
+    ]);
+    expect(floored.speed.walk!.value).toBe(5);
+    const capped = booted([
+      { target: "speed.walk", op: "multiply", value: 3 },
+      { target: "speed.walk", op: "max", value: 50 },
+    ]);
+    expect(capped.speed.walk!.value).toBe(50);
+  });
+
+  it("composes several multipliers, the way several bonuses accumulate", () => {
+    expect(
+      booted([
+        { target: "speed.walk", op: "multiply", value: 2 },
+        { target: "speed.walk", op: "multiply", value: 2 },
+      ]).speed.walk!.value,
+    ).toBe(120);
+  });
+
+  it("honours a stackKey, so the larger of two named multipliers wins alone", () => {
+    const character = booted([
+      { target: "speed.walk", op: "multiply", value: 2, stackKey: "haste" },
+      { target: "speed.walk", op: "multiply", value: 3, stackKey: "haste" },
+    ]);
+    expect(character.speed.walk!.value).toBe(90);
+  });
+
+  it("shows up in the breakdown either way", () => {
+    const character = booted([
+      { target: "speed.walk", op: "multiply", value: 2, stackKey: "haste" },
+      { target: "speed.walk", op: "multiply", value: 3, stackKey: "haste" },
+    ]);
+    const rows = character.speed.walk!.breakdown.filter((r) => r.op === "multiply");
+    expect(rows).toHaveLength(2);
+    expect(rows.filter((r) => r.applied)).toHaveLength(1);
+    expect(rows.find((r) => !r.applied)?.suppressedBy).toBeTruthy();
+  });
+});

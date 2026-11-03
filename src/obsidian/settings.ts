@@ -11,6 +11,11 @@ export interface LayoutSettings {
   showBreakdowns: boolean;
   /** Hide builder controls on the sheet, for play at the table. */
   playMode: boolean;
+  /**
+   * Resources every character pins to the stat cluster, most wanted first. A
+   * character's own `layout.5e` pins come first; content weights come last.
+   */
+  pins: string[];
 }
 
 /** The rail sections a layout can offer, in the spec's default order (4.4). */
@@ -55,6 +60,14 @@ export function resolveNarrow(settings: NarrowSettings, layout?: LayoutFile): Na
   return resolved;
 }
 
+/** The pinned-resource layers for one character, most specific first. */
+export function resolvePins(
+  settings: DragonglassSettings,
+  layout?: LayoutFile,
+): { character?: string[]; plugin?: string[] } {
+  return { character: layout?.pins, plugin: settings.layout.pins };
+}
+
 /** The accent colour for a character: its own, then the plugin's, then the theme's. */
 export function resolveAccent(settings: DragonglassSettings, layout?: LayoutFile): string {
   return layout?.accent?.trim() || settings.layout.accent.trim() || "";
@@ -87,6 +100,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     compact: false,
     showBreakdowns: true,
     playMode: false,
+    pins: [],
   },
   narrow: {
     layout: "auto",

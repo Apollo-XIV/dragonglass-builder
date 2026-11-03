@@ -118,3 +118,19 @@ export function changesStartingClass(build: BuildFile, index: number): boolean {
 export function nextClassLevels(build: BuildFile): { class: string; classLevel: number }[] {
   return [...classLevels(build).entries()].map(([classId, taken]) => ({ class: classId, classLevel: taken + 1 }));
 }
+
+/** Experience needed to reach each character level, 1 to 20. */
+export const XP_THRESHOLDS = [
+  0, 300, 900, 2700, 6500, 14000, 23000, 34000, 48000, 64000, 85000, 100000, 120000, 140000, 165000, 195000, 225000,
+  265000, 305000, 355000,
+];
+
+/** The level this much experience is enough for. It only ever prompts; nothing forces a level-up. */
+export function levelForXp(xp: number): number {
+  return XP_THRESHOLDS.filter((threshold) => xp >= threshold).length;
+}
+
+/** Sets one level's hit points. Not a validity change: nothing depends on it. */
+export function setLevelHp(build: BuildFile, index: number, hp: HpChoice): BuildFile {
+  return { ...build, levels: build.levels.map((level, i) => (i === index ? { ...level, hp } : level)) };
+}

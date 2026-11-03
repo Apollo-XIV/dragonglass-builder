@@ -14,11 +14,11 @@ import type {
   Grant,
   LevelEntry,
   Modifier,
-} from "../../core/types";
-import type { ContentIndex } from "../../core/content";
-import { describeRequirement } from "../../core/content/requirements";
-import type { CharacterStore } from "../character-store";
-import { Empty, Markdown, Pill, Section } from "./components";
+} from "../../../../core/types";
+import type { ContentIndex } from "../../../../core/content";
+import { describeRequirement } from "../../../../core/content/requirements";
+import type { CharacterStore } from "../../../character-store";
+import { Empty, Markdown, Pill, Section } from "../../components";
 
 export function ProgressionBrowser({ store }: { store: CharacterStore }): ReactNode {
   const index = store.index;

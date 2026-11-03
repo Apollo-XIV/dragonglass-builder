@@ -51,11 +51,30 @@ by `kind`, attributed to a `source`, and carrying optional **parts**.
 | `levelsBy` | No | What `levels` counts: `class` (default) or `character`. |
 | `grants` `choices` `modifiers` `resources` `actions` `effects` | No | Parts. See below. |
 
-Kind-specific fields (a class's `hitDie`, a spell's `spellLevel`) sit alongside these, and
-keys prefixed `x-` are reserved for experiments the core engine ignores.
+Kind-specific fields (a class's `hitDie`, a spell's `spellLevel`, an action's
+`activation`) sit alongside these, and keys prefixed `x-` are reserved for experiments the
+core engine ignores.
 
 A feature is a *container of independent parts*, because 5e routinely lumps several
 separately triggered mechanics under one name. The engine handles each part on its own.
+
+### Being a thing, versus granting one
+
+Several kinds describe something a character *does*, and the schema keeps a consistent
+line through them: **an element that *is* the thing carries its properties at element
+level; an element that *grants* the thing carries a part.**
+
+| The element | Carries |
+| --- | --- |
+| An `action` the rules define — Dash, Dodge, Help | `activation`, because the element is the action |
+| A feature that grants one — Rage, Second Wind | an `actions` part, because the cost belongs to what it grants |
+| A `spell` | `castingTime` and friends describing it, *and* an `actions` part for the castable thing |
+| A `skill` | `ability`, and a `modifiers` part granting proficiency with itself |
+
+An `action` element's `activation` is required and uses the same open vocabulary as an
+`actions` part's: `action`, `bonus-action`, `reaction`, `free`, `special`, `minute`,
+`hour`, `passive`. An unrecognised value is a warning with the text still shown, not a
+rejection, and a cost the rules leave open ("varies") is `special`.
 
 ## Kinds are data
 
@@ -274,10 +293,28 @@ progression browser reads straight off the data.
 - A subclass declares its `class`, or carries the class's subclass tag, and may have its
   own `levels`, `tables` and `spellcasting`.
 - The subclass is **a choice at the level the class gains it** — not a schema concept.
+
+A **subspecies** works the same way and is the same non-concept: the species declares a
+choice, and `subspecies` elements carrying its tag are the options. A subspecies' own
+traits are `species-trait` elements, tagged after the subspecies. Nothing links a
+subspecies to its species except that tag, which is what lets a later source add one.
 - `spellcasting`: `ability`, `progression` (`full` | `half` | `third` | `pact` | `none`),
   `type` (`prepared` | `known` | `spellbook`), `list` (the spell list tag), `startsAt`,
-  and optional `cantrips` / `prepared` expressions. Multiclass slot totals derive from the
-  progressions.
+  and optional count expressions. Multiclass slot totals derive from the progressions.
+  The counts each mean one thing, so a reader never has to guess from `type`:
+
+  | Field | Counts |
+  | --- | --- |
+  | `cantrips` | cantrips known |
+  | `known` | spells known (`type: known`) |
+  | `prepared` | spells prepared each day (`prepared`, `spellbook`) |
+  | `spellbook` | spells the book holds (`spellbook`); advisory, because scrolls add more |
+  | `maxSpellLevel` | highest spell level learnable; defaults to the highest slot level held (the pact slot level for `pact`) |
+  | `extra` | picks outside the above: `{ level, choose, spellLevels?, anyClass? }`, one per class level that grants them (Mystic Arcanum, Magical Secrets) |
+
+  A spell learned outside the class's progression (a scroll, a feat, an item) is stored in
+  the spells file with `extra: true`. It never counts toward any figure above, and the
+  builder adds it through its own picker.
 
 A class's class level is **how many `levels` entries the build has for it**, which is why
 nothing renumbers when a level is removed.
@@ -310,13 +347,65 @@ Core paths: `abilities.<ability>.score`, `saves.<ability>`, `checks.<ability>`,
 `proficiencies.<type>`, `damage.<scope>`, `spellcasting.<class>.dc`. Sources may declare
 more.
 
-Operations: `add`, `set`, `min` (a floor), `max` (a ceiling), `advantage`, `disadvantage`,
-`include` (add to a set), `proficiency` (`none` | `half` | `proficient` | `expertise`),
-and `base` (a competing formula).
+**`skills.*` is an open family, and content declares its members.** Core declares the
+stat path; a `skill` element declares one skill and the ability its checks use:
+
+```jsonc
+{ "id": "srd:skill:animal-handling", "kind": "skill", "name": "Animal Handling",
+  "source": "srd", "ability": "wis",
+  "modifiers": [{ "target": "skills.animal-handling", "op": "proficiency", "value": "proficient" }] }
+```
+
+`ability` is required and must be one of the six — nothing else knows what a skill
+rolls. `key` is what a modifier targets and defaults to the id's last segment, the same
+rule a class's `key` follows; give it explicitly when the two differ. The modifier is the
+self-granting option element pattern, which is what makes "choose two skills" need no
+special handling.
+
+The consequences are the point. A source may add a skill and it appears on the sheet, in
+`skills.all` and in every skill choice with no plugin change. A vault whose sources
+declare no skills has an empty skill list, which is correct rather than a gap: there is
+nothing to roll.
+
+### Families and the `.all` fan-outs
+
+Several stat paths are families, and a modifier may address a whole family at once
+instead of naming each member. The engine expands the target before anything else sees
+it, so a fan-out is indistinguishable from having written the members out:
+
+| Target | Expands to |
+| --- | --- |
+| `saves.all` | `saves.str` … `saves.cha` |
+| `checks.all` | `checks.str` … `checks.cha` |
+| `abilities.all.score` | `abilities.str.score` … `abilities.cha.score` |
+| `skills.all` | every **declared** skill (see above) |
+| `spellcasting.all.dc` / `spellcasting.all.attack` | the same path for each class **this character casts with** |
+
+The last two are the ones worth understanding, because their members are not fixed. A
+skill's family comes from *content*, so a source that adds a skill gets it covered with no
+plugin change. A spellcasting family comes from *the character*: `spellcasting.all.dc` on a
+Rod of the Pact Keeper means the classes its holder actually casts with, it reaches both
+halves of a wizard/cleric, and it expands to nothing at all for a fighter — which is
+correct, rather than a modifier landing somewhere arbitrary.
+
+**`attacks.all` is deliberately not a fan-out.** Its member is the weapon in hand, which
+nothing knows until an attack is assembled, so `resolver/attacks.ts` reads `attacks.all`,
+`attacks.melee` / `attacks.ranged` and `attacks.<item id>` itself when it builds one. The
+same goes for `damage.*`.
+
+Operations: `add`, `multiply`, `set`, `min` (a floor), `max` (a ceiling), `advantage`,
+`disadvantage`, `include` (add to a set), `proficiency` (`none` | `half` | `proficient` |
+`expertise`), and `base` (a competing formula).
 
 **Stacking.** `base` candidates compete and the highest wins — including the stat's own
 computed base, which is how unarmoured AC loses to chain mail. Modifiers sharing a
 `stackKey` do not stack; the largest applies. Everything else accumulates.
+
+**Order.** The stat's own base, then the winning `base` candidate, then `set`, then the
+`add`s, then `multiply`, then `min` and `max`. `multiply` sits where it does because
+"your speed is doubled" doubles the speed you have — bonuses included — while a floor
+still holds afterwards. Several multipliers compose, the way several bonuses accumulate,
+and the result **rounds down**, as 5e rounds down.
 
 **Soft caps.** A `stat-path` element may declare `softMax` — 20 for an ability score. It is
 **advisory and never enforced**: the engine does not clamp, because items legitimately take

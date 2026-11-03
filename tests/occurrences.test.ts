@@ -13,7 +13,7 @@ import { resolve } from "../src/core/resolver/resolve";
 import { collect } from "../src/core/resolver/collect";
 import { capBreaches, newBreaches } from "../src/core/resolver/caps";
 import type { Element } from "../src/core/types";
-import { cycle } from "../src/obsidian/ui/narrow/picker";
+import { cycle } from "../src/obsidian/ui/builder/picker";
 import { build, scores, testIndex, TEST_BOOK } from "./helpers";
 
 /** A +1 to Strength, as a pickable element. */

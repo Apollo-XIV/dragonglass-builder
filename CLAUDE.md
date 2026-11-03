@@ -4,13 +4,14 @@ An Obsidian plugin for D&D 5e: a data-driven character builder and an interactiv
 character sheet. Built from `Obsidian 5e Builder & Sheet Design Spec.md`, which is the
 authority on intent — read it before making a design decision.
 
-Three documents are authoritative, each over its own territory:
+Four documents are authoritative, each over its own territory:
 
 | Document | Authority on |
 | --- | --- |
 | `Obsidian 5e Builder & Sheet Design Spec.md` | Intent, and everything not below |
 | `docs/schema.md` | The content format: elements, parts, choices, stat paths |
 | `mobile-ux-spec.md` | The narrow layout |
+| `dragonglass desktop sheet spec.md` | The desktop sheet |
 
 `docs/schema.md` is the one to read before touching `src/core/types.ts`, the validator, or
 any content. It defines the choice model — options are elements, nesting is how a
@@ -49,8 +50,13 @@ src/obsidian/        the plugin
   view.ts            one view for .5e, dispatching on each file's kind
   character-store.ts one store per character folder; owns reads, writes and resolution
   sources.ts         vault, path and pinned GitHub source loading
+  icons.ts           the game icons Lucide has no equivalent for (d20, vial)
   ui/                React
+  ui/hp-panel.tsx    the HP vial, register and calc; belongs to neither layout
+  ui/builder/        the builder, for both layouts: sections, picker, change confirmation,
+                     session and drafts, the feature flags, the registry that lists sections
   ui/narrow/         the narrow layout: rail, sticky sections, hold sheets, toasts
+  ui/desktop/        the desktop sheet: header band, identity column, boxes, tabs
 src/cli/validate.ts  the validation CLI
 src/node/            filesystem source loading, for the CLI and tests only
 content/core/        kinds and stat paths, bundled into the plugin at build time
@@ -60,11 +66,80 @@ vault/               test vault with the plugin installed and a sample character
 
 ## The two layouts
 
-`mobile-ux-spec.md` is the authority on the narrow layout, as the design spec is on
-everything else. **The layout is chosen from the view container's own width** (900px,
+`mobile-ux-spec.md` is the authority on the narrow layout and
+`dragonglass desktop sheet spec.md` on the desktop sheet; the design spec is the authority
+on everything else. **The layout is chosen from the view container's own width** (900px,
 40px of hysteresis), not the window's, so a side pane on a desktop gets the narrow
 layout too — `ui/narrow/layout-mode.ts`. Below that width `CharacterApp` renders
-`NarrowRoot` instead of the tabbed `Sheet`/`Builder`; above it, nothing changed.
+`NarrowRoot`; above it, `DesktopSheet`.
+
+**The two are siblings, not separate designs.** `DesktopSheet` mounts the narrow layout's
+own hosts — `ToastHost`, `SheetHost`, `NarrowSettingsContext` — so the roll breakdowns,
+resource menus, filter chips and feature rows are the same components in both. What
+changes between them is arrangement and the gesture that opens things:
+
+| Narrow | Desktop | Does |
+| --- | --- | --- |
+| tap | click | roll, spend a use, toggle |
+| hold | right-click | the detail sheet, with advantage and uses |
+| — | hover | a one-line breakdown of a computed number |
+
+The desktop layout's own rules:
+
+- **The design scale lives in `.dg-desk`'s custom properties** in `styles.css`: one
+  spacing scale, one radius scale, one type scale, and the five colour roles mapped to
+  Obsidian's palette variables. Nothing below it uses a value of its own.
+- **Surfaces are one elevation ladder**, not a set of named variables: the page, then
+  `--d-surface` for a box, then `--d-tile` for a tile on it, then `--d-surface-sunken` for
+  a track or a well inside one. Each rung is a `color-mix` towards `--text-normal`,
+  because only a mix moves the right way in both a light and a dark theme — Obsidian's
+  own `--background-*` variables are barely a step apart in some themes and the whole
+  layout flattens. A thing's rung is decided by what it sits on, so a chip on the page
+  is a tile and a tile inside a box is one rung above the box.
+- **Tiles and pills carry a fill or a border, never both.** The accent outline is the
+  hover and proficiency state, so it has to arrive on something that had no edge.
+- **A hover card is portalled to `document.body`**, because every box in the layout is a
+  scroll container that would clip it.
+- **`addIcon` declares a 100-unit box.** `src/obsidian/icons.ts` draws in Lucide's
+  24-unit one and scales, so the d20 and the vial fill their frame instead of sitting as
+  a speck in its corner. Size icons in a label in `rem`, not `em`: labels are 11px, and a
+  fraction of that is a smudge.
+- **Nothing rollable carries an `aria-label`.** Obsidian opens a tooltip of its own for
+  any element that has one, on top of the hover card; the accessible name is a
+  `.dg-sr-only` span inside the button instead.
+- **The top row's height is the identity column's.** The HP register holds a whole
+  session, so the HP panel carries a `max-height` rather than being allowed to set the
+  row — and `.dg-desk` needs `height: 100%`, not `min-height`, or a 1fr row sizes to
+  its content and the page scrolls instead of the boxes.
+- **Which resources are pinned is `choosePins` in core**, not a layout decision: three
+  layers, most specific first — the character's `layout.5e`, the plugin settings, then
+  the `pin` weight the content carries.
+- **The HP calc is parsed, never evaluated** (`core/state/hp-calc.ts`), and the preview
+  is the commit run without committing, so the vial's ghosts and the register's row can
+  never disagree about what Enter will do.
+- **`hp.set` is the one event that stores a total** rather than an input. "My HP is 35"
+  is what the player is asserting, and expressing it as damage would eat their temp HP
+  on the way past.
+
+**The builder is one builder.** `ui/builder/` holds the sections (`sections/`), the pickers, the
+change confirmation (`changes.tsx`), the session and drafts, and `registry.tsx`, which says which
+sections exist and what each says about itself — and nothing about how they are arranged.
+`NarrowBuilder` scrolls them under the rail; `desktop/DesktopBuilder` sets them out as tabs with a
+reading sidebar. Levels and Planned share a tab there. Shared code never imports `narrow/scroller` or
+`rail`. Two known exceptions: the picker still uses narrow's `hold` and sheet host (the sheet host is
+already a dialog on desktop), and `sections/sources.tsx` imports `obsidian`. The seams that differ are:
+
+- **`builder/nav.tsx`**: register a card, jump to a card. The narrow scroller and the desktop tab shell
+  each answer it, so Review's "go to this choice" works in both.
+- **`builder/detail.tsx`**: how a thing is read. Narrow holds a row and a sheet opens; desktop hovers
+  and the sidebar shows it. With `inlinePicker` on, a choice's options open under its row (`usePickerSlot`)
+  and are read in that same sidebar, so there is no dialog with a column of its own. Sections render `InfoRow`.
+- **`builder/features.ts`**: `BuilderFeatures` flags for what a layout opts into (per-level HP, options that
+  open under their row, search in pickers, row removal, custom items, Browse, Sources, Notes...). Each is written once as a shared
+  component; narrow sets none today, so adding one to a phone is a flag in `NarrowRoot` and a CSS job.
+  `tests/builder-model.test.ts` fails if a shell stops naming every flag.
+
+New builder behaviour goes in `ui/builder/`, never in a shell.
 
 The narrow layout's own rules:
 

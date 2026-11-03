@@ -128,9 +128,13 @@ Arrays are indexed by level, 1 first. `null` means "nothing at this level".
 
 ## 5. Stacking, and why `base` matters
 
-Operations: `add`, `set`, `min` (a floor), `max` (a ceiling), `advantage`,
+Operations: `add`, `multiply`, `set`, `min` (a floor), `max` (a ceiling), `advantage`,
 `disadvantage`, `include` (add to a set), `proficiency` (`half`/`proficient`/`expertise`),
 and `base`.
+
+**"Your speed is doubled" is `multiply`.** It applies after the bonuses and before the
+floor and ceiling, and rounds down. Use it only where the rule really is a multiple —
+a flat increase is `add`.
 
 **`base` candidates compete, and the highest wins.** This is how armour, Unarmored
 Defense and Mage Armor coexist without any of them knowing about the others:
@@ -183,7 +187,11 @@ isn't wearing armour is worse than one that tells you the condition.
   *proficiency* change (`"op": "proficiency", "value": "expertise"`); the Actor feat's
   impersonation benefit is situational advantage.
 
-`saves.all`, `checks.all` and `skills.all` fan out to every member of the family.
+`saves.all`, `checks.all`, `skills.all`, `abilities.all.score` and
+`spellcasting.all.dc` / `spellcasting.all.attack` fan out to every member of the family —
+for the last one, the classes the character actually casts with, so an item that boosts
+"your spell save DC" needs no idea which class that is. `attacks.all` is not a fan-out but
+is still read when an attack is assembled. See `docs/schema.md`.
 
 ## 7. Resources, actions and effects
 

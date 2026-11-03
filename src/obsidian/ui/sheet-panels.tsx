@@ -290,7 +290,8 @@ export function SpellsPanel({
               <StatValue stat={cls.attack} label="Spell attack" />
               <div className="dg-muted">
                 {cls.ability.toUpperCase()} · {cls.type} · {cls.progression} caster
-                {cls.prepared !== undefined ? ` · ${cls.prepared} prepared` : ""}
+                {cls.known !== undefined ? ` · ${casting.limits.find((l) => l.class === cls.class)?.known.used ?? 0}/${cls.known} known` : ""}
+                {cls.prepared !== undefined ? ` · ${casting.limits.find((l) => l.class === cls.class)?.prepared.used ?? 0}/${cls.prepared} prepared` : ""}
               </div>
             </div>
           ))}

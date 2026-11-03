@@ -1,10 +1,10 @@
 {
   "kind": "build",
   "schemaVersion": 1,
-  "name": "Ilsa Stonebrook",
+  "name": "Bibby Longbottom",
   "xp": 6500,
-  "level": 6,
-  "species": "srd:species:dwarf",
+  "level": 0,
+  "species": "srd:species:gnome",
   "background": "srd:background:acolyte",
   "abilities": {
     "method": "point-buy",
@@ -17,29 +17,20 @@
       "cha": 14
     }
   },
-  "levels": [
+  "levels": [],
+  "choices": {
+    "srd:background:acolyte:language-1": [
+      "srd:language:common",
+      "srd:language:dwarvish"
+    ],
+    "srd:species:gnome:subspecies": [
+      "srd:subspecies:rock-gnome"
+    ]
+  },
+  "planned": [
     {
       "class": "srd:class:paladin",
-      "hp": "max",
-      "choices": {
-        "srd:class:paladin:skills": [
-          "srd:skill:athletics",
-          "srd:skill:persuasion"
-        ]
-      }
-    },
-    {
-      "class": "srd:class:paladin",
-      "hp": "average",
-      "choices": {
-        "srd:paladin:fighting-style": [
-          "srd:fighting-style:defense"
-        ]
-      }
-    },
-    {
-      "class": "srd:class:paladin",
-      "hp": "average",
+      "classLevel": 6,
       "choices": {
         "srd:paladin:sacred-oath": [
           "srd:subclass:oath-of-devotion"
@@ -48,7 +39,7 @@
     },
     {
       "class": "srd:class:paladin",
-      "hp": "max",
+      "classLevel": 5,
       "choices": {
         "srd:paladin:asi-4": [
           "srd:feature:ability-score-improvement"
@@ -57,22 +48,74 @@
     },
     {
       "class": "srd:class:paladin",
-      "hp": "average",
-      "choices": {}
+      "classLevel": 2,
+      "choices": {
+        "srd:paladin:fighting-style": [
+          "srd:fighting-style:defense"
+        ]
+      }
     },
     {
       "class": "srd:class:paladin",
-      "hp": "average",
-      "choices": {}
+      "classLevel": 1,
+      "choices": {
+        "srd:class:paladin:skills": [
+          "srd:skill:athletics",
+          "srd:skill:persuasion"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:warlock",
+      "classLevel": 3,
+      "choices": {
+        "srd:class:warlock:skill-1": [
+          "srd:skill:arcana",
+          "srd:skill:deception"
+        ],
+        "srd:class:warlock:subclass": [
+          "srd:subclass:the-fiend"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:warlock",
+      "classLevel": 2,
+      "choices": {
+        "srd:class:warlock:eldritch-invocations-2": [
+          "srd:invocation:armor-of-shadows",
+          "srd:invocation:mask-of-many-faces"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:warlock",
+      "classLevel": 1,
+      "choices": {
+        "srd:class:warlock:pact-boon-3": [
+          "srd:pact-boon:pact-of-the-blade"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:wizard",
+      "classLevel": 1,
+      "choices": {
+        "srd:class:wizard:skill-1": [
+          "srd:skill:arcana",
+          "srd:skill:history"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:barbarian",
+      "classLevel": 1,
+      "choices": {
+        "srd:class:barbarian:skill-1": [
+          "srd:skill:animal-handling",
+          "srd:skill:nature"
+        ]
+      }
     }
-  ],
-  "choices": {
-    "srd:species:dwarf:tool-proficiency": [
-      "srd:tool:smiths-tools"
-    ],
-    "srd:background:acolyte:languages": [
-      "srd:language:elvish",
-      "srd:language:celestial"
-    ]
-  }
+  ]
 }

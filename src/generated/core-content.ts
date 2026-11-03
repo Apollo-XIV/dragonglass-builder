@@ -74,6 +74,23 @@ export const CORE_ELEMENTS: Element[] = [
     ]
   },
   {
+    "id": "core:kind:subspecies",
+    "kind": "kind",
+    "name": "Subspecies",
+    "source": "core",
+    "key": "subspecies",
+    "label": "Subspecies",
+    "plural": "Subspecies",
+    "tab": null,
+    "display": "card",
+    "aliases": [
+      "subrace"
+    ],
+    "browsable": true,
+    "order": 21,
+    "text": "A branch of a species, chosen the way a subclass is: the species declares a choice and these are its options. Its own traits are `species-trait` elements."
+  },
+  {
     "id": "core:kind:class",
     "kind": "kind",
     "name": "Class",
@@ -279,6 +296,20 @@ export const CORE_ELEMENTS: Element[] = [
     "display": "list",
     "browsable": true,
     "order": 80
+  },
+  {
+    "id": "core:kind:action",
+    "kind": "kind",
+    "name": "Action",
+    "source": "core",
+    "key": "action",
+    "label": "Action",
+    "plural": "Actions",
+    "tab": null,
+    "display": "list",
+    "browsable": true,
+    "order": 81,
+    "text": "Something a creature can do on its turn, as the rules define it: Dash, Dodge, Help. An element of this kind *is* an action; an element that *grants* one carries an `actions` part instead."
   },
   {
     "id": "core",

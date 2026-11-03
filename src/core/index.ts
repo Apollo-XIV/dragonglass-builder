@@ -14,6 +14,8 @@ export { ExprError, parseExpression } from "./expr/parser";
 export { resolve, resourceKey, allAnnotations } from "./resolver/resolve";
 export type { ResolveInput, ResolveOptions } from "./resolver/resolve";
 export * from "./resolver/resolved";
+export { spellLimits, limitDiagnostics } from "./resolver/spell-limits";
+export type { ClassSpellLimits, Count } from "./resolver/spell-limits";
 export {
   explainStat,
   explainSet,

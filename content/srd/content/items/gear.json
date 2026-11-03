@@ -1,0 +1,1271 @@
+[
+  {
+    "id": "srd:item:abacus",
+    "kind": "item",
+    "name": "Abacus",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 200,
+    "text": "A counting frame used to perform arithmetic calculations."
+  },
+  {
+    "id": "srd:item:acid-vial",
+    "kind": "item",
+    "name": "Acid (Vial)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 2500,
+    "text": "As an action, you can splash the contents of this vial onto a creature within 5 feet of you or throw the vial up to 20 feet, shattering it on impact. In either case, make a ranged attack against a creature or object, treating the acid as an improvised weapon. On a hit, the target takes 2d6 acid damage."
+  },
+  {
+    "id": "srd:item:alchemists-fire",
+    "kind": "item",
+    "name": "Alchemist's Fire (Flask)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 5000,
+    "text": "This sticky, adhesive fluid ignites when exposed to air. As an action, you can throw this flask up to 20 feet, shattering it on impact. Make a ranged attack against a creature or object, treating the alchemist's fire as an improvised weapon. On a hit, the target takes 1d4 fire damage at the start of each of its turns. A creature can end this damage by using its action to make a DC 10 Dexterity check to extinguish the flames."
+  },
+  {
+    "id": "srd:item:antitoxin",
+    "kind": "item",
+    "name": "Antitoxin (Vial)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 5000,
+    "text": "A creature that drinks this vial of liquid gains advantage on saving throws against poison for 1 hour. It confers no benefit to undead or constructs."
+  },
+  {
+    "id": "srd:item:backpack",
+    "kind": "item",
+    "name": "Backpack",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 200,
+    "text": "A backpack can hold 1 cubic foot or 30 pounds of gear. You can also strap items, such as a bedroll or a coil of rope, to the outside of a backpack."
+  },
+  {
+    "id": "srd:item:ball-bearings",
+    "kind": "item",
+    "name": "Ball Bearings (Bag of 1,000)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 100,
+    "text": "As an action, you can spill these tiny metal balls from their pouch to cover a level, square area that is 10 feet on a side. A creature moving across the covered area must succeed on a DC 10 Dexterity saving throw or fall prone. A creature moving through the area at half speed doesn't need to make the save."
+  },
+  {
+    "id": "srd:item:barrel",
+    "kind": "item",
+    "name": "Barrel",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 70,
+    "value": 200,
+    "text": "A barrel holds 40 gallons of liquid or 4 cubic feet of solid goods."
+  },
+  {
+    "id": "srd:item:basket",
+    "kind": "item",
+    "name": "Basket",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 40,
+    "text": "A basket holds 2 cubic feet or 40 pounds of gear."
+  },
+  {
+    "id": "srd:item:bedroll",
+    "kind": "item",
+    "name": "Bedroll",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 7,
+    "value": 100,
+    "text": "A bedroll for sleeping outdoors."
+  },
+  {
+    "id": "srd:item:bell",
+    "kind": "item",
+    "name": "Bell",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 100,
+    "text": "A small bell."
+  },
+  {
+    "id": "srd:item:blanket",
+    "kind": "item",
+    "name": "Blanket",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 50,
+    "text": "A simple blanket."
+  },
+  {
+    "id": "srd:item:block-and-tackle",
+    "kind": "item",
+    "name": "Block and Tackle",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 100,
+    "text": "A set of pulleys with a cable threaded through them and a hook to attach to objects, a block and tackle allows you to hoist up to four times the weight you can normally lift."
+  },
+  {
+    "id": "srd:item:book",
+    "kind": "item",
+    "name": "Book",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 2500,
+    "text": "A book might contain poetry, historical accounts, information pertaining to a particular field of lore, diagrams and notes on gnomish contraptions, or just about anything else that can be represented using text or pictures. A book of spells is a spellbook."
+  },
+  {
+    "id": "srd:item:bottle-glass",
+    "kind": "item",
+    "name": "Bottle, Glass",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 200,
+    "text": "A glass bottle holding 1.5 pints of liquid."
+  },
+  {
+    "id": "srd:item:bucket",
+    "kind": "item",
+    "name": "Bucket",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 5,
+    "text": "A bucket holds 3 gallons of liquid or 0.5 cubic feet of solid goods."
+  },
+  {
+    "id": "srd:item:caltrops",
+    "kind": "item",
+    "name": "Caltrops (Bag of 20)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 100,
+    "text": "As an action, you can spread a bag of caltrops to cover a square area that is 5 feet on a side. Any creature that enters the area must succeed on a DC 15 Dexterity saving throw or stop moving this turn and take 1 piercing damage. Taking this damage reduces the creature's walking speed by 10 feet until the creature regains at least 1 hit point. A creature moving through the area at half speed doesn't need to make the save."
+  },
+  {
+    "id": "srd:item:candle",
+    "kind": "item",
+    "name": "Candle",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "light-source",
+    "weight": 0,
+    "value": 1,
+    "text": "For 1 hour, a candle sheds bright light in a 5-foot radius and dim light for an additional 5 feet."
+  },
+  {
+    "id": "srd:item:case-crossbow-bolt",
+    "kind": "item",
+    "name": "Case, Crossbow Bolt",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 100,
+    "text": "This wooden case can hold up to twenty crossbow bolts."
+  },
+  {
+    "id": "srd:item:case-map-or-scroll",
+    "kind": "item",
+    "name": "Case, Map or Scroll",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 100,
+    "text": "This cylindrical leather case can hold up to ten rolled-up sheets of paper or five rolled-up sheets of parchment."
+  },
+  {
+    "id": "srd:item:chain",
+    "kind": "item",
+    "name": "Chain (10 Feet)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 10,
+    "value": 500,
+    "text": "A chain has 10 hit points. It can be burst with a successful DC 20 Strength check."
+  },
+  {
+    "id": "srd:item:chalk",
+    "kind": "item",
+    "name": "Chalk (1 Piece)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 1,
+    "text": "A piece of chalk."
+  },
+  {
+    "id": "srd:item:chest",
+    "kind": "item",
+    "name": "Chest",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 25,
+    "value": 500,
+    "text": "A chest holds 12 cubic feet or 300 pounds of gear."
+  },
+  {
+    "id": "srd:item:climbers-kit",
+    "kind": "item",
+    "name": "Climber's Kit",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 12,
+    "value": 2500,
+    "text": "A climber's kit includes special pitons, boot tips, gloves, and a harness. You can use the climber's kit as an action to anchor yourself; when you do, you can't fall more than 25 feet from the point where you anchored yourself, and you can't climb more than 25 feet away from that point without undoing the anchor."
+  },
+  {
+    "id": "srd:item:clothes-common",
+    "kind": "item",
+    "name": "Clothes, Common",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "clothing"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 50,
+    "text": "An outfit of common clothing."
+  },
+  {
+    "id": "srd:item:clothes-costume",
+    "kind": "item",
+    "name": "Clothes, Costume",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "clothing"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 500,
+    "text": "An outfit suited for the theater or disguise."
+  },
+  {
+    "id": "srd:item:clothes-fine",
+    "kind": "item",
+    "name": "Clothes, Fine",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "clothing"
+    ],
+    "itemType": "gear",
+    "weight": 6,
+    "value": 1500,
+    "text": "An outfit of fine clothing."
+  },
+  {
+    "id": "srd:item:clothes-travelers",
+    "kind": "item",
+    "name": "Clothes, Traveler's",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "clothing"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 200,
+    "text": "An outfit suited for travel."
+  },
+  {
+    "id": "srd:item:component-pouch",
+    "kind": "item",
+    "name": "Component Pouch",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "spellcasting-focus"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 2500,
+    "text": "A component pouch is a small, watertight leather belt pouch that has compartments to hold all the material components and other special items you need to cast your spells, except for those components that have a specific cost (as indicated in a spell's description)."
+  },
+  {
+    "id": "srd:item:crowbar",
+    "kind": "item",
+    "name": "Crowbar",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 200,
+    "text": "Using a crowbar grants advantage to Strength checks where the crowbar's leverage can be applied."
+  },
+  {
+    "id": "srd:item:fishing-tackle",
+    "kind": "item",
+    "name": "Fishing Tackle",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 100,
+    "text": "This kit includes a wooden rod, silken line, corkwood bobbers, steel hooks, lead sinkers, velvet lures, and narrow netting."
+  },
+  {
+    "id": "srd:item:flask-or-tankard",
+    "kind": "item",
+    "name": "Flask or Tankard",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 2,
+    "text": "A flask or tankard holds 1 pint of liquid."
+  },
+  {
+    "id": "srd:item:grappling-hook",
+    "kind": "item",
+    "name": "Grappling Hook",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 200,
+    "text": "A hook used to grab hold of ledges or other surfaces, often tied to a rope."
+  },
+  {
+    "id": "srd:item:hammer",
+    "kind": "item",
+    "name": "Hammer",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 100,
+    "text": "A one-handed hammer, useful as a tool."
+  },
+  {
+    "id": "srd:item:hammer-sledge",
+    "kind": "item",
+    "name": "Hammer, Sledge",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 10,
+    "value": 200,
+    "text": "A heavy, two-handed hammer, useful as a tool."
+  },
+  {
+    "id": "srd:item:healers-kit",
+    "kind": "item",
+    "name": "Healer's Kit",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 500,
+    "charges": {
+      "id": "uses",
+      "name": "Healer's Kit Uses",
+      "max": 10,
+      "recharge": "never",
+      "unit": "uses"
+    },
+    "text": "This kit is a leather pouch containing bandages, salves, and splints. The kit has ten uses. As an action, you can expend one use of the kit to stabilize a creature that has 0 hit points, without needing to make a Wisdom (Medicine) check."
+  },
+  {
+    "id": "srd:item:holy-water",
+    "kind": "item",
+    "name": "Holy Water (Flask)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 2500,
+    "text": "As an action, you can splash the contents of this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. In either case, make a ranged attack against a target creature, treating the holy water as an improvised weapon. If the target is a fiend or undead, it takes 2d6 radiant damage. A cleric or paladin may create holy water by performing a special ritual that takes 1 hour, uses 25 gp worth of powdered silver, and requires the caster to expend a 1st-level spell slot."
+  },
+  {
+    "id": "srd:item:hourglass",
+    "kind": "item",
+    "name": "Hourglass",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 2500,
+    "text": "A device for measuring time using falling sand."
+  },
+  {
+    "id": "srd:item:hunting-trap",
+    "kind": "item",
+    "name": "Hunting Trap",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 25,
+    "value": 500,
+    "text": "When you use your action to set it, this trap forms a saw-toothed steel ring that snaps shut when a creature steps on a pressure plate in the center. The trap is affixed by a heavy chain to an immobile object, such as a tree or a spike driven into the ground. A creature that steps on the plate must succeed on a DC 13 Dexterity saving throw or take 1d4 piercing damage and stop moving. Thereafter, until the creature breaks free of the trap, its movement is limited by the length of the chain (typically 3 feet long). A creature can use its action to make a DC 13 Strength check, freeing itself or another creature within its reach on a success. Each failed check deals 1 piercing damage to the trapped creature."
+  },
+  {
+    "id": "srd:item:ink",
+    "kind": "item",
+    "name": "Ink (1 Ounce Bottle)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 1000,
+    "text": "A bottle of ink, used for writing."
+  },
+  {
+    "id": "srd:item:ink-pen",
+    "kind": "item",
+    "name": "Ink Pen",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 2,
+    "text": "A pen for writing with ink."
+  },
+  {
+    "id": "srd:item:jug-or-pitcher",
+    "kind": "item",
+    "name": "Jug or Pitcher",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 2,
+    "text": "A jug or pitcher holds 1 gallon of liquid."
+  },
+  {
+    "id": "srd:item:ladder",
+    "kind": "item",
+    "name": "Ladder (10-Foot)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 25,
+    "value": 10,
+    "text": "A ten-foot wooden ladder."
+  },
+  {
+    "id": "srd:item:lamp",
+    "kind": "item",
+    "name": "Lamp",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "light-source",
+    "weight": 1,
+    "value": 50,
+    "text": "A lamp casts bright light in a 15-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
+  },
+  {
+    "id": "srd:item:lantern-bullseye",
+    "kind": "item",
+    "name": "Lantern, Bullseye",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "light-source",
+    "weight": 2,
+    "value": 1000,
+    "text": "A bullseye lantern casts bright light in a 60-foot cone and dim light for an additional 60 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil."
+  },
+  {
+    "id": "srd:item:lantern-hooded",
+    "kind": "item",
+    "name": "Lantern, Hooded",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "light-source",
+    "weight": 2,
+    "value": 500,
+    "text": "A hooded lantern casts bright light in a 30-foot radius and dim light for an additional 30 feet. Once lit, it burns for 6 hours on a flask (1 pint) of oil. As an action, you can lower the hood, reducing the light to dim light in a 5-foot radius."
+  },
+  {
+    "id": "srd:item:lock",
+    "kind": "item",
+    "name": "Lock",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 1000,
+    "text": "A key is provided with the lock. Without the key, a creature proficient with thieves' tools can pick this lock with a successful DC 15 Dexterity check. Better locks may be available for higher prices."
+  },
+  {
+    "id": "srd:item:magnifying-glass",
+    "kind": "item",
+    "name": "Magnifying Glass",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 10000,
+    "text": "This lens allows a closer look at small objects. It is also useful as a substitute for flint and steel when starting fires: lighting a fire with a magnifying glass requires light as bright as sunlight to focus, tinder to ignite, and about 5 minutes for the fire to ignite. A magnifying glass grants advantage on any ability check made to appraise or inspect an item that is small or highly detailed."
+  },
+  {
+    "id": "srd:item:manacles",
+    "kind": "item",
+    "name": "Manacles",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 6,
+    "value": 200,
+    "text": "These metal restraints can bind a Small or Medium creature. Escaping the manacles requires a successful DC 20 Dexterity check. Breaking them requires a successful DC 20 Strength check. Each set of manacles comes with one key. Without the key, a creature proficient with thieves' tools can pick the manacles' lock with a successful DC 15 Dexterity check. Manacles have 15 hit points."
+  },
+  {
+    "id": "srd:item:mess-kit",
+    "kind": "item",
+    "name": "Mess Kit",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 20,
+    "text": "This tin box contains a cup and simple cutlery. The box clamps together, and one side can be used as a cooking pan and the other as a plate or shallow bowl."
+  },
+  {
+    "id": "srd:item:mirror-steel",
+    "kind": "item",
+    "name": "Mirror, Steel",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0.5,
+    "value": 500,
+    "text": "A small steel mirror."
+  },
+  {
+    "id": "srd:item:oil-flask",
+    "kind": "item",
+    "name": "Oil (Flask)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 10,
+    "text": "Oil usually comes in a clay flask that holds 1 pint. As an action, you can splash the oil in this flask onto a creature within 5 feet of you or throw it up to 20 feet, shattering it on impact. Make a ranged attack against a target creature or object, treating the oil as an improvised weapon. On a hit, the target is covered in oil. If the target takes any fire damage before the oil dries (after 1 minute), the target takes an additional 5 fire damage from the burning oil. You can also pour a flask of oil on the ground to cover a 5-foot-square area, provided that the surface is level. If lit, the oil burns for 2 rounds and deals 5 fire damage to any creature that enters the area or ends its turn in the area. A creature can take this damage only once per turn."
+  },
+  {
+    "id": "srd:item:paper",
+    "kind": "item",
+    "name": "Paper (One Sheet)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 20,
+    "text": "A single sheet of paper."
+  },
+  {
+    "id": "srd:item:parchment",
+    "kind": "item",
+    "name": "Parchment (One Sheet)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 10,
+    "text": "A single sheet of parchment."
+  },
+  {
+    "id": "srd:item:perfume",
+    "kind": "item",
+    "name": "Perfume (Vial)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 500,
+    "text": "A vial of perfume."
+  },
+  {
+    "id": "srd:item:pick-miners",
+    "kind": "item",
+    "name": "Pick, Miner's",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 10,
+    "value": 200,
+    "text": "A miner's pick, useful for digging."
+  },
+  {
+    "id": "srd:item:piton",
+    "kind": "item",
+    "name": "Piton",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0.25,
+    "value": 5,
+    "text": "A metal spike used for climbing."
+  },
+  {
+    "id": "srd:item:poison-basic",
+    "kind": "item",
+    "name": "Poison, Basic (Vial)",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "poison"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 10000,
+    "text": "You can use the poison in this vial to coat one slashing or piercing weapon or up to three pieces of ammunition. Applying the poison takes an action. A creature hit by the poisoned weapon or ammunition must make a DC 10 Constitution saving throw or take 1d4 poison damage. Once applied, the poison retains potency for 1 minute before drying."
+  },
+  {
+    "id": "srd:item:pole",
+    "kind": "item",
+    "name": "Pole (10-Foot)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 7,
+    "value": 5,
+    "text": "A ten-foot wooden pole."
+  },
+  {
+    "id": "srd:item:pot-iron",
+    "kind": "item",
+    "name": "Pot, Iron",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 10,
+    "value": 200,
+    "text": "An iron pot that holds 1 gallon of liquid."
+  },
+  {
+    "id": "srd:item:pouch",
+    "kind": "item",
+    "name": "Pouch",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 50,
+    "text": "A cloth or leather pouch can hold up to 20 sling bullets or 50 blowgun needles, among other things, and holds up to 0.2 cubic feet or 6 pounds of gear. A compartmentalized pouch for holding spell components is called a component pouch."
+  },
+  {
+    "id": "srd:item:quiver",
+    "kind": "item",
+    "name": "Quiver",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 100,
+    "text": "A quiver can hold up to 20 arrows."
+  },
+  {
+    "id": "srd:item:ram-portable",
+    "kind": "item",
+    "name": "Ram, Portable",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 35,
+    "value": 400,
+    "text": "You can use a portable ram to break down doors. When doing so, you gain a +4 bonus on the Strength check. One other character can help you use the ram, giving you advantage on this check."
+  },
+  {
+    "id": "srd:item:rations",
+    "kind": "item",
+    "name": "Rations (1 Day)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 2,
+    "value": 50,
+    "text": "Rations consist of dry foods suitable for extended travel, including jerky, dried fruit, hardtack, and nuts."
+  },
+  {
+    "id": "srd:item:robes",
+    "kind": "item",
+    "name": "Robes",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "clothing"
+    ],
+    "itemType": "gear",
+    "weight": 4,
+    "value": 100,
+    "text": "A set of robes."
+  },
+  {
+    "id": "srd:item:rope-hempen",
+    "kind": "item",
+    "name": "Rope, Hempen (50 Feet)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 10,
+    "value": 100,
+    "text": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+  },
+  {
+    "id": "srd:item:rope-silk",
+    "kind": "item",
+    "name": "Rope, Silk (50 Feet)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 1000,
+    "text": "Rope, whether made of hemp or silk, has 2 hit points and can be burst with a DC 17 Strength check."
+  },
+  {
+    "id": "srd:item:sack",
+    "kind": "item",
+    "name": "Sack",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0.5,
+    "value": 1,
+    "text": "A sack holds 1 cubic foot or 30 pounds of gear."
+  },
+  {
+    "id": "srd:item:scale-merchants",
+    "kind": "item",
+    "name": "Scale, Merchant's",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 500,
+    "text": "A scale includes a small balance, pans, and a suitable assortment of weights up to 2 pounds. With it, you can measure the exact weight of small objects, such as raw precious metals or trade goods, to help determine their worth."
+  },
+  {
+    "id": "srd:item:sealing-wax",
+    "kind": "item",
+    "name": "Sealing Wax",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 50,
+    "text": "Wax used to seal letters and documents."
+  },
+  {
+    "id": "srd:item:shovel",
+    "kind": "item",
+    "name": "Shovel",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 200,
+    "text": "A shovel for digging."
+  },
+  {
+    "id": "srd:item:signal-whistle",
+    "kind": "item",
+    "name": "Signal Whistle",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 5,
+    "text": "A small whistle used to signal others."
+  },
+  {
+    "id": "srd:item:signet-ring",
+    "kind": "item",
+    "name": "Signet Ring",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 500,
+    "text": "A ring bearing a personal or family seal."
+  },
+  {
+    "id": "srd:item:soap",
+    "kind": "item",
+    "name": "Soap",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 2,
+    "text": "A bar of soap."
+  },
+  {
+    "id": "srd:item:spellbook",
+    "kind": "item",
+    "name": "Spellbook",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 3,
+    "value": 5000,
+    "text": "Essential for wizards, a spellbook is a leather-bound tome with 100 blank vellum pages suitable for recording spells."
+  },
+  {
+    "id": "srd:item:spikes-iron",
+    "kind": "item",
+    "name": "Spikes, Iron (10)",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 100,
+    "text": "A set of ten iron spikes."
+  },
+  {
+    "id": "srd:item:spyglass",
+    "kind": "item",
+    "name": "Spyglass",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 100000,
+    "text": "Objects viewed through a spyglass are magnified to twice their size."
+  },
+  {
+    "id": "srd:item:tent-two-person",
+    "kind": "item",
+    "name": "Tent, Two-Person",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 20,
+    "value": 200,
+    "text": "A simple and portable canvas shelter, a tent sleeps two."
+  },
+  {
+    "id": "srd:item:tinderbox",
+    "kind": "item",
+    "name": "Tinderbox",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 50,
+    "text": "This small container holds flint, fire steel, and tinder (usually dry cloth soaked in light oil) used to kindle a fire. Using it to light a torch, or anything else with abundant, exposed fuel, takes an action. Lighting any other fire takes 1 minute."
+  },
+  {
+    "id": "srd:item:torch",
+    "kind": "item",
+    "name": "Torch",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "light-source",
+    "weight": 1,
+    "value": 1,
+    "text": "A torch burns for 1 hour, providing bright light in a 20-foot radius and dim light for an additional 20 feet. If you make a melee attack with a burning torch and hit, it deals 1 fire damage."
+  },
+  {
+    "id": "srd:item:vial",
+    "kind": "item",
+    "name": "Vial",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 100,
+    "text": "A vial holds 4 ounces of liquid."
+  },
+  {
+    "id": "srd:item:waterskin",
+    "kind": "item",
+    "name": "Waterskin",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 5,
+    "value": 20,
+    "text": "A waterskin holds 4 pints of liquid when full."
+  },
+  {
+    "id": "srd:item:whetstone",
+    "kind": "item",
+    "name": "Whetstone",
+    "source": "srd",
+    "tags": [
+      "equipment"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 1,
+    "text": "A stone used to sharpen blades."
+  },
+  {
+    "id": "srd:item:arrows",
+    "kind": "item",
+    "name": "Arrows (20)",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "ammunition"
+    ],
+    "itemType": "ammunition",
+    "weight": 1,
+    "value": 100,
+    "text": "A bundle of 20 arrows, for use with a bow. A character can draw ammunition from a quiver as part of the attack made with a ranged weapon."
+  },
+  {
+    "id": "srd:item:blowgun-needles",
+    "kind": "item",
+    "name": "Blowgun Needles (50)",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "ammunition"
+    ],
+    "itemType": "ammunition",
+    "weight": 1,
+    "value": 100,
+    "text": "A bundle of 50 needles, for use with a blowgun."
+  },
+  {
+    "id": "srd:item:crossbow-bolts",
+    "kind": "item",
+    "name": "Crossbow Bolts (20)",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "ammunition"
+    ],
+    "itemType": "ammunition",
+    "weight": 1.5,
+    "value": 100,
+    "text": "A case of 20 bolts, for use with a crossbow."
+  },
+  {
+    "id": "srd:item:sling-bullets",
+    "kind": "item",
+    "name": "Sling Bullets (20)",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "ammunition"
+    ],
+    "itemType": "ammunition",
+    "weight": 1.5,
+    "value": 4,
+    "text": "A pouch of 20 bullets, for use with a sling."
+  },
+  {
+    "id": "srd:item:arcane-focus",
+    "kind": "item",
+    "name": "Arcane Focus",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "spellcasting-focus"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 1000,
+    "text": "An arcane focus is a special item - an orb, a crystal, a rod, a specially constructed staff, a wand-like length of wood, or some similar item - designed to channel the power of arcane spells. A sorcerer, warlock, or wizard can use such an item as a spellcasting focus. Variants include a crystal (10 gp, 1 lb.), an orb (20 gp, 3 lb.), a rod (10 gp, 2 lb.), a staff (5 gp, 4 lb.), and a wand (10 gp, 1 lb.)."
+  },
+  {
+    "id": "srd:item:druidic-focus",
+    "kind": "item",
+    "name": "Druidic Focus",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "spellcasting-focus"
+    ],
+    "itemType": "gear",
+    "weight": 0,
+    "value": 100,
+    "text": "A druidic focus might be a sprig of mistletoe or holly, a wand or scepter made of yew or another special wood, a staff drawn whole out of a living tree, or a totem object incorporating feathers, fur, bones, and teeth from sacred animals. A druid can use such an object as a spellcasting focus. Variants include a sprig of mistletoe (1 gp), a totem (1 gp), a wooden staff (5 gp, 4 lb.), and a yew wand (10 gp, 1 lb.)."
+  },
+  {
+    "id": "srd:item:holy-symbol",
+    "kind": "item",
+    "name": "Holy Symbol",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "spellcasting-focus"
+    ],
+    "itemType": "gear",
+    "weight": 1,
+    "value": 500,
+    "text": "A holy symbol is a representation of a god or pantheon. It might be an amulet depicting a symbol representing a deity, the same symbol carefully engraved or inlaid as an emblem on a shield, or a tiny box holding a fragment of a sacred relic. A cleric or paladin can use a holy symbol as a spellcasting focus. To use the symbol in this way, the caster must hold it in hand, wear it visibly, or bear it on a shield. Variants include an amulet (5 gp, 1 lb.), an emblem (5 gp), and a reliquary (5 gp, 2 lb.)."
+  },
+  {
+    "id": "srd:item:burglars-pack",
+    "kind": "item",
+    "name": "Burglar's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 1600,
+    "text": "Includes a backpack, a bag of 1,000 ball bearings, 10 feet of string, a bell, 5 candles, a crowbar, a hammer, 10 pitons, a hooded lantern, 2 flasks of oil, 5 days of rations, a tinderbox, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:diplomats-pack",
+    "kind": "item",
+    "name": "Diplomat's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 3900,
+    "text": "Includes a chest, 2 cases for maps and scrolls, a set of fine clothes, a bottle of ink, an ink pen, a lamp, 2 flasks of oil, 5 sheets of paper, a vial of perfume, sealing wax, and soap. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:dungeoneers-pack",
+    "kind": "item",
+    "name": "Dungeoneer's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 1200,
+    "text": "Includes a backpack, a crowbar, a hammer, 10 pitons, 10 torches, a tinderbox, 10 days of rations, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:entertainers-pack",
+    "kind": "item",
+    "name": "Entertainer's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 4000,
+    "text": "Includes a backpack, a bedroll, 2 costumes, 5 candles, 5 days of rations, a waterskin, and a disguise kit. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:explorers-pack",
+    "kind": "item",
+    "name": "Explorer's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 1000,
+    "text": "Includes a backpack, a bedroll, a mess kit, a tinderbox, 10 torches, 10 days of rations, and a waterskin. The pack also has 50 feet of hempen rope strapped to the side of it. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:priests-pack",
+    "kind": "item",
+    "name": "Priest's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 1900,
+    "text": "Includes a backpack, a blanket, 10 candles, a tinderbox, an alms box, 2 blocks of incense, a censer, vestments, 2 days of rations, and a waterskin. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:scholars-pack",
+    "kind": "item",
+    "name": "Scholar's Pack",
+    "source": "srd",
+    "tags": [
+      "equipment",
+      "pack"
+    ],
+    "itemType": "pack",
+    "value": 4000,
+    "text": "Includes a backpack, a book of lore, a bottle of ink, an ink pen, 10 sheets of parchment, a little bag of sand, and a small knife. This pack is cheaper to buy as a set than purchasing its contents individually."
+  }
+]

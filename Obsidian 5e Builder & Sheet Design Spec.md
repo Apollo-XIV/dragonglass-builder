@@ -428,7 +428,7 @@ The builder generates a character's data by walking the content graph. Every cho
 
 ### Flow
 
-- The builder is a row of left-to-right tabs: core information, levels and features, spells, details, inventory, and so on.
+- The builder is the same set of sections in both layouts: origin, levels (with planned levels), spells, equipment, details and review. Narrow scrolls them under a rail; desktop shows them as tabs with a reading sidebar.
 - Selections add or remove tabs where applicable. A character with no spellcasting has no spells tab, and a source's new kinds can add tabs of their own.
 - Working through the tabs in order feels like a wizard, but any tab can be revisited at any time, and changing an earlier choice updates everything after it retroactively.
 - If an earlier change invalidates a later choice, for example because it came from a feature the character no longer has, the choice is kept and flagged in the pending-choices list.

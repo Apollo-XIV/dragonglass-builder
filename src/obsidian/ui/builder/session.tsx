@@ -18,7 +18,7 @@ import { diffBuilds, type BuildDiff } from "../../../core/resolver/diff";
 import type { BuildFile } from "../../../core/types";
 import type { CharacterStore } from "../../character-store";
 import { baseHasMoved, type Draft } from "./drafts";
-import { useShell } from "./platform";
+import { useShell } from "../narrow/platform";
 
 export interface BuilderSession {
   /** Live saves: this character is being made for the first time. */

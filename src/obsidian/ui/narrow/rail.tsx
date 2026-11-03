@@ -20,7 +20,7 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
   const settings = useNarrowSettings();
   const haptics = useHaptics();
   const controller = useScrollController();
-  const { active, progress, flash } = useScrollState();
+  const { active, flash } = useScrollState();
   const railRef = useRef<HTMLDivElement>(null);
 
   const [awake, setAwake] = useState(false);
@@ -64,7 +64,7 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
       if (!rail || !el) return;
       const stops = controller.stops();
       const max = controller.maxScroll();
-      const railTop = rail.getBoundingClientRect().top + RAIL.endPadding;
+      const railTop = rail.getBoundingClientRect().top;
       let target = scrubTarget({
         pointerY,
         railTop,
@@ -96,9 +96,9 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
 
   return (
     // The dock is what gets positioned and what fades; the pill inside it clips,
-    // so the position track is masked by the pill's own rounded edge instead of
-    // hanging off it. The label bubble has to live outside the pill for the same
-    // reason — inside, the clip would eat it.
+    // so the spotlight is masked by the pill's own rounded edge. The label bubble
+    // has to live outside the pill for the same reason — inside, the clip would
+    // eat it.
     <div
       className={awake ? "dg-rail-dock is-awake" : "dg-rail-dock"}
       data-side={settings.railSide}
@@ -112,7 +112,6 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
       <div
         className="dg-rail"
         ref={railRef}
-        style={{ padding: `${RAIL.endPadding}px ${RAIL.padding}px`, gap: `${RAIL.iconGap}px` }}
         onPointerDown={(event) => {
           const g = gesture.current;
           g.pointer = event.pointerId;
@@ -166,8 +165,6 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
           className="dg-rail-spot"
           aria-hidden="true"
           style={{
-            top: `${RAIL.endPadding}px`,
-            left: `${RAIL.padding}px`,
             width: `${RAIL.iconWidth}px`,
             height: `${RAIL.iconHeight}px`,
             transform: `translateY(${active * RAIL.zoneHeight}px)`,
@@ -194,22 +191,6 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
             ) : null}
           </button>
         ))}
-
-        <span
-          className="dg-rail-track"
-          style={{ width: `${RAIL.trackWidth}px`, top: `${RAIL.endPadding}px`, bottom: `${RAIL.endPadding}px` }}
-          aria-hidden="true"
-        >
-          <span
-            className="dg-rail-thumb"
-            style={{
-              height: `${RAIL.thumbHeight}px`,
-              // The thumb follows the continuous position, so it keeps moving while
-              // you scroll within a single section.
-              top: `${progress * RAIL.zoneHeight + (RAIL.iconHeight - RAIL.thumbHeight) / 2}px`,
-            }}
-          />
-        </span>
       </div>
 
       {labelIndex >= 0 ? (
@@ -217,7 +198,7 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
           className="dg-rail-label"
           data-side={settings.railSide}
           style={{
-            top: `${labelIndex * RAIL.zoneHeight + RAIL.endPadding}px`,
+            top: `${labelIndex * RAIL.zoneHeight}px`,
             height: `${RAIL.iconHeight}px`,
           }}
         >
@@ -230,7 +211,7 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
 
 function indexFromPointer(pointerY: number, rail: HTMLElement | null, count: number): number {
   if (!rail) return 0;
-  const top = rail.getBoundingClientRect().top + RAIL.endPadding;
+  const top = rail.getBoundingClientRect().top;
   return scrubZone(pointerY, top, count);
 }
 

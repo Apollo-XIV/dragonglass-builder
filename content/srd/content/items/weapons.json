@@ -1,0 +1,920 @@
+[
+  {
+    "id": "srd:item:club",
+    "kind": "item",
+    "name": "Club",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 10,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "category": "simple-melee",
+      "properties": [
+        "light"
+      ]
+    },
+    "text": "A simple melee weapon dealing 1d4 bludgeoning damage."
+  },
+  {
+    "id": "srd:item:dagger",
+    "kind": "item",
+    "name": "Dagger",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 1,
+    "value": 200,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "piercing",
+      "category": "simple-melee",
+      "properties": [
+        "finesse",
+        "light",
+        "thrown (range 20/60)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A simple melee weapon dealing 1d4 piercing damage. Finesse, light, thrown."
+  },
+  {
+    "id": "srd:item:greatclub",
+    "kind": "item",
+    "name": "Greatclub",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 10,
+    "value": 20,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "category": "simple-melee",
+      "properties": [
+        "two-handed"
+      ]
+    },
+    "text": "A simple melee weapon dealing 1d8 bludgeoning damage. Two-handed."
+  },
+  {
+    "id": "srd:item:handaxe",
+    "kind": "item",
+    "name": "Handaxe",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "slashing",
+      "category": "simple-melee",
+      "properties": [
+        "light",
+        "thrown (range 20/60)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A simple melee weapon dealing 1d6 slashing damage."
+  },
+  {
+    "id": "srd:item:javelin",
+    "kind": "item",
+    "name": "Javelin",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 50,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "simple-melee",
+      "properties": [
+        "thrown (range 30/120)"
+      ],
+      "range": "30/120 ft."
+    },
+    "text": "A simple melee weapon dealing 1d6 piercing damage. Thrown."
+  },
+  {
+    "id": "srd:item:light-hammer",
+    "kind": "item",
+    "name": "Light Hammer",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 200,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "category": "simple-melee",
+      "properties": [
+        "light",
+        "thrown (range 20/60)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A simple melee weapon dealing 1d4 bludgeoning damage."
+  },
+  {
+    "id": "srd:item:mace",
+    "kind": "item",
+    "name": "Mace",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 4,
+    "value": 500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "bludgeoning",
+      "category": "simple-melee",
+      "properties": []
+    },
+    "text": "A simple melee weapon dealing 1d6 bludgeoning damage."
+  },
+  {
+    "id": "srd:item:quarterstaff",
+    "kind": "item",
+    "name": "Quarterstaff",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 4,
+    "value": 20,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "bludgeoning",
+      "category": "simple-melee",
+      "properties": [
+        "versatile (1d8)"
+      ]
+    },
+    "text": "A simple melee weapon dealing 1d6 bludgeoning damage, or 1d8 when wielded in two hands."
+  },
+  {
+    "id": "srd:item:sickle",
+    "kind": "item",
+    "name": "Sickle",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 100,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "slashing",
+      "category": "simple-melee",
+      "properties": [
+        "light"
+      ]
+    },
+    "text": "A simple melee weapon dealing 1d4 slashing damage."
+  },
+  {
+    "id": "srd:item:spear",
+    "kind": "item",
+    "name": "Spear",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 100,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "simple-melee",
+      "properties": [
+        "thrown (range 20/60)",
+        "versatile (1d8)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A simple melee weapon dealing 1d6 piercing damage, or 1d8 when wielded in two hands to make a melee attack. Thrown."
+  },
+  {
+    "id": "srd:item:crossbow-light",
+    "kind": "item",
+    "name": "Crossbow, Light",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 5,
+    "value": 2500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "piercing",
+      "category": "simple-ranged",
+      "properties": [
+        "ammunition (range 80/320)",
+        "loading",
+        "two-handed"
+      ],
+      "range": "80/320 ft."
+    },
+    "text": "A simple ranged weapon dealing 1d8 piercing damage. Ammunition, loading, two-handed."
+  },
+  {
+    "id": "srd:item:dart",
+    "kind": "item",
+    "name": "Dart",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 0.25,
+    "value": 5,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "piercing",
+      "category": "simple-ranged",
+      "properties": [
+        "finesse",
+        "thrown (range 20/60)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A simple weapon dealing 1d4 piercing damage. Finesse, thrown."
+  },
+  {
+    "id": "srd:item:shortbow",
+    "kind": "item",
+    "name": "Shortbow",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 2500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "simple-ranged",
+      "properties": [
+        "ammunition (range 80/320)",
+        "two-handed"
+      ],
+      "range": "80/320 ft."
+    },
+    "text": "A simple ranged weapon dealing 1d6 piercing damage. Ammunition, two-handed."
+  },
+  {
+    "id": "srd:item:sling",
+    "kind": "item",
+    "name": "Sling",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "simple-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 0,
+    "value": 10,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "bludgeoning",
+      "category": "simple-ranged",
+      "properties": [
+        "ammunition (range 30/120)"
+      ],
+      "range": "30/120 ft."
+    },
+    "text": "A simple ranged weapon dealing 1d4 bludgeoning damage. Ammunition."
+  },
+  {
+    "id": "srd:item:battleaxe",
+    "kind": "item",
+    "name": "Battleaxe",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 4,
+    "value": 1000,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "versatile (1d10)"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d8 slashing damage, or 1d10 when wielded in two hands."
+  },
+  {
+    "id": "srd:item:flail",
+    "kind": "item",
+    "name": "Flail",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 1000,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "category": "martial-melee",
+      "properties": []
+    },
+    "text": "A martial melee weapon dealing 1d8 bludgeoning damage."
+  },
+  {
+    "id": "srd:item:glaive",
+    "kind": "item",
+    "name": "Glaive",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 6,
+    "value": 2000,
+    "weapon": {
+      "damage": "1d10",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "reach",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d10 slashing damage. Heavy, reach, two-handed."
+  },
+  {
+    "id": "srd:item:greataxe",
+    "kind": "item",
+    "name": "Greataxe",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 7,
+    "value": 3000,
+    "weapon": {
+      "damage": "1d12",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d12 slashing damage. Heavy, two-handed."
+  },
+  {
+    "id": "srd:item:greatsword",
+    "kind": "item",
+    "name": "Greatsword",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 6,
+    "value": 5000,
+    "weapon": {
+      "damage": "2d6",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 2d6 slashing damage. Heavy, two-handed."
+  },
+  {
+    "id": "srd:item:halberd",
+    "kind": "item",
+    "name": "Halberd",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 6,
+    "value": 2000,
+    "weapon": {
+      "damage": "1d10",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "reach",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d10 slashing damage. Heavy, reach, two-handed."
+  },
+  {
+    "id": "srd:item:lance",
+    "kind": "item",
+    "name": "Lance",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 6,
+    "value": 1000,
+    "weapon": {
+      "damage": "1d12",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": [
+        "reach",
+        "special"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d12 piercing damage. Reach. You have disadvantage when you use a lance to attack a target within 5 feet of you. A lance requires two hands to wield when you aren't mounted."
+  },
+  {
+    "id": "srd:item:longsword",
+    "kind": "item",
+    "name": "Longsword",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 1500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "versatile (1d10)"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d8 slashing damage, or 1d10 when wielded in two hands."
+  },
+  {
+    "id": "srd:item:maul",
+    "kind": "item",
+    "name": "Maul",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 10,
+    "value": 1000,
+    "weapon": {
+      "damage": "2d6",
+      "damageType": "bludgeoning",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 2d6 bludgeoning damage. Heavy, two-handed."
+  },
+  {
+    "id": "srd:item:morningstar",
+    "kind": "item",
+    "name": "Morningstar",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 4,
+    "value": 1500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": []
+    },
+    "text": "A martial melee weapon dealing 1d8 piercing damage."
+  },
+  {
+    "id": "srd:item:pike",
+    "kind": "item",
+    "name": "Pike",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 18,
+    "value": 500,
+    "weapon": {
+      "damage": "1d10",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": [
+        "heavy",
+        "reach",
+        "two-handed"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d10 piercing damage. Heavy, reach, two-handed."
+  },
+  {
+    "id": "srd:item:rapier",
+    "kind": "item",
+    "name": "Rapier",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 2500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": [
+        "finesse"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d8 piercing damage. Finesse."
+  },
+  {
+    "id": "srd:item:scimitar",
+    "kind": "item",
+    "name": "Scimitar",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 2500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "finesse",
+        "light"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d6 slashing damage. Finesse, light."
+  },
+  {
+    "id": "srd:item:shortsword",
+    "kind": "item",
+    "name": "Shortsword",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 1000,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": [
+        "finesse",
+        "light"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d6 piercing damage. Finesse, light."
+  },
+  {
+    "id": "srd:item:trident",
+    "kind": "item",
+    "name": "Trident",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 4,
+    "value": 500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": [
+        "thrown (range 20/60)",
+        "versatile (1d8)"
+      ],
+      "range": "20/60 ft."
+    },
+    "text": "A martial melee weapon dealing 1d6 piercing damage, or 1d8 when wielded in two hands to make a melee attack. Thrown."
+  },
+  {
+    "id": "srd:item:war-pick",
+    "kind": "item",
+    "name": "War Pick",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "piercing",
+      "category": "martial-melee",
+      "properties": []
+    },
+    "text": "A martial melee weapon dealing 1d8 piercing damage."
+  },
+  {
+    "id": "srd:item:warhammer",
+    "kind": "item",
+    "name": "Warhammer",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 1500,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "bludgeoning",
+      "category": "martial-melee",
+      "properties": [
+        "versatile (1d10)"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d8 bludgeoning damage, or 1d10 when wielded in two hands."
+  },
+  {
+    "id": "srd:item:whip",
+    "kind": "item",
+    "name": "Whip",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "melee-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 200,
+    "weapon": {
+      "damage": "1d4",
+      "damageType": "slashing",
+      "category": "martial-melee",
+      "properties": [
+        "finesse",
+        "reach"
+      ]
+    },
+    "text": "A martial melee weapon dealing 1d4 slashing damage. Finesse, reach."
+  },
+  {
+    "id": "srd:item:blowgun",
+    "kind": "item",
+    "name": "Blowgun",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 1,
+    "value": 1000,
+    "weapon": {
+      "damage": "1",
+      "damageType": "piercing",
+      "category": "martial-ranged",
+      "properties": [
+        "ammunition (range 25/100)",
+        "loading"
+      ],
+      "range": "25/100 ft."
+    },
+    "text": "A martial ranged weapon dealing 1 piercing damage. Ammunition, loading."
+  },
+  {
+    "id": "srd:item:crossbow-hand",
+    "kind": "item",
+    "name": "Crossbow, Hand",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 7500,
+    "weapon": {
+      "damage": "1d6",
+      "damageType": "piercing",
+      "category": "martial-ranged",
+      "properties": [
+        "ammunition (range 30/120)",
+        "light",
+        "loading"
+      ],
+      "range": "30/120 ft."
+    },
+    "text": "A martial ranged weapon dealing 1d6 piercing damage. Ammunition, light, loading."
+  },
+  {
+    "id": "srd:item:crossbow-heavy",
+    "kind": "item",
+    "name": "Crossbow, Heavy",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 18,
+    "value": 5000,
+    "weapon": {
+      "damage": "1d10",
+      "damageType": "piercing",
+      "category": "martial-ranged",
+      "properties": [
+        "ammunition (range 100/400)",
+        "heavy",
+        "loading",
+        "two-handed"
+      ],
+      "range": "100/400 ft."
+    },
+    "text": "A martial ranged weapon dealing 1d10 piercing damage. Ammunition, heavy, loading, two-handed."
+  },
+  {
+    "id": "srd:item:longbow",
+    "kind": "item",
+    "name": "Longbow",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 2,
+    "value": 5000,
+    "weapon": {
+      "damage": "1d8",
+      "damageType": "piercing",
+      "category": "martial-ranged",
+      "properties": [
+        "ammunition (range 150/600)",
+        "heavy",
+        "two-handed"
+      ],
+      "range": "150/600 ft."
+    },
+    "text": "A martial ranged weapon dealing 1d8 piercing damage. Ammunition, heavy, two-handed."
+  },
+  {
+    "id": "srd:item:net",
+    "kind": "item",
+    "name": "Net",
+    "source": "srd",
+    "page": 69,
+    "tags": [
+      "weapon",
+      "martial-weapon",
+      "ranged-weapon"
+    ],
+    "itemType": "weapon",
+    "weight": 3,
+    "value": 100,
+    "text": "A martial ranged weapon with the special and thrown (range 5/15) properties. It deals no damage. A Large or smaller creature hit by a net is restrained until it is freed; a net has no effect on creatures that are formless or Huge or larger. A creature can use its action to make a DC 10 Strength check, freeing itself or another creature within its reach on a success. Dealing 5 slashing damage to the net (AC 10) also frees the creature without harming it, destroying the net. When used to attack, only one attack can be made with a net regardless of the number of attacks you can normally make.",
+    "notes": "No damage die; left as text because the restrained/escape mechanic has no stat-path representation."
+  }
+]

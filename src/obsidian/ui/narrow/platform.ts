@@ -6,7 +6,7 @@
  */
 
 import { createContext, useContext } from "react";
-import { NO_DRAFTS, type DraftStore } from "./drafts";
+import { NO_DRAFTS, type DraftStore } from "../builder/drafts";
 
 export interface Haptics {
   /** Milliseconds. A no-op where the platform has no vibration API. */

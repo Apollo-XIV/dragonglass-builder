@@ -6,6 +6,7 @@
 
 import {
   ABILITIES,
+  ACTIVATIONS,
   MODIFIER_OPS,
   PROFICIENCY_LEVELS,
   RECHARGES,
@@ -48,7 +49,7 @@ function validateModifier(m: unknown, subject: string | undefined, path: string,
   } else if (!(MODIFIER_OPS as readonly string[]).includes(mod.op)) {
     out.push(warn("unknown-op", `unknown modifier op "${mod.op}"; shown as text`, subject, path));
   }
-  const numericOps = ["add", "set", "min", "max", "base"];
+  const numericOps = ["add", "multiply", "set", "min", "max", "base"];
   if (typeof mod.op === "string" && numericOps.includes(mod.op)) {
     if (mod.value === undefined) {
       out.push(err("invalid-element", `op "${mod.op}" needs a value`, subject, path));
@@ -370,10 +371,25 @@ export function validateElement(raw: unknown): ValidationResult {
         out.push(err("invalid-element", `unknown preparation type "${String(sc.type)}"`, subject, "spellcasting.type"));
       if (typeof sc.list !== "string")
         out.push(err("invalid-element", "spellcasting needs a spell list tag", subject, "spellcasting.list"));
-      for (const f of ["cantrips", "prepared"] as const) {
+      for (const f of ["cantrips", "known", "prepared", "spellbook", "maxSpellLevel"] as const) {
         if (sc[f] === undefined) continue;
         const e = checkExpression(sc[f] as string | number);
         if (e) out.push(warn("expression-error", e, subject, `spellcasting.${f}`));
+      }
+      if (sc.extra !== undefined) {
+        if (!Array.isArray(sc.extra))
+          out.push(err("invalid-element", "spellcasting.extra must be a list", subject, "spellcasting.extra"));
+        else
+          (sc.extra as Record<string, unknown>[]).forEach((pick, i) => {
+            const at = `spellcasting.extra.${i}`;
+            if (!pick || typeof pick !== "object" || !Number.isInteger(pick.level) || !Number.isInteger(pick.choose))
+              out.push(err("invalid-element", "an extra spell pick needs an integer level and choose", subject, at));
+            else if (
+              pick.spellLevels !== undefined &&
+              (!Array.isArray(pick.spellLevels) || pick.spellLevels.some((n) => !Number.isInteger(n)))
+            )
+              out.push(err("invalid-element", "spellLevels must be a list of integers", subject, `${at}.spellLevels`));
+          });
       }
     }
   }
@@ -387,6 +403,27 @@ export function validateElement(raw: unknown): ValidationResult {
     if (!["number", "set"].includes(String(el.valueType)))
       out.push(err("invalid-element", 'stat-path needs valueType "number" or "set"', subject, "valueType"));
   }
+  // An action element is itself an action, so it declares what it costs.
+  if (el.kind === "action") {
+    if (typeof el.activation !== "string" || !el.activation) {
+      out.push(err("invalid-element", "action needs an activation", subject, "activation"));
+    } else if (!(ACTIVATIONS as readonly string[]).includes(el.activation)) {
+      out.push(
+        warn("unknown-activation", `Unknown activation "${el.activation}"`, subject, "activation"),
+      );
+    }
+  }
+
+  // A skill declares which ability its checks use; nothing else knows.
+  if (el.kind === "skill" && !(ABILITIES as readonly string[]).includes(String(el.ability)))
+    out.push(
+      err(
+        "invalid-element",
+        `skill needs an ability, one of ${ABILITIES.join(", ")}`,
+        subject,
+        "ability",
+      ),
+    );
   if (el.kind === "sourcebook" && typeof el.abbreviation !== "string")
     out.push(err("invalid-element", "sourcebook needs an abbreviation", subject, "abbreviation"));
 

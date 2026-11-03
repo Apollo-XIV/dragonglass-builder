@@ -17,7 +17,6 @@
 
 import {
   ABILITIES,
-  SKILLS,
   type Ability,
   type ActionDef,
   type BuildFile,
@@ -55,6 +54,7 @@ import {
   proficiencyBonusFor,
   slotsForCasterLevel,
 } from "./spellslots";
+import { limitDiagnostics, spellLimits } from "./spell-limits";
 import { StatEngine, proficiencyMultiplier, type StatInput } from "./stats";
 import type {
   AbilityBlock,
@@ -137,6 +137,12 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
 
   const baseModifiers: StatInput[] = collected.modifiers.map(({ def, from }) => ({ mod: def, from }));
 
+  // Slot counts depend only on class levels, so the plan is available before any
+  // stat is computed — which is what lets spell slots be poolRules for the fold,
+  // and what lets "spellcasting.all.dc" know which classes to fan out over.
+  const plan = spellPlan(collected);
+  const spellcastingKeys = plan.casting.map(({ cls }) => shortKey(cls));
+
   // Every engine built during resolution, so lazily-produced diagnostics from both
   // passes are collected once all the reads are done.
   const engines: StatEngine[] = [];
@@ -148,14 +154,11 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
       classLevel: classLevelOf,
       table: tableLookup,
       base: (path, info) => baseFor(path, info.proficiency, info.engine, build, collected, totalLevel, content),
+      spellcastingKeys,
     });
     engines.push(built);
     return built;
   };
-
-  // Slot counts depend only on class levels, so the plan is available before any
-  // stat is computed — which is what lets spell slots be poolRules for the fold.
-  const plan = spellPlan(collected);
 
   // --- pass A: level state, which is all the fold rules need -----------------
   let engine = makeEngine([]);
@@ -199,9 +202,19 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
     };
   }
 
-  const skills: SkillBlock[] = Object.entries(SKILLS).map(([key, ability]) => {
+  // Which skills exist, and what each one rolls, comes from content. A vault with
+  // no source declaring skills has an empty skill list, which is correct rather
+  // than a gap: there is nothing to roll.
+  const skills: SkillBlock[] = content.skillKeys().map((key) => {
     const stat = engine.get(`skills.${key}`);
-    return { key, name: titleCase(key), ability, stat, passive: 10 + stat.value };
+    const ability = content.skillAbility(key)!;
+    return {
+      key,
+      name: content.skill(key)?.name ?? titleCase(key),
+      ability,
+      stat,
+      passive: 10 + stat.value,
+    };
   });
 
   const ac = engine.get("ac");
@@ -361,7 +374,7 @@ function baseFor(
 
   if (path.startsWith("skills.")) {
     const key = path.slice("skills.".length);
-    const ability = SKILLS[key];
+    const ability = content.skillAbility(key);
     if (!ability) return undefined;
     return abilityWithProficiency(engine, ability, proficiency, `${ability.toUpperCase()} modifier`);
   }
@@ -533,6 +546,8 @@ function resolveResources(
       recharge: def.recharge,
       rechargeAmount,
       unit: def.unit,
+      die: def.die,
+      pin: def.pin,
       source: from.element.id,
       sourceName: from.element.name,
       notes: def.notes,
@@ -743,7 +758,7 @@ function makeRequirementContext(
   const proficiencies = new Set<string>();
   for (const [path, stat] of Object.entries(sets))
     if (path.startsWith("proficiencies")) for (const v of stat.values) proficiencies.add(v);
-  for (const key of Object.keys(SKILLS))
+  for (const key of content.skillKeys())
     if (engine.proficiencyFor(`skills.${key}`) !== "none") proficiencies.add(key);
 
   const anySpellcasting = collected.classLevels.some(
@@ -927,6 +942,8 @@ function resolveSpellcasting(
   const grantedSpells = collected.elements.filter((c) => c.element.kind === "spell");
   if (!plan.casting.length && !grantedSpells.length && !spellsFile?.spells?.length) return undefined;
 
+  const count = (expr: Spellcasting["prepared"]): number | undefined =>
+    expr === undefined ? undefined : tryEvaluate(expr, engine.ctx, 0).value;
   const classes: ResolvedSpellcastingClass[] = plan.casting.map(({ cls, sc, level, slotLevel }) => {
     const key = shortKey(cls);
     return {
@@ -940,8 +957,18 @@ function resolveSpellcasting(
       slotLevel,
       dc: engine.get(`spellcasting.${key}.dc`),
       attack: engine.get(`spellcasting.${key}.attack`),
-      prepared: sc.prepared === undefined ? undefined : tryEvaluate(sc.prepared, engine.ctx, 0).value,
-      cantrips: sc.cantrips === undefined ? undefined : tryEvaluate(sc.cantrips, engine.ctx, 0).value,
+      prepared: count(sc.prepared),
+      known: count(sc.known),
+      spellbook: count(sc.spellbook),
+      cantrips: count(sc.cantrips),
+      maxSpellLevel:
+        count(sc.maxSpellLevel) ??
+        // A pact caster's spells are as high as its slots; everyone else's as high as the
+        // highest slot they hold, which for a multiclass character is the shared table.
+        (sc.progression === "pact"
+          ? plan.pact?.level ?? 0
+          : plan.slotMaxes.reduce((top, max, i) => (max > 0 ? i + 1 : top), 0)),
+      extraPicks: sc.extra ?? [],
     };
   });
 
@@ -992,6 +1019,7 @@ function resolveSpellcasting(
       higherLevels: spell.higherLevels,
       prepared: alwaysPrepared || entry.prepared === true,
       alwaysPrepared,
+      extra: entry.extra === true,
       class: classId,
       source: element.source,
       abbreviation: content.abbreviation(element.source),
@@ -1003,7 +1031,8 @@ function resolveSpellcasting(
     if (!fits) orphaned.push(resolved);
     else spells.push(resolved);
 
-    if (fits && classId) {
+    // An extra spell is learned outside the class, so its list says nothing about it.
+    if (fits && classId && !resolved.extra) {
       const tag = listTags.get(classId);
       if (tag && !(element.tags ?? []).includes(tag))
         diagnostics.push({
@@ -1042,7 +1071,8 @@ function resolveSpellcasting(
 
   spells.sort((a, b) => a.spellLevel - b.spellLevel || a.name.localeCompare(b.name));
 
-  return { classes, slots, pact, spells, orphaned };
+  diagnostics.push(...limitDiagnostics(classes, spells));
+  return { classes, slots, pact, spells, orphaned, limits: spellLimits(classes, spells) };
 }
 
 // ---------------------------------------------------------------------------

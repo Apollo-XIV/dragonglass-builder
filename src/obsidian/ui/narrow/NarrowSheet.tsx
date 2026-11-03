@@ -19,6 +19,7 @@ import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
 import { NarrowScroller, type SectionSpec } from "./scroller";
 import { useSheet } from "./sheet";
+import { ChipRow } from "../builder/chips";
 import { ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
 import { useToast } from "./toast";
 
@@ -138,7 +139,7 @@ function slotStatus(character: ResolvedCharacter): string {
   return max ? `${remaining}/${max} slots` : "";
 }
 
-function featureList(character: ResolvedCharacter): ResolvedCharacter["features"][string] {
+export function featureList(character: ResolvedCharacter): ResolvedCharacter["features"][string] {
   // Everything the sheet's Features section shows: the kinds a source marked for
   // the features tab, flattened.
   return Object.entries(character.features)
@@ -150,7 +151,7 @@ function featureList(character: ResolvedCharacter): ResolvedCharacter["features"
 // Overview
 // ---------------------------------------------------------------------------
 
-function OverviewSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function OverviewSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   return (
     <>
       <HpBlock store={store} character={character} />
@@ -373,7 +374,7 @@ const ACTIVATION_CHIPS = [
   { id: "reaction", label: "Reaction" },
 ];
 
-function ActionsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function ActionsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const [filter, setFilter] = useState("all");
   const attacks = useMemo(() => weaponAttacks(character), [character]);
   const actions = character.actions.filter((a) => filter === "all" || a.activation === filter);
@@ -504,7 +505,7 @@ function UseButton({
 // Spells
 // ---------------------------------------------------------------------------
 
-function SpellsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function SpellsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const casting = character.spellcasting;
   const [filter, setFilter] = useState("all");
   if (!casting) return null;
@@ -633,7 +634,7 @@ function SlotPill({
 // Inventory, features, skills, details
 // ---------------------------------------------------------------------------
 
-function InventorySection({ character }: { character: ResolvedCharacter }): ReactNode {
+export function InventorySection({ character }: { character: ResolvedCharacter }): ReactNode {
   const currency = Object.entries(character.currency).filter(([, n]) => n > 0);
   return (
     <>
@@ -656,7 +657,7 @@ function InventorySection({ character }: { character: ResolvedCharacter }): Reac
   );
 }
 
-function FeaturesSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function FeaturesSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const byKey = new Map(character.resources.map((r) => [r.source, r] as const));
   return (
     <>
@@ -719,7 +720,7 @@ function SkillsSection({ character }: { character: ResolvedCharacter }): ReactNo
   );
 }
 
-function DetailsSection({ store }: { store: CharacterStore }): ReactNode {
+export function DetailsSection({ store }: { store: CharacterStore }): ReactNode {
   const details = store.data.details;
   if (!details) return null;
   // `kind` and `schemaVersion` say what the file is, not what the character is
@@ -744,29 +745,7 @@ function DetailsSection({ store }: { store: CharacterStore }): ReactNode {
   );
 }
 
-/** A horizontally scrolling row of filter chips (spec 6, decided). */
-export function ChipRow({
-  chips,
-  active,
-  onPick,
-}: {
-  chips: { id: string; label: string }[];
-  active: string;
-  onPick: (id: string) => void;
-}): ReactNode {
-  return (
-    <div className="dg-n-chips" role="tablist">
-      {chips.map((chip) => (
-        <button
-          key={chip.id}
-          role="tab"
-          aria-selected={chip.id === active}
-          className={chip.id === active ? "dg-n-chip is-active" : "dg-n-chip"}
-          onClick={() => onPick(chip.id)}
-        >
-          {chip.label}
-        </button>
-      ))}
-    </div>
-  );
-}
+/**
+ * A horizontally scrolling row of filter chips (spec 6, decided). Shared with the
+ * desktop layout's tabs panel, which keeps the same chips at a different density.
+ */

@@ -35,20 +35,14 @@ export const HOLD = {
 export const RAIL = {
   iconWidth: 40,
   iconHeight: 48,
-  iconGap: 2,
-  /** Padding either side of the icon column. */
-  padding: 4,
   /**
-   * Padding above and below the column. Larger than the sides because the
-   * container is a pill: its end caps curve through about 24px, and an icon
-   * highlight pressed right into that curve reads as a chip sitting on the rail
-   * rather than part of it. Every offset measured from the top of the rail uses
-   * this, so changing it keeps the spotlight, thumb and labels aligned.
+   * The pill has no padding and the icons no gap, so the spotlight is flush with
+   * its edges and the top and bottom icons' highlights are shaped by the pill's
+   * own corner. That makes the scrub zone exactly one icon tall, and every offset
+   * measured from the top of the rail a plain multiple of it.
    */
-  endPadding: 8,
-  /** Icon height plus gap: the scrub zone each icon owns. */
   get zoneHeight(): number {
-    return RAIL.iconHeight + RAIL.iconGap;
+    return RAIL.iconHeight;
   },
   /** Content padding reserved beside the rail, on top of the icon width. */
   contentClearance: 28,
@@ -69,9 +63,6 @@ export const RAIL = {
   chaseFactor: 0.4,
   /** Per-frame fraction of the remaining distance, for a glide. */
   glideFactor: 0.2,
-  /** Position track on the content-facing edge. */
-  trackWidth: 3,
-  thumbHeight: 12,
   statusPip: 10,
 } as const;
 

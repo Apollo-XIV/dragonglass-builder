@@ -121,12 +121,12 @@ A vertical icon rail on the thumb side of the screen. It scrolls to sections and
 
 ### 4.1 Geometry and placement
 
-- **[Decided]** Icons 40px wide by 48px high. Glyphs are not stretched. 2px gap between icons, 4px padding around the group, pill-shaped container.
+- **[Decided]** Icons 40px wide by 48px high. Glyphs are not stretched. No gap between icons and no padding around the group, so the highlight behind the active icon is flush with the container's edges and the first and last are shaped by its corners. Rounded container, `--radius-m`.
 - **[Decided]** Side (left or right) and height are settings. Height options: Middle (vertically centred) and Low (just above Obsidian's floating toolbar).
 - **[Proposed]** Default side: right. On the left, inset the rail about 14px from the edge to stay clear of Android's back gesture and Obsidian's sidebar swipe.
 - **[Proposed]** Defaults: side right, height middle. Both are settings.
 - **[Decided]** Content never sits under the rail: reserve right padding (or left, when the rail is on the left) of icon width plus about 28px. Sticky section headers extend full width beneath the rail (section 5).
-- **[Proposed]** A 3px track on the rail edge facing the content, with a 12px thumb showing continuous position (icon index plus fraction through the section).
+- **[Decided]** No position track on the rail edge. The spotlight behind the active icon is the only position indicator; a second, thinner rail inside the pill read as a scrollbar and competed with it.
 
 ### 4.2 Behaviour
 
@@ -134,7 +134,7 @@ A vertical icon rail on the thumb side of the screen. It scrolls to sections and
 - **[Decided]** The icon for the section currently at the top is highlighted.
 - **[Decided]** Tap an icon: glide to that section's start. Default is glide, and a setting allows jump. Glide is an exponential ease-out (about 20% of remaining distance per frame, roughly 250 to 300ms).
 - **[Decided]** Drag is a continuous scrub, not a discrete jump.
-  - Each icon owns a zone of icon height plus gap (about 50px). Within zone *i*, finger position *t* (0 to 1) maps linearly onto the scroll range from the start of section *i* to the start of section *i+1*. The last zone ends at maximum scroll. The mapping is continuous across zone boundaries.
+  - Each icon owns a zone of its own height (48px). Within zone *i*, finger position *t* (0 to 1) maps linearly onto the scroll range from the start of section *i* to the start of section *i+1*. The last zone ends at maximum scroll. The mapping is continuous across zone boundaries.
   - Detents: within about 28px of scroll distance of any section start, scroll position snaps to that start and a short haptic fires on entry.
   - Smoothing: scroll chases the mapped target (about 40% of remaining distance per frame while dragging).
   - On release: if within about 90px of a section start, glide to it. Otherwise stay put.
@@ -193,6 +193,7 @@ Horizontal filter chip rows inside sections are **[Decided]**. Everything else a
 - **[Decided]** One vertical scroll in dependency order. It sits between a guided character wizard and a freeform editor: new users scroll down and pick as they go, experienced users jump with the rail.
 - **[Decided]** Section order: Origin, Levels, Planned (collapsed by default), Spells (casters only), Equipment, Details, Review.
 - **[Decided]** The sheet and builder share one visual design and component set.
+- **[Decided]** The builder's sections, pickers, confirmations and save flow are shared with the desktop layout (`ui/builder/`); this section describes the narrow arrangement of them. Features the desktop has first (per-level HP, picker search, row removal) are shared flags, ready to switch on here.
 
 ### 7.2 Origin
 
@@ -320,7 +321,7 @@ The UI is a thin layer over the engine. The engine must provide:
 
 | Item | Value |
 | --- | --- |
-| Rail icon | 40w × 48h, 2px gap, 4px padding |
+| Rail icon | 40w × 48h, no gap, no padding |
 | Rail idle opacity, idle delay | 0.4, 1.6s |
 | Rail label hold | 350ms |
 | Rail scrub detent radius | 28px of scroll distance |

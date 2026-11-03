@@ -17,13 +17,14 @@ import type { ContentIndex } from "../src/core/content";
 import { testIndex } from "./helpers";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
-import { Sheet } from "../src/obsidian/ui/Sheet";
-import { Builder } from "../src/obsidian/ui/Builder";
+import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
+import { DesktopBuilder } from "../src/obsidian/ui/desktop/DesktopBuilder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
-import { PendingChoiceList } from "../src/obsidian/ui/builder-choices";
 import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
-import { upcomingStaged } from "../src/obsidian/ui/narrow/NarrowBuilder";
+import { upcomingStaged } from "../src/obsidian/ui/builder/model";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
+import { SourceBrowser } from "../src/obsidian/ui/content-browser";
+import { ContentWizard } from "../src/obsidian/ui/content-wizard";
 import { CONTENT_ROOT } from "./helpers";
 
 const content = indexFromDisk(join(CONTENT_ROOT, "srd"), join(CONTENT_ROOT, "core"));
@@ -153,7 +154,7 @@ const plugin = {
 } as never;
 
 const app = {
-  vault: { adapter: { getResourcePath: (p: string) => `app://local/${p}` } },
+  vault: { adapter: { getResourcePath: (p: string) => `app://local/${p}` }, getAllFolders: () => [] },
 } as never;
 
 function render(node: ReactNode, store: CharacterStore): string {
@@ -166,71 +167,108 @@ function render(node: ReactNode, store: CharacterStore): string {
   );
 }
 
-describe("the sheet", () => {
+describe("the desktop sheet", () => {
   const store = makeStore();
   const character = store.resolved as ResolvedCharacter;
-  const html = render(createElement(Sheet, { store, character }), store);
+  const html = render(createElement(DesktopSheet, { store, character, settings: DEFAULT_SETTINGS }), store);
 
-  it("shows the character's identity", () => {
+  it("shows the character's identity in the header band", () => {
     expect(html).toContain("Ilsa Stonebrook");
-    expect(html).toContain("Paladin 5 (Oath of Devotion)");
-    expect(html).toContain("Dwarf");
-    expect(html).toContain("Acolyte");
+    expect(html).toContain("Dwarf Paladin 5");
+    // No gallery yet, so the avatar is initials on a colour of its own.
+    expect(html).toContain(">IS<");
   });
 
-  it("shows current and maximum hit points from the live state", () => {
-    expect(html).toContain("37");
-    expect(html).toContain("/ 49");
+  it("shows hit points as a readout over a register", () => {
+    expect(html).toContain("dg-hp-vial");
+    expect(html).toContain("dg-hp-register");
+    // 37 of 49: the register's head carries the maximum, the readout the current.
+    expect(html).toContain(">37<");
+    expect(html).toContain(">49<");
+    // The log's 12 damage is one row of the register.
+    expect(html).toContain("-12");
   });
 
-  it("shows AC, abilities and skills", () => {
-    expect(html).toContain(">18<");
-    expect(html).toContain("STR");
+  it("shows the ability tiles with scores, and the saves as pills", () => {
+    expect(html).toContain("STR 16");
+    expect(html).toContain("CON 16");
+    // The accessible name is text, not an aria-label: Obsidian opens a tooltip
+    // of its own for anything carrying one, over the top of the hover card.
+    expect(html).toContain('<span class="dg-sr-only">Strength check</span>');
+    expect(html).toContain('<span class="dg-sr-only">Constitution save</span>');
+    // A proficient save carries a filled pip and the accent outline.
+    expect(html).toContain("dg-d-save is-proficient");
+  });
+
+  it("states the situational modifiers a feature grants", () => {
+    // The dwarf's poison resilience annotates the CON save rather than adding to it.
+    expect(html).toContain("dg-d-note");
+    // The dwarf's resilience annotates all six saves, and says so once.
+    expect(html).toContain("on saves against poison");
+  });
+
+  it("shows the stat cluster, hit dice and a pinned resource", () => {
+    expect(html).toContain(">Armour Class<");
+    expect(html).toContain(">Initiative<");
+    expect(html).toContain(">Proficiency bonus<");
+    expect(html).toContain("/5d10");
+    // Channel Divinity comes back on a short rest and has one use: the clearest
+    // thing a level 5 paladin can have pinned.
+    expect(html).toContain("Channel Divinity");
+  });
+
+  it("shows skills, senses and proficiencies as standing boxes", () => {
     expect(html).toContain("Animal Handling");
-    expect(html).toContain("passive");
+    expect(html).toContain("Passive");
+    expect(html).toContain(">Passive Perception<");
+    expect(html).toContain("Darkvision");
+    expect(html).toContain("Smith&#x27;s Tools");
+    expect(html).toContain("Elvish");
   });
 
-  it("marks a stat that has situational modifiers", () => {
-    expect(html).toContain("dg-conditional");
-  });
-
-  it("shows the avatar from details.5e", () => {
-    expect(html).toContain("app://local/Art/ilsa.png");
-  });
-
-  it("offers the tabs the character has content for", () => {
-    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Details", "Log"])
+  it("offers the tabs the character has content for, Log included", () => {
+    for (const label of ["Actions", "Spells", "Features", "Inventory", "Details", "Log"])
       expect(html, label).toContain(`>${label}`);
   });
 
-  it("shows an active condition", () => {
+  it("shows an active condition as a chip you can take off", () => {
     expect(html).toContain("frightened");
+    expect(html).toContain("dg-d-chip is-condition");
   });
 
-  it("shows resources with their recharge rule", () => {
-    expect(html).toContain("Lay on Hands");
-    expect(html).toContain("long rest");
+  it("offers rest and inspiration in the header", () => {
+    expect(html).toContain(">Rest<");
+    expect(html).toContain(">Inspiration<");
   });
 
-  it("offers short and long rests", () => {
-    expect(html).toContain("Short rest");
-    expect(html).toContain("Long rest");
+  it("marks hit points as pending rather than changed while an entry is typed", () => {
+    // Nothing typed, so no diff is up.
+    expect(html).not.toContain("has-pending");
   });
 
-  it("does not list items or spells a second time as feature cards", () => {
-    // The `item` and `spell` kinds declare a tab, but those tabs have dedicated
-    // panels; only kinds on the features tab (or a tab the plugin has no panel
-    // for) become generic feature lists.
-    const inventoryHtml = render(createElement(CharacterApp, { store, kind: "inventory", path: "x" }), store);
-    expect(inventoryHtml).not.toContain(">Items<");
-    expect(html).not.toContain(">Items<");
-  });
-
-  it("renders every tab body without crashing", () => {
-    // Each tab is rendered through CharacterApp's own dispatch below; here the
-    // panels are exercised directly by switching the sheet's own state is not
-    // possible in static rendering, so the dedicated panel tests cover them.
-    expect(html.length).toBeGreaterThan(2000);
+  it("shows the death save pips instead of the vial at zero hit points", () => {
+    const downed = makeStore({
+      state: {
+        kind: "state",
+        schemaVersion: 1,
+        checkpoint: { damage: 0, tempHp: 0, tempMaxHp: [], spent: {}, effects: [] },
+        events: [
+          { t: "2026-10-27T19:42:00Z", type: "damage", amount: 99 },
+          { t: "2026-10-27T19:43:00Z", type: "death-save", result: "failure" },
+        ],
+      },
+    });
+    const downedHtml = render(
+      createElement(DesktopSheet, {
+        store: downed,
+        character: downed.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS,
+      }),
+      downed,
+    );
+    expect(downedHtml).toContain("dg-hp-death");
+    expect(downedHtml).toContain('aria-label="Death save failure 1"');
+    expect(downedHtml).not.toContain("dg-hp-vial");
   });
 });
 
@@ -239,7 +277,7 @@ describe("panel dispatch by file kind", () => {
 
   it.each([
     ["sheet", "Ilsa Stonebrook"],
-    ["build", "Levels &amp; features"],
+    ["build", "dg-b-detail"],
     ["spells", "Spell slots"],
     ["inventory", "Carried"],
     ["state", "Since the last rest"],
@@ -280,79 +318,72 @@ describe("panel dispatch by file kind", () => {
   });
 });
 
-describe("the builder", () => {
+describe("the desktop builder", () => {
+  const desk = (s: CharacterStore, initialTab?: string): string =>
+    render(
+      createElement(DesktopBuilder, {
+        store: s,
+        character: s.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS,
+        initialTab,
+      }),
+      s,
+    );
   const store = makeStore();
-  const character = store.resolved as ResolvedCharacter;
-  const html = render(createElement(Builder, { store, character }), store);
+  const html = desk(store);
 
-  it("offers the core tab with species and background selects", () => {
+  it("opens on Origin with species, background and the ability scores", () => {
     expect(html).toContain("Species");
     expect(html).toContain("Background");
     expect(html).toContain("Dwarf");
-    expect(html).toContain("Point buy");
-  });
-
-  it("shows ability scores with the species increase applied", () => {
     expect(html).toContain("CON");
-    expect(html).toContain("+2 → 16");
   });
 
-  it("reports the point buy total", () => {
-    expect(html).toContain("of 27 points spent");
-  });
-
-  it("lists the builder's tabs, with no spells tab for a non-caster", () => {
-    expect(html).toContain(">Levels &amp; features");
-    expect(html).toContain(">Choices");
-    expect(html).toContain(">Browse classes");
-    expect(html).toContain(">Sources");
-
-    const noCaster = makeStore({
-      build: { ...build, levels: [{ class: "srd:class:paladin", hp: "max", choices: {} }], level: 1 },
-      spells: { kind: "spells", schemaVersion: 1, spells: [] },
-    });
-    const plain = render(
-      createElement(Builder, { store: noCaster, character: noCaster.resolved as ResolvedCharacter }),
-      noCaster,
-    );
-    expect(plain).not.toContain(">Spells<");
-  });
-
-  it("shows the species and background choices on the core tab", () => {
+  it("shows the choices species and background bring", () => {
     expect(html).toContain("Tool Proficiency");
     expect(html).toContain("Smith&#x27;s Tools");
     expect(html).toContain("Acolyte Languages");
   });
-});
 
-describe("choice rendering", () => {
-  const unchosen = makeStore({
-    build: {
-      ...build,
-      levels: build.levels.map((level, i) => (i === 1 ? { ...level, choices: {} } : level)),
-    },
-  });
-  const character = unchosen.resolved as ResolvedCharacter;
-  const html = render(createElement(PendingChoiceList, { store: unchosen, character }), unchosen);
-
-  it("shows an outstanding choice with every option", () => {
-    expect(html).toContain("outstanding");
-    expect(html).toContain("Fighting Style");
-    for (const name of ["Defense", "Dueling", "Great Weapon Fighting", "Protection"])
-      expect(html, name).toContain(name);
+  it("has the sidebar the desktop reads in", () => {
+    expect(html).toContain("dg-b-detail");
   });
 
-  it("offers the enforcement toggle", () => {
-    expect(html).toContain("Enforce prerequisites");
+  it("lists tabs for the shared sections, with Levels and Planned on one tab", () => {
+    for (const tab of [">Origin<", ">Levels<", ">Equipment<", ">Details<", ">Review<", ">Browse<", ">Sources<"])
+      expect(html, tab).toContain(tab);
+    expect(html).not.toContain(">Planned<");
   });
 
-  it("marks a completed choice as done", () => {
-    const done = makeStore();
-    const full = render(
-      createElement(PendingChoiceList, { store: done, character: done.resolved as ResolvedCharacter }),
-      done,
-    );
-    expect(full).toContain("Nothing left to choose");
+  it("has no Spells tab for a non-caster", () => {
+    const noCaster = makeStore({
+      build: { ...build, levels: [{ class: "srd:class:paladin", hp: "max", choices: {} }], level: 1 },
+      spells: { kind: "spells", schemaVersion: 1, spells: [] },
+    });
+    expect(desk(noCaster)).not.toContain(">Spells<");
+  });
+
+  it("puts the planned levels under the level cards", () => {
+    const levels = desk(store, "levels");
+    expect(levels).toContain("dg-level-card");
+    expect(levels).toContain("Planned");
+  });
+
+  it("turns on the per-level hit points the narrow builder does not have", () => {
+    expect(desk(store, "levels")).toContain("Maximum (");
+  });
+
+  it("flags a tab that has a decision waiting", () => {
+    const unchosen = makeStore({
+      build: {
+        ...build,
+        levels: build.levels.map((level, i) => (i === 1 ? { ...level, choices: {} } : level)),
+      },
+    });
+    expect(desk(unchosen)).toContain("dg-d-tab-dot");
+    const levels = desk(unchosen, "levels");
+    expect(levels).toContain("Fighting Style");
+    expect(levels).toContain("is-empty");
   });
 
   it("keeps a pick that no longer fits and says so", () => {
@@ -364,15 +395,22 @@ describe("choice rendering", () => {
         ),
       },
     });
-    const staleCharacter = stale.resolved as ResolvedCharacter;
-    const choice = staleCharacter.pendingChoices.find((c) => c.id === "srd:paladin:fighting-style");
+    const choice = (stale.resolved as ResolvedCharacter).pendingChoices.find(
+      (c) => c.id === "srd:paladin:fighting-style",
+    );
     expect(choice?.chosen).toEqual(["srd:spell:bless"]);
     expect(choice?.invalid).toEqual(["srd:spell:bless"]);
-    const staleHtml = render(createElement(PendingChoiceList, { store: stale, character: staleCharacter }), stale);
-    expect(staleHtml).toContain("no longer fits this choice");
+    expect(desk(stale, "levels")).toContain("Invalid");
+  });
+
+  it("offers the enforcement toggle on Review", () => {
+    expect(desk(store, "review")).toContain("Enforce prerequisites");
+  });
+
+  it("does not show the narrow-only chrome", () => {
+    expect(html).not.toContain("dg-narrow-content");
   });
 });
-
 
 describe("the narrow layout", () => {
   const store = makeStore();
@@ -632,5 +670,63 @@ describe("species features staged by character level", () => {
   it("ignores an element that doesn't stage itself", () => {
     const classStaged: Element = { ...SPECIES, id: "stage:other", levelsBy: "class" };
     expect(upcomingStaged([{ element: classStaged }], 1, 3)).toEqual([]);
+  });
+});
+
+describe("the source browser and entry wizard", () => {
+  const store = makeStore();
+  const srdRef = { id: "srd", type: "github" as const, location: "owner/srd", enabled: true };
+  const homebrewRef = { id: "homebrew", type: "vault" as const, location: "Sources/homebrew", enabled: true };
+
+  it("lists a read-only source's elements with no add/edit controls", () => {
+    const html = render(createElement(SourceBrowser, { index: content, sourceRef: srdRef, onClose: () => undefined }), store);
+    expect(html).toContain("Dwarf");
+    expect(html).toContain("read-only");
+    expect(html).not.toContain("Add entry");
+  });
+
+  it("filters by kind and by text", () => {
+    const html = render(createElement(SourceBrowser, { index: content, sourceRef: srdRef, onClose: () => undefined }), store);
+    expect(html).toContain("Every kind");
+    expect(html).toContain('placeholder="Filter by name or id"');
+  });
+
+  it("offers Add entry on a writable source and opens the wizard for a new element", () => {
+    const html = render(
+      createElement(SourceBrowser, { index: content, sourceRef: homebrewRef, startNew: true, onClose: () => undefined }),
+      store,
+    );
+    expect(html).toContain("New entry");
+    expect(html).toContain("View raw JSON");
+  });
+
+  it("renders the wizard's form fields for a blank new entry", () => {
+    const html = render(
+      createElement(ContentWizard, { index: content, sourceRef: homebrewRef, onSaved: () => undefined, onCancel: () => undefined }),
+      store,
+    );
+    expect(html).toContain("Id");
+    expect(html).toContain("Kind");
+    expect(html).toContain("Name");
+    expect(html).toContain("Source");
+    // Nothing filled in yet, so the structural validator flags the missing fields.
+    expect(html).toContain("Validation");
+  });
+
+  it("validates cleanly editing an existing well-formed element", () => {
+    const dwarf = content.get("srd:species:dwarf")!;
+    const html = render(
+      createElement(ContentWizard, {
+        index: content,
+        sourceRef: homebrewRef,
+        initial: dwarf,
+        originFile: "content/species/dwarf.json",
+        onSaved: () => undefined,
+        onCancel: () => undefined,
+      }),
+      store,
+    );
+    expect(html).toContain("Edit Dwarf");
+    expect(html).toContain("Validates cleanly");
   });
 });

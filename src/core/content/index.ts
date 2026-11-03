@@ -4,10 +4,12 @@
  */
 
 import type {
+  Ability,
   Diagnostic,
   Element,
   Filter,
   KindElement,
+  SkillElement,
   SourceRef,
   SourcebookElement,
   StatPathElement,
@@ -55,6 +57,13 @@ export class ContentIndex {
   private readonly sourcebooks = new Map<string, SourcebookElement>();
   /** Short class keys mapped to class element ids, for @level(monk) and @table. */
   private readonly classKeys = new Map<string, string>();
+  /**
+   * Which ability each declared skill uses. `skills.*` is an open family like
+   * `senses.*`: core declares the stat path, content declares its members, so the
+   * engine carries no list of its own.
+   */
+  private readonly skillAbilities = new Map<string, Ability>();
+  private readonly skillElements = new Map<string, SkillElement>();
 
   readonly diagnostics: Diagnostic[] = [];
   readonly overrides: OverrideRecord[] = [];
@@ -163,6 +172,14 @@ export class ContentIndex {
           const key = typeof element.key === "string" ? element.key : lastSegment(element.id);
           if (!this.classKeys.has(key)) this.classKeys.set(key, element.id);
           this.classKeys.set(element.id, element.id);
+          break;
+        }
+        case "skill": {
+          const skill = element as SkillElement;
+          // Same defaulting rule as a class's `key`: the id's last segment.
+          const key = typeof skill.key === "string" ? skill.key : lastSegment(skill.id);
+          this.skillAbilities.set(key, skill.ability);
+          this.skillElements.set(key, skill);
           break;
         }
       }
@@ -291,6 +308,21 @@ export class ContentIndex {
 
   allStatPaths(): StatPathElement[] {
     return [...this.statPaths.values(), ...this.statPathPatterns.map((p) => p.def)];
+  }
+
+  /** Every declared skill key, in declaration order. */
+  skillKeys(): string[] {
+    return [...this.skillAbilities.keys()];
+  }
+
+  /** The ability a declared skill uses, or undefined if no source declares it. */
+  skillAbility(key: string): Ability | undefined {
+    return this.skillAbilities.get(key);
+  }
+
+  /** The element behind a skill key, for its display name. */
+  skill(key: string): SkillElement | undefined {
+    return this.skillElements.get(key);
   }
 
   /** Resolves "monk" or "srd:class:monk" to a class element. */

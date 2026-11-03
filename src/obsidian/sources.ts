@@ -14,6 +14,11 @@ import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile
 import { CORE_ELEMENTS, CORE_SOURCE_ID, CORE_SOURCE_NAME } from "../generated/core-content";
 import type { CacheTier } from "./settings";
 
+/** vault and path sources are local files the plugin can write back to; github and url are fetched. */
+export function isWritableSource(ref: Pick<SourceRef, "type">): boolean {
+  return ref.type === "vault" || ref.type === "path";
+}
+
 export interface SourceStatus {
   ref: SourceRef;
   state: "loaded" | "error" | "loading" | "disabled" | "cached";
@@ -21,6 +26,13 @@ export interface SourceStatus {
   diagnostics: Diagnostic[];
   /** Where the bytes came from, for the sources panel. */
   origin?: string;
+  /**
+   * The id the content index actually filed this source's elements under — a
+   * source's own `source.json` id wins over its `SourceRef.id` (so ids survive a
+   * renamed settings entry), which means the two can differ. Browsing a source
+   * has to filter by this one, not `ref.id`.
+   */
+  sourceId: string;
 }
 
 interface CacheEntry {
@@ -127,7 +139,7 @@ export class SourceManager {
       if (!ref?.id || seen.has(ref.id)) continue;
       seen.add(ref.id);
       if (ref.enabled === false || off.has(ref.id)) {
-        this.statuses.set(ref.id, { ref, state: "disabled", elementCount: 0, diagnostics: [] });
+        this.statuses.set(ref.id, { ref, state: "disabled", elementCount: 0, diagnostics: [], sourceId: ref.id });
         continue;
       }
       ordered.push(ref);
@@ -173,6 +185,7 @@ export class SourceManager {
       if (fallback) {
         // A cached copy keeps characters working offline, with the failure still shown.
         const loaded = bundleToLoadedSource({ manifest: fallback.manifest, files: fallback.files });
+        loaded.id = fallback.manifest.id || ref.id;
         loaded.diagnostics = [...(loaded.diagnostics ?? []), ...diagnostics];
         this.loaded.set(ref.id, loaded);
         this.statuses.set(ref.id, {
@@ -181,11 +194,12 @@ export class SourceManager {
           elementCount: loaded.elements.length,
           diagnostics: loaded.diagnostics,
           origin: `cache from ${fallback.fetchedAt}`,
+          sourceId: loaded.id,
         });
         return loaded;
       }
       const empty: LoadedSource = { id: ref.id, name: ref.name, elements: [], diagnostics };
-      this.statuses.set(ref.id, { ref, state: "error", elementCount: 0, diagnostics, origin });
+      this.statuses.set(ref.id, { ref, state: "error", elementCount: 0, diagnostics, origin, sourceId: ref.id });
       return empty;
     }
 
@@ -204,6 +218,7 @@ export class SourceManager {
       elementCount: loaded.elements.length,
       diagnostics: loaded.diagnostics,
       origin,
+      sourceId: loaded.id,
     });
     if (this.tier !== "none") {
       this.cache.set(ref.id, {
@@ -215,6 +230,118 @@ export class SourceManager {
       void this.saveCache();
     }
     return loaded;
+  }
+
+  // -- writers (vault and path sources only; github and url are read-only) --
+
+  /** Every content JSON file in a source, as paths relative to the source root. */
+  async listFiles(ref: SourceRef): Promise<string[]> {
+    if (ref.type === "vault") {
+      const root = normalizePath(ref.location);
+      const out: string[] = [];
+      const walk = async (dir: string): Promise<void> => {
+        if (!(await this.adapter.exists(dir))) return;
+        const listing = await this.adapter.list(dir);
+        for (const file of listing.files)
+          if (file.endsWith(".json") && !file.endsWith("source.json")) out.push(file.slice(root.length + 1));
+        for (const folder of listing.folders) await walk(folder);
+      };
+      await walk(normalizePath(`${root}/content`));
+      return out;
+    }
+    if (ref.type === "path") {
+      if (!Platform.isDesktopApp) return [];
+      const fs: typeof import("node:fs") = require("node:fs");
+      const path: typeof import("node:path") = require("node:path");
+      const root = ref.location;
+      const out: string[] = [];
+      const walk = (dir: string): void => {
+        if (!fs.existsSync(dir)) return;
+        for (const entry of fs.readdirSync(dir).sort()) {
+          const full = path.join(dir, entry);
+          if (fs.statSync(full).isDirectory()) walk(full);
+          else if (entry.endsWith(".json") && entry !== "source.json") out.push(path.relative(root, full));
+        }
+      };
+      walk(path.join(root, "content"));
+      return out;
+    }
+    return [];
+  }
+
+  /** Whether a file exists, by path relative to the source root. */
+  async fileExists(ref: SourceRef, relPath: string): Promise<boolean> {
+    if (ref.type === "vault") return this.adapter.exists(normalizePath(`${ref.location}/${relPath}`));
+    if (ref.type === "path") {
+      const fs: typeof import("node:fs") = require("node:fs");
+      const path: typeof import("node:path") = require("node:path");
+      return fs.existsSync(path.join(ref.location, relPath));
+    }
+    return false;
+  }
+
+  /** Reads one file's raw text, by path relative to the source root. */
+  async readFile(ref: SourceRef, relPath: string): Promise<string> {
+    if (ref.type === "vault") return this.adapter.read(normalizePath(`${ref.location}/${relPath}`));
+    if (ref.type === "path") {
+      const fs: typeof import("node:fs") = require("node:fs");
+      const path: typeof import("node:path") = require("node:path");
+      return fs.readFileSync(path.join(ref.location, relPath), "utf8");
+    }
+    throw new Error(`"${ref.id}" is read-only`);
+  }
+
+  /** Writes one file's raw text, creating parent folders as needed. */
+  async writeFile(ref: SourceRef, relPath: string, text: string): Promise<void> {
+    if (ref.type === "vault") {
+      const full = normalizePath(`${ref.location}/${relPath}`);
+      await this.ensureVaultFolder(full.slice(0, full.lastIndexOf("/")));
+      await this.adapter.write(full, text);
+      return;
+    }
+    if (ref.type === "path") {
+      const fs: typeof import("node:fs") = require("node:fs");
+      const path: typeof import("node:path") = require("node:path");
+      const full = path.join(ref.location, relPath);
+      fs.mkdirSync(path.dirname(full), { recursive: true });
+      fs.writeFileSync(full, text, "utf8");
+      return;
+    }
+    throw new Error(`"${ref.id}" is read-only; only a vault folder or a local path can be edited`);
+  }
+
+  private async ensureVaultFolder(dir: string): Promise<void> {
+    if (!dir || (await this.adapter.exists(dir))) return;
+    const parts = dir.split("/").filter(Boolean);
+    let current = "";
+    for (const part of parts) {
+      current = current ? `${current}/${part}` : part;
+      if (!(await this.adapter.exists(current))) await this.adapter.mkdir(current);
+    }
+  }
+
+  /**
+   * Scaffolds a brand-new source: `source.json` plus an empty `content/` folder,
+   * for "create a source from scratch" to then populate through the wizard.
+   */
+  async createSource(ref: Omit<SourceRef, "id"> & { id: string }, manifest: SourceBundle["manifest"]): Promise<void> {
+    if (!isWritableSource(ref)) throw new Error("only a vault folder or a local path can be created this way");
+    if (ref.type === "path" && !Platform.isDesktopApp)
+      throw new Error("paths outside the vault need the desktop app; use a vault folder instead");
+
+    if (ref.type === "vault") {
+      const root = normalizePath(ref.location);
+      if (await this.adapter.exists(root)) throw new Error(`"${ref.location}" already exists`);
+      await this.ensureVaultFolder(root);
+      await this.ensureVaultFolder(normalizePath(`${root}/content`));
+      await this.adapter.write(normalizePath(`${root}/source.json`), `${JSON.stringify(manifest, null, 2)}\n`);
+    } else {
+      const fs: typeof import("node:fs") = require("node:fs");
+      const path: typeof import("node:path") = require("node:path");
+      if (fs.existsSync(ref.location)) throw new Error(`"${ref.location}" already exists`);
+      fs.mkdirSync(path.join(ref.location, "content"), { recursive: true });
+      fs.writeFileSync(path.join(ref.location, "source.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+    }
   }
 
   // -- readers ---------------------------------------------------------------
@@ -293,6 +420,7 @@ export class SourceManager {
             source: ref.id,
           },
         ],
+        sourceId: ref.id,
       });
     }
 

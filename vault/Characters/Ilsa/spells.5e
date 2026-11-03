@@ -31,6 +31,46 @@
       "id": "srd:spell:magic-weapon",
       "class": "srd:class:paladin",
       "prepared": false
+    },
+    {
+      "id": "srd:spell:eldritch-blast",
+      "class": "srd:class:warlock",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:mage-hand",
+      "class": "srd:class:warlock",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:find-familiar",
+      "class": "srd:class:wizard",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:alarm",
+      "class": "srd:class:wizard",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:comprehend-languages",
+      "class": "srd:class:wizard",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:acid-splash",
+      "class": "srd:class:wizard",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:jump",
+      "class": "srd:class:wizard",
+      "prepared": false
+    },
+    {
+      "id": "srd:spell:poison-spray",
+      "class": "srd:class:wizard",
+      "prepared": false
     }
   ]
 }

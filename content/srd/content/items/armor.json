@@ -1,0 +1,208 @@
+[
+  {
+    "id": "srd:item:padded-armor",
+    "kind": "item",
+    "name": "Padded Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "light-armor"],
+    "itemType": "armor",
+    "weight": 8,
+    "value": 500,
+    "armor": { "base": 11, "category": "light", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "text": "Padded armor consists of quilted layers of cloth and batting. AC 11 + Dex modifier. Disadvantage on Stealth."
+  },
+
+  {
+    "id": "srd:item:leather-armor",
+    "kind": "item",
+    "name": "Leather Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "light-armor"],
+    "itemType": "armor",
+    "weight": 10,
+    "value": 1000,
+    "armor": { "base": 11, "category": "light" },
+    "requiresEquipped": true,
+    "text": "The breastplate and shoulder protectors of this armor are made of leather that has been stiffened by being boiled in oil. The rest of the armor is made of softer and more flexible materials. AC 11 + Dex modifier."
+  },
+
+  {
+    "id": "srd:item:studded-leather-armor",
+    "kind": "item",
+    "name": "Studded Leather Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "light-armor"],
+    "itemType": "armor",
+    "weight": 13,
+    "value": 4500,
+    "armor": { "base": 12, "category": "light" },
+    "requiresEquipped": true,
+    "text": "Made from tough but flexible leather, studded leather is reinforced with close-set rivets or spikes. AC 12 + Dex modifier."
+  },
+
+  {
+    "id": "srd:item:hide-armor",
+    "kind": "item",
+    "name": "Hide Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "medium-armor"],
+    "itemType": "armor",
+    "weight": 12,
+    "value": 1000,
+    "armor": { "base": 12, "dexMax": 2, "category": "medium" },
+    "requiresEquipped": true,
+    "text": "This crude armor consists of thick furs and pelts. It is commonly worn by barbarian tribes, evil humanoids, and other folk who lack access to the tools and materials needed to create better armor. AC 12 + Dex modifier (max 2)."
+  },
+
+  {
+    "id": "srd:item:chain-shirt",
+    "kind": "item",
+    "name": "Chain Shirt",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "medium-armor"],
+    "itemType": "armor",
+    "weight": 20,
+    "value": 5000,
+    "armor": { "base": 13, "dexMax": 2, "category": "medium" },
+    "requiresEquipped": true,
+    "text": "Made of interlocking metal rings, a chain shirt is worn between layers of clothing or leather. This armor offers modest protection to the wearer's upper body and allows the sound of the rings rubbing against one another to be muffled by outer layers. AC 13 + Dex modifier (max 2)."
+  },
+
+  {
+    "id": "srd:item:scale-mail",
+    "kind": "item",
+    "name": "Scale Mail",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "medium-armor"],
+    "itemType": "armor",
+    "weight": 45,
+    "value": 5000,
+    "armor": { "base": 14, "dexMax": 2, "category": "medium", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "text": "This armor consists of a coat and leggings (and perhaps a separate skirt) of leather covered with overlapping pieces of metal, much like the scales of a fish. The suit includes gauntlets. AC 14 + Dex modifier (max 2). Disadvantage on Stealth."
+  },
+
+  {
+    "id": "srd:item:breastplate",
+    "kind": "item",
+    "name": "Breastplate",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "medium-armor"],
+    "itemType": "armor",
+    "weight": 20,
+    "value": 40000,
+    "armor": { "base": 14, "dexMax": 2, "category": "medium" },
+    "requiresEquipped": true,
+    "text": "This armor consists of a fitted metal chest piece worn with supple leather. Although it leaves the legs and arms relatively unprotected, this armor provides good protection for the wearer's vital organs while leaving the wearer relatively unencumbered. AC 14 + Dex modifier (max 2)."
+  },
+
+  {
+    "id": "srd:item:half-plate",
+    "kind": "item",
+    "name": "Half Plate",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "medium-armor"],
+    "itemType": "armor",
+    "weight": 40,
+    "value": 75000,
+    "armor": { "base": 15, "dexMax": 2, "category": "medium", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "text": "Half plate consists of shaped metal plates that cover most of the wearer's body. It does not include leg protection beyond simple greaves that are attached with leather straps. AC 15 + Dex modifier (max 2). Disadvantage on Stealth."
+  },
+
+  {
+    "id": "srd:item:ring-mail",
+    "kind": "item",
+    "name": "Ring Mail",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "heavy-armor"],
+    "itemType": "armor",
+    "weight": 40,
+    "value": 3000,
+    "armor": { "base": 14, "dexMax": null, "category": "heavy", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "text": "This armor is leather armor with heavy rings sewn into it. The rings help reinforce the armor against blows from swords and axes. Ring mail is inferior to chain mail, and it's usually worn only by those who can't afford better armor. AC 14. Disadvantage on Stealth."
+  },
+
+  {
+    "id": "srd:item:chain-mail",
+    "kind": "item",
+    "name": "Chain Mail",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "heavy-armor"],
+    "itemType": "armor",
+    "weight": 55,
+    "value": 7500,
+    "armor": { "base": 16, "dexMax": null, "category": "heavy", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "requires": {
+      "text": "Strength 13",
+      "all": [{ "type": "ability", "ability": "str", "min": 13 }]
+    },
+    "text": "Made of interlocking metal rings, chain mail includes a layer of quilted fabric worn underneath the mail to prevent chafing and to cushion the impact of blows. The suit includes gauntlets. AC 16. Disadvantage on Stealth. If your Strength is lower than 13, your speed is reduced by 10 feet."
+  },
+
+  {
+    "id": "srd:item:splint-armor",
+    "kind": "item",
+    "name": "Splint Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "heavy-armor"],
+    "itemType": "armor",
+    "weight": 60,
+    "value": 20000,
+    "armor": { "base": 17, "dexMax": null, "category": "heavy", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "requires": {
+      "text": "Strength 15",
+      "all": [{ "type": "ability", "ability": "str", "min": 15 }]
+    },
+    "text": "This armor is made of narrow vertical strips of metal riveted to a backing of leather that is worn over cloth padding. Flexible chain mail protects the joints. AC 17. Disadvantage on Stealth. If your Strength is lower than 15, your speed is reduced by 10 feet."
+  },
+
+  {
+    "id": "srd:item:plate-armor",
+    "kind": "item",
+    "name": "Plate Armor",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "heavy-armor"],
+    "itemType": "armor",
+    "weight": 65,
+    "value": 150000,
+    "armor": { "base": 18, "dexMax": null, "category": "heavy", "stealthDisadvantage": true },
+    "requiresEquipped": true,
+    "requires": {
+      "text": "Strength 15",
+      "all": [{ "type": "ability", "ability": "str", "min": 15 }]
+    },
+    "text": "Plate consists of shaped, interlocking metal plates to cover the entire body. A suit of plate includes gauntlets, heavy leather boots, a visored helmet, and thick layers of padding underneath the armor. Buckles and straps distribute the weight over the body. AC 18. Disadvantage on Stealth. If your Strength is lower than 15, your speed is reduced by 10 feet."
+  },
+
+  {
+    "id": "srd:item:shield",
+    "kind": "item",
+    "name": "Shield",
+    "source": "srd",
+    "page": 63,
+    "tags": ["armor", "shield"],
+    "itemType": "shield",
+    "weight": 6,
+    "value": 1000,
+    "requiresEquipped": true,
+    "modifiers": [{ "target": "ac", "op": "add", "value": 2, "stackKey": "shield" }],
+    "text": "A shield is made from wood or metal and is carried in one hand. Wielding a shield increases your Armor Class by 2. You can benefit from only one shield at a time."
+  }
+]

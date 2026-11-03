@@ -4,6 +4,7 @@
     "kind": "skill",
     "name": "Acrobatics",
     "source": "srd",
+    "ability": "dex",
     "tags": [
       "skill"
     ],
@@ -21,6 +22,7 @@
     "kind": "skill",
     "name": "Animal Handling",
     "source": "srd",
+    "ability": "wis",
     "tags": [
       "skill"
     ],
@@ -38,6 +40,7 @@
     "kind": "skill",
     "name": "Arcana",
     "source": "srd",
+    "ability": "int",
     "tags": [
       "skill"
     ],
@@ -55,6 +58,7 @@
     "kind": "skill",
     "name": "Athletics",
     "source": "srd",
+    "ability": "str",
     "tags": [
       "skill"
     ],
@@ -72,6 +76,7 @@
     "kind": "skill",
     "name": "Deception",
     "source": "srd",
+    "ability": "cha",
     "tags": [
       "skill"
     ],
@@ -89,6 +94,7 @@
     "kind": "skill",
     "name": "History",
     "source": "srd",
+    "ability": "int",
     "tags": [
       "skill"
     ],
@@ -106,6 +112,7 @@
     "kind": "skill",
     "name": "Insight",
     "source": "srd",
+    "ability": "wis",
     "tags": [
       "skill"
     ],
@@ -123,6 +130,7 @@
     "kind": "skill",
     "name": "Intimidation",
     "source": "srd",
+    "ability": "cha",
     "tags": [
       "skill"
     ],
@@ -140,6 +148,7 @@
     "kind": "skill",
     "name": "Investigation",
     "source": "srd",
+    "ability": "int",
     "tags": [
       "skill"
     ],
@@ -157,6 +166,7 @@
     "kind": "skill",
     "name": "Medicine",
     "source": "srd",
+    "ability": "wis",
     "tags": [
       "skill"
     ],
@@ -174,6 +184,7 @@
     "kind": "skill",
     "name": "Nature",
     "source": "srd",
+    "ability": "int",
     "tags": [
       "skill"
     ],
@@ -191,6 +202,7 @@
     "kind": "skill",
     "name": "Perception",
     "source": "srd",
+    "ability": "wis",
     "tags": [
       "skill"
     ],
@@ -208,6 +220,7 @@
     "kind": "skill",
     "name": "Performance",
     "source": "srd",
+    "ability": "cha",
     "tags": [
       "skill"
     ],
@@ -225,6 +238,7 @@
     "kind": "skill",
     "name": "Persuasion",
     "source": "srd",
+    "ability": "cha",
     "tags": [
       "skill"
     ],
@@ -242,6 +256,7 @@
     "kind": "skill",
     "name": "Religion",
     "source": "srd",
+    "ability": "int",
     "tags": [
       "skill"
     ],
@@ -259,6 +274,7 @@
     "kind": "skill",
     "name": "Sleight of Hand",
     "source": "srd",
+    "ability": "dex",
     "tags": [
       "skill"
     ],
@@ -276,6 +292,7 @@
     "kind": "skill",
     "name": "Stealth",
     "source": "srd",
+    "ability": "dex",
     "tags": [
       "skill"
     ],
@@ -293,6 +310,7 @@
     "kind": "skill",
     "name": "Survival",
     "source": "srd",
+    "ability": "wis",
     "tags": [
       "skill"
     ],

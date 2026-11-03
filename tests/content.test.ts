@@ -20,6 +20,93 @@ function source(id: string, elements: unknown[]): LoadedSource {
   return { id, elements };
 }
 
+describe("an action element declares what it costs", () => {
+  const action = (activation?: unknown) => ({
+    id: "srd:action:dash", kind: "action", name: "Dash", source: "srd",
+    ...(activation === undefined ? {} : { activation }),
+  });
+
+  it("accepts a known activation", () => {
+    const r = validateElement(action("action"));
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics).toHaveLength(0);
+  });
+
+  it("rejects an action with no activation", () => {
+    const r = validateElement(action());
+    expect(r.usable).toBe(false);
+    expect(r.diagnostics.map((d) => d.path)).toContain("activation");
+  });
+
+  it("warns about an activation it does not know, and keeps the element", () => {
+    const r = validateElement(action("fortnight"));
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics.map((d) => d.code)).toContain("unknown-activation");
+  });
+
+  it("treats a cost the rules leave open as special", () => {
+    expect(validateElement(action("special")).diagnostics).toHaveLength(0);
+  });
+
+  it("does not ask an element that merely grants an action for one", () => {
+    const r = validateElement({
+      id: "srd:barbarian:rage", kind: "class-feature", name: "Rage", source: "srd",
+      actions: [{ id: "rage", name: "Rage", activation: "bonus-action" }],
+    });
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics).toHaveLength(0);
+  });
+});
+
+describe("skills are declared by content", () => {
+  const skill = (id: string, name: string, ability: string, extra: Record<string, unknown> = {}) => ({
+    id, kind: "skill", name, source: "srd", ability, ...extra,
+  });
+
+  it("rejects a skill with no ability, because nothing else knows what it rolls", () => {
+    const r = validateElement({ id: "srd:skill:acrobatics", kind: "skill", name: "Acrobatics", source: "srd" });
+    expect(r.usable).toBe(false);
+    expect(r.diagnostics.map((d) => d.path)).toContain("ability");
+  });
+
+  it("rejects a skill whose ability is not one of the six", () => {
+    const r = validateElement(skill("srd:skill:vibes", "Vibes", "luck"));
+    expect(r.usable).toBe(false);
+  });
+
+  it("indexes a skill under its id's last segment", () => {
+    const index = ContentIndex.build([
+      source("srd", [book, skill("srd:skill:animal-handling", "Animal Handling", "wis")]),
+    ]);
+    expect(index.skillKeys()).toEqual(["animal-handling"]);
+    expect(index.skillAbility("animal-handling")).toBe("wis");
+    expect(index.skill("animal-handling")?.name).toBe("Animal Handling");
+  });
+
+  it("prefers an explicit key over the id, the way a class does", () => {
+    const index = ContentIndex.build([
+      source("srd", [book, skill("srd:skill:sleight", "Sleight of Hand", "dex", { key: "sleight-of-hand" })]),
+    ]);
+    expect(index.skillKeys()).toEqual(["sleight-of-hand"]);
+    expect(index.skillAbility("sleight-of-hand")).toBe("dex");
+  });
+
+  it("knows no skills when no source declares any", () => {
+    const index = ContentIndex.build([source("srd", [book])]);
+    expect(index.skillKeys()).toEqual([]);
+    expect(index.skillAbility("acrobatics")).toBeUndefined();
+  });
+
+  it("lets a later source add a skill of its own", () => {
+    const index = ContentIndex.build([
+      source("srd", [book, skill("srd:skill:arcana", "Arcana", "int")]),
+      source("hb", [homebook, { ...skill("hb:skill:piloting", "Piloting", "dex"), source: "hb" }]),
+    ]);
+    expect(index.skillKeys().sort()).toEqual(["arcana", "piloting"]);
+    expect(index.skillAbility("piloting")).toBe("dex");
+  });
+});
+
 describe("validateElement", () => {
   it("accepts a minimal element", () => {
     const r = validateElement({ id: "a", kind: "feat", name: "A", source: "srd" });

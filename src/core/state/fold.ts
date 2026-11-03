@@ -207,10 +207,23 @@ export function applyEvent(live: LiveState, ev: StateEvent, rules: FoldRules): v
     }
     case "heal": {
       const before = live.damage;
-      live.damage = Math.max(0, live.damage - Math.max(0, ev.amount));
+      // Healing always starts from 0 HP, never from however far damage ran past
+      // the effective max while tracking the massive-damage instant-death rule.
+      const effectiveMax = rules.maxHp + live.tempMaxHp.reduce((n, e) => n + (e.amount ?? 0), 0);
+      const current = Math.max(0, effectiveMax - before);
+      const target = Math.min(current + Math.max(0, ev.amount), effectiveMax);
+      live.damage = Math.max(0, effectiveMax - target);
       // Any healing from 0 HP stops the dying clock.
       if (before >= (rules.maxHp || Infinity) && live.damage < before)
         live.deathSaves = { successes: 0, failures: 0 };
+      break;
+    }
+    case "hp.set": {
+      // The one event that stores a total rather than an input, because "my HP
+      // is 35" is what the player is asserting. Clamped the same way damage is.
+      const cap = rules.maxHp ? rules.maxHp * 2 : Infinity;
+      live.damage = clamp(Math.max(0, ev.damage), 0, cap);
+      if (live.damage === 0) live.deathSaves = { successes: 0, failures: 0 };
       break;
     }
     case "temp-hp":
@@ -350,6 +363,8 @@ export function describeEvent(ev: StateEvent, nameOf?: (id: string) => string): 
       return `Took ${ev.amount} damage`;
     case "heal":
       return `Healed ${ev.amount}`;
+    case "hp.set":
+      return ev.note ? `Set to ${ev.note} HP` : `Set damage to ${ev.damage}`;
     case "temp-hp":
       return ev.amount ? `Gained ${ev.amount} temp HP` : "Cleared temp HP";
     case "temp-max-hp.add":

@@ -58,6 +58,11 @@ describe("folding", () => {
     expect(currentHp(live, 20)).toBe(0);
   });
 
+  it("heals back up from 0, not from however far damage ran past the max", () => {
+    const live = foldState(stateWith(ev("damage", { amount: 99 }), ev("heal", { amount: 15 })), rules);
+    expect(currentHp(live, 20)).toBe(15);
+  });
+
   it("soaks damage with temp HP first", () => {
     const live = foldState(stateWith(ev("temp-hp", { amount: 5 }), ev("damage", { amount: 8 })), rules);
     expect(live.tempHp).toBe(0);

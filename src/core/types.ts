@@ -8,27 +8,6 @@
 export const ABILITIES = ["str", "dex", "con", "int", "wis", "cha"] as const;
 export type Ability = (typeof ABILITIES)[number];
 
-export const SKILLS: Record<string, Ability> = {
-  acrobatics: "dex",
-  "animal-handling": "wis",
-  arcana: "int",
-  athletics: "str",
-  deception: "cha",
-  history: "int",
-  insight: "wis",
-  intimidation: "cha",
-  investigation: "int",
-  medicine: "wis",
-  nature: "int",
-  perception: "wis",
-  performance: "cha",
-  persuasion: "cha",
-  religion: "int",
-  "sleight-of-hand": "dex",
-  stealth: "dex",
-  survival: "wis",
-};
-
 /** An expression: a number, or a string in the expression language ("@prof + 2"). */
 export type Expr = number | string;
 
@@ -81,6 +60,7 @@ export interface ChoiceDef {
 
 export const MODIFIER_OPS = [
   "add",
+  "multiply",
   "set",
   "min",
   "max",
@@ -142,6 +122,10 @@ export interface ResourceDef {
   rechargeAmount?: Expr;
   /** Unit label for pools counted in points, e.g. "hit points" for Lay on Hands. */
   unit?: string;
+  /** The die this resource is spent as, where it has one: Bardic Inspiration's d6. */
+  die?: string;
+  /** How much this resource wants a pinned slot on the sheet. Higher wins. */
+  pin?: number;
   text?: string;
   notes?: string;
 }
@@ -298,6 +282,18 @@ export interface LevelEntry {
 export type ProgressionKind = "full" | "half" | "third" | "pact" | "none";
 export type PreparationKind = "prepared" | "known" | "spellbook";
 
+/** A spell pick granted by a class level that the known/prepared counts do not cover. */
+export interface ExtraSpellPick {
+  /** Class level that grants it. */
+  level: number;
+  /** How many spells. */
+  choose: number;
+  /** Spell levels allowed. Absent means any the character can cast. */
+  spellLevels?: number[];
+  /** Whether the spell may come from any class's list, not only this one's. */
+  anyClass?: boolean;
+}
+
 export interface Spellcasting {
   ability: Ability;
   progression: ProgressionKind;
@@ -308,8 +304,16 @@ export interface Spellcasting {
   startsAt?: number;
   /** Expression for how many cantrips are known at the current level. */
   cantrips?: Expr;
-  /** Expression for the number of prepared/known spells. */
+  /** Spells known, for `type: "known"`. Counts non-cantrip spells chosen. */
+  known?: Expr;
+  /** Spells prepared each day, for `type: "prepared"` and `"spellbook"`. */
   prepared?: Expr;
+  /** How many spells the book holds, for `type: "spellbook"`. Advisory: scrolls add more. */
+  spellbook?: Expr;
+  /** Highest spell level that may be learned. Defaults to the highest slot level held. */
+  maxSpellLevel?: Expr;
+  /** Picks that sit outside the progression above: Mystic Arcanum, Magical Secrets. */
+  extra?: ExtraSpellPick[];
   /** Ritual casting, focus, etc. — carried through for display. */
   notes?: string;
 }
@@ -431,6 +435,12 @@ export interface LayoutFile extends CharacterFile {
   images?: string[];
   /** Per-character narrow-layout overrides. */
   narrow?: Partial<NarrowPrefs>;
+  /**
+   * Resources pinned to the sheet's stat cluster, most wanted first. Pool keys,
+   * bare resource ids, or a slot target ("slots.3", "pact"). The most specific
+   * of the three pin layers.
+   */
+  pins?: string[];
 }
 
 export type AbilityMethod = "point-buy" | "standard-array" | "rolled" | "manual";
@@ -514,6 +524,8 @@ export interface Checkpoint {
 export type StateEvent =
   | { t: string; type: "damage"; amount: number; note?: string }
   | { t: string; type: "heal"; amount: number; note?: string }
+  /** Sets the damage counter outright: what the sheet's "=35" entry commits. */
+  | { t: string; type: "hp.set"; damage: number; note?: string }
   | { t: string; type: "temp-hp"; amount: number }
   | { t: string; type: "temp-max-hp.add"; effect: TempMaxHpEffect }
   | { t: string; type: "temp-max-hp.remove"; id: string }
@@ -550,6 +562,11 @@ export interface SpellEntry {
   alwaysPrepared?: boolean;
   /** In the spellbook but not scribed/known yet. */
   known?: boolean;
+  /**
+   * Learned outside the class's own progression (a scroll, a feat, an item). Never
+   * counts toward cantrips, known, prepared or the spellbook.
+   */
+  extra?: boolean;
   notes?: string;
 }
 
@@ -623,6 +640,7 @@ export type DiagnosticCode =
   | "unknown-part"
   | "unknown-op"
   | "unknown-stat-path"
+  | "unknown-activation"
   | "unresolved-reference"
   | "missing-source"
   | "expression-error"
@@ -631,6 +649,8 @@ export type DiagnosticCode =
   | "invalid-element"
   | "overridden"
   | "spell-mismatch"
+  | "spells-over-limit"
+  | "spell-level-too-high"
   | "choice-invalid"
   | "duplicate-id";
 
@@ -646,6 +666,40 @@ export interface Diagnostic {
   file?: string;
   /** Source the problem belongs to, for filtering by source in the UI and CLI. */
   source?: string;
+}
+
+/**
+ * An action the rules define: Dash, Dodge, Help, Grapple.
+ *
+ * The distinction worth holding on to: an element of this kind *is* an action, so
+ * what it costs is a property of the element. An element that *grants* an action —
+ * Rage, Second Wind — carries an `actions` part instead, and the cost belongs to
+ * the part. A spell is the precedent for the descriptive half: it carries
+ * `castingTime` at element level and an `actions` part for the castable thing.
+ *
+ * `activation` is open like `ActionDef`'s, so an unknown value degrades to a
+ * warning with the text still displayed. "special" is what a cost that varies
+ * converts to.
+ */
+export interface ActionElement extends Element {
+  kind: "action";
+  activation: Activation;
+}
+
+/**
+ * A skill, and the ability its checks use.
+ *
+ * `skills.*` is an open family: core declares the stat path, content declares its
+ * members. The engine therefore carries no list of skills — which ability
+ * Acrobatics uses is a rule, and rules live in content.
+ *
+ * `key` is what a modifier targets (`skills.animal-handling`) and defaults to the
+ * id's last segment, the same rule a class's `key` follows.
+ */
+export interface SkillElement extends Element {
+  kind: "skill";
+  key?: string;
+  ability: Ability;
 }
 
 /**

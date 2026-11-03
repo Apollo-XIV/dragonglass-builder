@@ -4,749 +4,1500 @@
   "checkpoint": {
     "damage": 0,
     "tempHp": 0,
-    "tempMaxHp": [],
+    "tempMaxHp": [
+      {
+        "id": "manual:2026-10-30T23:27:28.695Z:0",
+        "amount": 5,
+        "source": "Entered by hand"
+      },
+      {
+        "id": "manual:2026-10-31T00:46:56.341Z:0",
+        "amount": -6,
+        "source": "Entered by hand"
+      },
+      {
+        "id": "manual:2026-10-31T00:47:02.512Z:0",
+        "amount": -1,
+        "source": "Entered by hand"
+      },
+      {
+        "id": "manual:2026-10-31T00:47:06.881Z:0",
+        "amount": 2,
+        "source": "Entered by hand"
+      }
+    ],
     "spent": {
       "slots": {},
-      "hitDice": {},
-      "resources": {}
+      "hitDice": {
+        "d8": 2
+      },
+      "resources": {
+        "srd:paladin:divine-sense:uses": 1
+      }
     },
     "effects": [],
-    "conditions": [],
+    "conditions": [
+      "blinded"
+    ],
     "exhaustion": 0,
     "deathSaves": {
       "successes": 0,
       "failures": 0
     },
     "concentration": null,
-    "inspiration": false,
-    "t": "2026-10-27T18:00:00Z"
+    "inspiration": true,
+    "t": "2026-10-31T22:59:53.439Z"
   },
   "events": [
     {
-      "t": "2026-10-27T19:42:00Z",
+      "t": "2026-10-31T23:57:49.336Z",
       "type": "damage",
       "amount": 12
     },
     {
-      "t": "2026-10-27T19:43:10Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T19:44:02Z",
-      "type": "spend",
-      "target": "srd:paladin:lay-on-hands",
-      "amount": 8
-    },
-    {
-      "t": "2026-10-27T19:45:00Z",
-      "type": "effect.start",
-      "effect": "srd:devotion:sacred-weapon"
-    },
-    {
-      "t": "2026-10-27T18:29:09.123Z",
-      "type": "spend",
-      "target": "srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:29:23.979Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:29:39.254Z",
-      "type": "effect.end",
-      "effect": "srd:devotion:sacred-weapon"
-    },
-    {
-      "t": "2026-10-27T18:29:46.538Z",
-      "type": "spend",
-      "target": "srd:paladin:channel-divinity",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:29:46.538Z",
-      "type": "effect.start",
-      "effect": "srd:devotion:sacred-weapon",
-      "source": "srd:devotion:channel-divinity"
-    },
-    {
-      "t": "2026-10-27T18:30:03.483Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:05.027Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:05.457Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:05.829Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:06.141Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:07.330Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:07.515Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:07.681Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:07.899Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:08.474Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:08.811Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:09.135Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:09.441Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:09.871Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-27T18:30:10.357Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-27T18:30:11.047Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-27T18:30:11.575Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:12.023Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:12.314Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:12.595Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:13.120Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-27T18:30:13.331Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:14.369Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-27T18:30:14.926Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-27T18:30:15.950Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:16.885Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:17.439Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:30:21.016Z",
-      "type": "spend",
-      "target": "slots.2",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-27T18:31:56.754Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:56.948Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:57.104Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:57.288Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:57.460Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:57.808Z",
+      "t": "2026-10-31T23:57:52.247Z",
       "type": "damage",
-      "amount": 1
+      "amount": 25
     },
     {
-      "t": "2026-10-27T18:31:57.990Z",
-      "type": "damage",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:58.163Z",
-      "type": "damage",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:58.326Z",
-      "type": "damage",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:58.712Z",
+      "t": "2026-10-31T23:57:56.867Z",
       "type": "heal",
-      "amount": 1
+      "amount": 45
     },
     {
-      "t": "2026-10-27T18:31:58.889Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:59.066Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:31:59.234Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:32:01.150Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:32:01.354Z",
-      "type": "heal",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-27T18:32:01.698Z",
+      "t": "2026-10-31T23:58:00.589Z",
       "type": "damage",
-      "amount": 1
+      "amount": 99
     },
     {
-      "t": "2026-10-27T18:57:46.454Z",
-      "type": "inspiration",
-      "value": true
-    },
-    {
-      "t": "2026-10-27T18:57:49.012Z",
-      "type": "inspiration",
-      "value": false
-    },
-    {
-      "t": "2026-10-27T18:57:49.414Z",
-      "type": "inspiration",
-      "value": true
-    },
-    {
-      "t": "2026-10-27T19:17:05.826Z",
-      "type": "effect.end",
-      "effect": "srd:devotion:sacred-weapon"
-    },
-    {
-      "t": "2026-10-28T19:41:32.968Z",
-      "type": "spend",
-      "target": "srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:03.767Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-28T20:08:05.452Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:05.655Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:05.821Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:08.385Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:08.779Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:09.033Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:08:11.024Z",
-      "type": "regain",
-      "target": "slots.1",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-28T20:47:51.027Z",
+      "t": "2026-10-31T23:58:03.572Z",
       "type": "heal",
-      "amount": 1
+      "amount": 30
     },
     {
-      "t": "2026-10-28T20:47:52.276Z",
+      "t": "2026-11-01T00:01:12.844Z",
       "type": "damage",
-      "amount": 1
+      "amount": 66
     },
     {
-      "t": "2026-10-28T20:48:54.536Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:48:55.281Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T20:48:57.486Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-28T21:06:01.571Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:06:47.751Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:08:32.140Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:08:32.642Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 2
-    },
-    {
-      "t": "2026-10-28T21:13:16.127Z",
+      "t": "2026-11-01T00:01:14.578Z",
       "type": "heal",
-      "amount": 1
+      "amount": 20
     },
     {
-      "t": "2026-10-28T21:13:16.908Z",
+      "t": "2026-11-01T00:01:16.952Z",
+      "type": "heal",
+      "amount": 20
+    },
+    {
+      "t": "2026-11-01T00:01:23.785Z",
+      "type": "heal",
+      "amount": 100
+    },
+    {
+      "t": "2026-11-01T00:01:25.557Z",
       "type": "damage",
-      "amount": 1
+      "amount": 20
     },
     {
-      "t": "2026-10-28T21:13:17.111Z",
+      "t": "2026-11-01T00:01:30.613Z",
       "type": "damage",
-      "amount": 1
+      "amount": 99
     },
     {
-      "t": "2026-10-28T21:13:17.272Z",
+      "t": "2026-11-01T00:01:33.113Z",
+      "type": "heal",
+      "amount": 20
+    },
+    {
+      "t": "2026-11-01T00:01:47.047Z",
+      "type": "heal",
+      "amount": 99
+    },
+    {
+      "t": "2026-11-01T00:01:48.524Z",
       "type": "damage",
-      "amount": 1
+      "amount": 20
     },
     {
-      "t": "2026-10-28T21:13:17.402Z",
+      "t": "2026-11-01T00:01:52.468Z",
       "type": "damage",
-      "amount": 1
+      "amount": 99
     },
     {
-      "t": "2026-10-28T21:13:27.046Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
+      "t": "2026-11-01T00:01:54.980Z",
+      "type": "heal",
+      "amount": 20
     },
     {
-      "t": "2026-10-28T21:13:27.532Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
+      "t": "2026-11-01T00:02:16.817Z",
+      "type": "heal",
+      "amount": 20
     },
     {
-      "t": "2026-10-28T21:13:28.820Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
+      "t": "2026-11-01T00:07:31.386Z",
+      "type": "damage",
+      "amount": 99
     },
     {
-      "t": "2026-10-28T21:13:33.714Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 3
+      "t": "2026-11-01T00:07:33.277Z",
+      "type": "heal",
+      "amount": 20
+    }
+  ],
+  "archive": [
+    {
+      "until": "2026-10-30T22:21:46.900Z",
+      "events": [
+        {
+          "t": "2026-10-27T19:42:00Z",
+          "type": "damage",
+          "amount": 12
+        },
+        {
+          "t": "2026-10-27T19:43:10Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T19:44:02Z",
+          "type": "spend",
+          "target": "srd:paladin:lay-on-hands",
+          "amount": 8
+        },
+        {
+          "t": "2026-10-27T19:45:00Z",
+          "type": "effect.start",
+          "effect": "srd:devotion:sacred-weapon"
+        },
+        {
+          "t": "2026-10-27T18:29:09.123Z",
+          "type": "spend",
+          "target": "srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:29:23.979Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:29:39.254Z",
+          "type": "effect.end",
+          "effect": "srd:devotion:sacred-weapon"
+        },
+        {
+          "t": "2026-10-27T18:29:46.538Z",
+          "type": "spend",
+          "target": "srd:paladin:channel-divinity",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:29:46.538Z",
+          "type": "effect.start",
+          "effect": "srd:devotion:sacred-weapon",
+          "source": "srd:devotion:channel-divinity"
+        },
+        {
+          "t": "2026-10-27T18:30:03.483Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:05.027Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:05.457Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:05.829Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:06.141Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:07.330Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:07.515Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:07.681Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:07.899Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:08.474Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:08.811Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:09.135Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:09.441Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:09.871Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-27T18:30:10.357Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-27T18:30:11.047Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-27T18:30:11.575Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:12.023Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:12.314Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:12.595Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:13.120Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-27T18:30:13.331Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:14.369Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-27T18:30:14.926Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-27T18:30:15.950Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:16.885Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:17.439Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:30:21.016Z",
+          "type": "spend",
+          "target": "slots.2",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-27T18:31:56.754Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:56.948Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:57.104Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:57.288Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:57.460Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:57.808Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:57.990Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:58.163Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:58.326Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:58.712Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:58.889Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:59.066Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:31:59.234Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:32:01.150Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:32:01.354Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:32:01.698Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-27T18:57:46.454Z",
+          "type": "inspiration",
+          "value": true
+        },
+        {
+          "t": "2026-10-27T18:57:49.012Z",
+          "type": "inspiration",
+          "value": false
+        },
+        {
+          "t": "2026-10-27T18:57:49.414Z",
+          "type": "inspiration",
+          "value": true
+        },
+        {
+          "t": "2026-10-27T19:17:05.826Z",
+          "type": "effect.end",
+          "effect": "srd:devotion:sacred-weapon"
+        },
+        {
+          "t": "2026-10-28T19:41:32.968Z",
+          "type": "spend",
+          "target": "srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:03.767Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-28T20:08:05.452Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:05.655Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:05.821Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:08.385Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:08.779Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:09.033Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:08:11.024Z",
+          "type": "regain",
+          "target": "slots.1",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-28T20:47:51.027Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:47:52.276Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:48:54.536Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:48:55.281Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T20:48:57.486Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-28T21:06:01.571Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:06:47.751Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:08:32.140Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:08:32.642Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-28T21:13:16.127Z",
+          "type": "heal",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:16.908Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:17.111Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:17.272Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:17.402Z",
+          "type": "damage",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:27.046Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:27.532Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:28.820Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:33.714Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-28T21:13:35.636Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:35.976Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:36.238Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:38.450Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-28T21:13:39.568Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:40.262Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:40.461Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:40.614Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:40.781Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:40.946Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:41.127Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:41.294Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:41.462Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:13:45.122Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 17
+        },
+        {
+          "t": "2026-10-28T21:13:48.862Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:channel-divinity",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:08.698Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:08.910Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:09.098Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:10.064Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:10.254Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:10.425Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:10.630Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:10.826Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:11.030Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:11.242Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:11.465Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:11.652Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:11.891Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:12.174Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:12.396Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:12.848Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:13.026Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:13.210Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:13.399Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:13.604Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:13.798Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:14.064Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:14.374Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-28T21:14:23.471Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:channel-divinity",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T00:39:15.518Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T00:39:15.694Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T00:39:18.119Z",
+          "type": "regain",
+          "target": "slots.2",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-29T18:06:02.004Z",
+          "type": "spend",
+          "target": "slots.1",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:41.750Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:43.355Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:43.577Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:43.790Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:43.957Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:44.164Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-29T18:06:44.345Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:lay-on-hands",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T22:13:29.680Z",
+          "type": "damage",
+          "amount": 12
+        },
+        {
+          "t": "2026-10-30T22:13:29.680Z",
+          "type": "temp-hp",
+          "amount": 5
+        },
+        {
+          "t": "2026-10-30T22:20:36.320Z",
+          "type": "temp-max-hp.add",
+          "effect": {
+            "id": "manual:2026-10-30T22:20:36.320Z:0",
+            "amount": 8,
+            "source": "Entered by hand"
+          }
+        },
+        {
+          "t": "2026-10-30T22:21:01.763Z",
+          "type": "hp.set",
+          "damage": 70,
+          "note": "0"
+        },
+        {
+          "t": "2026-10-30T22:21:32.673Z",
+          "type": "temp-max-hp.remove",
+          "id": "manual:2026-10-30T22:20:36.320Z:0"
+        },
+        {
+          "t": "2026-10-30T22:21:46.900Z",
+          "type": "rest.long"
+        }
+      ]
     },
     {
-      "t": "2026-10-28T21:13:35.636Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
+      "until": "2026-10-31T22:50:12.965Z",
+      "events": [
+        {
+          "t": "2026-10-30T23:26:15.686Z",
+          "type": "damage",
+          "amount": 20
+        },
+        {
+          "t": "2026-10-30T23:26:18.366Z",
+          "type": "damage",
+          "amount": 42
+        },
+        {
+          "t": "2026-10-30T23:26:21.211Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:22.296Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:23.070Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:24.562Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:24.563Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:24.564Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:26.252Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:26.252Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.252Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.252Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.253Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:26.253Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:26.858Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:26.858Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.858Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.858Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:26.858Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:27.237Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:27.237Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:27.237Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:27.237Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:27.644Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:28.594Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:28.595Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:29.501Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:29.914Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:29.914Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.914Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.914Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:29.914Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:31.152Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:31.152Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:31.152Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:31.798Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:32.658Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:33.808Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:33.809Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:34.467Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:35.830Z",
+          "type": "death-save",
+          "result": "reset"
+        },
+        {
+          "t": "2026-10-30T23:26:35.830Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:35.830Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:35.830Z",
+          "type": "death-save",
+          "result": "failure"
+        },
+        {
+          "t": "2026-10-30T23:26:36.528Z",
+          "type": "death-save",
+          "result": "success"
+        },
+        {
+          "t": "2026-10-30T23:26:50.086Z",
+          "type": "condition.add",
+          "condition": "stunned"
+        },
+        {
+          "t": "2026-10-30T23:26:54.576Z",
+          "type": "condition.add",
+          "condition": "deafened"
+        },
+        {
+          "t": "2026-10-30T23:26:55.966Z",
+          "type": "condition.add",
+          "condition": "blinded"
+        },
+        {
+          "t": "2026-10-30T23:26:56.958Z",
+          "type": "condition.remove",
+          "condition": "blinded"
+        },
+        {
+          "t": "2026-10-30T23:26:57.939Z",
+          "type": "condition.remove",
+          "condition": "deafened"
+        },
+        {
+          "t": "2026-10-30T23:26:58.642Z",
+          "type": "condition.remove",
+          "condition": "stunned"
+        },
+        {
+          "t": "2026-10-30T23:27:00.201Z",
+          "type": "condition.add",
+          "condition": "blinded"
+        },
+        {
+          "t": "2026-10-30T23:27:18.206Z",
+          "type": "heal",
+          "amount": 28
+        },
+        {
+          "t": "2026-10-30T23:27:24.018Z",
+          "type": "temp-hp",
+          "amount": 5
+        },
+        {
+          "t": "2026-10-30T23:27:28.695Z",
+          "type": "temp-max-hp.add",
+          "effect": {
+            "id": "manual:2026-10-30T23:27:28.695Z:0",
+            "amount": 5,
+            "source": "Entered by hand"
+          }
+        },
+        {
+          "t": "2026-10-30T23:27:35.443Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-30T23:27:36.133Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:36.664Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:37.397Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:38.515Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:38.954Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:40.357Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:divine-sense:uses",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-30T23:27:42.031Z",
+          "type": "spend",
+          "target": "resources.srd:paladin:channel-divinity",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-30T23:27:42.519Z",
+          "type": "regain",
+          "target": "resources.srd:paladin:channel-divinity",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T00:46:34.604Z",
+          "type": "heal",
+          "amount": 5
+        },
+        {
+          "t": "2026-10-31T00:46:37.361Z",
+          "type": "heal",
+          "amount": 3
+        },
+        {
+          "t": "2026-10-31T00:46:39.786Z",
+          "type": "heal",
+          "amount": 6
+        },
+        {
+          "t": "2026-10-31T00:46:45.499Z",
+          "type": "damage",
+          "amount": 5
+        },
+        {
+          "t": "2026-10-31T00:46:48.569Z",
+          "type": "damage",
+          "amount": 36
+        },
+        {
+          "t": "2026-10-31T00:46:56.341Z",
+          "type": "temp-max-hp.add",
+          "effect": {
+            "id": "manual:2026-10-31T00:46:56.341Z:0",
+            "amount": -6,
+            "source": "Entered by hand"
+          }
+        },
+        {
+          "t": "2026-10-31T00:47:02.512Z",
+          "type": "temp-max-hp.add",
+          "effect": {
+            "id": "manual:2026-10-31T00:47:02.512Z:0",
+            "amount": -1,
+            "source": "Entered by hand"
+          }
+        },
+        {
+          "t": "2026-10-31T00:47:06.881Z",
+          "type": "temp-max-hp.add",
+          "effect": {
+            "id": "manual:2026-10-31T00:47:06.881Z:0",
+            "amount": 2,
+            "source": "Entered by hand"
+          }
+        },
+        {
+          "t": "2026-10-31T00:47:11.156Z",
+          "type": "heal",
+          "amount": 99
+        },
+        {
+          "t": "2026-10-31T22:37:40.290Z",
+          "type": "condition.add",
+          "condition": "charmed"
+        },
+        {
+          "t": "2026-10-31T22:37:44.916Z",
+          "type": "condition.remove",
+          "condition": "charmed"
+        },
+        {
+          "t": "2026-10-31T22:50:06.074Z",
+          "type": "inspiration",
+          "value": false
+        },
+        {
+          "t": "2026-10-31T22:50:06.508Z",
+          "type": "inspiration",
+          "value": true
+        },
+        {
+          "t": "2026-10-31T22:50:12.964Z",
+          "type": "rest.short"
+        }
+      ]
     },
     {
-      "t": "2026-10-28T21:13:35.976Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
+      "until": "2026-10-31T22:50:14.552Z",
+      "events": [
+        {
+          "t": "2026-10-31T22:50:14.552Z",
+          "type": "rest.long"
+        }
+      ]
     },
     {
-      "t": "2026-10-28T21:13:36.238Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:38.450Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 3
-    },
-    {
-      "t": "2026-10-28T21:13:39.568Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:40.262Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:40.461Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:40.614Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:40.781Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:40.946Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:41.127Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:41.294Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:41.462Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:13:45.122Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 17
-    },
-    {
-      "t": "2026-10-28T21:13:48.862Z",
-      "type": "regain",
-      "target": "resources.srd:paladin:channel-divinity",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:08.698Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:08.910Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:09.098Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:divine-sense:uses",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:10.064Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:10.254Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:10.425Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:10.630Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:10.826Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:11.030Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:11.242Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:11.465Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:11.652Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:11.891Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:12.174Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:12.396Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:12.848Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:13.026Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:13.210Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:13.399Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:13.604Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:13.798Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:14.064Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:14.374Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:lay-on-hands",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-28T21:14:23.471Z",
-      "type": "spend",
-      "target": "resources.srd:paladin:channel-divinity",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-29T00:39:15.518Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-29T00:39:15.694Z",
-      "type": "spend",
-      "target": "slots.1",
-      "amount": 1
-    },
-    {
-      "t": "2026-10-29T00:39:18.119Z",
-      "type": "regain",
-      "target": "slots.2",
-      "amount": 2
+      "until": "2026-10-31T22:59:53.439Z",
+      "events": [
+        {
+          "t": "2026-10-31T22:50:19.157Z",
+          "type": "damage",
+          "amount": 12
+        },
+        {
+          "t": "2026-10-31T22:59:37.440Z",
+          "type": "spend",
+          "target": "pact",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:38.576Z",
+          "type": "spend",
+          "target": "pact",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:40.138Z",
+          "type": "regain",
+          "target": "pact",
+          "amount": 2
+        },
+        {
+          "t": "2026-10-31T22:59:42.384Z",
+          "type": "spend",
+          "target": "pact",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:46.058Z",
+          "type": "regain",
+          "target": "pact",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:50.070Z",
+          "type": "spend",
+          "target": "hitDice.d8",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:50.802Z",
+          "type": "spend",
+          "target": "hitDice.d8",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:51.382Z",
+          "type": "spend",
+          "target": "hitDice.d8",
+          "amount": 1
+        },
+        {
+          "t": "2026-10-31T22:59:53.438Z",
+          "type": "rest.long"
+        }
+      ]
     }
   ]
 }

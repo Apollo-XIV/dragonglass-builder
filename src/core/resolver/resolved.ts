@@ -1,5 +1,6 @@
 /** The resolver's output. Every view and exporter reads this and nothing else. */
 
+import type { ClassSpellLimits } from "./spell-limits";
 import type {
   Ability,
   ActionDef,
@@ -9,6 +10,7 @@ import type {
   Diagnostic,
   EffectDef,
   Element,
+  ExtraSpellPick,
   InventoryEntry,
   Modifier,
   ModifierOp,
@@ -130,6 +132,10 @@ export interface ResolvedResource {
   recharge: Recharge;
   rechargeAmount?: number;
   unit?: string;
+  /** The die it is spent as, where the content gives one. */
+  die?: string;
+  /** The content's own pin weight, the first of the three pin layers. */
+  pin?: number;
   source: string;
   sourceName: string;
   notes?: string;
@@ -230,8 +236,17 @@ export interface ResolvedSpellcastingClass {
   slotLevel: number;
   dc: NumericStat;
   attack: NumericStat;
+  /** Spells prepared each day, when the class states a count. */
   prepared?: number;
+  /** Spells known, when the class states a count. */
+  known?: number;
+  /** Spells the book holds, when the class states a count. */
+  spellbook?: number;
   cantrips?: number;
+  /** Highest spell level that may be learned. */
+  maxSpellLevel: number;
+  /** Every pick the class can ever unlock outside its counts; filter by `level`. */
+  extraPicks: ExtraSpellPick[];
 }
 
 export interface ResolvedSpell {
@@ -249,6 +264,8 @@ export interface ResolvedSpell {
   higherLevels?: string;
   prepared: boolean;
   alwaysPrepared: boolean;
+  /** Learned outside the class's progression; counts toward no limit. */
+  extra: boolean;
   class?: string;
   source: string;
   abbreviation?: string;
@@ -272,6 +289,8 @@ export interface ResolvedSpellcasting {
   spells: ResolvedSpell[];
   /** Spells that no longer fit the build, flagged for review. */
   orphaned: ResolvedSpell[];
+  /** What each class may learn and how much of it is used. */
+  limits: ClassSpellLimits[];
 }
 
 export interface ResolvedItem {

@@ -1,0 +1,115 @@
+name: Release
+
+# release-X.Y.Z branches publish the release X.Y.Z (tag = X.Y.Z, no "v", as Obsidian requires).
+# main publishes a pre-release X.Y.Z-beta.N, where X.Y.Z is package.json's version and N
+# counts up from the highest beta already tagged for it. BRAT installs either.
+on:
+  push:
+    branches:
+      - main
+      - "release-*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the beta counter reads existing tags
+          fetch-tags: true
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Work out the version
+        id: version
+        run: |
+          set -euo pipefail
+          if [[ "$GITHUB_REF_NAME" == release-* ]]; then
+            version="${GITHUB_REF_NAME#release-}"
+            if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::Branch '$GITHUB_REF_NAME' must be release-X.Y.Z (e.g. release-0.2.0)"
+              exit 1
+            fi
+            prerelease=false
+          else
+            base="$(node -p "require('./package.json').version.replace(/-.*$/, '')")"
+            last="$(git tag --list "${base}-beta.*" | sed "s/^${base}-beta\.//" | sort -n | tail -n1)"
+            version="${base}-beta.$(( ${last:-0} + 1 ))"
+            prerelease=true
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "prerelease=$prerelease" >> "$GITHUB_OUTPUT"
+          echo "Releasing $version (prerelease=$prerelease)"
+
+      - run: npm ci
+
+      - name: Stamp the version into manifest.json
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const m = JSON.parse(fs.readFileSync("manifest.json", "utf8"));
+            m.version = process.env.VERSION;
+            fs.writeFileSync("manifest.json", JSON.stringify(m, null, 2) + "\n");
+          '
+
+      - run: npm test
+      - run: npm run build
+
+      - name: Check the artifacts
+        run: |
+          for f in main.js manifest.json styles.css; do test -s "$f" || { echo "::error::$f missing"; exit 1; }; done
+
+      # Obsidian reads minAppVersion for older app versions from versions.json. Only real
+      # releases are listed. The push uses GITHUB_TOKEN, so it does not trigger another run.
+      - name: Record the release in versions.json
+        id: versions
+        if: steps.version.outputs.prerelease == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          node -e '
+            const fs = require("fs");
+            const min = JSON.parse(fs.readFileSync("manifest.json", "utf8")).minAppVersion;
+            const v = JSON.parse(fs.readFileSync("versions.json", "utf8"));
+            v[process.env.VERSION] = min;
+            fs.writeFileSync("versions.json", JSON.stringify(v, null, 2) + "\n");
+          '
+          if git diff --quiet versions.json; then exit 0; fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add versions.json
+          git commit -m "Record ${VERSION} in versions.json"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          PRERELEASE: ${{ steps.version.outputs.prerelease }}
+        run: |
+          set -euo pipefail
+          target="$(git rev-parse HEAD)"
+          if gh release view "$VERSION" >/dev/null 2>&1; then
+            # A re-run, or another push to the same release branch: replace the assets.
+            gh release upload "$VERSION" main.js manifest.json styles.css --clobber
+            exit 0
+          fi
+          flags=(--target "$target" --title "$VERSION" --generate-notes)
+          if [[ "$PRERELEASE" == true ]]; then
+            flags+=(--prerelease)
+          else
+            flags+=(--latest)
+          fi
+          gh release create "$VERSION" main.js manifest.json styles.css "${flags[@]}"

@@ -95,6 +95,11 @@ export function useMinorStop(id: string): (el: HTMLElement | null) => void {
   return useCallback((el: HTMLElement | null) => register(id, el), [register, id]);
 }
 
+/** The raw registrar, for the bridge that hands it to the builder's shared sections. */
+export function useStopRegistrar(): (id: string, el: HTMLElement | null) => void {
+  return useContext(RegisterContext);
+}
+
 export function NarrowScroller({
   sections,
   banner,

@@ -1,0 +1,176 @@
+[
+  { "id": "srd:item:alchemists-supplies", "kind": "item", "name": "Alchemist's Supplies", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 8, "value": 5000,
+    "text": "Artisan's tools: the items needed to pursue the alchemist's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:brewers-supplies", "kind": "item", "name": "Brewer's Supplies", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 9, "value": 2000,
+    "text": "Artisan's tools: the items needed to pursue the brewer's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:calligraphers-supplies", "kind": "item", "name": "Calligrapher's Supplies", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 1000,
+    "text": "Artisan's tools: the items needed to pursue the calligrapher's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:carpenters-tools", "kind": "item", "name": "Carpenter's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 6, "value": 800,
+    "text": "Artisan's tools: the items needed to pursue the carpenter's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:cartographers-tools", "kind": "item", "name": "Cartographer's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 6, "value": 1500,
+    "text": "Artisan's tools: the items needed to pursue the cartographer's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:cobblers-tools", "kind": "item", "name": "Cobbler's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 500,
+    "text": "Artisan's tools: the items needed to pursue the cobbler's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:cooks-utensils", "kind": "item", "name": "Cook's Utensils", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 8, "value": 100,
+    "text": "Artisan's tools: the items needed to pursue the cook's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:glassblowers-tools", "kind": "item", "name": "Glassblower's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 3000,
+    "text": "Artisan's tools: the items needed to pursue the glassblower's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:jewelers-tools", "kind": "item", "name": "Jeweler's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 2, "value": 2500,
+    "text": "Artisan's tools: the items needed to pursue the jeweler's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:leatherworkers-tools", "kind": "item", "name": "Leatherworker's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 500,
+    "text": "Artisan's tools: the items needed to pursue the leatherworker's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:masons-tools", "kind": "item", "name": "Mason's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 8, "value": 1000,
+    "text": "Artisan's tools: the items needed to pursue the mason's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:painters-supplies", "kind": "item", "name": "Painter's Supplies", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 1000,
+    "text": "Artisan's tools: the items needed to pursue the painter's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:potters-tools", "kind": "item", "name": "Potter's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 3, "value": 1000,
+    "text": "Artisan's tools: the items needed to pursue the potter's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:smiths-tools", "kind": "item", "name": "Smith's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 8, "value": 2000,
+    "text": "Artisan's tools: the items needed to pursue the smith's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:tinkers-tools", "kind": "item", "name": "Tinker's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 10, "value": 5000,
+    "text": "Artisan's tools: the items needed to pursue the tinker's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:weavers-tools", "kind": "item", "name": "Weaver's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 100,
+    "text": "Artisan's tools: the items needed to pursue the weaver's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:woodcarvers-tools", "kind": "item", "name": "Woodcarver's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "artisans-tools"], "itemType": "tool",
+    "weight": 5, "value": 100,
+    "text": "Artisan's tools: the items needed to pursue the woodcarver's craft. Proficiency with a set of artisan's tools lets you add your proficiency bonus to any ability check you make using the tools in your craft." },
+
+  { "id": "srd:item:disguise-kit", "kind": "item", "name": "Disguise Kit", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 3, "value": 2500,
+    "text": "This pouch of cosmetics, hair dye, and small props lets you create disguises that change your physical appearance. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a visual disguise." },
+
+  { "id": "srd:item:forgery-kit", "kind": "item", "name": "Forgery Kit", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 5, "value": 1500,
+    "text": "This small box contains a variety of papers and parchments, pens and inks, seals and sealing wax, gold and silver leaf, and other supplies necessary to create convincing forgeries of physical documents. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to create a physical forgery of a document." },
+
+  { "id": "srd:item:herbalism-kit", "kind": "item", "name": "Herbalism Kit", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 3, "value": 500,
+    "text": "This kit contains a variety of instruments such as clippers, mortar and pestle, and pouches and vials used by herbalists to create remedies and potions. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to identify or apply herbs. Proficiency with this kit is also required to create antitoxin and potions of healing." },
+
+  { "id": "srd:item:navigators-tools", "kind": "item", "name": "Navigator's Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 2, "value": 2500,
+    "text": "This set of instruments is used for navigation at sea. Proficiency with navigator's tools lets you chart a ship's course and follow navigation charts, and lets you add your proficiency bonus to any ability check you make to avoid getting lost at sea." },
+
+  { "id": "srd:item:poisoners-kit", "kind": "item", "name": "Poisoner's Kit", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 2, "value": 5000,
+    "text": "A poisoner's kit includes the vials, chemicals, and other equipment necessary for the creation of poisons. Proficiency with this kit lets you add your proficiency bonus to any ability checks you make to craft or use poisons." },
+
+  { "id": "srd:item:thieves-tools", "kind": "item", "name": "Thieves' Tools", "source": "srd",
+    "page": 69, "tags": ["tool", "kit"], "itemType": "tool",
+    "weight": 1, "value": 2500,
+    "text": "This set of tools includes a small file, a set of lock picks, a small mirror mounted on a metal handle, a set of narrow-bladed scissors, and a pair of pliers. Proficiency with these tools lets you add your proficiency bonus to any ability checks you make to disarm traps or open locks." },
+
+  { "id": "srd:item:dice-set", "kind": "item", "name": "Dice Set", "source": "srd",
+    "page": 69, "tags": ["tool", "gaming-set"], "itemType": "tool",
+    "weight": 0, "value": 10,
+    "text": "A gaming set, encompassing a wide range of game pieces. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency." },
+
+  { "id": "srd:item:playing-card-set", "kind": "item", "name": "Playing Card Set", "source": "srd",
+    "page": 69, "tags": ["tool", "gaming-set"], "itemType": "tool",
+    "weight": 0, "value": 50,
+    "text": "A gaming set, encompassing a wide range of game pieces. If you are proficient with a gaming set, you can add your proficiency bonus to ability checks you make to play a game with that set. Each type of gaming set requires a separate proficiency." },
+
+  { "id": "srd:item:bagpipes", "kind": "item", "name": "Bagpipes", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 6, "value": 3000,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:drum", "kind": "item", "name": "Drum", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 3, "value": 600,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:dulcimer", "kind": "item", "name": "Dulcimer", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 10, "value": 2500,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:flute", "kind": "item", "name": "Flute", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 1, "value": 200,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:lute", "kind": "item", "name": "Lute", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 2, "value": 3500,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:lyre", "kind": "item", "name": "Lyre", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 2, "value": 3000,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:horn", "kind": "item", "name": "Horn", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 2, "value": 300,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:pan-flute", "kind": "item", "name": "Pan Flute", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 2, "value": 1200,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:shawm", "kind": "item", "name": "Shawm", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 1, "value": 200,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." },
+
+  { "id": "srd:item:viol", "kind": "item", "name": "Viol", "source": "srd",
+    "page": 69, "tags": ["tool", "musical-instrument"], "itemType": "tool",
+    "weight": 1, "value": 3000,
+    "text": "A musical instrument. If you have proficiency with a given musical instrument, you can add your proficiency bonus to any ability checks you make to play music with the instrument. A bard can use a musical instrument as a spellcasting focus. Each type of musical instrument requires a separate proficiency." }
+]
