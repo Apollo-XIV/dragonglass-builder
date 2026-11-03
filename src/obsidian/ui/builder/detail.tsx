@@ -7,6 +7,7 @@
  * which gesture is behind it.
  */
 
+import type { Fact } from "../../../core/content/facts";
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
 
 export interface DetailSpec {
@@ -16,6 +17,8 @@ export interface DetailSpec {
   text?: string;
   /** Setting prose, shown above the rules text where a source has it. */
   fluff?: string;
+  /** Reference data shown between the fluff and the rules text: a spell's range and components. */
+  facts?: Fact[];
   /** Source abbreviation and page, where known. */
   tag?: string;
   page?: string | number;

@@ -5,7 +5,7 @@
  */
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
-import { Markdown } from "../components";
+import { Facts, Markdown } from "../components";
 import { DetailContext, type DetailSpec, type DetailStrategy, type InfoRowProps } from "../builder/detail";
 
 interface Sink {
@@ -16,9 +16,9 @@ interface Sink {
 const SinkContext = createContext<Sink>({ hover: () => {}, pin: () => {} });
 const CurrentContext = createContext<DetailSpec | undefined>(undefined);
 
-function DeskRow({ title, subtitle, text, fluff, tag, page, tags, overriddenBy, className, children }: InfoRowProps): ReactNode {
+function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, className, children }: InfoRowProps): ReactNode {
   const sink = useContext(SinkContext);
-  const spec: DetailSpec = { title, subtitle, text, fluff, tag, page, tags, overriddenBy };
+  const spec: DetailSpec = { title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy };
   return (
     <div
       className={["dg-read-row", "is-readable", className].filter(Boolean).join(" ")}
@@ -70,6 +70,7 @@ export function DetailPane(): ReactNode {
           ) : null}
           {spec.overriddenBy ? <p className="dg-warn">Overridden by {spec.overriddenBy}</p> : null}
           {spec.fluff ? <Markdown source={spec.fluff} className="dg-fluff" /> : null}
+          <Facts facts={spec.facts} />
           {spec.text ? <Markdown source={spec.text} /> : <p className="dg-muted">No rules text.</p>}
           {spec.tags?.length ? (
             <div className="dg-tags">

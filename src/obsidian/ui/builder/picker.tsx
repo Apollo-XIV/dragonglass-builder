@@ -17,6 +17,8 @@ import {
   type ReactNode,
 } from "react";
 import { Markdown } from "../components";
+import type { Fact } from "../../../core/content/facts";
+import { Facts } from "../components";
 import { ChipRow } from "./chips";
 import { useDetail, type DetailSpec } from "./detail";
 import { useBuilderFeatures } from "./features";
@@ -28,6 +30,7 @@ export interface PickerOption {
   name: string;
   text?: string;
   fluff?: string;
+  facts?: Fact[];
   /** Source abbreviation: SRD, PHB. */
   tag?: string;
   /** Unmet prerequisites. Shown as an amber note; only enforced if asked. */
@@ -271,6 +274,7 @@ export function PickerBody({
                             tag: option.tag,
                             text: option.text,
                             fluff: option.fluff,
+                            facts: option.facts,
                             subtitle: option.warnings?.join("; "),
                           }
                         : undefined,
@@ -366,9 +370,10 @@ function OptionRow({
         title: option.name,
         subtitle: option.tag,
         body: () =>
-          option.text || option.fluff ? (
+          option.text || option.fluff || option.facts?.length ? (
             <>
               {option.fluff ? <Markdown source={option.fluff} className="dg-fluff" /> : null}
+              <Facts facts={option.facts} />
               {option.text ? <Markdown source={option.text} /> : null}
             </>
           ) : (

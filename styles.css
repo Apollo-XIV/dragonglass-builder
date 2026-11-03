@@ -754,6 +754,10 @@
   display: contents;
 }
 
+.dg-facts dd {
+  overflow-wrap: anywhere;
+}
+
 /* --- tables --------------------------------------------------------------- */
 
 .dg-table {

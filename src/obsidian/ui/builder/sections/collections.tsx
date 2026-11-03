@@ -5,6 +5,7 @@ import type {
   ResolvedCharacter,
   ResolvedSpellcastingClass,
 } from "../../../../core/resolver/resolved";
+import { factsOf } from "../../../../core/content/facts";
 import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-limits";
 import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
@@ -83,6 +84,7 @@ export function SpellsSection({
       id: spell.id,
       name: spell.name,
       text: typeof spell.text === "string" ? spell.text : undefined,
+      facts: factsOf(spell),
       tag: index.abbreviation(spell.source),
       group: level > 0 ? `Level ${level}` : "Cantrip",
       bucket: level > 0 ? "leveled" : "cantrips",
@@ -163,6 +165,7 @@ export function SpellsSection({
           title={spell.name}
           subtitle={`${spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`}${spell.extra ? " · Extra" : ""}`}
           text={spell.text}
+          facts={factsOf(spell.element)}
         >
           {features.rowEditing &&
           store.data.spells?.spells.some((entry) => entry.id === spell.id) ? (
@@ -237,6 +240,7 @@ export function EquipmentSection({
         id: item.id,
         name: item.name,
         text: typeof item.text === "string" ? item.text : undefined,
+        facts: factsOf(item),
         tag: index.abbreviation(item.source),
         group: item.tags?.[0],
       })),
@@ -270,6 +274,7 @@ export function EquipmentSection({
               ? item.element.text
               : undefined
           }
+          facts={factsOf(item.element)}
         >
           {features.rowEditing ? (
             <button

@@ -8,6 +8,7 @@
  */
 
 import { useMemo, useState, type ReactNode } from "react";
+import { factsOf } from "../../../core/content/facts";
 import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainStat, type Explanation } from "../../../core/resolver/explain";
 import type { ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
@@ -578,6 +579,7 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
             .filter(Boolean)
             .join(" · ")}
           text={spell.text}
+          facts={factsOf(spell.element)}
           className={spell.prepared || spell.alwaysPrepared ? "is-prepared" : undefined}
         />
       ))}
@@ -650,6 +652,7 @@ export function InventorySection({ character }: { character: ResolvedCharacter }
             .filter(Boolean)
             .join(" · ")}
           text={typeof item.element.text === "string" ? item.element.text : undefined}
+          facts={factsOf(item.element)}
         />
       ))}
       {character.inventory.length === 0 ? <p className="dg-muted">Nothing carried.</p> : null}

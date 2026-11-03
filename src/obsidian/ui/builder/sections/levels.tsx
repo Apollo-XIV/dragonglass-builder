@@ -6,6 +6,7 @@ import {
   classLevelAt,
   classLevels,
 } from "../../../../core/resolver/levels";
+import { factsOf } from "../../../../core/content/facts";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type {
   PendingChoice,
@@ -217,6 +218,7 @@ function FeatureChip({ feature }: { feature: ResolvedElement }): ReactNode {
       subtitle={feature.kind.replace(/-/g, " ")}
       text={feature.text}
       fluff={feature.fluff}
+      facts={factsOf(feature.element)}
       className="dg-level-feature"
     />
   );

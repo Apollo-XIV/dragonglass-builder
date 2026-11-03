@@ -4,6 +4,7 @@
  * so it is tested without a view and both layouts read the same answers.
  */
 
+import { factsOf } from "../../../core/content/facts";
 import { averageForDie } from "../../../core/resolver/spellslots";
 import { describeRequirement } from "../../../core/content/requirements";
 import type { PendingChoice } from "../../../core/resolver/resolved";
@@ -58,6 +59,7 @@ export function optionsFor(choice: PendingChoice): PickerOption[] {
     name: option.name,
     text: option.text,
     fluff: option.fluff,
+    facts: factsOf(option.element),
     tag: option.abbreviation,
     warnings: option.warnings,
     allowed: option.allowed,

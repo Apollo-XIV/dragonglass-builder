@@ -11,7 +11,8 @@
 import { useRef, type ReactNode } from "react";
 import { describeRoll, rollNotation, type RollOptions } from "../../../core/dice";
 import type { Explanation, ExplainRow } from "../../../core/resolver/explain";
-import { Icon, Markdown } from "../components";
+import type { Fact } from "../../../core/content/facts";
+import { Facts, Icon, Markdown } from "../components";
 import { UI } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHold } from "./hold";
@@ -64,11 +65,13 @@ function ExplainLine({ row }: { row: ExplainRow }): ReactNode {
 export function TextBody({
   text,
   fluff,
+  facts,
   formula,
   sourcePath,
 }: {
   text?: string;
   fluff?: string;
+  facts?: Fact[];
   formula?: string;
   sourcePath?: string;
 }): ReactNode {
@@ -76,6 +79,7 @@ export function TextBody({
     <>
       {formula ? <p className="dg-sheet-formula">{formula}</p> : null}
       {fluff ? <Markdown source={fluff} sourcePath={sourcePath} className="dg-fluff" /> : null}
+      <Facts facts={facts} />
       {text ? <Markdown source={text} sourcePath={sourcePath} /> : <p className="dg-muted">No rules text.</p>}
     </>
   );
@@ -221,6 +225,7 @@ export function ReadRow({
   subtitle,
   text,
   fluff,
+  facts,
   formula,
   children,
   onTap,
@@ -231,6 +236,7 @@ export function ReadRow({
   subtitle?: string;
   text?: string;
   fluff?: string;
+  facts?: Fact[];
   formula?: string;
   /** Tap targets inside the row; they stop the row's own hold. */
   children?: ReactNode;
@@ -247,7 +253,7 @@ export function ReadRow({
     sheet.open({
       title,
       subtitle,
-      body: () => <TextBody text={text} fluff={fluff} formula={formula} />,
+      body: () => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} />,
     });
 
   const { handlers } = useHold({

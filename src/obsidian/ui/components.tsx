@@ -6,6 +6,7 @@
 import { MarkdownRenderer, setIcon } from "obsidian";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Annotation, Contribution, NumericStat, ResolvedElement, SetStat } from "../../core/resolver/resolved";
+import type { Fact } from "../../core/content/facts";
 import type { Diagnostic } from "../../core/types";
 import { usePlugin } from "./context";
 
@@ -377,5 +378,20 @@ export function UnmechanisedNote({ text }: { text?: string }): ReactNode {
       <Pill tone="warn">text only</Pill>
       <Markdown source={text} />
     </div>
+  );
+}
+
+/** An element's reference data (a spell's range, components...) as a definition list. */
+export function Facts({ facts }: { facts?: Fact[] }): ReactNode {
+  if (!facts?.length) return null;
+  return (
+    <dl className="dg-kv dg-facts">
+      {facts.map((fact) => (
+        <div className="dg-kv-row" key={fact.label}>
+          <dt>{fact.label}</dt>
+          <dd>{fact.value}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
