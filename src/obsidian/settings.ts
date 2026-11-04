@@ -32,7 +32,6 @@ export const SHEET_RAIL_ORDER = [
 export const BUILDER_RAIL_ORDER = [
   "origin",
   "levels",
-  "planned",
   "spells",
   "equipment",
   "details",

@@ -48,10 +48,13 @@ export const DESKTOP_FEATURES: BuilderFeatures = {
   diagnostics: true,
   browse: true,
   sources: true,
+  foldOnDrag: true,
+  plannedOpen: true,
 };
 
-/** Sections that share a tab: the first names it, the rest follow it down the page. */
-const TAB_OF: Record<string, string> = { planned: "levels" };
+/** Sections that share a tab: the first names it, the rest follow it down the page. None do
+ * today: Levels and Planned were one list long before they were one section. */
+const TAB_OF: Record<string, string> = {};
 
 export function DesktopBuilder({
   store,

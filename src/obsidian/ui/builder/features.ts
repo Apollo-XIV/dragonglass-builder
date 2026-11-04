@@ -36,6 +36,14 @@ export interface BuilderFeatures {
   browse: boolean;
   /** Content sources and the content editor. */
   sources: boolean;
+  /**
+   * Every level card folds to its header while a level is being dragged, and opens
+   * again after. Off where cards have no fold-outs yet; the reorder logic does not
+   * care which, so putting it on a phone is this flag and nothing else.
+   */
+  foldOnDrag: boolean;
+  /** The planned half of the Progression list starts open, rather than behind its divider. */
+  plannedOpen: boolean;
 }
 
 export const NO_FEATURES: BuilderFeatures = {
@@ -50,6 +58,8 @@ export const NO_FEATURES: BuilderFeatures = {
   diagnostics: false,
   browse: false,
   sources: false,
+  foldOnDrag: false,
+  plannedOpen: false,
 };
 
 export const FeaturesContext = createContext<BuilderFeatures>(NO_FEATURES);

@@ -210,6 +210,15 @@ Planned picks are keyed by **class and class level, never character level**, so 
 level of one class leaves another class's plans untouched. `addLevel` consumes the queue;
 `removeLevel` demotes that level's picks back into it.
 
+**The order of `build.planned` is the plan.** It is one queue across classes, and the
+Progression list shows it below the PLANNED divider, under the active `levels`. Levels of
+one class are always in ascending class level, in `levels` and in `planned` alike, so a
+reorder never changes any level's class level: it only moves levels between the two lists
+and between classes. `normalisedQueue` (`resolver/levels.ts`) enforces that and fills any
+gap, and `reorderProgression` writes a drag's result. An entry may carry `hp` (so a level
+dragged below the divider and back keeps its rolled hit points) and `queued: true` (a
+place held on purpose when it has no picks in it).
+
 ### Validity is derived, never stored
 
 A stored pick is *live* if the current selections lead the collector to the choice it

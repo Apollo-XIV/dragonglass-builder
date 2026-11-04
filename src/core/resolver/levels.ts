@@ -50,7 +50,7 @@ export function setPlannedChoice(
   else delete choices[choiceId];
 
   const next: PlannedLevel = { ...existing, choices };
-  if (Object.keys(choices).length === 0) {
+  if (Object.keys(choices).length === 0 && !existing.queued) {
     if (at >= 0) planned.splice(at, 1);
   } else if (at >= 0) planned[at] = next;
   else planned.push(next);
@@ -65,7 +65,7 @@ export function setPlannedChoice(
 export function addLevel(build: BuildFile, classId: string, hp: HpChoice): BuildFile {
   const classLevel = (classLevels(build).get(classId) ?? 0) + 1;
   const queued = plannedFor(build, classId, classLevel);
-  const level: BuildLevel = { class: classId, hp, choices: queued ? { ...queued.choices } : {} };
+  const level: BuildLevel = { class: classId, hp: queued?.hp ?? hp, choices: queued ? { ...queued.choices } : {} };
   const planned = (build.planned ?? []).filter((entry) => entry !== queued);
 
   return {
@@ -105,6 +105,128 @@ export function removeLevel(build: BuildFile, index: number): BuildFile {
     level: levels.length,
     planned: demoted.length ? demoted : undefined,
   };
+}
+
+/**
+ * The planned queue as the Progression list reads it: in order, in ascending class
+ * level within each class, with no gaps.
+ *
+ * A hand-edited or older file can hold entries in any order, leave out a level
+ * between two that are planned, or still list one that has since been taken. All
+ * three are repaired here rather than rejected: stale entries are dropped, the
+ * entries of each class keep the places they have in the queue but are reordered
+ * among them, and a missing level is made up (empty) just before the next one.
+ */
+export function normalisedQueue(build: BuildFile): PlannedLevel[] {
+  const taken = classLevels(build);
+  const stored = (build.planned ?? []).filter((entry) => entry.classLevel > (taken.get(entry.class) ?? 0));
+
+  // Each class's entries, ascending, poured back into the slots that class held.
+  const byClass = new Map<string, PlannedLevel[]>();
+  for (const entry of stored) byClass.set(entry.class, [...(byClass.get(entry.class) ?? []), entry]);
+  for (const [, list] of byClass) list.sort((a, b) => a.classLevel - b.classLevel);
+  const used = new Map<string, number>();
+  const ordered = stored.map((entry) => {
+    const n = used.get(entry.class) ?? 0;
+    used.set(entry.class, n + 1);
+    return byClass.get(entry.class)![n];
+  });
+
+  // Any level missing below one that is planned, made up just ahead of it.
+  const out: PlannedLevel[] = [];
+  const have = new Map<string, number>(taken);
+  for (const entry of ordered) {
+    for (let level = (have.get(entry.class) ?? 0) + 1; level < entry.classLevel; level++)
+      out.push({ class: entry.class, classLevel: level, choices: {}, queued: true });
+    have.set(entry.class, entry.classLevel);
+    out.push(entry);
+  }
+  return out;
+}
+
+/** An item in the Progression list, named by class and class level, which a reorder never changes. */
+export interface ProgressionRef {
+  class: string;
+  classLevel: number;
+}
+
+export function progressionKey(ref: ProgressionRef): string {
+  return `${ref.class}#${ref.classLevel}`;
+}
+
+/** Every active level, in order, as a ref. */
+export function activeRefs(build: BuildFile): ProgressionRef[] {
+  return (build.levels ?? []).map((level, i) => ({ class: level.class, classLevel: classLevelAt(build, i) }));
+}
+
+/**
+ * Writes a reorder: `order` is every item of the list, top to bottom, and the first
+ * `active` of them are the levels taken, the rest the queue.
+ *
+ * The UI hands over an order that already obeys the conflict rule, and this keeps
+ * it honest anyway: within a class the items are put back in ascending class level
+ * (so no class level can ever be taken before a lower one), and an item the build
+ * has never heard of — a look-ahead level, shown but never stored — is made up empty.
+ * Hit points follow a level in both directions; one that has none yet gets `hp`.
+ */
+export function reorderProgression(
+  build: BuildFile,
+  order: ProgressionRef[],
+  active: number,
+  hp: (classId: string) => HpChoice,
+): BuildFile {
+  const levelOf = new Map<string, BuildLevel>();
+  activeRefs(build).forEach((ref, i) => levelOf.set(progressionKey(ref), build.levels[i]));
+  const queued = new Map<string, PlannedLevel>();
+  for (const entry of normalisedQueue(build)) queued.set(progressionKey(entry), entry);
+
+  // Class-level order within each class, whatever order the caller asked for.
+  const byClass = new Map<string, number[]>();
+  for (const ref of order) byClass.set(ref.class, [...(byClass.get(ref.class) ?? []), ref.classLevel]);
+  for (const [, levels] of byClass) levels.sort((a, b) => a - b);
+  const used = new Map<string, number>();
+  const sequence = order.map((ref) => {
+    const n = used.get(ref.class) ?? 0;
+    used.set(ref.class, n + 1);
+    return { class: ref.class, classLevel: byClass.get(ref.class)![n] };
+  });
+
+  const levels: BuildLevel[] = [];
+  const planned: PlannedLevel[] = [];
+  sequence.forEach((ref, i) => {
+    const key = progressionKey(ref);
+    const was = levelOf.get(key);
+    const waiting = queued.get(key);
+    const choices = { ...(was?.choices ?? waiting?.choices ?? {}) };
+    const hit = was?.hp ?? waiting?.hp;
+    if (i < active) levels.push({ class: ref.class, hp: hit ?? hp(ref.class), choices });
+    else planned.push({ class: ref.class, classLevel: ref.classLevel, choices, ...(hit !== undefined ? { hp: hit } : {}), queued: true });
+  });
+
+  const kept = trimQueue(build, levels, planned);
+  return { ...build, levels, level: levels.length, planned: kept.length ? kept : undefined };
+}
+
+/**
+ * The look-ahead the UI shows is written into the queue the moment anything is
+ * dragged, because only then does it have a place. Most of it is still exactly where
+ * it would be by default, so the trailing entries that carry nothing and are already
+ * in default order — class by class, in the order the classes were taken — are let
+ * go again; the list shows them anyway, and the file is not left with thirty empty
+ * levels for one drag.
+ */
+function trimQueue(build: BuildFile, levels: BuildLevel[], planned: PlannedLevel[]): PlannedLevel[] {
+  const rank = new Map<string, number>();
+  for (const level of [...(build.levels ?? []), ...levels]) if (!rank.has(level.class)) rank.set(level.class, rank.size);
+  for (const entry of planned) if (!rank.has(entry.class)) rank.set(entry.class, rank.size);
+  const before = (a: PlannedLevel, b: PlannedLevel): boolean =>
+    rank.get(a.class)! < rank.get(b.class)! || (a.class === b.class && a.classLevel < b.classLevel);
+  const empty = (entry: PlannedLevel): boolean => Object.keys(entry.choices).length === 0 && entry.hp === undefined;
+
+  let start = planned.length;
+  while (start > 0 && empty(planned[start - 1]) && (start === planned.length || before(planned[start - 1], planned[start])))
+    start -= 1;
+  return planned.slice(0, start);
 }
 
 /** True when removing this level changes the starting class (spec 7.3). */

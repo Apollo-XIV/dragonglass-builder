@@ -55,6 +55,7 @@ src/obsidian/        the plugin
   ui/hp-panel.tsx    the HP vial, register and calc; belongs to neither layout
   ui/builder/        the builder, for both layouts: sections, picker, change confirmation,
                      session and drafts, the feature flags, the registry that lists sections
+  ui/builder/reorder/  dragging levels: the pure state machine, the list, the fold override
   ui/narrow/         the narrow layout: rail, sticky sections, hold sheets, toasts
   ui/desktop/        the desktop sheet: header band, identity column, boxes, tabs
 src/cli/validate.ts  the validation CLI
@@ -125,7 +126,7 @@ The desktop layout's own rules:
 change confirmation (`changes.tsx`), the session and drafts, and `registry.tsx`, which says which
 sections exist and what each says about itself — and nothing about how they are arranged.
 `NarrowBuilder` scrolls them under the rail; `desktop/DesktopBuilder` sets them out as tabs with a
-reading sidebar. Levels and Planned share a tab there. Shared code never imports `narrow/scroller` or
+reading sidebar. Levels and Planned are one section, the Progression list. Shared code never imports `narrow/scroller` or
 `rail`. Two known exceptions: the picker still uses narrow's `hold` and sheet host (the sheet host is
 already a dialog on desktop), and `sections/sources.tsx` imports `obsidian`. The seams that differ are:
 
@@ -140,6 +141,37 @@ already a dialog on desktop), and `sections/sources.tsx` imports `obsidian`. The
   `tests/builder-model.test.ts` fails if a shell stops naming every flag.
 
 New builder behaviour goes in `ui/builder/`, never in a shell.
+
+**The Progression list** (`sections/progression.tsx`) is one ordered list: the levels taken, a draggable
+PLANNED divider, then the queue. Reordering it is the progression spec's conflict rule, and these are the
+parts worth knowing before you touch it:
+
+- **The machine is pure** (`reorder/machine.ts`). It knows no DOM, React or dnd-kit: it takes the pointer's
+  position in the list and the measured heights and returns the proposed order, the dragged *group* (an
+  anchor, always the lowest level, plus a tail of its higher levels) and whether the anchor is being held
+  back from a lower level of its class. Every transition is pushed on a stack with the pointer position it
+  fired at and undone at that same position, so a drag is exactly reversible, handoffs included. A fresh
+  transition is only looked for in the direction the top of the stack was travelling. Tested in
+  `tests/reorder-machine.test.ts` with the spec's own examples.
+- **dnd-kit only supplies the gesture.** Sensors, keyboard and auto-scroll are its; `collisionDetection`
+  returns nothing, and `ReorderList` reads the pointer itself (dnd-kit's delta folds in scroll, which is
+  wrong here) and draws the gap, the floating group (inside the view, not a portal) and the lift cue.
+  The handle element is never unmounted mid-drag: a touch keeps sending events to the element it began on.
+- **A drop is one `reorder` change** through `previewChange` / `commitChange`, so it gets the same
+  confirmation as any edit, and it is one `mutateBuild` — one write, which is what "one undo entry" means
+  here (the builder session discards or saves as a whole; there is no per-edit undo). The list holds the
+  proposed order while the confirmation is up and snaps back if it is cancelled.
+- **Every level's class level survives a reorder**, because the conflict rule keeps each class in order.
+  So an item is keyed by `class#classLevel` and a reorder only moves levels between the two lists and
+  between classes. `build.planned`'s array order *is* the queue; `normalisedQueue` repairs it and
+  `reorderProgression` writes it. The look-ahead the list shows (levels the queue doesn't mention) is
+  written into the queue only when dragged, and `trimQueue` lets go of what is still in default order.
+- **Folding is an override, not a state** (`reorder/fold.tsx`, the `foldOnDrag` feature flag): a card's own
+  expanded state is untouched and `useCardShown` just lays the drag over it. Desktop folds; narrow doesn't
+  yet, so the group is drawn from headers (`Layout.groupCard`) whatever the cards measure.
+- **Scroll anchoring** (`keepInPlace`) scrolls by how far the held card moved when the cards above it
+  folded. Where the scroll is already at its limit it adds `padding-top` to the list for the length of the
+  drag instead, so the card stays under the thumb.
 
 The narrow layout's own rules:
 

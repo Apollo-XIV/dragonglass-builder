@@ -35,6 +35,8 @@ export interface PickerOption {
   tag?: string;
   /** Unmet prerequisites. Shown as an amber note; only enforced if asked. */
   warnings?: string[];
+  /** A small tag beside the name: "queued", for a class that has planned levels waiting. */
+  badge?: string;
   allowed?: boolean;
   /** Which of the spec's `buckets` this option counts against. */
   bucket?: string;
@@ -401,6 +403,7 @@ function OptionRow({
     >
       <span className="dg-option-main">
         <span className="dg-option-name">{option.name}</span>
+        {option.badge ? <span className="dg-option-badge">{option.badge}</span> : null}
         {option.warnings?.length ? (
           <span className="dg-option-warning">
             {option.warnings.join("; ")}

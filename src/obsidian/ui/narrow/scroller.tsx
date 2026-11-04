@@ -306,7 +306,7 @@ export function NarrowScroller({
       // must not also tick.
       const previous = m.lastPosition;
       m.lastPosition = position;
-      if (!settings.scrollTicks || m.mode !== "idle" || m.scrubbing) return;
+      if (!settings.scrollTicks || m.mode !== "idle" || m.scrubbing || container.dataset.dgReordering) return;
 
       const arrived = crossedStop(major, previous, position);
       if (arrived === undefined) return;
@@ -326,7 +326,9 @@ export function NarrowScroller({
      */
     const settle = (): void => {
       const m = motion.current;
-      if (!settings.snap || m.scrubbing || m.wheeling || m.mode !== "idle") return;
+      // A drag auto-scrolls at the edges and would be hauled back to a section on
+      // every pause; the reorder list marks the container while it is held.
+      if (!settings.snap || m.scrubbing || m.wheeling || m.mode !== "idle" || container.dataset.dgReordering) return;
       const grab = (container.clientHeight * settings.snapGrabPercent) / 100;
       // Sections only. Level cards are addressable but not stopping points, so a
       // release settles onto the section it is in rather than the nearest card.

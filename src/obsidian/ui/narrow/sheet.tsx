@@ -27,6 +27,8 @@ export interface SheetSpec {
   body: () => ReactNode;
   /** Buttons pinned below the body: Roll / Advantage, Use one / Restore all, Done. */
   actions?: () => ReactNode;
+  /** Called when the sheet goes away by any route: a button, the scrim, Escape, a swipe. */
+  onClose?: () => void;
 }
 
 interface SheetController {
@@ -48,7 +50,13 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
   const [drag, setDrag] = useState(0);
   const pointer = useRef<{ id: number; y: number } | undefined>(undefined);
 
+  const current = useRef<SheetSpec | undefined>(undefined);
+  current.current = spec;
+
   const close = useCallback((): void => {
+    const closing = current.current;
+    current.current = undefined;
+    closing?.onClose?.();
     setSpec(undefined);
     setDrag(0);
     pointer.current = undefined;

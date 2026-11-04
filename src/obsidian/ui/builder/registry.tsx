@@ -13,9 +13,8 @@ import { ProgressionBrowser } from "./sections/browse";
 import type { BuilderFeatures } from "./features";
 import { BUILDER_ICONS } from "./model";
 import { DetailsSection, EquipmentSection, SpellsSection } from "./sections/collections";
-import { LevelsSection } from "./sections/levels";
+import { ProgressionSection } from "./sections/progression";
 import { OriginSection } from "./sections/origin";
-import { PlannedSection } from "./sections/planned";
 import { ReviewSection } from "./sections/review";
 
 export interface SectionDef {
@@ -33,7 +32,6 @@ export function builderSections(
   character: ResolvedCharacter,
   features: BuilderFeatures,
 ): SectionDef[] {
-  const build = store.data.build;
   const openOrigin = character.pendingChoices.filter((c) => c.scope === "build" && !c.complete).length;
   const openLevels = character.pendingChoices.filter((c) => c.scope === "level" && !c.complete).length;
   const sections: Omit<SectionDef, "icon">[] = [];
@@ -51,15 +49,8 @@ export function builderSections(
     label: "Levels",
     status: `Level ${character.level} of ${character.level}`,
     attention: openLevels > 0,
-    body: <LevelsSection store={store} character={character} />,
+    body: <ProgressionSection store={store} character={character} />,
   });
-
-  if (build?.levels?.length)
-    sections.push({
-      id: "planned",
-      label: "Planned",
-      body: <PlannedSection store={store} character={character} />,
-    });
 
   if (character.spellcasting?.classes.length)
     sections.push({

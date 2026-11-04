@@ -363,7 +363,7 @@ describe("the desktop builder", () => {
     expect(desk(noCaster)).not.toContain(">Spells<");
   });
 
-  it("puts the planned levels under the level cards", () => {
+  it("puts the planned levels under the level cards, past the divider", () => {
     const levels = desk(store, "levels");
     expect(levels).toContain("dg-level-card");
     expect(levels).toContain("Planned");
@@ -439,7 +439,7 @@ describe("the narrow layout", () => {
   });
 
   it("gives every section a sticky header and a rail icon", () => {
-    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Skills and saves", "Details"]) {
+    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Saves", "Proficiencies", "Details"]) {
       expect(html, label).toContain(`>${label}<`);
       expect(html, `${label} rail icon`).toContain(`aria-label="${label}"`);
     }
@@ -544,9 +544,10 @@ describe("the narrow builder", () => {
   });
 
   it("makes each level card a scroll stop without giving it a rail icon", () => {
-    // Five cards, seven rail icons: the levels tick and detent but don't get
-    // their own icons (spec 4.3).
-    expect(html.match(/dg-rail-icon/g)).toHaveLength(7);
+    // Five cards, six rail icons: the levels tick and detent but don't get
+    // their own icons (spec 4.3), and Planned is not a section of its own — it is
+    // the other half of the Levels list.
+    expect(html.match(/dg-rail-icon/g)).toHaveLength(6);
   });
 
   it("offers one class button plus multiclass for a single-class character", () => {

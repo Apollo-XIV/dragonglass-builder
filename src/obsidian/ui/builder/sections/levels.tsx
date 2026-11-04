@@ -1,10 +1,11 @@
-/** Levels: a card per level taken, and the buttons that take the next. */
+/** Levels: the card for a level taken, and the buttons that take the next. */
 
 import { type ReactNode } from "react";
 import {
   changesStartingClass,
   classLevelAt,
   classLevels,
+  normalisedQueue,
 } from "../../../../core/resolver/levels";
 import { factsOf } from "../../../../core/content/facts";
 import { inactivePicks } from "../../../../core/resolver/validity";
@@ -23,21 +24,12 @@ import { useBuilderStop } from "../nav";
 import { defaultHpFor, multiclassNote } from "../model";
 import { useBuilderFeatures } from "../features";
 import { usePicker, usePickerSlot } from "../picker";
+import { useCardShown } from "../reorder/fold";
 import { LevelHp } from "./extras";
 import { PendingChoiceRow } from "./origin";
 
-export function LevelsSection({
-  store,
-  character,
-}: {
-  store: CharacterStore;
-  character: ResolvedCharacter;
-}): ReactNode {
-  const index = store.index;
-  const build = store.data.build;
-  if (!build || !index) return null;
-
-  const nameOf = (id: string): string => index.get(id)?.name ?? id;
+/** The choices a character still has open, by the build level they belong to. */
+export function choicesByLevel(character: ResolvedCharacter): Map<number, PendingChoice[]> {
   const byLevel = new Map<number, PendingChoice[]>();
   for (const choice of character.pendingChoices) {
     if (choice.scope !== "level" || choice.levelIndex === undefined) continue;
@@ -45,39 +37,28 @@ export function LevelsSection({
     list.push(choice);
     byLevel.set(choice.levelIndex, list);
   }
-
-  return (
-    <>
-      {build.levels.map((_level, i) => (
-        <LevelCard
-          key={i}
-          index={i}
-          store={store}
-          character={character}
-          choices={byLevel.get(i) ?? []}
-          nameOf={nameOf}
-        />
-      ))}
-      {build.levels.length === 0 ? (
-        <p className="dg-muted">No levels yet. Add one to begin.</p>
-      ) : null}
-      <LevelButtons store={store} character={character} />
-    </>
-  );
+  return byLevel;
 }
 
-function LevelCard({
+export function LevelCard({
   index,
   store,
   character,
   choices,
   nameOf,
+  displayNumber,
 }: {
   index: number;
   store: CharacterStore;
   character: ResolvedCharacter;
   choices: PendingChoice[];
   nameOf: (id: string) => string;
+  /**
+   * The character level to print. Defaults to the card's own place in the build;
+   * mid-drag it is where the card currently sits, and `null` once it has been
+   * carried below the divider.
+   */
+  displayNumber?: number | null;
 }): ReactNode {
   const sheet = useSheet();
   const change = useBuildChange(store);
@@ -88,6 +69,7 @@ function LevelCard({
   // fight (spec 4.3, 7.3).
   const features = useBuilderFeatures();
   const ref = useBuilderStop(`level-${index}`);
+  const shown = useCardShown();
   if (!build) return null;
 
   const level = build.levels[index];
@@ -153,10 +135,21 @@ function LevelCard({
   return (
     <div className="dg-level-card" ref={ref}>
       <div className="dg-level-card-head">
-        <strong>Level {index + 1}</strong>
-        <span className="dg-level-chip">
-          {classElement?.name ?? level.class} {classLevel}
-        </span>
+        {displayNumber === null ? (
+          <>
+            <strong>
+              {classElement?.name ?? level.class} {classLevel}
+            </strong>
+            <span className="dg-level-chip is-planned">planned</span>
+          </>
+        ) : (
+          <>
+            <strong>Level {displayNumber ?? index + 1}</strong>
+            <span className="dg-level-chip">
+              {classElement?.name ?? level.class} {classLevel}
+            </span>
+          </>
+        )}
         {outstanding ? (
           <span className="dg-level-todo">{outstanding} to choose</span>
         ) : null}
@@ -169,11 +162,11 @@ function LevelCard({
         </button>
       </div>
 
-      {features.levelHp ? (
+      {features.levelHp && shown ? (
         <LevelHp store={store} index={index} classId={level.class} />
       ) : null}
 
-      {automatic.length ? (
+      {!shown ? null : automatic.length ? (
         <div className="dg-level-features">
           {automatic.map((feature) => (
             <FeatureChip key={feature.id} feature={feature} />
@@ -181,7 +174,7 @@ function LevelCard({
         </div>
       ) : null}
 
-      {staged.length ? (
+      {shown && staged.length ? (
         <div className="dg-level-features is-staged">
           {staged.map((feature) => (
             <FeatureChip key={feature.id} feature={feature} />
@@ -189,7 +182,7 @@ function LevelCard({
         </div>
       ) : null}
 
-      {choices.map((choice) => (
+      {(shown ? choices : []).map((choice) => (
         <PendingChoiceRow
           key={`${choice.id}-${index}`}
           choice={choice}
@@ -198,7 +191,7 @@ function LevelCard({
         />
       ))}
 
-      {inactive.map((pick) => (
+      {(shown ? inactive : []).map((pick) => (
         <InactivePickRow
           key={pick.choiceId}
           pick={pick}
@@ -224,7 +217,7 @@ function FeatureChip({ feature }: { feature: ResolvedElement }): ReactNode {
   );
 }
 
-function LevelButtons({
+export function LevelButtons({
   store,
   character,
 }: {
@@ -240,6 +233,7 @@ function LevelButtons({
   if (!build || !index) return null;
 
   const taken = [...classLevels(build).keys()];
+  const queued = new Set(normalisedQueue(build).map((entry) => entry.class));
   const hpFor = (classId: string): "max" | "average" | number =>
     defaultHpFor(index, classId, plugin.settings.defaultHp);
 
@@ -266,6 +260,8 @@ function LevelButtons({
           // Shown whether or not enforcement is on: a player multiclassing into
           // a class they don't qualify for should at least be told.
           warnings: multiclassNote(cls),
+          // A pick that arrives with its choices already filled in should not be a surprise.
+          badge: queued.has(cls.id) ? "queued" : undefined,
         })),
       selected: [],
       count: 1,

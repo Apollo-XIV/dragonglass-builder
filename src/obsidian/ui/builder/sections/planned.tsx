@@ -1,119 +1,73 @@
-/** Planned: the levels still to come, so a build can be laid out ahead of taking it. */
+/** Planned: the cards for levels still to come, which sit under the PLANNED divider. */
 
-import { useState, type ReactNode } from "react";
-import { classLevels, plannedFor, setPlannedChoice } from "../../../../core/resolver/levels";
+import { type ReactNode } from "react";
+import { plannedFor, setPlannedChoice } from "../../../../core/resolver/levels";
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { Element } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
-import { ChipRow } from "../chips";
 import { InfoRow } from "../detail";
-import { PLANNED_PAGE, upcomingStaged, type LevelEntryShape } from "../model";
+import { upcomingStaged, type LevelEntryShape } from "../model";
+import { useCardShown } from "../reorder/fold";
 import { usePicker } from "../picker";
 import { ChoiceRow } from "./origin";
 
-export function PlannedSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
-  const [open, setOpen] = useState(false);
-  const [shown, setShown] = useState(PLANNED_PAGE);
-  const [filter, setFilter] = useState("all");
-  const index = store.index;
-  const build = store.data.build;
-  if (!build || !index) return null;
-
-  const taken = [...classLevels(build).entries()];
-  const queued = build.planned?.length ?? 0;
-  const summary = `${queued} queued · ${taken.map(([id, n]) => `${index.get(id)?.name ?? id} ${n + 1}+`).join(", ")}`;
-
-  const chips = [{ id: "all", label: "All" }, ...taken.map(([id]) => ({ id, label: index.get(id)?.name ?? id }))];
-  const classes = filter === "all" ? taken : taken.filter(([id]) => id === filter);
-
-  return (
-    <>
-      <button className="dg-planned-toggle" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
-        <span>{open ? "Hide planned levels" : summary}</span>
-        <span className="dg-choice-chevron" aria-hidden="true">
-          {open ? "⌃" : "⌄"}
-        </span>
-      </button>
-
-      {open ? (
-        <>
-          {taken.length > 1 ? <ChipRow chips={chips} active={filter} onPick={setFilter} /> : null}
-          {classes.map(([classId, level]) => (
-            <PlannedClass
-              key={classId}
-              store={store}
-              classId={classId}
-              from={level + 1}
-              count={shown}
-              character={character}
-            />
-          ))}
-          {filter === "all" ? <PlannedStaged store={store} character={character} count={shown} /> : null}
-          <button className="dg-level-button is-multiclass" onClick={() => setShown((n) => n + PLANNED_PAGE)}>
-            Show more levels
-          </button>
-        </>
-      ) : null}
-    </>
-  );
-}
-
-function PlannedClass({
+/** One planned level: what it grants and the picks queued for it. */
+export function PlannedCard({
   store,
   classId,
-  from,
-  count,
+  classLevel,
   character,
+  displayNumber,
 }: {
   store: CharacterStore;
   classId: string;
-  from: number;
-  count: number;
+  classLevel: number;
   character: ResolvedCharacter;
+  /** Set mid-drag, once the card has been carried above the divider. */
+  displayNumber?: number;
 }): ReactNode {
   const index = store.index;
-  const build = store.data.build;
-  if (!index || !build) return null;
+  const shown = useCardShown();
+  if (!index) return null;
 
   const cls = index.get(classId) as (Element & { levels?: Record<string, LevelEntryShape> }) | undefined;
   const subclassId = character.classes.find((c) => c.id === classId)?.subclass?.id;
   const subclass = subclassId
     ? (index.get(subclassId) as (Element & { levels?: Record<string, LevelEntryShape> }) | undefined)
     : undefined;
-  if (!cls) return null;
 
-  const levels: number[] = [];
-  for (let level = from; level <= 20 && levels.length < count; level++) {
-    if (cls.levels?.[String(level)] || subclass?.levels?.[String(level)]) levels.push(level);
-  }
+  const entries = [cls?.levels?.[String(classLevel)], subclass?.levels?.[String(classLevel)]].filter(Boolean);
 
   return (
-    <>
-      {levels.map((level) => (
-        <div className="dg-level-card is-planned" key={`${classId}-${level}`}>
-          <div className="dg-level-card-head">
+    <div className={displayNumber === undefined ? "dg-level-card is-planned" : "dg-level-card"}>
+      <div className="dg-level-card-head">
+        {displayNumber === undefined ? (
+          <>
             <strong>
-              {cls.name} {level}
+              {cls?.name ?? classId} {classLevel}
             </strong>
             <span className="dg-level-chip is-planned">planned</span>
-          </div>
-          {[cls.levels?.[String(level)], subclass?.levels?.[String(level)]].filter(Boolean).map((entry, i) => (
-            <PlannedEntry
-              key={i}
-              entry={entry as LevelEntryShape}
-              store={store}
-              classId={classId}
-              classLevel={level}
-            />
-          ))}
-        </div>
-      ))}
-      {levels.length === 0 ? <p className="dg-muted">No further levels in the loaded data.</p> : null}
-    </>
+          </>
+        ) : (
+          <>
+            <strong>Level {displayNumber}</strong>
+            <span className="dg-level-chip">
+              {cls?.name ?? classId} {classLevel}
+            </span>
+          </>
+        )}
+      </div>
+      {shown
+        ? entries.map((entry, i) => (
+            <PlannedEntry key={i} entry={entry as LevelEntryShape} store={store} classId={classId} classLevel={classLevel} />
+          ))
+        : null}
+      {shown && entries.length === 0 ? <p className="dg-muted">Nothing new at this level.</p> : null}
+    </div>
   );
 }
 
-function PlannedStaged({
+export function PlannedStaged({
   store,
   character,
   count,

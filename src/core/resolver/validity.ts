@@ -18,7 +18,7 @@
 import type { ContentIndex } from "../content";
 import type { BuildFile, ChoiceDef, Element, HpChoice, LevelEntry } from "../types";
 import { collect } from "./collect";
-import { addLevel, removeLevel } from "./levels";
+import { addLevel, removeLevel, reorderProgression, type ProgressionRef } from "./levels";
 
 /** A stored answer, wherever it lives in the build file. */
 export interface PickRef {
@@ -56,6 +56,8 @@ export type BuildChange =
   | { type: "choice"; choiceId: string; scope: "build" | "level"; levelIndex?: number; chosen: string[] }
   | { type: "add-level"; class: string; hp: HpChoice }
   | { type: "remove-level"; index: number }
+  /** A drag in the Progression list: the whole order, and how many of it are taken. */
+  | { type: "reorder"; order: ProgressionRef[]; active: number; hp: Record<string, HpChoice> }
   | { type: "species"; id?: string }
   | { type: "background"; id?: string };
 
@@ -147,6 +149,8 @@ export function applyChange(build: BuildFile, change: BuildChange): BuildFile {
       return addLevel(build, change.class, change.hp);
     case "remove-level":
       return removeLevel(build, change.index);
+    case "reorder":
+      return reorderProgression(build, change.order, change.active, (id) => change.hp[id] ?? "average");
     case "choice": {
       if (change.scope === "level" && change.levelIndex !== undefined) {
         const levels = build.levels.map((level, i) =>
@@ -188,6 +192,10 @@ function isReplacement(build: BuildFile, change: BuildChange): boolean {
       // Adding a level only ever grants; it cannot cost anything.
       return false;
     case "remove-level":
+      return false;
+    case "reorder":
+      // Moving a level never puts a different option in place of another: what
+      // depended on it is invalidated, and comes back if the order does.
       return false;
   }
 }

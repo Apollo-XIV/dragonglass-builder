@@ -4351,3 +4351,240 @@
   text-align: center;
   width: 3.5rem;
 }
+
+/* -- Progression: the reorderable list of levels (progression spec) ------- */
+
+.dg-reorder-list {
+  position: relative;
+  /* A lifted card is a little larger than its slot, and a card that overflows the
+     list sideways would give the pane a scrollbar for as long as it was held. */
+  overflow-x: clip;
+}
+
+.dg-reorder-item {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  /* The spacing lives in the wrapper, not the card's margin, so the height the
+     drag measures for a card is the whole of what it takes up. */
+  padding-bottom: var(--size-4-3);
+  --lift: 0;
+}
+
+.dg-reorder-item .dg-level-card {
+  margin-bottom: 0;
+}
+
+.dg-reorder-body {
+  flex: 1;
+  min-width: 0;
+  border-radius: var(--radius-m);
+  transition: none;
+}
+
+/* The handle: the only place a drag starts, so the rest of the card scrolls. The
+   touch-action is here and nowhere else for the same reason. */
+.dg-layout .dg-drag-handle {
+  flex: 0 0 32px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: var(--size-4-4);
+  color: var(--text-faint);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  outline: none;
+}
+
+.dg-layout .dg-drag-handle:hover,
+.dg-layout .dg-drag-handle:focus-visible {
+  color: var(--text-normal);
+}
+
+.dg-layout .dg-drag-handle:focus-visible {
+  outline: 2px solid var(--dg-accent, var(--interactive-accent));
+  border-radius: var(--radius-s);
+}
+
+.dg-hex-grid {
+  display: block;
+}
+
+.dg-reorder-list.is-dragging,
+.dg-reorder-list.is-dragging * {
+  cursor: grabbing;
+}
+
+/* The group's place in the list while it floats: an empty slot the height of
+   what it will take up. The handle stays in the page, since a touch keeps sending
+   its events to the element it began on. */
+.dg-reorder-item.is-gap > .dg-reorder-body {
+  border: 1px dashed var(--background-modifier-border-hover);
+  background: color-mix(in srgb, var(--background-modifier-hover) 60%, transparent);
+}
+
+.dg-reorder-item.is-gap > .dg-drag-handle {
+  opacity: 0;
+}
+
+/* The cue on a lower level the held card is about to hand over to: --lift runs
+   0 to 1 as the thumb reaches it, and the outline, shadow and size follow it. */
+.dg-reorder-item > .dg-reorder-body {
+  transform: scale(calc(1 + var(--lift, 0) * 0.025));
+  box-shadow:
+    0 0 0 calc(var(--lift, 0) * 2px) var(--dg-accent, var(--interactive-accent)),
+    0 calc(var(--lift, 0) * 8px) calc(var(--lift, 0) * 20px) rgba(0, 0, 0, calc(var(--lift, 0) * 0.35));
+}
+
+.dg-reorder-floating {
+  position: absolute;
+  top: 0;
+  left: 32px;
+  right: 0;
+  z-index: 30;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.dg-reorder-ghost {
+  position: absolute;
+  left: 0;
+  right: 0;
+  box-sizing: border-box;
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+}
+
+/* Held, and active: an outline, a drop shadow and a slight enlargement. */
+.dg-reorder-ghost.is-held {
+  box-shadow:
+    0 0 0 2px var(--dg-accent, var(--interactive-accent)),
+    0 10px 24px rgba(0, 0, 0, 0.35);
+}
+
+.dg-reorder-ghost.is-held {
+  transform: scale(1.015);
+}
+
+.dg-reorder-ghost.is-tail.is-new,
+.dg-reorder-ghost.is-anchor.is-new {
+  animation: dg-reorder-cue 220ms ease-out;
+}
+
+@keyframes dg-reorder-cue {
+  from {
+    transform: translateY(8px) scale(0.97);
+    opacity: 0.7;
+  }
+}
+
+.dg-reorder-ghost.is-fanned {
+  box-shadow:
+    0 0 0 1px var(--background-modifier-border),
+    0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.dg-reorder-chip {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  padding: 1px var(--size-4-3);
+  border-radius: 999px;
+  background: var(--dg-accent, var(--interactive-accent));
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.dg-ghost-card {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  overflow: hidden;
+}
+
+.dg-ghost-card.is-planned {
+  border-style: dashed;
+  color: var(--text-muted);
+}
+
+.dg-ghost-card.is-divider {
+  background: var(--background-secondary);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: var(--font-ui-smaller);
+}
+
+/* The divider is a card of its own, and draggable like one. */
+.dg-planned-divider,
+.dg-layout .dg-planned-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 var(--size-4-3);
+  border: none;
+  border-top: 2px dashed var(--background-modifier-border-hover);
+  border-bottom: 2px dashed var(--background-modifier-border-hover);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+  text-align: left;
+}
+
+.dg-divider-label {
+  font-size: var(--font-ui-smaller);
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dg-divider-summary {
+  flex: 1;
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-option-badge {
+  align-self: flex-start;
+  margin-left: var(--size-4-2);
+  padding: 0 var(--size-4-2);
+  border: 1px solid var(--dg-accent, var(--interactive-accent));
+  border-radius: 999px;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* A dropped group comes down from where it was held, folded levels unfolding as it goes. */
+.dg-reorder-item.is-settling > .dg-reorder-body {
+  animation: dg-reorder-drop 320ms ease-out;
+}
+
+@keyframes dg-reorder-drop {
+  from {
+    transform: scale(1.015);
+    box-shadow:
+      0 0 0 2px var(--dg-accent, var(--interactive-accent)),
+      0 10px 24px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-reorder-item.is-settling > .dg-reorder-body,
+  .dg-reorder-ghost.is-new {
+    animation: none;
+  }
+}

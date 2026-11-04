@@ -83,7 +83,7 @@ export function PendingChoiceRow({
   const change = useBuildChange(store);
   const chosen = choice.chosen.map(nameOf).join(", ");
 
-  const write = (ids: string[]): void =>
+  const write = (ids: string[]): void => {
     change({
       type: "choice",
       choiceId: choice.id,
@@ -91,6 +91,7 @@ export function PendingChoiceRow({
       levelIndex: choice.levelIndex,
       chosen: ids,
     });
+  };
 
   return (
     <ChoiceRow

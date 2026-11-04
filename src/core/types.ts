@@ -459,11 +459,22 @@ export interface BuildLevel {
   choices?: Record<string, string[]>;
 }
 
-/** A queued build: picks made for a class level the character hasn't reached. */
+/**
+ * A level in the planned queue: picks made for a class level the character hasn't
+ * reached. The array is ordered, and that order is the plan.
+ */
 export interface PlannedLevel {
   class: string;
   classLevel: number;
   choices: Record<string, string[]>;
+  /** Hit points, carried so that dragging a level below the divider and back loses nothing. */
+  hp?: HpChoice;
+  /**
+   * A place in the queue held on purpose, even with no picks in it. Without it an
+   * empty entry is indistinguishable from one that was never made, and clearing
+   * its last pick would drop the level back to the end of the queue.
+   */
+  queued?: boolean;
 }
 
 export interface BuildFile extends CharacterFile {

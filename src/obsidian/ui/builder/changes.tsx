@@ -22,13 +22,21 @@ import { resolve } from "../../../core/resolver/resolve";
 import type { CharacterStore } from "../../character-store";
 import { useSheet } from "../narrow/sheet";
 
-export function useBuildChange(store: CharacterStore): (change: BuildChange) => void {
+/** Whether a change went straight in, or is waiting on the player's answer. */
+export type ChangeOutcome = "applied" | "asking" | "ignored";
+
+export interface ChangeOptions {
+  /** The confirmation went away, whichever way it was answered. */
+  onClose?: () => void;
+}
+
+export function useBuildChange(store: CharacterStore): (change: BuildChange, options?: ChangeOptions) => ChangeOutcome {
   const sheet = useSheet();
 
-  return (change) => {
+  return (change, options) => {
     const build = store.data.build;
     const index = store.index;
-    if (!build || !index) return;
+    if (!build || !index) return "ignored";
 
     const apply = (): void => {
       const current = store.data.build;
@@ -44,7 +52,7 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange) => 
 
     if (isEmptyReport(report) && breaches.length === 0) {
       apply();
-      return;
+      return "applied";
     }
 
     // One sheet, whatever the change costs. Two confirmations in a row for one
@@ -52,6 +60,7 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange) => 
     sheet.open({
       title: report.removed.length || report.invalidated.length ? "This affects other choices" : "Above the usual maximum",
       subtitle: describeChange(change),
+      onClose: options?.onClose,
       body: () => (
         <>
           {breaches.length > 0 ? <CapGroup breaches={breaches} /> : null}
@@ -75,6 +84,7 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange) => 
         </>
       ),
     });
+    return "asking";
   };
 }
 
@@ -133,6 +143,8 @@ function describeChange(change: BuildChange): string {
       return `Removing level ${change.index + 1}`;
     case "add-level":
       return "Adding a level";
+    case "reorder":
+      return "Reordering levels";
     case "choice":
       return change.chosen.length ? "Changing this choice" : "Clearing this choice";
   }
