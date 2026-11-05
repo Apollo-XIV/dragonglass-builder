@@ -10,28 +10,21 @@
 import { useMemo, useState, type ReactNode } from "react";
 import { factsOf } from "../../../core/content/facts";
 import { weaponAttacks } from "../../../core/resolver/attacks";
-import { explainParts, explainStat, type Explanation } from "../../../core/resolver/explain";
+import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
 import type { ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
-import { ABILITIES, type Ability } from "../../../core/types";
 import type { CharacterStore } from "../../character-store";
+import { AbilityBlock } from "../abilities";
 import { Markdown, signed } from "../components";
+import { prettyPath } from "../sheet-panels";
 import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
 import { NarrowScroller, type SectionSpec } from "./scroller";
 import { useSheet } from "./sheet";
+import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
-import { ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
+import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
 import { useToast } from "./toast";
-
-const ABILITY_NAMES: Record<Ability, string> = {
-  str: "Strength",
-  dex: "Dexterity",
-  con: "Constitution",
-  int: "Intelligence",
-  wis: "Wisdom",
-  cha: "Charisma",
-};
 
 /** Section ids are stable; the order comes from the settings (spec 4.4). */
 const SHEET_ICONS: Record<string, string> = {
@@ -40,7 +33,7 @@ const SHEET_ICONS: Record<string, string> = {
   spells: "sparkles",
   inventory: "backpack",
   features: "scroll",
-  skills: "target",
+  proficiencies: "target",
   details: "user",
 };
 
@@ -72,7 +65,9 @@ export function NarrowSheet({
         body: <ActionsSection store={store} character={character} />,
       });
 
-    if (character.spellcasting)
+    // A caster with nothing to cast has no spells to read or roll, so the section
+    // stays off the page and the rail.
+    if (character.spellcasting && character.spellcasting.spells.length > 0)
       available.set("spells", {
         id: "spells",
         label: "Spells",
@@ -105,10 +100,10 @@ export function NarrowSheet({
         body: <FeaturesSection store={store} character={character} />,
       });
 
-    available.set("skills", {
-      id: "skills",
-      label: "Skills and saves",
-      body: <SkillsSection character={character} />,
+    available.set("proficiencies", {
+      id: "proficiencies",
+      label: "Proficiencies",
+      body: <ProficienciesSection store={store} character={character} />,
     });
 
     if (store.data.details)
@@ -140,11 +135,14 @@ function slotStatus(character: ResolvedCharacter): string {
   return max ? `${remaining}/${max} slots` : "";
 }
 
+/** Kinds the Proficiencies section shows, so Features does not repeat them. */
+const PROFICIENCY_KINDS = new Set(["skill", "tool", "language"]);
+
 export function featureList(character: ResolvedCharacter): ResolvedCharacter["features"][string] {
   // Everything the sheet's Features section shows: the kinds a source marked for
   // the features tab, flattened.
   return Object.entries(character.features)
-    .filter(([kind]) => kind !== "item" && kind !== "spell")
+    .filter(([kind]) => kind !== "item" && kind !== "spell" && !PROFICIENCY_KINDS.has(kind.split(":").pop() ?? kind))
     .flatMap(([, list]) => list);
 }
 
@@ -156,41 +154,15 @@ export function OverviewSection({ store, character }: { store: CharacterStore; c
   return (
     <>
       <HpBlock store={store} character={character} />
-      <div className="dg-n-stat-row">
-        <StatTile label="AC" value={String(character.ac.value)} explanation={() => explainStat(character.ac, { label: "Armour Class" })} />
-        <RollTile
-          label="Initiative"
-          explanation={() => explainStat(character.initiative, { label: "Initiative", kind: "d20" })}
-        />
-        <StatTile
-          label="Speed"
-          value={`${character.speed.walk?.value ?? 0} ft`}
-          explanation={
-            character.speed.walk ? () => explainStat(character.speed.walk, { label: "Walking speed" }) : undefined
-          }
-        />
-        <StatTile
-          label="Prof."
-          value={signed(character.proficiencyBonus.value)}
-          explanation={() => explainStat(character.proficiencyBonus, { label: "Proficiency bonus" })}
-        />
+      <div className="dg-d-cluster dg-n-stat-cluster">
+        <SpeedTile character={character} Read={HoldReadTarget} />
+        <ArmourTile character={character} Read={HoldReadTarget} />
+        <InitiativeTile character={character} Roll={HoldRollTarget} />
+        <ProficiencyTile character={character} Read={HoldReadTarget} />
       </div>
 
-      <div className="dg-n-ability-grid">
-        {ABILITIES.map((ability) => {
-          const block = character.abilities[ability];
-          return (
-            <div className="dg-n-ability" key={ability}>
-              <span className="dg-n-ability-name">{ability.toUpperCase()}</span>
-              <RollBox
-                kind="d20"
-                label={`${ABILITY_NAMES[ability]} check`}
-                explanation={() => explainStat(block.check, { label: `${ABILITY_NAMES[ability]} check`, kind: "d20" })}
-              />
-              <span className="dg-n-ability-score">{block.score.value}</span>
-            </div>
-          );
-        })}
+      <div className="dg-n-ability-block">
+        <AbilityBlock character={character} Target={HoldRollTarget} />
       </div>
 
       {character.resources.length > 0 ? (
@@ -297,15 +269,6 @@ function StatTile({
           : undefined
       }
     />
-  );
-}
-
-function RollTile({ label, explanation }: { label: string; explanation: () => Explanation }): ReactNode {
-  return (
-    <div className="dg-n-tile">
-      <RollBox kind="d20" label={label} explanation={explanation} />
-      <span className="dg-n-tile-label">{label}</span>
-    </div>
   );
 }
 
@@ -720,30 +683,45 @@ function labelForClass(character: ResolvedCharacter, feature: { class?: string; 
   return `${cls?.name ?? feature.class ?? ""}${feature.level ? ` ${feature.level}` : ""}`.trim();
 }
 
-function SkillsSection({ character }: { character: ResolvedCharacter }): ReactNode {
+/** The order a character sheet prints them in, then anything a source adds. */
+const PROFICIENCY_GROUPS = [
+  { path: "proficiencies.armor", label: "Armour" },
+  { path: "proficiencies.weapon", label: "Weapons" },
+  { path: "proficiencies.tool", label: "Tools" },
+  { path: "languages", label: "Languages" },
+];
+
+/** Skills, then senses, then the sets: the same three lists the desktop keeps on screen. */
+export function ProficienciesSection({
+  store,
+  character,
+}: {
+  store: CharacterStore;
+  character: ResolvedCharacter;
+}): ReactNode {
+  const nameOf = (id: string): string => store.index?.get(id)?.name ?? prettyPath(id);
+  const passives = character.skills.filter((s) =>
+    ["perception", "investigation", "insight"].some((k) => s.key.endsWith(k)),
+  );
+  const senses = Object.entries(character.senses).filter(([, stat]) => stat.value > 0);
+  const extra = Object.keys(character.sets)
+    .filter(
+      (path) =>
+        path.startsWith("proficiencies.") &&
+        !PROFICIENCY_GROUPS.some((g) => g.path === path) &&
+        (character.sets[path]?.values.length ?? 0) > 0,
+    )
+    .map((path) => ({ path, label: prettyPath(path) }));
+  const groups = [...PROFICIENCY_GROUPS, ...extra].filter((group) => character.sets[group.path]);
+
   return (
     <>
-      <div className="dg-n-saves">
-        {ABILITIES.map((ability) => (
-          <div className="dg-n-save" key={ability}>
-            <span className={character.abilities[ability].save.proficiency ? "dg-n-prof is-on" : "dg-n-prof"} />
-            <span className="dg-n-save-name">{ability.toUpperCase()}</span>
-            <RollBox
-              kind="d20"
-              label={`${ABILITY_NAMES[ability]} save`}
-              explanation={() =>
-                explainStat(character.abilities[ability].save, { label: `${ABILITY_NAMES[ability]} save`, kind: "d20" })
-              }
-            />
-          </div>
-        ))}
-      </div>
+      <h4 className="dg-n-subhead">Skills</h4>
       {character.skills.map((skill) => (
         <div className="dg-n-skill" key={skill.key}>
           <span className={skill.stat.proficiency ? `dg-n-prof is-${skill.stat.proficiency}` : "dg-n-prof"} />
           <span className="dg-n-skill-name">{skill.name}</span>
           <span className="dg-n-skill-ability">{skill.ability.toUpperCase()}</span>
-          <span className="dg-muted">passive {skill.passive}</span>
           <RollBox
             kind="d20"
             label={`${skill.name} check`}
@@ -751,6 +729,47 @@ function SkillsSection({ character }: { character: ResolvedCharacter }): ReactNo
           />
         </div>
       ))}
+
+      <h4 className="dg-n-subhead">Senses</h4>
+      {passives.map((skill) => (
+        <ReadRow
+          key={skill.key}
+          title={`Passive ${skill.name}`}
+          formula={explainParts({
+            label: `Passive ${skill.name}`,
+            parts: [
+              { label: "Passive base", amount: 10 },
+              { label: skill.name, amount: skill.stat.value },
+            ],
+          }).formula}
+        >
+          <span className="dg-n-sense-value">{skill.passive}</span>
+        </ReadRow>
+      ))}
+      {senses.map(([name, stat]) => (
+        <ReadRow
+          key={name}
+          title={prettyPath(name)}
+          formula={explainStat(stat, { label: prettyPath(name) }).formula}
+        >
+          <span className="dg-n-sense-value">{stat.value} ft</span>
+        </ReadRow>
+      ))}
+      {!senses.length ? <p className="dg-muted">No special senses.</p> : null}
+
+      <h4 className="dg-n-subhead">Proficiencies</h4>
+      {groups.map((group) => {
+        const stat = character.sets[group.path];
+        return (
+          <ReadRow
+            key={group.path}
+            title={group.label}
+            subtitle={stat.values.length ? stat.values.map(nameOf).join(", ") : "none"}
+            formula={explainSet(stat, group.label).formula}
+          />
+        );
+      })}
+      {!groups.length ? <p className="dg-muted">Nothing yet.</p> : null}
     </>
   );
 }

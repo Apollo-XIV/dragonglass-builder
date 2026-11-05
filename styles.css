@@ -1837,6 +1837,14 @@
   padding-bottom: var(--size-4-2);
 }
 
+/* The desktop's speed, AC, initiative and proficiency tiles, four across: the
+ * narrow overview has no room for the desktop's three-column grid. */
+.dg-layout .dg-n-stat-cluster {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: auto;
+  padding-bottom: var(--size-4-2);
+}
+
 .dg-n-tile {
   display: flex;
   flex: 1 1 4.5rem;
@@ -1982,26 +1990,14 @@
   font-size: 12px;
 }
 
-.dg-n-saves {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--size-4-2);
-  padding-bottom: var(--size-4-3);
-}
-
-.dg-n-save,
 .dg-n-skill {
   display: flex;
   align-items: center;
   gap: var(--size-4-2);
   min-height: 48px;
-}
-
-.dg-n-skill {
   border-bottom: 1px solid var(--background-modifier-border);
 }
 
-.dg-n-save-name,
 .dg-n-skill-name {
   flex: 1;
 }
@@ -2028,6 +2024,17 @@
 .dg-n-prof.is-expertise {
   background: var(--dg-accent);
   border: 3px double var(--text-on-accent);
+}
+
+.dg-n-subhead {
+  margin: var(--size-4-3) 0 var(--size-4-1);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.dg-n-sense-value {
+  font-weight: var(--font-semibold);
 }
 
 .dg-n-detail-section h4 {
@@ -2399,7 +2406,11 @@
  * selector below that styles a button carries two classes for that reason.
  * ========================================================================== */
 
-.dg-desk {
+/* The design scale. The narrow sheet's ability block and stat cluster borrow it,
+ * so their tiles and save pills are the desktop's own rather than a second copy. */
+.dg-desk,
+.dg-n-ability-block,
+.dg-n-stat-cluster {
   /* One spacing scale. Every gap and padding in the layout is one of these. */
   --d-gap: var(--size-4-3);
   --d-gap-tight: var(--size-4-2);
@@ -2434,7 +2445,9 @@
   --d-tempmax: var(--color-purple);
   --d-set: var(--color-orange);
   --d-accent: var(--dg-accent, var(--interactive-accent));
+}
 
+.dg-desk {
   display: flex;
   flex-direction: column;
   gap: var(--d-gap);
@@ -2858,7 +2871,15 @@
   cursor: pointer;
 }
 
-.dg-layout .dg-d-target:hover,
+/* Hover is gated on a pointer that hovers: on a touch screen the browser keeps
+ * :hover on the last thing tapped, so the highlight would outlive the roll. */
+@media (hover: hover) {
+  .dg-layout .dg-d-target:hover {
+    border-color: var(--d-accent);
+    background: var(--background-modifier-hover);
+  }
+}
+
 .dg-layout .dg-d-target:focus-visible {
   border-color: var(--d-accent);
   background: var(--background-modifier-hover);
@@ -2940,7 +2961,13 @@
   background: var(--d-tile);
 }
 
-.dg-layout .dg-d-ability:hover,
+@media (hover: hover) {
+  .dg-layout .dg-d-ability:hover {
+    border-color: var(--d-accent);
+    background: var(--d-tile-hover);
+  }
+}
+
 .dg-layout .dg-d-ability:focus-visible {
   border-color: var(--d-accent);
   background: var(--d-tile-hover);
@@ -2970,7 +2997,13 @@
   font-size: var(--font-ui-smaller);
 }
 
-.dg-layout .dg-d-save:hover,
+@media (hover: hover) {
+  .dg-layout .dg-d-save:hover {
+    border-color: var(--d-accent);
+    background: var(--d-tile-hover);
+  }
+}
+
 .dg-layout .dg-d-save:focus-visible {
   border-color: var(--d-accent);
   background: var(--d-tile-hover);
@@ -2981,6 +3014,22 @@
 .dg-layout .dg-d-save.is-proficient {
   border-color: var(--d-accent);
   background: color-mix(in srgb, var(--d-accent) 12%, var(--d-tile));
+}
+
+/* On a phone the pips go and the six saves share one row. The pill keeps its
+ * outline for proficiency, so nothing the pip said is lost. */
+.dg-layout .dg-n-ability-block .dg-d-pip {
+  display: none;
+}
+
+.dg-layout .dg-n-ability-block .dg-d-saves {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.2rem;
+}
+
+.dg-layout .dg-n-ability-block .dg-d-save {
+  padding: 0 0.2rem;
+  gap: 0.15rem;
 }
 
 .dg-d-save-name {

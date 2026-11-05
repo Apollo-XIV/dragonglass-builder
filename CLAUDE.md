@@ -87,7 +87,8 @@ changes between them is arrangement and the gesture that opens things:
 
 The desktop layout's own rules:
 
-- **The design scale lives in `.dg-desk`'s custom properties** in `styles.css`: one
+- **The design scale lives in `.dg-desk`'s custom properties** (and `.dg-n-ability-block`, which
+  borrows it) in `styles.css`: one
   spacing scale, one radius scale, one type scale, and the five colour roles mapped to
   Obsidian's palette variables. Nothing below it uses a value of its own.
 - **Surfaces are one elevation ladder**, not a set of named variables: the page, then

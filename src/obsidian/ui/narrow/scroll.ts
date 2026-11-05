@@ -1,5 +1,5 @@
 /**
- * The scrolling maths behind the rail and the snapping (spec 4.2, 4.3).
+ * The scrolling maths behind the rail and its release (spec 4.2, 4.3).
  *
  * All of it is pure and takes plain numbers, because the behaviour it describes —
  * which section you are in, where a finger halfway down the rail points, whether
@@ -15,7 +15,7 @@ export interface Stop {
   start: number;
   /**
    * A position `goTo` can address that scrolling never stops at: no rail icon,
-   * no tick, no snap. Builder level cards are the only ones (spec 7.3).
+   * no tick. Builder level cards are the only ones (spec 7.3).
    */
   minor?: boolean;
 }

@@ -366,7 +366,10 @@ describe("the desktop builder", () => {
   it("puts the planned levels under the level cards, past the divider", () => {
     const levels = desk(store, "levels");
     expect(levels).toContain("dg-level-card");
-    expect(levels).toContain("Planned");
+    expect(levels.indexOf("dg-planned-divider")).toBeGreaterThan(levels.lastIndexOf("Level 5"));
+    // Open on the desktop: the queue's own cards are there, and no toggle.
+    expect(levels).toContain("is-planned");
+    expect(levels).not.toContain("dg-planned-toggle");
   });
 
   it("turns on the per-level hit points the narrow builder does not have", () => {
@@ -439,7 +442,7 @@ describe("the narrow layout", () => {
   });
 
   it("gives every section a sticky header and a rail icon", () => {
-    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Saves", "Proficiencies", "Details"]) {
+    for (const label of ["Overview", "Actions", "Spells", "Inventory", "Features", "Proficiencies", "Details"]) {
       expect(html, label).toContain(`>${label}<`);
       expect(html, `${label} rail icon`).toContain(`aria-label="${label}"`);
     }
@@ -447,11 +450,18 @@ describe("the narrow layout", () => {
     expect(html).toContain("dg-rail");
   });
 
-  it("shows ability checks and skills as outlined roll boxes", () => {
+  it("shows ability checks and saves as the desktop's tiles, and skills as outlined roll boxes", () => {
     expect(html).toContain("dg-roll-box");
-    expect(html).toContain('aria-label="Strength check"');
     expect(html).toContain('aria-label="Athletics check"');
-    expect(html).toContain('aria-label="Dexterity save"');
+    // The tiles and pills name themselves in text, as they do on the desktop.
+    expect(html).toContain('<span class="dg-sr-only">Strength check</span>');
+    expect(html).toContain('<span class="dg-sr-only">Dexterity save</span>');
+  });
+
+  it("keeps the saves in the overview with the abilities, not in a section of their own", () => {
+    const overview = html.slice(html.indexOf('data-section="overview"'), html.indexOf('data-section="actions"'));
+    expect(overview).toContain("dg-d-saves");
+    expect(html).not.toContain('aria-label="Saves"');
   });
 
   it("shows an equipped weapon as a hit box and a filled damage box", () => {
@@ -556,9 +566,16 @@ describe("the narrow builder", () => {
     expect(html).not.toContain("is-pair");
   });
 
-  it("keeps Planned collapsed, with a summary of what is queued", () => {
-    expect(html).toContain("0 queued · Paladin 6+");
+  it("keeps the queue behind its divider, with a summary of what is queued", () => {
+    expect(html).toContain("dg-planned-divider");
+    expect(html).toContain("Paladin 6+");
     expect(html).not.toContain("Show more levels");
+    expect(html).not.toContain(">Planned</h3>");
+  });
+
+  it("gives every card a handle that is the only way to drag it", () => {
+    expect(html.match(/dg-drag-handle/g)).toHaveLength(6);
+    expect(html).toContain("Reorder Paladin 3");
   });
 
   it("marks a level with an unresolved choice", () => {

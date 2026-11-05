@@ -219,27 +219,9 @@ export class DragonglassSettingTab extends PluginSettingTab {
 
     new Setting(containerEl)
       .setName("Scroll ticks")
-      .setDesc("A short buzz and a label flash when a section header reaches the top.")
+      .setDesc("A short buzz when a section header reaches the top.")
       .addToggle((toggle) =>
         toggle.setValue(this.plugin.settings.narrow.scrollTicks).onChange(async (value) => narrow("scrollTicks", value)),
-      );
-
-    new Setting(containerEl)
-      .setName("Snap to sections")
-      .setDesc("When scrolling stops near the start of a section, settle onto it.")
-      .addToggle((toggle) =>
-        toggle.setValue(this.plugin.settings.narrow.snap).onChange(async (value) => narrow("snap", value)),
-      );
-
-    new Setting(containerEl)
-      .setName("Snap distance")
-      .setDesc("How close counts as near, as a percentage of the screen height.")
-      .addSlider((slider) =>
-        slider
-          .setLimits(5, 40, 1)
-          .setDynamicTooltip()
-          .setValue(this.plugin.settings.narrow.snapGrabPercent)
-          .onChange(async (value) => narrow("snapGrabPercent", value)),
       );
 
     new Setting(containerEl)

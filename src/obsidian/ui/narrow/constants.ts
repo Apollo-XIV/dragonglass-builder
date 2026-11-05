@@ -45,7 +45,7 @@ export const RAIL = {
     return RAIL.iconHeight;
   },
   /** Content padding reserved beside the rail, on top of the icon width. */
-  contentClearance: 28,
+  contentClearance: 14,
   /** Inset from the screen edge when the rail is on the left, clear of the
    * Android back gesture and Obsidian's sidebar swipe. */
   leftInset: 14,
@@ -71,8 +71,6 @@ export const TICK = {
   haptic: 8,
   /** At most one tick this often. */
   rateLimit: 70,
-  /** How long the section label flashes beside the rail. */
-  labelFlash: 650,
 } as const;
 
 /** Sheets, toasts and tap targets (spec 3.3, 3.5, 10). */

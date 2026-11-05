@@ -511,8 +511,12 @@ Two export formats: a standard printed character sheet and Foundry VTT. Every ex
 
 - Exports a JSON actor for Foundry's dnd5e system: features, spells and inventory become items, and modifiers become active effects where they map.
 - HP maps directly, since the dnd5e actor already separates `hp.value`, `hp.max`, `hp.temp` and `hp.tempmax`.
-- Targets the latest dnd5e system version at first. A version toggle comes later, with each version behaving as its own export target.
+- Targets dnd5e 5.x, pinned as one constant in the exporter. The pin is a major version because FVTT's major releases change the data model; moving to 6.x is a deliberate change made only after the converter has been verified against it, never automatic. The exporter records the last 5.x release it was verified against beside the pin, for reproducibility. A new 5.x minor release is re-verified by running the exporter's tests, and the recorded release is updated when they pass.
+- The actor carries no system version and no ruleset. Foundry's own 2014/2024 setting is left to the user; the exporter writes each item by its element's source, so `srd` items are 2014 and `srd24` items are 2024. Mixing rulesets across classes, species and backgrounds is the user's choice and the export does not police it.
 - The avatar becomes the actor portrait and token image.
+- The export has a toggle, chosen each time:
+  - **Full export** supports levelling in Foundry, at the cost of a larger export. Each class's features are written as world items with stable IDs, and the class's advancement grants them from those UUIDs. Stable IDs come from the element id, so a re-export updates the same items rather than duplicating them. The export says the items must be imported before the character, since a grant to a missing item fails silently.
+  - **Character only** is faster and smaller, and doesn't support levelling. Features are embedded on the actor as plain items with no grants. The export says that levelling in Foundry won't add features.
 
 ## Conversion tooling
 

@@ -206,6 +206,37 @@ export function RollBox({
   );
 }
 
+/**
+ * A desktop-format tile (`dg-d-target`) with the phone's gesture: tap rolls, hold
+ * explains. The shape is the desktop's own, so an ability or save reads the same
+ * on both layouts; only what touching it does is different.
+ */
+export function HoldRollTarget({
+  explanation,
+  children,
+  label,
+  className,
+}: {
+  explanation: () => Explanation;
+  children: ReactNode;
+  label: string;
+  className?: string;
+}): ReactNode {
+  const { roll, explain } = useRollable(explanation);
+  const { handlers } = useHold({
+    onTap: () => roll(),
+    onHold: explain,
+    className: ["dg-d-target", className].filter(Boolean).join(" "),
+  });
+
+  return (
+    <button {...handlers} style={handlers.style} aria-haspopup="dialog">
+      {children}
+      <span className="dg-sr-only">{label}</span>
+    </button>
+  );
+}
+
 function defaultDisplay(explanation: () => Explanation): string {
   const current = explanation();
   return current.kind === "d20"
@@ -216,9 +247,76 @@ function defaultDisplay(explanation: () => Explanation): string {
 }
 
 /**
+ * Tapping something that only reads teaches the gesture rather than doing
+ * nothing (spec 3.4), and says so a couple of times at most.
+ */
+function useHoldHint(): () => void {
+  const settings = useNarrowSettings();
+  const toast = useToast();
+  const hints = useRef(0);
+  return () => {
+    if (!settings.holdHint || hints.current >= UI.holdHintCount) return;
+    hints.current += 1;
+    toast.show({ label: "Hold to read" });
+  };
+}
+
+/**
+ * A number that is read rather than rolled, in the desktop's tile shape: AC,
+ * speed, proficiency. Holding it opens the breakdown; a tap gives the hint.
+ */
+export function HoldReadTarget({
+  explanation,
+  children,
+  label,
+  className,
+}: {
+  explanation?: () => Explanation;
+  children: ReactNode;
+  label: string;
+  className?: string;
+}): ReactNode {
+  if (!explanation) return <span className={className}>{children}</span>;
+  return (
+    <HeldReadButton explanation={explanation} label={label} className={className}>
+      {children}
+    </HeldReadButton>
+  );
+}
+
+function HeldReadButton({
+  explanation,
+  children,
+  label,
+  className,
+}: {
+  explanation: () => Explanation;
+  children: ReactNode;
+  label: string;
+  className?: string;
+}): ReactNode {
+  const sheet = useSheet();
+  const hint = useHoldHint();
+  const { handlers } = useHold({
+    onHold: () => {
+      const current = explanation();
+      sheet.open({ title: current.label, body: () => <TextBody formula={current.formula} /> });
+    },
+    onTap: hint,
+    className: ["dg-d-target", className].filter(Boolean).join(" "),
+  });
+
+  return (
+    <button {...handlers} style={handlers.style} aria-haspopup="dialog">
+      {children}
+      <span className="dg-sr-only">{label}</span>
+    </button>
+  );
+}
+
+/**
  * A row that only reads: a feature, a spell, a weapon, an item. The hold target
- * is the whole row (spec 3.1.3), and tapping it teaches the gesture rather than
- * doing nothing (spec 3.4).
+ * is the whole row (spec 3.1.3).
  */
 export function ReadRow({
   title,
@@ -245,9 +343,8 @@ export function ReadRow({
   className?: string;
 }): ReactNode {
   const sheet = useSheet();
-  const toast = useToast();
   const settings = useNarrowSettings();
-  const hints = useRef(0);
+  const hint = useHoldHint();
 
   const open = (): void =>
     sheet.open({
@@ -258,13 +355,7 @@ export function ReadRow({
 
   const { handlers } = useHold({
     onHold: open,
-    onTap: onTap
-      ? onTap
-      : () => {
-          if (!settings.holdHint || hints.current >= UI.holdHintCount) return;
-          hints.current += 1;
-          toast.show({ label: "Hold to read" });
-        },
+    onTap: onTap ? onTap : hint,
     className: ["dg-read-row", className].filter(Boolean).join(" "),
   });
 

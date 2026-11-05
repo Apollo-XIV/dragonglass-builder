@@ -8,75 +8,18 @@
  */
 
 import type { ReactNode } from "react";
-import { explainStat } from "../../../core/resolver/explain";
 import type { Annotation, NumericStat, ResolvedCharacter } from "../../../core/resolver/resolved";
-import { ABILITIES, type Ability } from "../../../core/types";
+import { ABILITIES } from "../../../core/types";
+import { AbilityBlock } from "../abilities";
 import { Icon, signed } from "../components";
 import { RollTarget, useHoverCard } from "./targets";
-
-export const ABILITY_NAMES: Record<Ability, string> = {
-  str: "Strength",
-  dex: "Dexterity",
-  con: "Constitution",
-  int: "Intelligence",
-  wis: "Wisdom",
-  cha: "Charisma",
-};
 
 export function IdentityColumn({ character }: { character: ResolvedCharacter }): ReactNode {
   return (
     <div className="dg-d-identity-col">
-      <Divider>Abilities</Divider>
-      <div className="dg-d-abilities">
-        {ABILITIES.map((ability) => {
-          const block = character.abilities[ability];
-          return (
-            <RollTarget
-              key={ability}
-              className="dg-d-ability"
-              label={`${ABILITY_NAMES[ability]} check`}
-              explanation={() =>
-                explainStat(block.check, { label: `${ABILITY_NAMES[ability]} check`, kind: "d20" })
-              }
-            >
-              <span className="dg-d-value">{signed(block.check.value)}</span>
-              <span className="dg-d-label">
-                {ability.toUpperCase()} {block.score.value}
-              </span>
-            </RollTarget>
-          );
-        })}
-      </div>
-
-      <Divider>Saves</Divider>
-      <div className="dg-d-saves">
-        {ABILITIES.map((ability) => {
-          const save = character.abilities[ability].save;
-          const proficient = Boolean(save.proficiency);
-          return (
-            <RollTarget
-              key={ability}
-              className={proficient ? "dg-d-save is-proficient" : "dg-d-save"}
-              label={`${ABILITY_NAMES[ability]} save`}
-              explanation={() => explainStat(save, { label: `${ABILITY_NAMES[ability]} save`, kind: "d20" })}
-            >
-              <span className={proficient ? "dg-d-pip is-on" : "dg-d-pip"} aria-hidden="true" />
-              <span className="dg-d-save-name">{ability.toUpperCase()}</span>
-              <span className="dg-d-save-value">{signed(save.value)}</span>
-            </RollTarget>
-          );
-        })}
-      </div>
+      <AbilityBlock character={character} Target={RollTarget} />
 
       <SituationalNotes character={character} />
-    </div>
-  );
-}
-
-function Divider({ children }: { children: ReactNode }): ReactNode {
-  return (
-    <div className="dg-d-divider">
-      <span>{children}</span>
     </div>
   );
 }

@@ -25,7 +25,7 @@ export const SHEET_RAIL_ORDER = [
   "spells",
   "inventory",
   "features",
-  "skills",
+  "proficiencies",
   "details",
 ] as const;
 
@@ -108,8 +108,6 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     railHeight: "middle",
     railTap: "glide",
     scrollTicks: true,
-    snap: true,
-    snapGrabPercent: 22,
     holdMs: 450,
     haptics: true,
     infoButtons: false,
@@ -120,13 +118,35 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
   writeDebounceMs: 400,
 };
 
+/**
+ * A stored section order from an older version: sections it no longer has are
+ * dropped, and any it predates go in at their default place, after the section
+ * they follow by default. Without this a stored list replaces the default
+ * outright, so a section added since would always land at the bottom.
+ */
+export function railOrder(stored: readonly string[] | undefined): string[] {
+  if (!stored) return [...SHEET_RAIL_ORDER];
+  const known = new Set<string>(SHEET_RAIL_ORDER);
+  const order = stored.filter((id, i) => known.has(id) && stored.indexOf(id) === i);
+  SHEET_RAIL_ORDER.forEach((id, i) => {
+    if (order.includes(id)) return;
+    const before = i > 0 ? order.indexOf(SHEET_RAIL_ORDER[i - 1]) + 1 : 0;
+    order.splice(before, 0, id);
+  });
+  return order;
+}
+
 /** Fills in anything a settings file written by an older version is missing. */
 export function withDefaults(stored: Partial<DragonglassSettings> | null | undefined): DragonglassSettings {
   return {
     ...DEFAULT_SETTINGS,
     ...stored,
     layout: { ...DEFAULT_SETTINGS.layout, ...(stored?.layout ?? {}) },
-    narrow: { ...DEFAULT_SETTINGS.narrow, ...(stored?.narrow ?? {}) },
+    narrow: {
+      ...DEFAULT_SETTINGS.narrow,
+      ...(stored?.narrow ?? {}),
+      sheetSections: railOrder(stored?.narrow?.sheetSections),
+    },
     sources: stored?.sources ?? [],
   };
 }

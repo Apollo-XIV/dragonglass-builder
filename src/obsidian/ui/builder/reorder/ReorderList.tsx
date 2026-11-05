@@ -195,9 +195,9 @@ export function ReorderList(props: ReorderListProps): ReactNode {
   useEffect(() => () => window.clearTimeout(settleTimer.current), []);
 
   // Tells whatever scrolls the list to leave it alone while it is held: the narrow
-  // layout's section snap and scroll ticks would otherwise fire every time the drag
-  // auto-scrolls to an edge, and fight it. Released a moment after the drop so the
-  // scroll that follows does not snap the dropped card away either.
+  // layout's scroll ticks would otherwise fire every time the drag auto-scrolls to
+  // an edge. Released a moment after the drop so the scroll that follows does not
+  // tick against the dropped card either.
   useEffect(() => {
     const scroller = scrollParent(listRef.current);
     if (!scroller || !activeKey) return;

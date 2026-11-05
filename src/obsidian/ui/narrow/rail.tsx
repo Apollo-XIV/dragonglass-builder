@@ -20,7 +20,7 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
   const settings = useNarrowSettings();
   const haptics = useHaptics();
   const controller = useScrollController();
-  const { active, flash } = useScrollState();
+  const { active } = useScrollState();
   const railRef = useRef<HTMLDivElement>(null);
 
   const [awake, setAwake] = useState(false);
@@ -92,15 +92,19 @@ export function Rail({ sections }: { sections: SectionSpec[] }): ReactNode {
     [controller, haptics, sections.length],
   );
 
-  const labelIndex = label ? label.index : sections.findIndex((s) => s.id === flash);
+  const labelIndex = label ? label.index : -1;
 
   return (
     // The dock is what gets positioned and what fades; the pill inside it clips,
     // so the spotlight is masked by the pill's own rounded edge. The label bubble
     // has to live outside the pill for the same reason — inside, the clip would
     // eat it.
+    // `data-ignore-swipe` makes Obsidian's mobile swipe recogniser skip touches that
+    // start here, so scrubbing the rail downwards doesn't also pull down the command
+    // palette. Swipes started anywhere else keep working.
     <div
       className={awake ? "dg-rail-dock is-awake" : "dg-rail-dock"}
+      data-ignore-swipe="true"
       data-side={settings.railSide}
       data-height={settings.railHeight}
       style={{

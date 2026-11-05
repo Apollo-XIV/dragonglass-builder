@@ -8,15 +8,13 @@
  */
 
 import { useState, type ReactNode } from "react";
-import { explainStat } from "../../../core/resolver/explain";
 import { choosePins, type PinnedSlot } from "../../../core/resolver/pins";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import type { CharacterStore } from "../../character-store";
-import { Icon, signed } from "../components";
-import { prettyPath } from "../sheet-panels";
 import { useSheet } from "../narrow/sheet";
 import { Pips, TextBody } from "../narrow/targets";
+import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile, Tile } from "../stat-tiles";
 import { ReadTarget, RollTarget, useHoverCard } from "./targets";
 
 export function StatCluster({
@@ -29,95 +27,17 @@ export function StatCluster({
   /** The explicit pin layers: the character's own, then the plugin's. */
   pins: { character?: string[]; plugin?: string[] };
 }): ReactNode {
-  const walk = character.speed.walk;
-  const others = Object.entries(character.speed).filter(([name, stat]) => name !== "walk" && stat.value > 0);
-
   return (
     <div className="dg-d-cluster">
-      <Tile
-        label="Speed"
-        icon="footprints"
-        extra={
-          others.length ? (
-            <span className="dg-d-tile-extra">
-              {others.map(([name, stat]) => (
-                <span key={name}>
-                  {prettyPath(name).toLowerCase()} {stat.value}
-                </span>
-              ))}
-            </span>
-          ) : undefined
-        }
-      >
-        <ReadTarget
-          label="Walking speed"
-          explanation={walk ? () => explainStat(walk, { label: "Walking speed" }) : undefined}
-        >
-          <span className="dg-d-value">{walk?.value ?? 0}</span>
-          <span className="dg-d-unit">ft</span>
-        </ReadTarget>
-      </Tile>
-
-      <Tile label="AC" icon="shield">
-        <ReadTarget label="Armour Class" explanation={() => explainStat(character.ac, { label: "Armour Class" })}>
-          <span className="dg-d-value">{character.ac.value}</span>
-        </ReadTarget>
-      </Tile>
+      <SpeedTile character={character} Read={ReadTarget} />
+      <ArmourTile character={character} Read={ReadTarget} />
 
       <HitDiceTile store={store} character={character} />
 
-      <Tile label="Init." icon="dg-d20">
-        <RollTarget
-          label="Initiative"
-          explanation={() => explainStat(character.initiative, { label: "Initiative", kind: "d20" })}
-        >
-          <span className="dg-d-value">{signed(character.initiative.value)}</span>
-        </RollTarget>
-      </Tile>
-
-      <Tile label="Prof." icon="award">
-        <ReadTarget
-          label="Proficiency bonus"
-          explanation={() => explainStat(character.proficiencyBonus, { label: "Proficiency bonus" })}
-        >
-          <span className="dg-d-value">{signed(character.proficiencyBonus.value)}</span>
-        </ReadTarget>
-      </Tile>
+      <InitiativeTile character={character} Roll={RollTarget} />
+      <ProficiencyTile character={character} Read={ReadTarget} />
 
       <PinnedTile store={store} character={character} pins={pins} />
-    </div>
-  );
-}
-
-/**
- * The value fills everything above the label and centres in it, so the number
- * sits in the middle of the box whatever the label's height, and the label is
- * pinned to the bottom edge. `extra` sits under the value, inside that centred
- * area, so a secondary line does not push the main number off centre.
- */
-function Tile({
-  label,
-  icon,
-  wide,
-  extra,
-  children,
-}: {
-  label: string;
-  icon?: string;
-  wide?: boolean;
-  extra?: ReactNode;
-  children: ReactNode;
-}): ReactNode {
-  return (
-    <div className={wide ? "dg-d-tile is-wide" : "dg-d-tile"}>
-      <div className="dg-d-tile-value">
-        {children}
-        {extra}
-      </div>
-      <span className="dg-d-label">
-        {icon ? <Icon name={icon} /> : null}
-        {label}
-      </span>
     </div>
   );
 }

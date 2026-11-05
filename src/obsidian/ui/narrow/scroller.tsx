@@ -25,7 +25,6 @@ import {
   approach,
   crossedStop,
   glideLanding,
-  nearestStop,
   railProgress,
   tailSpace,
   type Stop,
@@ -50,7 +49,7 @@ interface ScrollController {
   chaseTo: (position: number) => void;
   glideToPosition: (position: number) => void;
   stop: () => void;
-  /** Suspends ticks and snapping while the rail is held. */
+  /** Suspends ticks while the rail is held. */
   setScrubbing: (scrubbing: boolean) => void;
   stops: () => Stop[];
   maxScroll: () => number;
@@ -71,8 +70,6 @@ export interface ScrollState {
   active: number;
   /** Active index plus the fraction scrolled through that section. */
   progress: number;
-  /** Section id whose label is flashing after a tick, if any. */
-  flash?: string;
 }
 
 const StateContext = createContext<ScrollState>({ active: 0, progress: 0 });
@@ -84,9 +81,8 @@ export function useScrollState(): ScrollState {
 /**
  * Registers a position the rail can be sent to without it becoming a place
  * scrolling stops: a builder level card (spec 7.3), which Review's "jump to this
- * choice" addresses by id. Scrolling past one is not an event — it neither ticks
- * nor snaps — because a card every hundred pixels made the whole builder buzz
- * and grab on a real phone.
+ * choice" addresses by id. Scrolling past one is not an event — it does not tick —
+ * because a card every hundred pixels made the whole builder buzz on a real phone.
  */
 const RegisterContext = createContext<(id: string, el: HTMLElement | null) => void>(() => {});
 
@@ -128,8 +124,6 @@ export function NarrowScroller({
     lastTick: 0,
     lastStop: -1,
     lastPosition: 0,
-    /** True while a wheel or trackpad is driving, rather than a finger. */
-    wheeling: false,
     /**
      * The section a tap asked for. Until the scroll gets there, this is what
      * the rail highlights: deriving the active icon from the scroll position
@@ -138,8 +132,6 @@ export function NarrowScroller({
      * of the target.
      */
     intent: undefined as number | undefined,
-    flashTimer: 0,
-    snapTimer: 0,
   });
 
   const registerMinor = useCallback((id: string, el: HTMLElement | null): void => {
@@ -273,21 +265,11 @@ export function NarrowScroller({
     [readStops, majorStops, maxScroll, run, stopMotion, settings.railTap],
   );
 
-  // Scroll handling: the active icon, the thumb, the ticks and the snap all hang
-  // off this one listener.
+  // Scroll handling: the active icon, the thumb and the ticks all hang off this
+  // one listener.
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-
-    const flash = (id: string): void => {
-      const m = motion.current;
-      if (m.flashTimer) window.clearTimeout(m.flashTimer);
-      setState((prev) => ({ ...prev, flash: id }));
-      m.flashTimer = window.setTimeout(
-        () => setState((prev) => (prev.flash === id ? { ...prev, flash: undefined } : prev)),
-        TICK.labelFlash,
-      );
-    };
 
     const onScroll = (): void => {
       const m = motion.current;
@@ -301,9 +283,11 @@ export function NarrowScroller({
           : { ...prev, active: index, progress };
       });
 
-      // Ticks fire when a header passes the top under ordinary scrolling.
-      // Programmatic scrolls and rail scrubs have their own feedback, so they
-      // must not also tick.
+      // Ticks fire when a header passes the top under ordinary scrolling. Only
+      // the buzz: the label belongs to the rail, and shows while it is scrubbed
+      // or held, not as a side effect of scrolling past a header. Programmatic
+      // scrolls and rail scrubs have their own feedback, so they must not also
+      // tick.
       const previous = m.lastPosition;
       m.lastPosition = position;
       if (!settings.scrollTicks || m.mode !== "idle" || m.scrubbing || container.dataset.dgReordering) return;
@@ -315,34 +299,6 @@ export function NarrowScroller({
       m.lastStop = arrived;
       m.lastTick = now;
       haptics.buzz(TICK.haptic);
-      flash(major[arrived].id);
-    };
-
-    /**
-     * Settling onto a nearby section is for a finger that has let go of a fling.
-     * A wheel or trackpad ends a scroll on every single tick, and the grab
-     * distance is far larger than a tick, so snapping there would drag the view
-     * back to where it started each time and the wheel would appear dead.
-     */
-    const settle = (): void => {
-      const m = motion.current;
-      // A drag auto-scrolls at the edges and would be hauled back to a section on
-      // every pause; the reorder list marks the container while it is held.
-      if (!settings.snap || m.scrubbing || m.wheeling || m.mode !== "idle" || container.dataset.dgReordering) return;
-      const grab = (container.clientHeight * settings.snapGrabPercent) / 100;
-      // Sections only. Level cards are addressable but not stopping points, so a
-      // release settles onto the section it is in rather than the nearest card.
-      const stops = majorStops();
-      const index = nearestStop(stops, container.scrollTop, grab);
-      if (index === undefined) return;
-      const target = stops[index].start;
-      if (Math.abs(target - container.scrollTop) > 1) run("glide", target);
-    };
-    const onScrollEnd = (): void => settle();
-    const onScrollFallback = (): void => {
-      const m = motion.current;
-      if (m.snapTimer) window.clearTimeout(m.snapTimer);
-      m.snapTimer = window.setTimeout(settle, 140);
     };
 
     // Scrolling by hand overrules a glide. Leaving it running means two things
@@ -354,44 +310,18 @@ export function NarrowScroller({
       if (motion.current.mode === "glide") stopMotion();
     };
 
-    const onWheel = (): void => {
-      motion.current.wheeling = true;
-      takeOver();
-    };
-    // A finger (or a pen) going down hands control back to the fling rules.
-    const onPointerDown = (event: PointerEvent): void => {
-      if (event.pointerType !== "mouse") motion.current.wheeling = false;
-      takeOver();
-    };
-
-    const supportsScrollEnd = "onscrollend" in window;
-    container.addEventListener("wheel", onWheel, { passive: true });
-    container.addEventListener("pointerdown", onPointerDown);
+    // A wheel, or a finger (or a pen) going down, hands control back to the hand.
+    container.addEventListener("wheel", takeOver, { passive: true });
+    container.addEventListener("pointerdown", takeOver);
     container.addEventListener("scroll", onScroll, { passive: true });
-    if (supportsScrollEnd) container.addEventListener("scrollend", onScrollEnd);
-    else container.addEventListener("scroll", onScrollFallback, { passive: true });
     onScroll();
 
     return () => {
-      container.removeEventListener("wheel", onWheel);
-      container.removeEventListener("pointerdown", onPointerDown);
+      container.removeEventListener("wheel", takeOver);
+      container.removeEventListener("pointerdown", takeOver);
       container.removeEventListener("scroll", onScroll);
-      if (supportsScrollEnd) container.removeEventListener("scrollend", onScrollEnd);
-      else container.removeEventListener("scroll", onScrollFallback);
-      const m = motion.current;
-      if (m.flashTimer) window.clearTimeout(m.flashTimer);
-      if (m.snapTimer) window.clearTimeout(m.snapTimer);
     };
-  }, [
-    majorStops,
-    maxScroll,
-    run,
-    stopMotion,
-    haptics,
-    settings.scrollTicks,
-    settings.snap,
-    settings.snapGrabPercent,
-  ]);
+  }, [majorStops, maxScroll, haptics, settings.scrollTicks, stopMotion]);
 
   /**
    * Space after the last section, so its header can actually reach the top.

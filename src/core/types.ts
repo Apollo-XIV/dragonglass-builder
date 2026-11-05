@@ -413,9 +413,6 @@ export interface NarrowPrefs {
   railHeight: "middle" | "low";
   railTap: "glide" | "jump";
   scrollTicks: boolean;
-  snap: boolean;
-  /** Snap grab distance, as a percentage of viewport height. */
-  snapGrabPercent: number;
   /** How long to hold before details open. */
   holdMs: number;
   haptics: boolean;
