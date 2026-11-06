@@ -51,6 +51,7 @@ export {
   randomUid,
   withInventoryIds,
   hasMissingIds,
+  adoptSavedIds,
   addInventoryItem,
   isStackable,
   appendInventoryEntry,

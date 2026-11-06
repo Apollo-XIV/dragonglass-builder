@@ -9,7 +9,7 @@
 
 import { normalizePath, type App, type EventRef, type TAbstractFile } from "obsidian";
 import type { ContentIndex } from "../core/content";
-import { newCharacterId, resolve, withInventoryIds, type ResolvedCharacter } from "../core/index";
+import { adoptSavedIds, hasMissingIds, newCharacterId, resolve, withInventoryIds, type ResolvedCharacter } from "../core/index";
 import type {
   BuildFile,
   Diagnostic,
@@ -291,6 +291,47 @@ export class CharacterStore {
     return [...(this.session?.touched ?? [])];
   }
 
+  /** True while the builder holds changes that are not in the files. */
+  get hasUnsavedEdits(): boolean {
+    return (this.session?.touched.size ?? 0) > 0;
+  }
+
+  /**
+   * What is in the files: the working copy, except that kinds an open session is
+   * holding come from what the session started with.
+   */
+  savedData(): CharacterData {
+    const session = this.session;
+    if (!session) return this.data;
+    const saved = { ...this.data };
+    for (const kind of session.kinds) Object.assign(saved, { [kind]: session.base[kind] });
+    return saved;
+  }
+
+  /**
+   * Gives the saved inventory the ids it lacks and writes them, without taking the
+   * builder's unsaved work with them. The session's working copy adopts the ids,
+   * so saving it later keeps them.
+   */
+  saveInventoryIds(): void {
+    const session = this.session;
+    if (!session?.kinds.has("inventory")) {
+      if (hasMissingIds(this.data.inventory)) this.update("inventory", this.data.inventory!);
+      return;
+    }
+    const saved = session.base.inventory;
+    if (!saved || !hasMissingIds(saved)) return;
+    const next = withInventoryIds(saved);
+    session.base = { ...session.base, inventory: next };
+    const working = this.data.inventory;
+    this.data = { ...this.data, inventory: working && working !== saved ? adoptSavedIds(working, next) : next };
+    const path = this.paths.byKind.inventory;
+    if (path) this.pending.set(path, serialiseJson(next));
+    this.recompute();
+    this.notify();
+    this.scheduleFlush();
+  }
+
   /** What the session started from, for a draft's base-version check. */
   get editBase(): CharacterData | undefined {
     return this.session?.base;
@@ -401,6 +442,8 @@ export class CharacterStore {
       id: newCharacterId(),
     };
     this.data = { ...this.data, sheet: next };
+    // Discarding a session goes back to its base, which must not forget the id.
+    if (this.session) this.session.base = { ...this.session.base, sheet: next };
     this.pending.set(this.paths.byKind.sheet!, serialiseJson(next));
     this.scheduleFlush();
   }

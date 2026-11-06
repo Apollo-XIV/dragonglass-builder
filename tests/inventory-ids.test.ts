@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   addInventoryItem,
+  adoptSavedIds,
   hasMissingIds,
   isStackable,
   removeInventoryEntry,
@@ -111,6 +112,24 @@ describe("isStackable", () => {
     expect(isStackable(el({ resources: [{ id: "c", name: "Uses", max: 1, recharge: "dawn" }] }))).toBe(false);
     expect(isStackable(el({ attunement: true }))).toBe(false);
     expect(isStackable(undefined)).toBe(false);
+  });
+});
+
+describe("adoptSavedIds", () => {
+  it("takes the saved id for the same item at the same place, and moves containers with it", () => {
+    const saved = file([{ uid: "S1", id: "bag" }, { uid: "S2", id: "rope", container: "S1" }]);
+    const working = file([
+      { uid: "w1", id: "bag" },
+      { uid: "w2", id: "rope", container: "w1" },
+      { uid: "w3", id: "torch" },
+    ]);
+    const out = adoptSavedIds(working, saved);
+    expect(out.items.map((e) => [e.uid, e.container])).toEqual([["S1", undefined], ["S2", "S1"], ["w3", undefined]]);
+  });
+
+  it("leaves a working copy that has moved on alone", () => {
+    const working = file([{ uid: "w1", id: "torch" }]);
+    expect(adoptSavedIds(working, file([{ uid: "S1", id: "bag" }]))).toBe(working);
   });
 });
 

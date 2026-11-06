@@ -6,7 +6,6 @@
 
 import { normalizePath, type App, type DataAdapter, type TFile } from "obsidian";
 import { buildExport, splitDetails, toPlainText, validateExport, type ExportDocument } from "../core/export";
-import { hasMissingIds } from "../core/inventory";
 import type { CharacterStore } from "./character-store";
 import type { SourceManager } from "./sources";
 
@@ -28,18 +27,29 @@ export interface ExportDeps {
   pluginVersion: string;
 }
 
-/** Builds and validates the document. Entries without ids are given them first. */
+/** What to tell the player when the builder holds changes the export will not include. */
+export function unsavedWarning(store: CharacterStore): string | undefined {
+  return store.hasUnsavedEdits
+    ? "The builder has unsaved changes. Exporting the saved version, without them."
+    : undefined;
+}
+
+/**
+ * Builds and validates the document from what is saved, not from what the builder
+ * is holding. Entries without ids are given them first and those are written.
+ */
 export async function exportDocument(store: CharacterStore, deps: ExportDeps): Promise<ExportDocument> {
-  const build = store.data.build;
-  if (!build) throw new ExportError("This character has no build file to export");
+  if (!store.savedData().build) throw new ExportError("This character has no build file to export");
   if (!store.index) throw new ExportError("The character's content has not loaded yet");
 
   // Ids are given when an inventory is saved, so an old one gets them now, by
   // the player's own action, and the file and the export agree on them.
-  if (hasMissingIds(store.data.inventory)) store.update("inventory", store.data.inventory!);
+  store.saveInventoryIds();
+  const saved = store.savedData();
+  const build = saved.build!;
 
   const details = await Promise.all(
-    splitDetails(store.data.details?.raw ?? "").map(async (s) => ({
+    splitDetails(saved.details?.raw ?? "").map(async (s) => ({
       heading: s.heading,
       text: await toPlainText(s.body, { embed: deps.embed }),
     })),
@@ -51,8 +61,8 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
       characterId: store.ensureCharacterId(),
       content: store.index,
       build,
-      spells: store.data.spells,
-      inventory: store.data.inventory,
+      spells: saved.spells,
+      inventory: saved.inventory,
       details,
       exportedAt: deps.exportedAt,
       pluginVersion: deps.pluginVersion,

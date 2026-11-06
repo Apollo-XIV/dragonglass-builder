@@ -6,6 +6,7 @@ import {
   embedReader,
   exportDocument,
   exportFileName,
+  unsavedWarning,
   writeExport,
   type ExportDeps,
 } from "../src/obsidian/export-character";
@@ -115,6 +116,73 @@ describe("exportDocument", () => {
     const err = await exportDocument(store, deps({ sources: { exportRef: async () => undefined } })).catch((e) => e);
     expect(err).toBeInstanceOf(ExportError);
     expect(err.message).toContain('Cannot pin source "srd"');
+  });
+});
+
+describe("exporting while the builder is open", () => {
+  it("exports the saved build, not the working copy, and says so", async () => {
+    const { store, adapter } = await open();
+    const before = adapter.files.get("Characters/B/build.5e");
+    store.beginEdit();
+    store.mutateBuild((b) => ({ ...b, name: "Unsaved Name", xp: 5000 }));
+    expect(store.hasUnsavedEdits).toBe(true);
+    expect(unsavedWarning(store)).toContain("unsaved changes");
+
+    const doc = await exportDocument(store, deps());
+    expect(doc.identity.name).toBe("Brann Ironvow");
+    expect(doc.identity.xp).toBe(900);
+    await store.flush();
+    expect(adapter.files.get("Characters/B/build.5e")).toBe(before);
+    // The working copy is still the builder's.
+    expect(store.data.build?.name).toBe("Unsaved Name");
+  });
+
+  it("has nothing to warn about when the session has changed nothing, or there is none", async () => {
+    const { store } = await open();
+    expect(unsavedWarning(store)).toBeUndefined();
+    store.beginEdit();
+    expect(unsavedWarning(store)).toBeUndefined();
+  });
+
+  it("exports the saved inventory and spells too", async () => {
+    const { store } = await open();
+    store.beginEdit();
+    store.update("inventory", { ...store.data.inventory!, items: [] });
+    store.update("spells", { ...store.data.spells!, spells: [] });
+    const doc = await exportDocument(store, deps());
+    expect(doc.inventory.items).toHaveLength(8);
+    expect(doc.spells.length).toBeGreaterThan(0);
+  });
+
+  it("writes missing inventory ids without saving the builder's work, and keeps them when it is saved", async () => {
+    const legacy = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:longsword" }] });
+    const { store, adapter } = await open(legacy);
+    store.beginEdit();
+    store.update("inventory", { ...store.data.inventory!, items: [...store.data.inventory!.items, { id: "srd:item:shield" }] });
+
+    const doc = await exportDocument(store, deps());
+    await store.flush();
+    const onDisk = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items;
+    expect(onDisk).toHaveLength(1);
+    expect(onDisk[0].uid).toBe(doc.inventory.items[0].uid);
+
+    store.commitEdit();
+    await store.flush();
+    const after = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items;
+    expect(after).toHaveLength(2);
+    expect(after[0].uid).toBe(doc.inventory.items[0].uid);
+  });
+
+  it("keeps the character id when the session is discarded", async () => {
+    const { store, adapter } = await open();
+    adapter.files.set("Characters/B/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "B" }));
+    await store.load();
+    store.beginEdit();
+    const id = (await exportDocument(store, deps())).envelope.characterId;
+    store.discardEdit();
+    expect(store.ensureCharacterId()).toBe(id);
+    await store.flush();
+    expect(JSON.parse(adapter.files.get("Characters/B/sheet.5e")!).id).toBe(id);
   });
 });
 

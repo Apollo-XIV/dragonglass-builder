@@ -14,7 +14,7 @@ import {
   folderOf,
   serialiseJson,
 } from "./obsidian/character-files";
-import { ExportError, embedReader, exportDocument, writeExport } from "./obsidian/export-character";
+import { ExportError, embedReader, exportDocument, unsavedWarning, writeExport } from "./obsidian/export-character";
 import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
@@ -160,6 +160,8 @@ export default class DragonglassPlugin extends Plugin {
   async exportCharacter(folder: string, fromPath: string): Promise<void> {
     const store = await this.acquireStore(folder);
     try {
+      const warning = unsavedWarning(store);
+      if (warning) new Notice(warning, 8000);
       const doc = await exportDocument(store, {
         sources: this.sources,
         embed: embedReader(this.app, fromPath),

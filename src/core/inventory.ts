@@ -112,3 +112,25 @@ export function removeInventoryEntry(file: InventoryFile, index: number): Invent
     });
   return { ...file, items };
 }
+
+/**
+ * Gives entries in `working` the ids `saved` has, where the entry at the same
+ * position is the same item. For an inventory edited in a session after its ids
+ * were written: the working copy may have been given ids of its own meanwhile, and
+ * saving it should keep the ones that were exported. Containers follow the change.
+ */
+export function adoptSavedIds(working: InventoryFile, saved: InventoryFile): InventoryFile {
+  const renamed = new Map<string, string>();
+  const items = working.items.map((entry, i) => {
+    const was = saved.items[i];
+    const same = was?.uid && was.uid !== entry.uid && was.id === entry.id && (was.item?.id ?? "") === (entry.item?.id ?? "");
+    if (!same) return entry;
+    if (entry.uid) renamed.set(entry.uid, was.uid!);
+    return { ...entry, uid: was.uid };
+  });
+  if (!renamed.size) return working;
+  return {
+    ...working,
+    items: items.map((e) => (e.container && renamed.has(e.container) ? { ...e, container: renamed.get(e.container) } : e)),
+  };
+}
