@@ -135,8 +135,11 @@ function slotStatus(character: ResolvedCharacter): string {
   return max ? `${remaining}/${max} slots` : "";
 }
 
-/** Kinds the Proficiencies section shows, so Features does not repeat them. */
-const PROFICIENCY_KINDS = new Set(["skill", "tool", "language"]);
+/**
+ * Kinds Features leaves out: the Proficiencies section shows the first three, and an
+ * ability point is a mechanism the Ability Score Improvement spends, a builder thing.
+ */
+const PROFICIENCY_KINDS = new Set(["skill", "tool", "language", "ability-point"]);
 
 export function featureList(character: ResolvedCharacter): ResolvedCharacter["features"][string] {
   // Everything the sheet's Features section shows: the kinds a source marked for
@@ -659,11 +662,12 @@ export function FeaturesSection({ store, character }: { store: CharacterStore; c
   return (
     <>
       {kinds.length > 1 ? <ChipRow chips={chips} active={active} onPick={setFilter} /> : null}
-      {features.map((feature) => {
+      {features.map((feature, i) => {
         const resource = byKey.get(feature.id);
         return (
           <ReadRow
-            key={`${feature.id}-${feature.origin.join("/")}`}
+            // An element picked twice is two occurrences with the same id and origin.
+            key={`${feature.id}-${feature.origin.join("/")}-${i}`}
             title={feature.name}
             subtitle={[feature.class ? labelForClass(character, feature) : undefined, store.index?.kindLabel(feature.kind) ?? feature.kind]
               .filter(Boolean)
