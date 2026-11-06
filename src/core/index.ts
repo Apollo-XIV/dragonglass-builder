@@ -46,6 +46,15 @@ export {
   EMPTY_REPORT,
 } from "./resolver/validity";
 export type { BuildChange, ChangeReport, InactivePick, PickRef } from "./resolver/validity";
+export {
+  randomUid,
+  withInventoryIds,
+  hasMissingIds,
+  addInventoryItem,
+  appendInventoryEntry,
+  removeInventoryEntry,
+} from "./inventory";
+export type { UidSource } from "./inventory";
 export { diffBuilds } from "./resolver/diff";
 export type { BuildDiff } from "./resolver/diff";
 export { weaponAttacks } from "./resolver/attacks";

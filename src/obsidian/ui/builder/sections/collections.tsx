@@ -10,6 +10,7 @@ import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-li
 import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
 import { usePlugin } from "../../context";
+import { addInventoryItem, removeInventoryEntry } from "../../../../core/index";
 import { useSheet } from "../../narrow/sheet";
 import { InfoRow } from "../detail";
 import { useBuilderFeatures } from "../features";
@@ -253,10 +254,10 @@ export function EquipmentSection({
           schemaVersion: 1,
           items: [],
         };
-        store.update("inventory", {
-          ...file,
-          items: [...file.items, ...ids.map((id) => ({ id }))],
-        });
+        store.update(
+          "inventory",
+          ids.reduce((next, id) => addInventoryItem(next, id), file),
+        );
       },
     });
 
@@ -283,10 +284,7 @@ export function EquipmentSection({
               onClick={() => {
                 const file = store.data.inventory;
                 if (file)
-                  store.update("inventory", {
-                    ...file,
-                    items: file.items.filter((_, i) => i !== item.index),
-                  });
+                  store.update("inventory", removeInventoryEntry(file, item.index));
               }}
             >
               ×

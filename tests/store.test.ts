@@ -165,6 +165,35 @@ describe("loading a character folder", () => {
   });
 });
 
+describe("inventory ids", () => {
+  const LEGACY = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:rope" }] });
+
+  it("leaves a file without ids alone on load", async () => {
+    const { store, adapter } = await loadStore({ "Characters/Ilsa/inventory.5e": LEGACY });
+    await store.flush();
+    expect(adapter.writes).toEqual([]);
+    expect(adapter.files.get("Characters/Ilsa/inventory.5e")).toBe(LEGACY);
+    expect(store.data.inventory?.items[0].uid).toBeUndefined();
+  });
+
+  it("gives every entry an id the next time the inventory is saved", async () => {
+    const { store, adapter } = await loadStore({ "Characters/Ilsa/inventory.5e": LEGACY });
+    store.update("inventory", { ...store.data.inventory!, items: [...store.data.inventory!.items, { id: "srd:item:torch" }] });
+    await store.flush();
+    const items = JSON.parse(adapter.files.get("Characters/Ilsa/inventory.5e")!).items;
+    expect(items.every((e: { uid?: string }) => /^inv-/.test(e.uid ?? ""))).toBe(true);
+    expect(items[0].id).toBe("srd:item:rope");
+  });
+
+  it("keeps ids it already wrote on a later save", async () => {
+    const { store } = await loadStore();
+    store.update("inventory", { ...store.data.inventory!, items: [{ id: "srd:item:rope" }] });
+    const first = store.data.inventory!.items[0].uid;
+    store.update("inventory", { ...store.data.inventory!, currency: { gp: 3 } });
+    expect(store.data.inventory!.items[0].uid).toBe(first);
+  });
+});
+
 describe("writing", () => {
   it("writes a changed file and re-resolves immediately", async () => {
     const { store, adapter } = await loadStore();

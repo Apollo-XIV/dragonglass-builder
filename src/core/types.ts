@@ -590,6 +590,12 @@ export interface SpellsFile extends CharacterFile {
 }
 
 export interface InventoryEntry {
+  /**
+   * This entry's own id, stable for the life of the entry and unique within the file.
+   * `container` points at it. Absent on files written before it existed; it is given
+   * the next time the inventory is saved, never on load.
+   */
+  uid?: string;
   /** Reference to source content. Mutually exclusive with `item`. */
   id?: string;
   /** An inline custom item, same element format as source content. */
@@ -597,7 +603,7 @@ export interface InventoryEntry {
   quantity?: number;
   equipped?: boolean;
   attuned?: boolean;
-  /** Container entry id, for bags of holding later. */
+  /** The `uid` of the entry that holds this one (a bag, a chest). Not an element id. */
   container?: string;
   notes?: string;
 }

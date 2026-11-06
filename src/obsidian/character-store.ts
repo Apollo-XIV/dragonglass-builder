@@ -9,7 +9,7 @@
 
 import { normalizePath, type App, type EventRef, type TAbstractFile } from "obsidian";
 import type { ContentIndex } from "../core/content";
-import { resolve, type ResolvedCharacter } from "../core/index";
+import { resolve, withInventoryIds, type ResolvedCharacter } from "../core/index";
 import type {
   BuildFile,
   Diagnostic,
@@ -343,6 +343,7 @@ export class CharacterStore {
 
   /** Updates one JSON file and reresolves. Several calls in a tick write together. */
   update<K extends keyof CharacterData>(kind: K, next: CharacterData[K]): void {
+    if (kind === "inventory") next = withInventoryIds(next as InventoryFile) as CharacterData[K];
     this.data = { ...this.data, [kind]: next };
     const path = this.paths.byKind[kind as FileKind];
     if (!path) return;
@@ -366,6 +367,7 @@ export class CharacterStore {
    * like a level-up that adds spell choices and new resources at once.
    */
   updateMany(changes: Partial<CharacterData>): void {
+    if (changes.inventory) changes = { ...changes, inventory: withInventoryIds(changes.inventory) };
     this.data = { ...this.data, ...changes };
     for (const [kind, value] of Object.entries(changes)) {
       const path = this.paths.byKind[kind as FileKind];

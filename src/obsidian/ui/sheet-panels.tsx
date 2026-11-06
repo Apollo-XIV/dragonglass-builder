@@ -14,6 +14,7 @@ import type {
 } from "../../core/resolver/resolved";
 import { describeEvent, event } from "../../core/state/fold";
 import type { InventoryEntry, SpellEntry, StateEvent } from "../../core/types";
+import { removeInventoryEntry } from "../../core/index";
 import type { CharacterStore } from "../character-store";
 import { DETAIL_SECTIONS } from "../character-files";
 import {
@@ -480,7 +481,7 @@ export function InventoryPanel({
 
   const remove = (index: number): void => {
     if (!file) return;
-    store.update("inventory", { ...file, items: file.items.filter((_, i) => i !== index) });
+    store.update("inventory", removeInventoryEntry(file, index));
   };
 
   const setCurrency = (coin: string, value: number): void => {
