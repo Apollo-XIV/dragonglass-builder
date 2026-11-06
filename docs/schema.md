@@ -440,6 +440,20 @@ notation and may embed expressions: `"2d6 + @abilities.str.mod"`.
 Stats resolve lazily with cycle detection: a CON modifier feeding HP needs no declared
 order, and a stat depending on itself reports `expression-cycle` and yields 0.
 
+## Inventory entries and the export
+
+An `inventory.5e` entry has its own `uid`, and `container` is the `uid` of the entry that
+holds it, never an element id. Ids are given when the inventory is written (and by Export
+character, which writes them first); loading a file never rewrites it. Two copies of one
+item are one entry with a `quantity`.
+
+`hp.levels` on the resolved character lists the hit points taken at each class level
+(`resolver/hit-points.ts`), with the first-level rule applied once.
+
+The export document that leaves the plugin is defined in `src/core/export/schema.ts`;
+`docs/export-schema.json` is generated from it with `npm run export:schema`, and
+`npm run export -- <character> <source>...` writes one from disk.
+
 ## Versioning and conformance
 
 - Content is validated by `npm run validate -- <source> --strict`, which shares the
