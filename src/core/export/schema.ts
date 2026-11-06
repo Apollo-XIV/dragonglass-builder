@@ -7,13 +7,15 @@
  * (`npm run export:schema`); a test fails if the checked-in copy has drifted.
  *
  * Versioning is major.minor. Adding a field bumps the minor. Changing what a field
- * means, removing one or tightening one bumps the major. Readers must ignore fields
+ * means, removing one or tightening one bumps the major.
+ *
+ * 1.1 added `proficiencies`. Readers must ignore fields
  * they do not know, which is why no object here forbids extra properties.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "1.0";
+export const EXPORT_SCHEMA_VERSION = "1.1";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -189,6 +191,50 @@ export const ExportResource = Type.Object({
   owner: Type.String({ description: "The element that owns the resource." }),
 });
 
+// -- proficiencies ------------------------------------------------------------
+
+const ProficiencyLevel = Type.Union(["none", "half", "proficient", "expertise"].map((l) => Type.Literal(l)));
+const By = Type.Array(ExportGrant, {
+  description:
+    "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+});
+
+export const ExportRating = Type.Object(
+  {
+    key: Type.String({ description: "The ability for a save, the skill key for a skill." }),
+    name: Type.Optional(Type.String()),
+    ability: Ability,
+    level: ProficiencyLevel,
+    bonus: Type.Number({ description: "The total, as the sheet rolls it, with proficiency already in." }),
+    passive: Type.Optional(Type.Number()),
+    by: By,
+  },
+  { description: "A saving throw or skill, resolved." },
+);
+
+export const ExportGrantedValue = Type.Object(
+  {
+    value: Type.String({
+      description:
+        "An element id, a category (light, martial) or text (a language's name), as the content states it.",
+    }),
+    by: By,
+  },
+  { description: "One thing the character is proficient in, and who granted it." },
+);
+
+export const ExportProficiencies = Type.Object(
+  {
+    saves: Type.Array(ExportRating, { description: "All six, in ability order." }),
+    skills: Type.Array(ExportRating, { description: "Every skill, proficient or not. Expertise is level `expertise`." }),
+    tools: Type.Array(ExportGrantedValue),
+    armor: Type.Array(ExportGrantedValue),
+    weapons: Type.Array(ExportGrantedValue),
+    languages: Type.Array(ExportGrantedValue),
+  },
+  { description: "Resolved, active picks only. Conditional proficiencies are in the features' parts." },
+);
+
 // -- spells -----------------------------------------------------------------
 
 export const ExportSpell = Type.Object({
@@ -283,6 +329,7 @@ export const ExportDocument = Type.Object(
     choices: Type.Array(ExportChoice, {
       description: "Choices answered outside any class level: species, background, feats.",
     }),
+    proficiencies: ExportProficiencies,
     features: Type.Array(ExportFeature),
     resources: Type.Array(ExportResource),
     spells: Type.Array(ExportSpell),
@@ -306,6 +353,8 @@ export type ExportChoice = Static<typeof ExportChoice>;
 export type ExportLevel = Static<typeof ExportLevel>;
 export type ExportFeature = Static<typeof ExportFeature>;
 export type ExportPart = Static<typeof ExportPart>;
+export type ExportProficiencies = Static<typeof ExportProficiencies>;
+export type ExportRating = Static<typeof ExportRating>;
 export type ExportResource = Static<typeof ExportResource>;
 export type ExportSpell = Static<typeof ExportSpell>;
 export type ExportItem = Static<typeof ExportItem>;

@@ -7,7 +7,7 @@
 import type { ContentIndex } from "../content";
 import { withInventoryIds } from "../inventory";
 import { resolve } from "../resolver/resolve";
-import type { PendingChoice, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
+import type { Contribution, NumericStat, PendingChoice, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
 import type { BuildFile, Element, InventoryEntry, InventoryFile, SpellsFile } from "../types";
 import {
   EXPORT_SCHEMA_VERSION,
@@ -17,6 +17,8 @@ import {
   type ExportGrant,
   type ExportItem,
   type ExportPart,
+  type ExportProficiencies,
+  type ExportRating,
   type ExportSource,
 } from "./schema";
 
@@ -146,6 +148,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
     },
     progression,
     choices: r.pendingChoices.filter((c) => c.scope === "build").map(choiceOf),
+    proficiencies: proficienciesOf(r, use),
     features,
     resources: r.resources.map((x) => ({
       key: x.key,
@@ -210,6 +213,71 @@ function activePicks(c: PendingChoice): string[] {
     drop.splice(at, 1);
     return false;
   });
+}
+
+const ABILITY_ORDER = ["str", "dex", "con", "int", "wis", "cha"] as const;
+
+/**
+ * The elements whose applied contributions to a stat satisfy `pick`, each with the
+ * chain that granted it. Contributions from something that is not a collected
+ * element (the rules themselves) have no chain and are left out.
+ */
+function grantors(
+  r: ResolvedCharacter,
+  breakdown: Contribution[],
+  pick: (c: Contribution) => boolean,
+  use: (id: string) => string | undefined,
+): ExportGrant[] {
+  const out: ExportGrant[] = [];
+  for (const c of breakdown) {
+    if (!c.applied || !pick(c) || out.some((g) => g.id === c.source)) continue;
+    const el = r.elements.find((e) => e.id === c.source);
+    if (el) out.push({ id: use(el.id)!, kind: el.kind, via: [...el.origin] });
+  }
+  return out;
+}
+
+function proficienciesOf(r: ResolvedCharacter, use: (id: string) => string | undefined): ExportProficiencies {
+  const rating = (
+    key: string,
+    ability: (typeof ABILITY_ORDER)[number],
+    stat: NumericStat,
+    extra: { name?: string; passive?: number },
+  ): ExportRating => {
+    const level = stat.proficiency ?? "none";
+    return {
+      key,
+      ...(extra.name ? { name: extra.name } : {}),
+      ability,
+      level,
+      bonus: stat.value,
+      ...(extra.passive !== undefined ? { passive: extra.passive } : {}),
+      by:
+        level === "none"
+          ? []
+          : grantors(r, stat.breakdown, (c) => c.op === "proficiency" && c.value === level, use),
+    };
+  };
+  const granted = (path: string): ExportProficiencies["tools"] => {
+    const set = r.sets[path];
+    return (set?.values ?? []).map((value) => ({
+      value,
+      by: grantors(
+        r,
+        set!.breakdown,
+        (c) => Array.isArray(c.value) && c.value.includes(value),
+        use,
+      ),
+    }));
+  };
+  return {
+    saves: ABILITY_ORDER.map((a) => rating(a, a, r.abilities[a].save, {})),
+    skills: r.skills.map((s) => rating(s.key, s.ability, s.stat, { name: s.name, passive: s.passive })),
+    tools: granted("proficiencies.tool"),
+    armor: granted("proficiencies.armor"),
+    weapons: granted("proficiencies.weapon"),
+    languages: granted("languages"),
+  };
 }
 
 function withProvisionalIds(file: InventoryFile): InventoryFile {

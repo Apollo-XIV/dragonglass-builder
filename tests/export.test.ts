@@ -2,6 +2,7 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
+  buildExport,
   contentHash,
   EXPORT_SCHEMA_VERSION,
   splitDetails,
@@ -11,7 +12,8 @@ import {
 } from "../src/core/export";
 import { exportFromDisk } from "../src/node/export-character";
 import { schemaJson } from "../scripts/export-schema";
-import { CONTENT_ROOT } from "./helpers";
+import type { Element } from "../src/core/types";
+import { CONTENT_ROOT, build, scores, testIndex, TEST_BOOK } from "./helpers";
 
 const FIXTURES = join(__dirname, "fixtures");
 const AT = "2026-01-01T00:00:00.000Z";
@@ -130,6 +132,62 @@ describe("what the export contains", () => {
     expect(doc.resources.every((r) => typeof r.max === "number")).toBe(true);
   });
 
+  it("resolves saves, skills, tools, armour, weapons and languages, with who granted them", async () => {
+    const { proficiencies: p } = await run("paladin-3");
+    const ids = (by: { id: string }[]) => by.map((g) => g.id);
+    expect(p.saves.map((s) => s.key)).toEqual(["str", "dex", "con", "int", "wis", "cha"]);
+    // +1 from the equipped Oath Token, 2 for proficiency.
+    expect(p.saves.find((s) => s.key === "wis")).toMatchObject({ level: "proficient", bonus: 4 });
+    expect(ids(p.saves.find((s) => s.key === "wis")!.by)).toEqual(["srd:class:paladin"]);
+    expect(p.saves.find((s) => s.key === "str")).toMatchObject({ level: "none", bonus: 3, by: [] });
+    expect(p.skills).toHaveLength(18);
+    const insight = p.skills.find((s) => s.key === "insight")!;
+    expect(insight).toMatchObject({ name: "Insight", ability: "wis", level: "proficient", bonus: 3, passive: 13 });
+    // The skill element is what carries the proficiency; the chain says the background granted it.
+    expect(insight.by).toEqual([{ id: "srd:skill:insight", kind: "skill", via: ["srd:background:acolyte"] }]);
+    expect(p.skills.find((s) => s.key === "athletics")).toMatchObject({ level: "none", bonus: 2, by: [] });
+    expect(p.tools).toEqual([
+      { value: "srd:tool:smiths-tools", by: [{ id: "srd:tool:smiths-tools", kind: "tool", via: ["srd:species:dwarf"] }] },
+    ]);
+    expect(p.armor.map((a) => a.value)).toEqual(["light", "medium", "heavy", "shields"]);
+    expect(ids(p.armor[0].by)).toEqual(["srd:class:paladin"]);
+    expect(ids(p.weapons.find((w) => w.value === "srd:item:handaxe")!.by)).toEqual(["srd:dwarf:dwarven-combat-training"]);
+    expect(ids(p.weapons.find((w) => w.value === "martial")!.by)).toEqual(["srd:class:paladin"]);
+    expect(p.languages.map((l) => l.value)).toEqual(["Common", "Dwarvish"]);
+    expect(ids(p.languages[0].by)).toEqual(["srd:species:dwarf"]);
+  });
+
+  it("carries expertise as a level, with the proficiency bonus doubled", async () => {
+    const skill: Element = { id: "test:skill:stealth", kind: "skill", key: "stealth", name: "Stealth", source: "test", ability: "dex" };
+    const rogueish: Element = {
+      id: "test:species:sneak",
+      kind: "species",
+      name: "Sneak",
+      source: "test",
+      modifiers: [{ target: "skills.stealth", op: "proficiency", value: "expertise" }],
+    };
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, skill, rogueish]),
+      build: build({ species: rogueish.id, levels: [], abilities: { method: "manual", base: scores({ dex: 14 }) } }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(doc.proficiencies.skills).toEqual([
+      expect.objectContaining({
+        key: "stealth", level: "expertise", bonus: 6, // DEX +2, and the proficiency bonus of 2 counted twice
+        by: [{ id: rogueish.id, kind: "species", via: [] }],
+      }),
+    ]);
+  });
+
+  it("lists every set even when nothing grants it", async () => {
+    const doc = await run("teste-character");
+    expect(doc.proficiencies.skills).toHaveLength(18);
+    expect(doc.proficiencies.tools.map((t) => t.value)).toEqual(["srd:tool:brewers-supplies"]);
+  });
+
   it("exports spells with their class and preparation", async () => {
     const { spells } = await run("paladin-3");
     expect(spells.find((s) => s.id === "srd:spell:bless")).toMatchObject({ class: "srd:class:paladin", prepared: true });
@@ -168,7 +226,7 @@ describe("what the export contains", () => {
   it("holds no live state", async () => {
     const doc = await run("paladin-3");
     expect(Object.keys(doc).sort()).toEqual(
-      ["choices", "details", "diagnostics", "envelope", "features", "identity", "inventory", "progression", "resources", "spellcasting", "spells"],
+      ["choices", "details", "diagnostics", "envelope", "features", "identity", "inventory", "proficiencies", "progression", "resources", "spellcasting", "spells"],
     );
     for (const r of doc.resources) expect(Object.keys(r)).not.toContain("spent");
   });

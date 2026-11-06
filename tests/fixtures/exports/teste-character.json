@@ -1,6 +1,6 @@
 {
   "envelope": {
-    "schemaVersion": "1.0",
+    "schemaVersion": "1.1",
     "characterId": "c3b8a1e4-5a67-4c0e-8d2f-91b4f7e6a002",
     "exportedAt": "2026-01-01T00:00:00.000Z",
     "pluginVersion": "test",
@@ -201,6 +201,411 @@
       "pending": false
     }
   ],
+  "proficiencies": {
+    "saves": [
+      {
+        "key": "str",
+        "ability": "str",
+        "level": "none",
+        "bonus": -1,
+        "by": []
+      },
+      {
+        "key": "dex",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 2,
+        "by": []
+      },
+      {
+        "key": "con",
+        "ability": "con",
+        "level": "none",
+        "bonus": 3,
+        "by": []
+      },
+      {
+        "key": "int",
+        "ability": "int",
+        "level": "none",
+        "bonus": 2,
+        "by": []
+      },
+      {
+        "key": "wis",
+        "ability": "wis",
+        "level": "proficient",
+        "bonus": 1,
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "key": "cha",
+        "ability": "cha",
+        "level": "proficient",
+        "bonus": 1,
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      }
+    ],
+    "skills": [
+      {
+        "key": "acrobatics",
+        "name": "Acrobatics",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "animal-handling",
+        "name": "Animal Handling",
+        "ability": "wis",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "arcana",
+        "name": "Arcana",
+        "ability": "int",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "athletics",
+        "name": "Athletics",
+        "ability": "str",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "deception",
+        "name": "Deception",
+        "ability": "cha",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "history",
+        "name": "History",
+        "ability": "int",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "insight",
+        "name": "Insight",
+        "ability": "wis",
+        "level": "proficient",
+        "bonus": 1,
+        "passive": 11,
+        "by": [
+          {
+            "id": "srd:skill:insight",
+            "kind": "skill",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "intimidation",
+        "name": "Intimidation",
+        "ability": "cha",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "investigation",
+        "name": "Investigation",
+        "ability": "int",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "medicine",
+        "name": "Medicine",
+        "ability": "wis",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "nature",
+        "name": "Nature",
+        "ability": "int",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "perception",
+        "name": "Perception",
+        "ability": "wis",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "performance",
+        "name": "Performance",
+        "ability": "cha",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "persuasion",
+        "name": "Persuasion",
+        "ability": "cha",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      },
+      {
+        "key": "religion",
+        "name": "Religion",
+        "ability": "int",
+        "level": "proficient",
+        "bonus": 4,
+        "passive": 14,
+        "by": [
+          {
+            "id": "srd:skill:religion",
+            "kind": "skill",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "sleight-of-hand",
+        "name": "Sleight of Hand",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "stealth",
+        "name": "Stealth",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "survival",
+        "name": "Survival",
+        "ability": "wis",
+        "level": "none",
+        "bonus": -1,
+        "passive": 9,
+        "by": []
+      }
+    ],
+    "tools": [
+      {
+        "value": "srd:tool:brewers-supplies",
+        "by": [
+          {
+            "id": "srd:tool:brewers-supplies",
+            "kind": "tool",
+            "via": [
+              "srd:species:dwarf"
+            ]
+          }
+        ]
+      }
+    ],
+    "armor": [
+      {
+        "value": "light",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "medium",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "heavy",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "shields",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      }
+    ],
+    "weapons": [
+      {
+        "value": "srd:item:battleaxe",
+        "by": [
+          {
+            "id": "srd:dwarf:dwarven-combat-training",
+            "kind": "species-trait",
+            "via": [
+              "srd:species:dwarf"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "srd:item:handaxe",
+        "by": [
+          {
+            "id": "srd:dwarf:dwarven-combat-training",
+            "kind": "species-trait",
+            "via": [
+              "srd:species:dwarf"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "srd:item:light-hammer",
+        "by": [
+          {
+            "id": "srd:dwarf:dwarven-combat-training",
+            "kind": "species-trait",
+            "via": [
+              "srd:species:dwarf"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "srd:item:warhammer",
+        "by": [
+          {
+            "id": "srd:dwarf:dwarven-combat-training",
+            "kind": "species-trait",
+            "via": [
+              "srd:species:dwarf"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "simple",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "martial",
+        "by": [
+          {
+            "id": "srd:class:paladin",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      }
+    ],
+    "languages": [
+      {
+        "value": "Common",
+        "by": [
+          {
+            "id": "srd:species:dwarf",
+            "kind": "species",
+            "via": []
+          },
+          {
+            "id": "srd:language:common",
+            "kind": "language",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "Dwarvish",
+        "by": [
+          {
+            "id": "srd:species:dwarf",
+            "kind": "species",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "Celestial",
+        "by": [
+          {
+            "id": "srd:language:celestial",
+            "kind": "language",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "features": [
     {
       "id": "srd:dwarf:darkvision",

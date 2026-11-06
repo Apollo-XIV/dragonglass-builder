@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "1.0",
+  "x-schemaVersion": "1.1",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -10,6 +10,7 @@
     "identity",
     "progression",
     "choices",
+    "proficiencies",
     "features",
     "resources",
     "spells",
@@ -535,6 +536,426 @@
           "blocked": {
             "description": "The choice's own requirement is not met.",
             "type": "boolean"
+          }
+        }
+      }
+    },
+    "proficiencies": {
+      "description": "Resolved, active picks only. Conditional proficiencies are in the features' parts.",
+      "type": "object",
+      "required": [
+        "saves",
+        "skills",
+        "tools",
+        "armor",
+        "weapons",
+        "languages"
+      ],
+      "properties": {
+        "saves": {
+          "description": "All six, in ability order.",
+          "type": "array",
+          "items": {
+            "description": "A saving throw or skill, resolved.",
+            "type": "object",
+            "required": [
+              "key",
+              "ability",
+              "level",
+              "bonus",
+              "by"
+            ],
+            "properties": {
+              "key": {
+                "description": "The ability for a save, the skill key for a skill.",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "ability": {
+                "anyOf": [
+                  {
+                    "const": "str",
+                    "type": "string"
+                  },
+                  {
+                    "const": "dex",
+                    "type": "string"
+                  },
+                  {
+                    "const": "con",
+                    "type": "string"
+                  },
+                  {
+                    "const": "int",
+                    "type": "string"
+                  },
+                  {
+                    "const": "wis",
+                    "type": "string"
+                  },
+                  {
+                    "const": "cha",
+                    "type": "string"
+                  }
+                ]
+              },
+              "level": {
+                "anyOf": [
+                  {
+                    "const": "none",
+                    "type": "string"
+                  },
+                  {
+                    "const": "half",
+                    "type": "string"
+                  },
+                  {
+                    "const": "proficient",
+                    "type": "string"
+                  },
+                  {
+                    "const": "expertise",
+                    "type": "string"
+                  }
+                ]
+              },
+              "bonus": {
+                "description": "The total, as the sheet rolls it, with proficiency already in.",
+                "type": "number"
+              },
+              "passive": {
+                "type": "number"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "skills": {
+          "description": "Every skill, proficient or not. Expertise is level `expertise`.",
+          "type": "array",
+          "items": {
+            "description": "A saving throw or skill, resolved.",
+            "type": "object",
+            "required": [
+              "key",
+              "ability",
+              "level",
+              "bonus",
+              "by"
+            ],
+            "properties": {
+              "key": {
+                "description": "The ability for a save, the skill key for a skill.",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "ability": {
+                "anyOf": [
+                  {
+                    "const": "str",
+                    "type": "string"
+                  },
+                  {
+                    "const": "dex",
+                    "type": "string"
+                  },
+                  {
+                    "const": "con",
+                    "type": "string"
+                  },
+                  {
+                    "const": "int",
+                    "type": "string"
+                  },
+                  {
+                    "const": "wis",
+                    "type": "string"
+                  },
+                  {
+                    "const": "cha",
+                    "type": "string"
+                  }
+                ]
+              },
+              "level": {
+                "anyOf": [
+                  {
+                    "const": "none",
+                    "type": "string"
+                  },
+                  {
+                    "const": "half",
+                    "type": "string"
+                  },
+                  {
+                    "const": "proficient",
+                    "type": "string"
+                  },
+                  {
+                    "const": "expertise",
+                    "type": "string"
+                  }
+                ]
+              },
+              "bonus": {
+                "description": "The total, as the sheet rolls it, with proficiency already in.",
+                "type": "number"
+              },
+              "passive": {
+                "type": "number"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "tools": {
+          "type": "array",
+          "items": {
+            "description": "One thing the character is proficient in, and who granted it.",
+            "type": "object",
+            "required": [
+              "value",
+              "by"
+            ],
+            "properties": {
+              "value": {
+                "description": "An element id, a category (light, martial) or text (a language's name), as the content states it.",
+                "type": "string"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "armor": {
+          "type": "array",
+          "items": {
+            "description": "One thing the character is proficient in, and who granted it.",
+            "type": "object",
+            "required": [
+              "value",
+              "by"
+            ],
+            "properties": {
+              "value": {
+                "description": "An element id, a category (light, martial) or text (a language's name), as the content states it.",
+                "type": "string"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "weapons": {
+          "type": "array",
+          "items": {
+            "description": "One thing the character is proficient in, and who granted it.",
+            "type": "object",
+            "required": [
+              "value",
+              "by"
+            ],
+            "properties": {
+              "value": {
+                "description": "An element id, a category (light, martial) or text (a language's name), as the content states it.",
+                "type": "string"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "languages": {
+          "type": "array",
+          "items": {
+            "description": "One thing the character is proficient in, and who granted it.",
+            "type": "object",
+            "required": [
+              "value",
+              "by"
+            ],
+            "properties": {
+              "value": {
+                "description": "An element id, a category (light, martial) or text (a language's name), as the content states it.",
+                "type": "string"
+              },
+              "by": {
+                "description": "The elements that grant it, each with the chain of grants that led to it. Empty when nothing does (level none).",
+                "type": "array",
+                "items": {
+                  "description": "Something a class level, species or background gave the character.",
+                  "type": "object",
+                  "required": [
+                    "id",
+                    "kind",
+                    "via"
+                  ],
+                  "properties": {
+                    "id": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    },
+                    "kind": {
+                      "type": "string"
+                    },
+                    "via": {
+                      "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
