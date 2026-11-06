@@ -7,7 +7,7 @@
  * character never rewrites its files.
  */
 
-import type { InventoryEntry, InventoryFile } from "./types";
+import type { Element, InventoryEntry, InventoryFile } from "./types";
 
 export type UidSource = () => string;
 
@@ -50,17 +50,37 @@ export function hasMissingIds(file: InventoryFile | undefined): boolean {
   return !!file && withInventoryIds(file, () => "x") !== file;
 }
 
+/** Entry fields that are about the item rather than about this particular copy. */
+const SHARED_FIELDS = new Set(["uid", "id", "quantity"]);
+
 /**
- * Adds one copy of an item. A plain entry for the same item in the same place takes
- * the copy as quantity; anything else (it is in a bag, or is a custom item) gets an
- * entry of its own.
+ * Whether copies of an item are interchangeable: it has no charges to spend and
+ * nothing to attune to. An item that cannot be found is not assumed to be.
+ */
+export function isStackable(item: Element | undefined): boolean {
+  if (!item) return false;
+  const resources = item.resources;
+  return !item.attunement && !item.charges && !(Array.isArray(resources) && resources.length > 0);
+}
+
+/** An entry that is nothing but "n of this item": equipped, attuned, named, noted or held, it is not. */
+function isPlain(entry: InventoryEntry, id: string): boolean {
+  return entry.id === id && Object.keys(entry).every((k) => SHARED_FIELDS.has(k));
+}
+
+/**
+ * Adds one copy of an item. A plain entry for the same item takes the copy as
+ * quantity, if copies of the item are interchangeable. Anything with a state of
+ * its own (equipped, attuned, in a bag, with notes or charges) is left as it is
+ * and the copy gets an entry of its own.
  */
 export function addInventoryItem(
   file: InventoryFile,
   id: string,
+  stackable: (id: string) => boolean,
   next: UidSource = randomUid,
 ): InventoryFile {
-  const at = file.items.findIndex((e) => e.id === id && !e.container);
+  const at = stackable(id) ? file.items.findIndex((e) => isPlain(e, id)) : -1;
   if (at >= 0) {
     const items = file.items.map((e, i) => (i === at ? { ...e, quantity: (e.quantity ?? 1) + 1 } : e));
     return { ...file, items };

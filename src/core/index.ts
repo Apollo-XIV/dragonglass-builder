@@ -52,6 +52,7 @@ export {
   withInventoryIds,
   hasMissingIds,
   addInventoryItem,
+  isStackable,
   appendInventoryEntry,
   removeInventoryEntry,
 } from "./inventory";

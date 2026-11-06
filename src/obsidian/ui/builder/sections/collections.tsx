@@ -10,7 +10,7 @@ import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-li
 import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
 import { usePlugin } from "../../context";
-import { addInventoryItem, removeInventoryEntry } from "../../../../core/index";
+import { addInventoryItem, isStackable, removeInventoryEntry } from "../../../../core/index";
 import { useSheet } from "../../narrow/sheet";
 import { InfoRow } from "../detail";
 import { useBuilderFeatures } from "../features";
@@ -256,7 +256,7 @@ export function EquipmentSection({
         };
         store.update(
           "inventory",
-          ids.reduce((next, id) => addInventoryItem(next, id), file),
+          ids.reduce((next, id) => addInventoryItem(next, id, (i) => isStackable(index.get(i))), file),
         );
       },
     });

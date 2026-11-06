@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   addInventoryItem,
   hasMissingIds,
+  isStackable,
   removeInventoryEntry,
   withInventoryIds,
 } from "../src/core/inventory";
-import type { InventoryFile } from "../src/core/types";
+import type { Element, InventoryFile } from "../src/core/types";
 
 const file = (items: InventoryFile["items"]): InventoryFile => ({ kind: "inventory", schemaVersion: 1, items });
 const counter = (): (() => string) => {
@@ -44,16 +45,72 @@ describe("withInventoryIds", () => {
 });
 
 describe("addInventoryItem", () => {
+  const always = () => true;
+
   it("adds a second copy as quantity, not a second entry", () => {
-    let f = addInventoryItem(file([]), "srd:item:rope", counter());
-    f = addInventoryItem(f, "srd:item:rope", counter());
+    let f = addInventoryItem(file([]), "srd:item:rope", always, counter());
+    f = addInventoryItem(f, "srd:item:rope", always, counter());
     expect(f.items).toHaveLength(1);
     expect(f.items[0]).toMatchObject({ id: "srd:item:rope", quantity: 2, uid: "u1" });
   });
 
-  it("does not merge into a copy that is inside a bag", () => {
-    const f = addInventoryItem(file([{ uid: "bag", id: "b" }, { uid: "r", id: "rope", container: "bag" }]), "rope", counter());
-    expect(f.items).toHaveLength(3);
+  it("keeps stacking on the same entry", () => {
+    let f = file([]);
+    for (let i = 0; i < 3; i++) f = addInventoryItem(f, "rope", always, counter());
+    expect(f.items).toHaveLength(1);
+    expect(f.items[0].quantity).toBe(3);
+  });
+
+  it.each([
+    ["equipped", { equipped: true }],
+    ["attuned", { attuned: true }],
+    ["held in a bag", { container: "bag" }],
+    ["noted", { notes: "Grandfather's" }],
+    ["named", { name: "Biter" }],
+    ["unknown state", { "x-charges-spent": 2 }],
+  ])("does not stack onto an entry that is %s", (_why, state) => {
+    const f = addInventoryItem(
+      file([{ uid: "a", id: "sword", quantity: 1, ...state } as never]),
+      "sword",
+      always,
+      counter(),
+    );
+    expect(f.items).toHaveLength(2);
+    expect(f.items[0].quantity).toBe(1);
+    expect(f.items[1]).toMatchObject({ id: "sword", uid: "u1" });
+  });
+
+  it("stacks onto a plain entry past one that has state", () => {
+    const f = addInventoryItem(
+      file([{ uid: "a", id: "sword", equipped: true }, { uid: "b", id: "sword", quantity: 2 }]),
+      "sword",
+      always,
+      counter(),
+    );
+    expect(f.items.map((e) => e.quantity)).toEqual([undefined, 3]);
+  });
+
+  it("never stacks an item that fails the stackable test", () => {
+    let f = addInventoryItem(file([]), "wand", () => false, counter());
+    f = addInventoryItem(f, "wand", () => false, counter());
+    expect(f.items.map((e) => e.id)).toEqual(["wand", "wand"]);
+    expect(new Set(f.items.map((e) => e.uid)).size).toBe(2);
+  });
+});
+
+describe("isStackable", () => {
+  const el = (extra: object): Element => ({ id: "x", kind: "item", name: "X", source: "s", ...extra });
+
+  it("allows plain gear", () => {
+    expect(isStackable(el({}))).toBe(true);
+    expect(isStackable(el({ resources: [] }))).toBe(true);
+  });
+
+  it("refuses an item with charges, resources or attunement, or one it cannot find", () => {
+    expect(isStackable(el({ charges: { id: "c", name: "Charges", max: 7, recharge: "dawn" } }))).toBe(false);
+    expect(isStackable(el({ resources: [{ id: "c", name: "Uses", max: 1, recharge: "dawn" }] }))).toBe(false);
+    expect(isStackable(el({ attunement: true }))).toBe(false);
+    expect(isStackable(undefined)).toBe(false);
   });
 });
 
