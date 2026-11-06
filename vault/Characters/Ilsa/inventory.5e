@@ -2,12 +2,36 @@
   "kind": "inventory",
   "schemaVersion": 1,
   "items": [
-    { "id": "srd:item:longsword", "quantity": 1, "equipped": true },
-    { "id": "srd:item:chain-mail", "quantity": 1, "equipped": true },
-    { "id": "srd:item:shield", "quantity": 1, "equipped": true },
-    { "id": "srd:item:potion-of-healing", "quantity": 2 },
-    { "id": "srd:item:holy-symbol", "quantity": 1 },
     {
+      "uid": "inv-c6a1b795",
+      "id": "srd:item:longsword",
+      "quantity": 1,
+      "equipped": true
+    },
+    {
+      "uid": "inv-036add22",
+      "id": "srd:item:chain-mail",
+      "quantity": 1,
+      "equipped": true
+    },
+    {
+      "uid": "inv-b4837b45",
+      "id": "srd:item:shield",
+      "quantity": 1,
+      "equipped": true
+    },
+    {
+      "uid": "inv-5a2853dc",
+      "id": "srd:item:potion-of-healing",
+      "quantity": 2
+    },
+    {
+      "uid": "inv-af8b5969",
+      "id": "srd:item:holy-symbol",
+      "quantity": 1
+    },
+    {
+      "uid": "inv-387bf66b",
       "item": {
         "id": "custom:item:forge-token",
         "kind": "item",
@@ -16,12 +40,24 @@
         "weight": 0.2,
         "requiresEquipped": true,
         "text": "A thumb of hammered iron, still warm. A keepsake from the temple forge.",
-        "modifiers": [{ "target": "saves.all", "op": "add", "value": 1 }]
+        "modifiers": [
+          {
+            "target": "saves.all",
+            "op": "add",
+            "value": 1
+          }
+        ]
       },
       "quantity": 1,
       "equipped": false,
       "notes": "Not yet attuned to the oath."
     }
   ],
-  "currency": { "cp": 0, "sp": 4, "ep": 0, "gp": 15, "pp": 0 }
+  "currency": {
+    "cp": 0,
+    "sp": 4,
+    "ep": 0,
+    "gp": 15,
+    "pp": 0
+  }
 }

@@ -442,10 +442,13 @@ order, and a stat depending on itself reports `expression-cycle` and yields 0.
 
 ## Inventory entries and the export
 
-An `inventory.5e` entry has its own `uid`, and `container` is the `uid` of the entry that
-holds it, never an element id. Ids are given when the inventory is written (and by Export
-character, which writes them first); loading a file never rewrites it. Two copies of one
-item are one entry with a `quantity`.
+An `inventory.5e` entry has its own required `uid`, and `container` is the `uid` of the entry
+that holds it, never an element id. An entry gets its `uid` when it is added in the builder.
+A character's `sheet.5e` likewise has a required `id` (a UUID), made when the character is
+created. Nothing assigns either to a file that lacks it: the loader and the export CLI refuse
+such a character with a message saying to rebuild it. Two copies of one item are one entry
+with a `quantity`, unless the item has charges, resources or attunement, or the entry has
+state of its own.
 
 `hp.levels` on the resolved character lists the hit points taken at each class level
 (`resolver/hit-points.ts`), with the first-level rule applied once.

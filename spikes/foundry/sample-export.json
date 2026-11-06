@@ -1,8 +1,8 @@
 {
   "envelope": {
-    "schemaVersion": "1.0",
-    "characterId": "Ilsa",
-    "exportedAt": "2026-11-06T18:53:07.421Z",
+    "schemaVersion": "1.1",
+    "characterId": "9b9918fc-0bfd-41e8-8b2a-a07892d9f940",
+    "exportedAt": "2026-11-06T20:03:21.954Z",
     "pluginVersion": "cli",
     "sources": [
       {
@@ -270,6 +270,350 @@
       "pending": false
     }
   ],
+  "proficiencies": {
+    "saves": [
+      {
+        "key": "str",
+        "ability": "str",
+        "level": "none",
+        "bonus": 3,
+        "by": []
+      },
+      {
+        "key": "dex",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 0,
+        "by": []
+      },
+      {
+        "key": "con",
+        "ability": "con",
+        "level": "proficient",
+        "bonus": 4,
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "key": "int",
+        "ability": "int",
+        "level": "none",
+        "bonus": 0,
+        "by": []
+      },
+      {
+        "key": "wis",
+        "ability": "wis",
+        "level": "none",
+        "bonus": 1,
+        "by": []
+      },
+      {
+        "key": "cha",
+        "ability": "cha",
+        "level": "proficient",
+        "bonus": 4,
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      }
+    ],
+    "skills": [
+      {
+        "key": "acrobatics",
+        "name": "Acrobatics",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "animal-handling",
+        "name": "Animal Handling",
+        "ability": "wis",
+        "level": "none",
+        "bonus": 1,
+        "passive": 11,
+        "by": []
+      },
+      {
+        "key": "arcana",
+        "name": "Arcana",
+        "ability": "int",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "athletics",
+        "name": "Athletics",
+        "ability": "str",
+        "level": "none",
+        "bonus": 3,
+        "passive": 13,
+        "by": []
+      },
+      {
+        "key": "deception",
+        "name": "Deception",
+        "ability": "cha",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "history",
+        "name": "History",
+        "ability": "int",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "insight",
+        "name": "Insight",
+        "ability": "wis",
+        "level": "proficient",
+        "bonus": 3,
+        "passive": 13,
+        "by": [
+          {
+            "id": "srd:skill:insight",
+            "kind": "skill",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "intimidation",
+        "name": "Intimidation",
+        "ability": "cha",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "investigation",
+        "name": "Investigation",
+        "ability": "int",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "medicine",
+        "name": "Medicine",
+        "ability": "wis",
+        "level": "none",
+        "bonus": 1,
+        "passive": 11,
+        "by": []
+      },
+      {
+        "key": "nature",
+        "name": "Nature",
+        "ability": "int",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "perception",
+        "name": "Perception",
+        "ability": "wis",
+        "level": "none",
+        "bonus": 1,
+        "passive": 11,
+        "by": []
+      },
+      {
+        "key": "performance",
+        "name": "Performance",
+        "ability": "cha",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "persuasion",
+        "name": "Persuasion",
+        "ability": "cha",
+        "level": "none",
+        "bonus": 2,
+        "passive": 12,
+        "by": []
+      },
+      {
+        "key": "religion",
+        "name": "Religion",
+        "ability": "int",
+        "level": "proficient",
+        "bonus": 2,
+        "passive": 12,
+        "by": [
+          {
+            "id": "srd:skill:religion",
+            "kind": "skill",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      },
+      {
+        "key": "sleight-of-hand",
+        "name": "Sleight of Hand",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "stealth",
+        "name": "Stealth",
+        "ability": "dex",
+        "level": "none",
+        "bonus": 0,
+        "passive": 10,
+        "by": []
+      },
+      {
+        "key": "survival",
+        "name": "Survival",
+        "ability": "wis",
+        "level": "none",
+        "bonus": 1,
+        "passive": 11,
+        "by": []
+      }
+    ],
+    "tools": [
+      {
+        "value": "srd:tool:tinkers-tools",
+        "by": [
+          {
+            "id": "srd:tool:tinkers-tools",
+            "kind": "tool",
+            "via": [
+              "srd:species:gnome",
+              "srd:subspecies:rock-gnome"
+            ]
+          }
+        ]
+      }
+    ],
+    "armor": [],
+    "weapons": [
+      {
+        "value": "srd:item:dagger",
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "srd:item:dart",
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "srd:item:sling",
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "srd:item:quarterstaff",
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      },
+      {
+        "value": "srd:item:light-crossbow",
+        "by": [
+          {
+            "id": "srd:class:sorcerer",
+            "kind": "class",
+            "via": []
+          }
+        ]
+      }
+    ],
+    "languages": [
+      {
+        "value": "Common",
+        "by": [
+          {
+            "id": "srd:language:common",
+            "kind": "language",
+            "via": [
+              "srd:species:gnome"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "Gnomish",
+        "by": [
+          {
+            "id": "srd:language:gnomish",
+            "kind": "language",
+            "via": [
+              "srd:species:gnome"
+            ]
+          }
+        ]
+      },
+      {
+        "value": "Dwarvish",
+        "by": [
+          {
+            "id": "srd:language:dwarvish",
+            "kind": "language",
+            "via": [
+              "srd:background:acolyte"
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "features": [
     {
       "id": "srd:rock-gnome:artificers-lore",
@@ -546,7 +890,7 @@
   "inventory": {
     "items": [
       {
-        "uid": "legacy-1",
+        "uid": "inv-c6a1b795",
         "quantity": 1,
         "equipped": true,
         "attuned": false,
@@ -557,7 +901,7 @@
         "resolved": true
       },
       {
-        "uid": "legacy-2",
+        "uid": "inv-036add22",
         "quantity": 1,
         "equipped": true,
         "attuned": false,
@@ -568,7 +912,7 @@
         "resolved": true
       },
       {
-        "uid": "legacy-3",
+        "uid": "inv-b4837b45",
         "quantity": 1,
         "equipped": true,
         "attuned": false,
@@ -579,7 +923,7 @@
         "resolved": true
       },
       {
-        "uid": "legacy-4",
+        "uid": "inv-5a2853dc",
         "quantity": 2,
         "equipped": false,
         "attuned": false,
@@ -590,7 +934,7 @@
         "resolved": true
       },
       {
-        "uid": "legacy-5",
+        "uid": "inv-af8b5969",
         "quantity": 1,
         "equipped": false,
         "attuned": false,
@@ -600,7 +944,7 @@
         "reason": "\"srd:item:holy-symbol\" is not in any loaded source"
       },
       {
-        "uid": "legacy-6",
+        "uid": "inv-387bf66b",
         "quantity": 1,
         "equipped": false,
         "attuned": false,
