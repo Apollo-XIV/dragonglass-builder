@@ -69,7 +69,7 @@ describe("exportDocument", () => {
   it("builds a document that passes validation", async () => {
     const { store } = await open();
     const doc = await exportDocument(store, deps());
-    expect(doc.envelope).toMatchObject({ characterId: "B", pluginVersion: "9.9.9" });
+    expect(doc.envelope).toMatchObject({ characterId: "6f1d7c52-0d0e-4a39-9f6b-3a1f0c7b9e11", pluginVersion: "9.9.9" });
     expect(validateExport(JSON.parse(JSON.stringify(doc))).ok).toBe(true);
   });
 
@@ -81,6 +81,17 @@ describe("exportDocument", () => {
     const saved = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items[0].uid;
     expect(saved).toMatch(/^inv-/);
     expect(doc.inventory.items[0].uid).toBe(saved);
+  });
+
+  it("gives a character without an id one, saved and exported", async () => {
+    const { store, adapter } = await open();
+    adapter.files.set("Characters/B/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "B" }));
+    await store.load();
+    const doc = await exportDocument(store, deps());
+    await store.flush();
+    const saved = JSON.parse(adapter.files.get("Characters/B/sheet.5e")!).id;
+    expect(saved).toMatch(/^[0-9a-f-]{36}$/);
+    expect(doc.envelope.characterId).toBe(saved);
   });
 
   it("does not touch an inventory that already has ids", async () => {

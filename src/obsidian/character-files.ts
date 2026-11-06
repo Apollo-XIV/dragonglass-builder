@@ -18,6 +18,7 @@ import type {
   SpellsFile,
   StateFile,
 } from "../core/types";
+import { newCharacterId } from "../core/character-id";
 import { emptyState } from "../core/state/fold";
 
 export const SCHEMA_VERSION = 1;
@@ -208,7 +209,7 @@ export function setDetailSection(doc: DetailsDocument, heading: string, body: st
 // ---------------------------------------------------------------------------
 
 export function blankSheet(name: string): SheetFile {
-  return { kind: "sheet", schemaVersion: SCHEMA_VERSION, name };
+  return { kind: "sheet", schemaVersion: SCHEMA_VERSION, id: newCharacterId(), name };
 }
 
 export function blankBuild(name: string): BuildFile {

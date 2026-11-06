@@ -48,7 +48,7 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
   let doc: ExportDocument;
   try {
     doc = await buildExport({
-      characterId: store.folder.split("/").pop() || store.folder,
+      characterId: store.ensureCharacterId(),
       content: store.index,
       build,
       spells: store.data.spells,

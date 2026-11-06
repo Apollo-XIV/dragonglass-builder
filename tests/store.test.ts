@@ -14,6 +14,7 @@ import {
   detectKindFixture,
   counterpartKind,
   switchLabel,
+  blankSheet,
 } from "./helpers-obsidian";
 import { indexFromDisk } from "../src/node/load-source";
 import type { ContentIndex } from "../src/core/content";
@@ -84,7 +85,7 @@ beforeEach(() => {
 });
 
 function seed(adapter: MemoryAdapter, extra: Record<string, string> = {}): void {
-  adapter.files.set("Characters/Ilsa/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "Ilsa" }));
+  adapter.files.set("Characters/Ilsa/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, id: "seed-id", name: "Ilsa" }));
   adapter.files.set("Characters/Ilsa/build.5e", JSON.stringify(BUILD));
   adapter.files.set(
     "Characters/Ilsa/state.5e",
@@ -191,6 +192,66 @@ describe("inventory ids", () => {
     const first = store.data.inventory!.items[0].uid;
     store.update("inventory", { ...store.data.inventory!, currency: { gp: 3 } });
     expect(store.data.inventory!.items[0].uid).toBe(first);
+  });
+});
+
+describe("character id", () => {
+  const SHEET = "Characters/Ilsa/sheet.5e";
+  const LEGACY = { [SHEET]: JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "Ilsa" }) };
+
+  it("does not rewrite a sheet without an id on load", async () => {
+    const { store, adapter } = await loadStore(LEGACY);
+    await store.flush();
+    expect(adapter.writes).toEqual([]);
+    expect(store.data.sheet?.id).toBeUndefined();
+  });
+
+  it("gives it an id with the next write of any kind, and keeps it", async () => {
+    const { store, adapter } = await loadStore(LEGACY);
+    store.mutateBuild((b) => ({ ...b, xp: 10 }));
+    await store.flush();
+    const id = JSON.parse(adapter.files.get(SHEET)!).id;
+    expect(id).toMatch(/^[0-9a-f-]{36}$/);
+    store.mutateBuild((b) => ({ ...b, xp: 20 }));
+    await store.flush();
+    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBe(id);
+    expect(JSON.parse(adapter.files.get(SHEET)!).name).toBe("Ilsa");
+  });
+
+  it("ensureCharacterId writes it on request and returns the existing one after", async () => {
+    const { store, adapter } = await loadStore(LEGACY);
+    const id = store.ensureCharacterId();
+    await store.flush();
+    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBe(id);
+    expect(store.ensureCharacterId()).toBe(id);
+  });
+
+  it("creates the sheet file when the folder has none", async () => {
+    const adapter = new MemoryAdapter();
+    seed(adapter);
+    adapter.files.delete(SHEET);
+    const { host } = makeHost(adapter, index);
+    const store = new CharacterStore(host, "Characters/Ilsa");
+    await store.load();
+    const id = store.ensureCharacterId();
+    await store.flush();
+    expect(JSON.parse(adapter.files.get(SHEET)!)).toMatchObject({ kind: "sheet", id });
+  });
+
+  it("is the same character under another folder name", async () => {
+    const { store: first, adapter } = await loadStore();
+    const moved = new MemoryAdapter();
+    for (const [path, text] of adapter.files) moved.files.set(path.replace("Characters/Ilsa", "Characters/Renamed"), text);
+    const { host } = makeHost(moved, index);
+    const second = new CharacterStore(host, "Characters/Renamed");
+    await second.load();
+    expect(second.ensureCharacterId()).toBe(first.ensureCharacterId());
+    expect(second.ensureCharacterId()).toBe("seed-id");
+  });
+
+  it("is made for a new character", () => {
+    expect(blankSheet("Ilsa").id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(blankSheet("Ilsa").id).not.toBe(blankSheet("Ilsa").id);
   });
 });
 

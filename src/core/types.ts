@@ -636,6 +636,11 @@ export interface SourcesFile extends CharacterFile {
 
 export interface SheetFile extends CharacterFile {
   kind: "sheet";
+  /**
+   * A UUID that names this character for good, whatever its folder is called.
+   * Characters made before it existed gain one on their next save.
+   */
+  id?: string;
   name?: string;
   /** Data type -> file path, relative to the manifest. Absent entries use defaults. */
   files?: Partial<Record<Exclude<FileKind, "sheet">, string>>;

@@ -5,6 +5,7 @@ export {
   serialiseDetails,
   resolvePaths,
   setDetailSection,
+  blankSheet,
   counterpartKind,
   switchLabel,
 } from "../src/obsidian/character-files";

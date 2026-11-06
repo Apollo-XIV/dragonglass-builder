@@ -46,6 +46,7 @@ export {
   EMPTY_REPORT,
 } from "./resolver/validity";
 export type { BuildChange, ChangeReport, InactivePick, PickRef } from "./resolver/validity";
+export { newCharacterId } from "./character-id";
 export {
   randomUid,
   withInventoryIds,

@@ -53,7 +53,7 @@ export const ExportSource = Type.Object(
 
 export const ExportEnvelope = Type.Object({
   schemaVersion: Type.String({ pattern: "^[0-9]+\\.[0-9]+$", description: "major.minor" }),
-  characterId: Type.String({ minLength: 1, description: "The character's folder name. Stable until the folder is renamed." }),
+  characterId: Type.String({ minLength: 1, description: "The UUID in the character's sheet.5e. Stable across renames of the folder." }),
   exportedAt: Type.String({ format: "date-time" }),
   pluginVersion: Type.String(),
   sources: Type.Array(ExportSource, { description: "Only the sources an exported element came from." }),

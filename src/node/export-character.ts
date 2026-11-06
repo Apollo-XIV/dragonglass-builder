@@ -1,5 +1,7 @@
 /**
- * Exports a character folder from disk. For the export CLI and the golden tests; the
+ * Exports a character folder from disk. A sheet with no id falls back to the folder
+ * name, since nothing here may write; the plugin's Export character gives it one.
+ * For the export CLI and the golden tests; the
  * plugin builds the same document from its own store.
  */
 
@@ -7,7 +9,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ContentIndex } from "../core/content";
 import { buildExport, contentHash, splitDetails, toPlainText, type ExportDocument } from "../core/export";
-import type { BuildFile, InventoryFile, SpellsFile } from "../core/types";
+import type { BuildFile, InventoryFile, SheetFile, SpellsFile } from "../core/types";
 import { loadSourceFromDisk, readSourceBundle } from "./load-source";
 
 export interface ExportFromDiskOptions {
@@ -46,7 +48,7 @@ export async function exportFromDisk(opts: ExportFromDiskOptions): Promise<Expor
     : [];
 
   return buildExport({
-    characterId: opts.characterDir.replace(/\/+$/, "").split("/").pop()!,
+    characterId: read<SheetFile>("sheet.5e")?.id ?? opts.characterDir.replace(/\/+$/, "").split("/").pop()!,
     content,
     build,
     spells: read<SpellsFile>("spells.5e"),

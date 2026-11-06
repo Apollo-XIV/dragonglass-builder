@@ -35,7 +35,7 @@
         },
         "characterId": {
           "minLength": 1,
-          "description": "The character's folder name. Stable until the folder is renamed.",
+          "description": "The UUID in the character's sheet.5e. Stable across renames of the folder.",
           "type": "string"
         },
         "exportedAt": {

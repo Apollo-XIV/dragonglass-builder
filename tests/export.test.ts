@@ -62,7 +62,7 @@ describe("golden exports", () => {
 describe("what the export contains", () => {
   it("states the version, the character and a hash for a source with no pin", async () => {
     const { envelope } = await run("paladin-3");
-    expect(envelope).toMatchObject({ schemaVersion: EXPORT_SCHEMA_VERSION, characterId: "paladin-3", exportedAt: AT });
+    expect(envelope).toMatchObject({ schemaVersion: EXPORT_SCHEMA_VERSION, characterId: "6f1d7c52-0d0e-4a39-9f6b-3a1f0c7b9e11", exportedAt: AT });
     expect(envelope.sources).toHaveLength(1);
     expect(envelope.sources[0]).toMatchObject({ id: "srd", refType: "hash", sourcebooks: ["srd"] });
     expect(envelope.sources[0].ref).toMatch(/^sha256:[0-9a-f]{64}$/);
@@ -71,6 +71,11 @@ describe("what the export contains", () => {
   it("uses a pin as the ref when the source has one", async () => {
     const { envelope } = await run("paladin-3", { srd: "v1.2.0" });
     expect(envelope.sources[0]).toMatchObject({ ref: "v1.2.0", refType: "git" });
+  });
+
+  it("uses the sheet's id, not the folder name", async () => {
+    const { envelope } = await run("paladin-3");
+    expect(envelope.characterId).not.toBe("paladin-3");
   });
 
   it("never carries a path, whatever the source's location", async () => {
