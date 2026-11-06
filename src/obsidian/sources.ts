@@ -10,6 +10,7 @@
 import { Platform, requestUrl, normalizePath, type App, type DataAdapter } from "obsidian";
 import type { Diagnostic, SourceRef } from "../core/types";
 import { ContentIndex, type LoadedSource } from "../core/content";
+import { contentHash } from "../core/export/hash";
 import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile } from "../core/content/source-bundle";
 import { CORE_ELEMENTS, CORE_SOURCE_ID, CORE_SOURCE_NAME } from "../generated/core-content";
 import type { CacheTier } from "./settings";
@@ -152,6 +153,39 @@ export class SourceManager {
     return ContentIndex.build(sources);
   }
 
+  private async readBundle(ref: SourceRef): Promise<{ bundle: SourceBundle; origin: string }> {
+    switch (ref.type) {
+      case "vault":
+        return { bundle: await this.readVaultFolder(ref), origin: ref.location };
+      case "path":
+        return { bundle: await this.readLocalPath(ref), origin: `${ref.location} (outside the vault)` };
+      case "github":
+        return this.readGithub(ref);
+      case "url":
+        return { bundle: await this.readUrl(ref), origin: ref.location };
+    }
+  }
+
+  /**
+   * What pins a loaded source in an export: the git pin of a GitHub source,
+   * otherwise a hash of its files read now. Never a location.
+   */
+  async exportRef(sourceId: string): Promise<{ ref: string; refType: "git" | "hash" } | undefined> {
+    const loaded = [...this.loaded.values()].find((l) => l.id === sourceId);
+    const ref = loaded?.ref;
+    if (!loaded || !ref) return undefined;
+    if (ref.type === "github" && ref.pin) return { ref: ref.pin, refType: "git" };
+    let files: SourceFile[];
+    try {
+      files = (await this.readBundle(ref)).bundle.files;
+    } catch {
+      const cached = this.cache.get(ref.id);
+      if (!cached) return undefined;
+      files = cached.files;
+    }
+    return { ref: await contentHash(files), refType: "hash" };
+  }
+
   private async load(ref: SourceRef): Promise<LoadedSource> {
     const cached = this.loaded.get(ref.id);
     if (cached) return cached;
@@ -161,21 +195,7 @@ export class SourceManager {
     let origin = ref.location;
 
     try {
-      switch (ref.type) {
-        case "vault":
-          bundle = await this.readVaultFolder(ref);
-          break;
-        case "path":
-          bundle = await this.readLocalPath(ref);
-          origin = `${ref.location} (outside the vault)`;
-          break;
-        case "github":
-          ({ bundle, origin } = await this.readGithub(ref));
-          break;
-        case "url":
-          bundle = await this.readUrl(ref);
-          break;
-      }
+      ({ bundle, origin } = await this.readBundle(ref));
     } catch (e) {
       diagnostics = [error(ref.id, e instanceof Error ? e.message : String(e))];
     }
@@ -186,6 +206,7 @@ export class SourceManager {
         // A cached copy keeps characters working offline, with the failure still shown.
         const loaded = bundleToLoadedSource({ manifest: fallback.manifest, files: fallback.files });
         loaded.id = fallback.manifest.id || ref.id;
+        loaded.ref = ref;
         loaded.diagnostics = [...(loaded.diagnostics ?? []), ...diagnostics];
         this.loaded.set(ref.id, loaded);
         this.statuses.set(ref.id, {

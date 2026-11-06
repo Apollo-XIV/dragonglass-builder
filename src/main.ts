@@ -14,6 +14,7 @@ import {
   folderOf,
   serialiseJson,
 } from "./obsidian/character-files";
+import { ExportError, embedReader, exportDocument, writeExport } from "./obsidian/export-character";
 import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
@@ -91,6 +92,17 @@ export default class DragonglassPlugin extends Plugin {
       },
     });
 
+    this.addCommand({
+      id: "export-character",
+      name: "Export character",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "5e") return false;
+        if (!checking) void this.exportCharacter(folderOf(file.path), file.path);
+        return true;
+      },
+    });
+
     this.registerEvent(
       this.app.vault.on("rename", (file, oldPath) => {
         const entry = this.stores.get(folderOf(oldPath));
@@ -142,6 +154,26 @@ export default class DragonglassPlugin extends Plugin {
       this.draftTimer = 0;
       void this.persist();
     }, 800);
+  }
+
+  /** Writes the character's export into the configured folder and says where it went. */
+  async exportCharacter(folder: string, fromPath: string): Promise<void> {
+    const store = await this.acquireStore(folder);
+    try {
+      const doc = await exportDocument(store, {
+        sources: this.sources,
+        embed: embedReader(this.app, fromPath),
+        exportedAt: new Date().toISOString(),
+        pluginVersion: this.manifest.version,
+      });
+      const path = await writeExport(this.app.vault.adapter, this.settings.exportFolder, doc);
+      new Notice(`Exported ${doc.identity.name} to ${path}`);
+    } catch (e) {
+      const lines = e instanceof ExportError ? e.lines : [];
+      new Notice([`Export failed: ${e instanceof Error ? e.message : String(e)}`, ...lines].join("\n"), 10000);
+    } finally {
+      this.releaseStore(folder);
+    }
   }
 
   /** Drops every cached index so the next resolve picks up new content. */

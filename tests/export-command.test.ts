@@ -1,0 +1,170 @@
+import { join } from "node:path";
+import { describe, expect, it } from "vitest";
+import { CharacterStore } from "../src/obsidian/character-store";
+import {
+  ExportError,
+  embedReader,
+  exportDocument,
+  exportFileName,
+  writeExport,
+  type ExportDeps,
+} from "../src/obsidian/export-character";
+import { indexFromDisk } from "../src/node/load-source";
+import { validateExport } from "../src/core/export";
+import { CONTENT_ROOT } from "./helpers";
+
+class MemoryAdapter {
+  files = new Map<string, string>();
+  folders = new Set<string>();
+  async exists(p: string) {
+    return this.files.has(p) || this.folders.has(p);
+  }
+  async read(p: string) {
+    return this.files.get(p)!;
+  }
+  async write(p: string, t: string) {
+    this.files.set(p, t);
+  }
+  async mkdir(p: string) {
+    this.folders.add(p);
+  }
+  async list(p: string) {
+    return { files: [...this.files.keys()].filter((f) => f.startsWith(`${p}/`)), folders: [] };
+  }
+  getResourcePath(p: string) {
+    return p;
+  }
+}
+
+const CHAR = join(__dirname, "fixtures", "characters", "paladin-3");
+const HASH = `sha256:${"a".repeat(64)}`;
+
+async function open(inventory?: string): Promise<{ store: CharacterStore; adapter: MemoryAdapter }> {
+  const { readFileSync } = await import("node:fs");
+  const adapter = new MemoryAdapter();
+  for (const f of ["sheet", "build", "spells", "inventory", "details"])
+    adapter.files.set(`Characters/B/${f}.5e`, readFileSync(join(CHAR, `${f}.5e`), "utf8"));
+  if (inventory) adapter.files.set("Characters/B/inventory.5e", inventory);
+  const index = indexFromDisk(join(CONTENT_ROOT, "srd"), join(CONTENT_ROOT, "core"));
+  const host = {
+    app: { vault: { adapter, on: () => ({}), offref: () => undefined } } as never,
+    indexFor: async () => index,
+    enforceRequirements: () => false,
+    writeDebounceMs: () => 0,
+  };
+  const store = new CharacterStore(host, "Characters/B");
+  await store.load();
+  return { store, adapter };
+}
+
+const deps = (over: Partial<ExportDeps> = {}): ExportDeps => ({
+  sources: { exportRef: async () => ({ ref: HASH, refType: "hash" as const }) },
+  embed: async () => undefined,
+  exportedAt: "2026-01-01T00:00:00.000Z",
+  pluginVersion: "9.9.9",
+  ...over,
+});
+
+describe("exportDocument", () => {
+  it("builds a document that passes validation", async () => {
+    const { store } = await open();
+    const doc = await exportDocument(store, deps());
+    expect(doc.envelope).toMatchObject({ characterId: "B", pluginVersion: "9.9.9" });
+    expect(validateExport(JSON.parse(JSON.stringify(doc))).ok).toBe(true);
+  });
+
+  it("gives a legacy inventory its ids, and the export carries the ones that were saved", async () => {
+    const legacy = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:longsword" }] });
+    const { store, adapter } = await open(legacy);
+    const doc = await exportDocument(store, deps());
+    await store.flush();
+    const saved = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items[0].uid;
+    expect(saved).toMatch(/^inv-/);
+    expect(doc.inventory.items[0].uid).toBe(saved);
+  });
+
+  it("does not touch an inventory that already has ids", async () => {
+    const { store, adapter } = await open();
+    const before = adapter.files.get("Characters/B/inventory.5e");
+    await exportDocument(store, deps());
+    await store.flush();
+    expect(adapter.files.get("Characters/B/inventory.5e")).toBe(before);
+  });
+
+  it("refuses to write, with readable lines, when the document fails its checks", async () => {
+    const { store } = await open();
+    const bad = deps({ sources: { exportRef: async () => ({ ref: "/home/me/srd", refType: "git" as const }) } });
+    const err = await exportDocument(store, bad).catch((e) => e);
+    expect(err).toBeInstanceOf(ExportError);
+    expect(err.lines[0]).toContain("/envelope/sources/0/ref");
+  });
+
+  it("says so when a source cannot be pinned", async () => {
+    const { store } = await open();
+    const err = await exportDocument(store, deps({ sources: { exportRef: async () => undefined } })).catch((e) => e);
+    expect(err).toBeInstanceOf(ExportError);
+    expect(err.message).toContain('Cannot pin source "srd"');
+  });
+});
+
+describe("writeExport", () => {
+  it("creates the folder and names the file after the character", async () => {
+    const { store } = await open();
+    const doc = await exportDocument(store, deps());
+    const adapter = new MemoryAdapter();
+    const path = await writeExport(adapter as never, "Exports", doc);
+    expect(path).toBe("Exports/Brann Ironvow.json");
+    expect(adapter.folders.has("Exports")).toBe(true);
+    expect(JSON.parse(adapter.files.get(path)!).identity.name).toBe("Brann Ironvow");
+  });
+
+  it("writes into a nested folder and replaces an earlier export", async () => {
+    const { store } = await open();
+    const doc = await exportDocument(store, deps());
+    const adapter = new MemoryAdapter();
+    await writeExport(adapter as never, "Game/Out", doc);
+    const again = await writeExport(adapter as never, "Game/Out", { ...doc, envelope: { ...doc.envelope, pluginVersion: "2" } });
+    expect([...adapter.folders]).toEqual(["Game", "Game/Out"]);
+    expect(JSON.parse(adapter.files.get(again)!).envelope.pluginVersion).toBe("2");
+  });
+
+  it("keeps a name safe as a file name", () => {
+    expect(exportFileName('A/B: "C"?')).toBe("A-B- -C--.json");
+    expect(exportFileName("  ")).toBe("Character.json");
+    expect(exportFileName("../x")).toBe("-x.json");
+  });
+});
+
+describe("embedReader", () => {
+  const note = "# One\nfirst\n\n## Sub\nnested\n\n# Two\nsecond ^blk\n";
+  const at = (s: string) => note.indexOf(s);
+  const file = { extension: "md" };
+  const app = {
+    metadataCache: {
+      getFirstLinkpathDest: (p: string) => (p === "Note" ? file : p === "pic.png" ? { extension: "png" } : null),
+      getFileCache: () => ({
+        headings: [
+          { heading: "One", level: 1, position: { start: { offset: at("# One") }, end: { offset: at("# One") + 5 } } },
+          { heading: "Sub", level: 2, position: { start: { offset: at("## Sub") }, end: { offset: at("## Sub") + 6 } } },
+          { heading: "Two", level: 1, position: { start: { offset: at("# Two") }, end: { offset: at("# Two") + 5 } } },
+        ],
+        blocks: { blk: { position: { start: { offset: at("second") }, end: { offset: at("second ^blk") + 11 } } } },
+      }),
+    },
+    vault: { cachedRead: async () => note },
+  } as never;
+  const read = embedReader(app, "Characters/B/details.5e");
+
+  it("reads a whole note, a heading including its subsections, and a block", async () => {
+    expect(await read("Note")).toBe(note);
+    expect((await read("Note#One"))?.trim()).toBe("first\n\n## Sub\nnested");
+    expect((await read("Note#Sub"))?.trim()).toBe("nested");
+    expect(await read("Note^blk")).toBe("second ^blk");
+  });
+
+  it("reads nothing for a missing note, a missing heading or a picture", async () => {
+    expect(await read("Nope")).toBeUndefined();
+    expect(await read("Note#Absent")).toBeUndefined();
+    expect(await read("pic.png")).toBeUndefined();
+  });
+});

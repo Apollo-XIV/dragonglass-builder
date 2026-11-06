@@ -80,6 +80,8 @@ export interface DragonglassSettings {
   enforceRequirements: boolean;
   /** Where "New character" creates folders. */
   charactersFolder: string;
+  /** Vault folder the Export character command writes to. */
+  exportFolder: string;
   /** Default hit point method for new levels. */
   defaultHp: "max" | "average" | "roll";
   layout: LayoutSettings;
@@ -93,6 +95,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
   caching: "smart",
   enforceRequirements: false,
   charactersFolder: "Characters",
+  exportFolder: "Exports",
   defaultHp: "average",
   layout: {
     accent: "",

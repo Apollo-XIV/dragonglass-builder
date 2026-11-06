@@ -71,6 +71,16 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Export folder")
+      .setDesc("Where Export character writes its JSON file, named after the character.")
+      .addText((text) =>
+        text.setValue(this.plugin.settings.exportFolder).onChange(async (value) => {
+          this.plugin.settings.exportFolder = value.trim() || "Exports";
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
       .setName("Hit points for new levels")
       .setDesc("The default when a level is added. Each level's choice is recorded separately and can be changed.")
       .addDropdown((dropdown) =>
