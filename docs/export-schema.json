@@ -1,0 +1,1048 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "x-schemaVersion": "1.0",
+  "$id": "https://dragonglass.local/schema/character-export.json",
+  "title": "Dragonglass character export",
+  "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
+  "type": "object",
+  "required": [
+    "envelope",
+    "identity",
+    "progression",
+    "choices",
+    "features",
+    "resources",
+    "spells",
+    "inventory",
+    "details",
+    "diagnostics"
+  ],
+  "properties": {
+    "envelope": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "characterId",
+        "exportedAt",
+        "pluginVersion",
+        "sources"
+      ],
+      "properties": {
+        "schemaVersion": {
+          "pattern": "^[0-9]+\\.[0-9]+$",
+          "description": "major.minor",
+          "type": "string"
+        },
+        "characterId": {
+          "minLength": 1,
+          "description": "The character's folder name. Stable until the folder is renamed.",
+          "type": "string"
+        },
+        "exportedAt": {
+          "format": "date-time",
+          "type": "string"
+        },
+        "pluginVersion": {
+          "type": "string"
+        },
+        "sources": {
+          "description": "Only the sources an exported element came from.",
+          "type": "array",
+          "items": {
+            "description": "A content source the character's elements came from.",
+            "type": "object",
+            "required": [
+              "id",
+              "ref",
+              "refType",
+              "sourcebooks"
+            ],
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "description": "The source's own id, from its source.json.",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "version": {
+                "description": "The content version, when the source states one.",
+                "type": "string"
+              },
+              "ref": {
+                "minLength": 1,
+                "description": "What pins the content: the git tag or commit for a GitHub source, otherwise a hash of the source's files computed at export time. Never a path.",
+                "type": "string"
+              },
+              "refType": {
+                "description": "`git` when ref is a pin on a GitHub source, `hash` when it is a content hash.",
+                "anyOf": [
+                  {
+                    "const": "git",
+                    "type": "string"
+                  },
+                  {
+                    "const": "hash",
+                    "type": "string"
+                  }
+                ]
+              },
+              "sourcebooks": {
+                "description": "Ids of the sourcebooks this source provides. An element's `source` names one of these.",
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "identity": {
+      "type": "object",
+      "required": [
+        "name",
+        "level",
+        "classes",
+        "abilityMethod",
+        "abilityBase",
+        "derived"
+      ],
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "level": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "xp": {
+          "minimum": 0,
+          "type": "integer"
+        },
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "name",
+              "level",
+              "hitDie"
+            ],
+            "properties": {
+              "id": {
+                "minLength": 1,
+                "description": "An element id, e.g. srd:barbarian:rage.",
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              },
+              "level": {
+                "minimum": 1,
+                "type": "integer"
+              },
+              "hitDie": {
+                "type": "string"
+              },
+              "subclass": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "name"
+                ],
+                "properties": {
+                  "id": {
+                    "minLength": 1,
+                    "description": "An element id, e.g. srd:barbarian:rage.",
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "species": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "source",
+            "granted"
+          ],
+          "properties": {
+            "id": {
+              "minLength": 1,
+              "description": "An element id, e.g. srd:barbarian:rage.",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "granted": {
+              "description": "Everything it grants, with the chain of grants that led there.",
+              "type": "array",
+              "items": {
+                "description": "Something a class level, species or background gave the character.",
+                "type": "object",
+                "required": [
+                  "id",
+                  "kind",
+                  "via"
+                ],
+                "properties": {
+                  "id": {
+                    "minLength": 1,
+                    "description": "An element id, e.g. srd:barbarian:rage.",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "via": {
+                    "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "background": {
+          "type": "object",
+          "required": [
+            "id",
+            "name",
+            "source",
+            "granted"
+          ],
+          "properties": {
+            "id": {
+              "minLength": 1,
+              "description": "An element id, e.g. srd:barbarian:rage.",
+              "type": "string"
+            },
+            "name": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "granted": {
+              "description": "Everything it grants, with the chain of grants that led there.",
+              "type": "array",
+              "items": {
+                "description": "Something a class level, species or background gave the character.",
+                "type": "object",
+                "required": [
+                  "id",
+                  "kind",
+                  "via"
+                ],
+                "properties": {
+                  "id": {
+                    "minLength": 1,
+                    "description": "An element id, e.g. srd:barbarian:rage.",
+                    "type": "string"
+                  },
+                  "kind": {
+                    "type": "string"
+                  },
+                  "via": {
+                    "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "abilityMethod": {
+          "type": "string"
+        },
+        "abilityBase": {
+          "description": "Scores before any bonus: what the player assigned.",
+          "type": "object",
+          "required": [
+            "str",
+            "dex",
+            "con",
+            "int",
+            "wis",
+            "cha"
+          ],
+          "properties": {
+            "str": {
+              "type": "integer"
+            },
+            "dex": {
+              "type": "integer"
+            },
+            "con": {
+              "type": "integer"
+            },
+            "int": {
+              "type": "integer"
+            },
+            "wis": {
+              "type": "integer"
+            },
+            "cha": {
+              "type": "integer"
+            }
+          }
+        },
+        "derived": {
+          "description": "The engine's own answers, to cross-check against. Do not recompute from them.",
+          "type": "object",
+          "required": [
+            "abilities",
+            "proficiencyBonus",
+            "hpMax",
+            "ac",
+            "speed"
+          ],
+          "properties": {
+            "abilities": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {
+                  "type": "number"
+                }
+              }
+            },
+            "proficiencyBonus": {
+              "type": "number"
+            },
+            "hpMax": {
+              "type": "number"
+            },
+            "ac": {
+              "type": "number"
+            },
+            "speed": {
+              "type": "object",
+              "patternProperties": {
+                "^(.*)$": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "progression": {
+      "description": "Every level taken, in order. Planned levels are not here.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "characterLevel",
+          "class",
+          "classLevel",
+          "hp",
+          "choices",
+          "granted"
+        ],
+        "properties": {
+          "characterLevel": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "class": {
+            "minLength": 1,
+            "description": "An element id, e.g. srd:barbarian:rage.",
+            "type": "string"
+          },
+          "classLevel": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "hp": {
+            "type": "object",
+            "required": [
+              "method",
+              "value",
+              "die",
+              "forced"
+            ],
+            "properties": {
+              "method": {
+                "description": "How the level's hit points were taken. The character's first level is always `max`.",
+                "anyOf": [
+                  {
+                    "const": "max",
+                    "type": "string"
+                  },
+                  {
+                    "const": "average",
+                    "type": "string"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ]
+              },
+              "value": {
+                "description": "What the die contributed, before the CON modifier.",
+                "type": "integer"
+              },
+              "die": {
+                "type": "string"
+              },
+              "forced": {
+                "description": "The stored choice was overridden by the first-level rule.",
+                "type": "boolean"
+              }
+            }
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "description": "A decision the content asks for, answered or not.",
+              "type": "object",
+              "required": [
+                "id",
+                "name",
+                "declaredBy",
+                "count",
+                "picked",
+                "pending"
+              ],
+              "properties": {
+                "id": {
+                  "description": "The content's choice id.",
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                },
+                "declaredBy": {
+                  "description": "The element that declared the choice.",
+                  "type": "string"
+                },
+                "count": {
+                  "minimum": 0,
+                  "type": "integer"
+                },
+                "picked": {
+                  "description": "Active picks only, as element ids.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "pending": {
+                  "description": "True while fewer than `count` valid picks are made. Never omitted.",
+                  "type": "boolean"
+                },
+                "blocked": {
+                  "description": "The choice's own requirement is not met.",
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "granted": {
+            "type": "array",
+            "items": {
+              "description": "Something a class level, species or background gave the character.",
+              "type": "object",
+              "required": [
+                "id",
+                "kind",
+                "via"
+              ],
+              "properties": {
+                "id": {
+                  "minLength": 1,
+                  "description": "An element id, e.g. srd:barbarian:rage.",
+                  "type": "string"
+                },
+                "kind": {
+                  "type": "string"
+                },
+                "via": {
+                  "description": "The chain that granted it, outermost first: the class, then the feature that granted it, and so on.",
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "choices": {
+      "description": "Choices answered outside any class level: species, background, feats.",
+      "type": "array",
+      "items": {
+        "description": "A decision the content asks for, answered or not.",
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "declaredBy",
+          "count",
+          "picked",
+          "pending"
+        ],
+        "properties": {
+          "id": {
+            "description": "The content's choice id.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "declaredBy": {
+            "description": "The element that declared the choice.",
+            "type": "string"
+          },
+          "count": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "picked": {
+            "description": "Active picks only, as element ids.",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pending": {
+            "description": "True while fewer than `count` valid picks are made. Never omitted.",
+            "type": "boolean"
+          },
+          "blocked": {
+            "description": "The choice's own requirement is not met.",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "source",
+          "provenance",
+          "parts"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "description": "An element id, e.g. srd:barbarian:rage.",
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "source": {
+            "description": "The sourcebook id.",
+            "type": "string"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "number"
+              }
+            ]
+          },
+          "text": {
+            "description": "The literal source text.",
+            "type": "string"
+          },
+          "provenance": {
+            "type": "object",
+            "required": [
+              "via"
+            ],
+            "properties": {
+              "class": {
+                "type": "string"
+              },
+              "classLevel": {
+                "type": "integer"
+              },
+              "via": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "parts": {
+            "type": "array",
+            "items": {
+              "description": "One part of a feature, as authored (see docs/schema.md), with a derived kind.",
+              "type": "object",
+              "required": [
+                "kind",
+                "from",
+                "definition"
+              ],
+              "properties": {
+                "kind": {
+                  "description": "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither.",
+                  "anyOf": [
+                    {
+                      "const": "resource",
+                      "type": "string"
+                    },
+                    {
+                      "const": "toggle",
+                      "type": "string"
+                    },
+                    {
+                      "const": "passive",
+                      "type": "string"
+                    },
+                    {
+                      "const": "action",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "from": {
+                  "description": "Which part list of the element it was read from.",
+                  "anyOf": [
+                    {
+                      "const": "modifiers",
+                      "type": "string"
+                    },
+                    {
+                      "const": "resources",
+                      "type": "string"
+                    },
+                    {
+                      "const": "actions",
+                      "type": "string"
+                    },
+                    {
+                      "const": "effects",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "definition": {
+                  "type": "object",
+                  "patternProperties": {
+                    "^(.*)$": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "key",
+          "id",
+          "name",
+          "max",
+          "recharge",
+          "owner"
+        ],
+        "properties": {
+          "key": {
+            "description": "Globally unique pool key.",
+            "type": "string"
+          },
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "max": {
+            "description": "Evaluated at the character's level.",
+            "type": "number"
+          },
+          "recharge": {
+            "type": "string"
+          },
+          "rechargeAmount": {
+            "type": "number"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "die": {
+            "type": "string"
+          },
+          "owner": {
+            "description": "The element that owns the resource.",
+            "type": "string"
+          }
+        }
+      }
+    },
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "level",
+          "source",
+          "known",
+          "prepared",
+          "alwaysPrepared",
+          "extra"
+        ],
+        "properties": {
+          "id": {
+            "minLength": 1,
+            "description": "An element id, e.g. srd:barbarian:rage.",
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "level": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "school": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "class": {
+            "description": "The class whose list and ability it uses.",
+            "type": "string"
+          },
+          "known": {
+            "type": "boolean"
+          },
+          "prepared": {
+            "type": "boolean"
+          },
+          "alwaysPrepared": {
+            "type": "boolean"
+          },
+          "extra": {
+            "description": "Learned outside the class's own progression.",
+            "type": "boolean"
+          }
+        }
+      }
+    },
+    "spellcasting": {
+      "type": "object",
+      "required": [
+        "classes",
+        "slots"
+      ],
+      "properties": {
+        "classes": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "class",
+              "ability",
+              "type",
+              "progression",
+              "dc",
+              "attack"
+            ],
+            "properties": {
+              "class": {
+                "minLength": 1,
+                "description": "An element id, e.g. srd:barbarian:rage.",
+                "type": "string"
+              },
+              "ability": {
+                "anyOf": [
+                  {
+                    "const": "str",
+                    "type": "string"
+                  },
+                  {
+                    "const": "dex",
+                    "type": "string"
+                  },
+                  {
+                    "const": "con",
+                    "type": "string"
+                  },
+                  {
+                    "const": "int",
+                    "type": "string"
+                  },
+                  {
+                    "const": "wis",
+                    "type": "string"
+                  },
+                  {
+                    "const": "cha",
+                    "type": "string"
+                  }
+                ]
+              },
+              "type": {
+                "type": "string"
+              },
+              "progression": {
+                "type": "string"
+              },
+              "dc": {
+                "type": "integer"
+              },
+              "attack": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "level",
+              "max"
+            ],
+            "properties": {
+              "level": {
+                "type": "integer"
+              },
+              "max": {
+                "type": "integer"
+              }
+            }
+          }
+        },
+        "pact": {
+          "type": "object",
+          "required": [
+            "level",
+            "max"
+          ],
+          "properties": {
+            "level": {
+              "type": "integer"
+            },
+            "max": {
+              "type": "integer"
+            }
+          }
+        }
+      }
+    },
+    "inventory": {
+      "type": "object",
+      "required": [
+        "items",
+        "currency"
+      ],
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "uid",
+              "name",
+              "quantity",
+              "equipped",
+              "attuned",
+              "resolved"
+            ],
+            "properties": {
+              "uid": {
+                "minLength": 1,
+                "description": "This entry's own id, unique in the inventory. An inventory the plugin has not saved since entries gained ids exports provisional `legacy-N` ids, which change once it is.",
+                "type": "string"
+              },
+              "ref": {
+                "description": "The element id, for an item from content.",
+                "type": "string"
+              },
+              "custom": {
+                "type": "object",
+                "patternProperties": {
+                  "^(.*)$": {}
+                }
+              },
+              "name": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              },
+              "quantity": {
+                "minimum": 0,
+                "type": "number"
+              },
+              "equipped": {
+                "type": "boolean"
+              },
+              "attuned": {
+                "type": "boolean"
+              },
+              "container": {
+                "description": "The uid of the entry holding this one.",
+                "type": "string"
+              },
+              "notes": {
+                "type": "string"
+              },
+              "resolved": {
+                "description": "False when the element is in no loaded source. The entry is kept either way.",
+                "type": "boolean"
+              },
+              "reason": {
+                "description": "Why it did not resolve, or what was wrong with an entry that did.",
+                "type": "string"
+              }
+            }
+          }
+        },
+        "currency": {
+          "type": "object",
+          "required": [
+            "cp",
+            "sp",
+            "ep",
+            "gp",
+            "pp"
+          ],
+          "properties": {
+            "cp": {
+              "type": "number"
+            },
+            "sp": {
+              "type": "number"
+            },
+            "ep": {
+              "type": "number"
+            },
+            "gp": {
+              "type": "number"
+            },
+            "pp": {
+              "type": "number"
+            }
+          }
+        }
+      }
+    },
+    "details": {
+      "type": "object",
+      "required": [
+        "sections"
+      ],
+      "properties": {
+        "sections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "heading",
+              "text"
+            ],
+            "properties": {
+              "heading": {
+                "type": "string"
+              },
+              "text": {
+                "description": "Plain text. Links and embeds are already resolved.",
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "diagnostics": {
+      "description": "The engine's own, carried through unchanged.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "severity",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "severity": {
+            "anyOf": [
+              {
+                "const": "error",
+                "type": "string"
+              },
+              {
+                "const": "warning",
+                "type": "string"
+              },
+              {
+                "const": "info",
+                "type": "string"
+              }
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "file": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

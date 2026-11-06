@@ -1,0 +1,28 @@
+{
+  "kind": "inventory",
+  "schemaVersion": 1,
+  "items": [
+    { "uid": "inv-sword", "id": "srd:item:longsword", "equipped": true },
+    { "uid": "inv-mail", "id": "srd:item:chain-mail", "equipped": true },
+    { "uid": "inv-shield", "id": "srd:item:shield", "equipped": true },
+    { "uid": "inv-pack", "id": "srd:item:backpack" },
+    { "uid": "inv-rope", "id": "srd:item:rope-hempen", "quantity": 2, "container": "inv-pack" },
+    { "uid": "inv-book", "id": "srd:item:prayer-book-of-the-lost", "container": "inv-pack", "notes": "Removed from the source." },
+    {
+      "uid": "inv-token",
+      "item": {
+        "id": "custom:item:oath-token",
+        "kind": "item",
+        "name": "Oath Token",
+        "source": "custom",
+        "weight": 0.1,
+        "text": "A pewter disc stamped with a hammer.",
+        "modifiers": [{ "target": "saves.all", "op": "add", "value": 1 }]
+      },
+      "equipped": true,
+      "attuned": true
+    },
+    { "uid": "inv-loose", "id": "srd:item:rope-hempen", "container": "inv-missing" }
+  ],
+  "currency": { "gp": 12, "sp": 3 }
+}

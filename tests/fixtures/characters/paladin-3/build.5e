@@ -1,0 +1,21 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Brann Ironvow",
+  "xp": 900,
+  "level": 3,
+  "species": "srd:species:dwarf",
+  "background": "srd:background:acolyte",
+  "abilities": { "method": "standard-array", "base": { "str": 15, "dex": 8, "con": 14, "int": 10, "wis": 12, "cha": 13 } },
+  "levels": [
+    { "class": "srd:class:paladin", "hp": "average", "choices": {} },
+    { "class": "srd:class:paladin", "hp": 7, "choices": { "srd:paladin:fighting-style": ["srd:fighting-style:defense", "srd:fighting-style:gone-from-the-book"] } },
+    { "class": "srd:class:paladin", "hp": "max", "choices": { "srd:paladin:sacred-oath": ["srd:subclass:oath-of-devotion"] } }
+  ],
+  "choices": {
+    "srd:species:dwarf:tool-proficiency": ["srd:tool:smiths-tools"]
+  },
+  "planned": [
+    { "class": "srd:class:paladin", "classLevel": 4, "choices": { "srd:paladin:asi-4": [] }, "queued": true }
+  ]
+}

@@ -1,0 +1,1025 @@
+{
+  "envelope": {
+    "schemaVersion": "1.0",
+    "characterId": "paladin-3",
+    "exportedAt": "2026-01-01T00:00:00.000Z",
+    "pluginVersion": "test",
+    "sources": [
+      {
+        "id": "srd",
+        "name": "SRD 5.1 (test slice)",
+        "version": "5.1",
+        "ref": "sha256:9c0308ac8d97ceadbee7e17efd4e4968d75c1f444c729a096aa2b4943533c2da",
+        "refType": "hash",
+        "sourcebooks": [
+          "srd"
+        ]
+      }
+    ]
+  },
+  "identity": {
+    "name": "Brann Ironvow",
+    "level": 3,
+    "xp": 900,
+    "classes": [
+      {
+        "id": "srd:class:paladin",
+        "name": "Paladin",
+        "level": 3,
+        "hitDie": "d10",
+        "subclass": {
+          "id": "srd:subclass:oath-of-devotion",
+          "name": "Oath of Devotion"
+        }
+      }
+    ],
+    "species": {
+      "id": "srd:species:dwarf",
+      "name": "Dwarf",
+      "source": "srd",
+      "granted": [
+        {
+          "id": "srd:tool:smiths-tools",
+          "kind": "tool",
+          "via": [
+            "srd:species:dwarf"
+          ]
+        },
+        {
+          "id": "srd:dwarf:darkvision",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:dwarf"
+          ]
+        },
+        {
+          "id": "srd:dwarf:dwarven-resilience",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:dwarf"
+          ]
+        },
+        {
+          "id": "srd:dwarf:dwarven-combat-training",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:dwarf"
+          ]
+        },
+        {
+          "id": "srd:dwarf:stonecunning",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:dwarf"
+          ]
+        }
+      ]
+    },
+    "background": {
+      "id": "srd:background:acolyte",
+      "name": "Acolyte",
+      "source": "srd",
+      "granted": [
+        {
+          "id": "srd:skill:insight",
+          "kind": "skill",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:skill:religion",
+          "kind": "skill",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:background:shelter-of-the-faithful",
+          "kind": "background-feature",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        }
+      ]
+    },
+    "abilityMethod": "standard-array",
+    "abilityBase": {
+      "str": 15,
+      "dex": 8,
+      "con": 14,
+      "int": 10,
+      "wis": 12,
+      "cha": 13
+    },
+    "derived": {
+      "abilities": {
+        "str": 15,
+        "dex": 8,
+        "con": 16,
+        "int": 10,
+        "wis": 12,
+        "cha": 13
+      },
+      "proficiencyBonus": 2,
+      "hpMax": 36,
+      "ac": 18,
+      "speed": {
+        "walk": 25
+      }
+    }
+  },
+  "progression": [
+    {
+      "characterLevel": 1,
+      "class": "srd:class:paladin",
+      "classLevel": 1,
+      "hp": {
+        "method": "max",
+        "value": 10,
+        "die": "d10",
+        "forced": true
+      },
+      "choices": [
+        {
+          "id": "srd:class:paladin:skills",
+          "name": "Paladin Skills",
+          "declaredBy": "srd:class:paladin",
+          "count": 2,
+          "picked": [],
+          "pending": true
+        }
+      ],
+      "granted": [
+        {
+          "id": "srd:paladin:divine-sense",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:paladin"
+          ]
+        },
+        {
+          "id": "srd:paladin:lay-on-hands",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:paladin"
+          ]
+        }
+      ]
+    },
+    {
+      "characterLevel": 2,
+      "class": "srd:class:paladin",
+      "classLevel": 2,
+      "hp": {
+        "method": 7,
+        "value": 7,
+        "die": "d10",
+        "forced": false
+      },
+      "choices": [
+        {
+          "id": "srd:paladin:fighting-style",
+          "name": "Fighting Style",
+          "declaredBy": "srd:class:paladin",
+          "count": 1,
+          "picked": [
+            "srd:fighting-style:defense"
+          ],
+          "pending": false
+        }
+      ],
+      "granted": [
+        {
+          "id": "srd:paladin:spellcasting",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:paladin"
+          ]
+        },
+        {
+          "id": "srd:paladin:divine-smite",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:paladin"
+          ]
+        },
+        {
+          "id": "srd:fighting-style:defense",
+          "kind": "fighting-style",
+          "via": [
+            "srd:class:paladin"
+          ]
+        }
+      ]
+    },
+    {
+      "characterLevel": 3,
+      "class": "srd:class:paladin",
+      "classLevel": 3,
+      "hp": {
+        "method": "max",
+        "value": 10,
+        "die": "d10",
+        "forced": false
+      },
+      "choices": [
+        {
+          "id": "srd:paladin:sacred-oath",
+          "name": "Sacred Oath",
+          "declaredBy": "srd:class:paladin",
+          "count": 1,
+          "picked": [
+            "srd:subclass:oath-of-devotion"
+          ],
+          "pending": false
+        }
+      ],
+      "granted": [
+        {
+          "id": "srd:paladin:divine-health",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:paladin"
+          ]
+        },
+        {
+          "id": "srd:subclass:oath-of-devotion",
+          "kind": "subclass",
+          "via": [
+            "srd:class:paladin"
+          ]
+        },
+        {
+          "id": "srd:devotion:channel-divinity",
+          "kind": "subclass-feature",
+          "via": [
+            "srd:subclass:oath-of-devotion"
+          ]
+        },
+        {
+          "id": "srd:spell:protection-from-evil-and-good",
+          "kind": "spell",
+          "via": [
+            "srd:subclass:oath-of-devotion"
+          ]
+        },
+        {
+          "id": "srd:spell:sanctuary",
+          "kind": "spell",
+          "via": [
+            "srd:subclass:oath-of-devotion"
+          ]
+        }
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "id": "srd:species:dwarf:tool-proficiency",
+      "name": "Tool Proficiency",
+      "declaredBy": "srd:species:dwarf",
+      "count": 1,
+      "picked": [
+        "srd:tool:smiths-tools"
+      ],
+      "pending": false
+    },
+    {
+      "id": "srd:background:acolyte:languages",
+      "name": "Acolyte Languages",
+      "declaredBy": "srd:background:acolyte",
+      "count": 2,
+      "picked": [],
+      "pending": true
+    }
+  ],
+  "features": [
+    {
+      "id": "srd:dwarf:darkvision",
+      "kind": "species-trait",
+      "name": "Darkvision",
+      "source": "srd",
+      "page": 5,
+      "text": "Accustomed to life underground, you have superior vision in dark and dim conditions. You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray.",
+      "provenance": {
+        "via": [
+          "srd:species:dwarf"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:dwarf:dwarven-resilience",
+      "kind": "species-trait",
+      "name": "Dwarven Resilience",
+      "source": "srd",
+      "page": 5,
+      "text": "You have advantage on saving throws against poison, and you have resistance against poison damage.",
+      "provenance": {
+        "via": [
+          "srd:species:dwarf"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "saves.all",
+            "op": "advantage",
+            "when": {
+              "text": "against poison",
+              "context": "poison"
+            }
+          }
+        },
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "resistances",
+            "op": "include",
+            "value": [
+              "poison"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:dwarf:dwarven-combat-training",
+      "kind": "species-trait",
+      "name": "Dwarven Combat Training",
+      "source": "srd",
+      "page": 5,
+      "text": "You have proficiency with the battleaxe, handaxe, light hammer, and warhammer.",
+      "provenance": {
+        "via": [
+          "srd:species:dwarf"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "proficiencies.weapon",
+            "op": "include",
+            "value": [
+              "srd:item:battleaxe",
+              "srd:item:handaxe",
+              "srd:item:light-hammer",
+              "srd:item:warhammer"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:dwarf:stonecunning",
+      "kind": "species-trait",
+      "name": "Stonecunning",
+      "source": "srd",
+      "page": 5,
+      "text": "Whenever you make an Intelligence (History) check related to the origin of stonework, you are considered proficient in the History skill and add double your proficiency bonus to the check, instead of your normal proficiency bonus.",
+      "provenance": {
+        "via": [
+          "srd:species:dwarf"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "skills.history",
+            "op": "proficiency",
+            "value": "expertise",
+            "when": {
+              "text": "on History checks related to the origin of stonework",
+              "context": "stonecunning"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:background:shelter-of-the-faithful",
+      "kind": "background-feature",
+      "name": "Shelter of the Faithful",
+      "source": "srd",
+      "page": 57,
+      "text": "As an acolyte, you command the respect of those who share your faith, and you can perform the religious ceremonies of your deity. You and your adventuring companions can expect to receive free healing and care at a temple, shrine, or other established presence of your faith, though you must provide any material components needed for spells. Those who share your religion will support you (but only you) at a modest lifestyle.\n\nYou might also have ties to a specific temple dedicated to your chosen deity or pantheon, and you have a residence there. This could be the temple where you used to serve, if you remain on good terms with it, or a temple where you have found a new home. While near your temple, you can call upon the priests for assistance, provided the assistance you ask for is not hazardous and you remain in good standing with your temple.",
+      "provenance": {
+        "via": [
+          "srd:background:acolyte"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:paladin:divine-sense",
+      "kind": "class-feature",
+      "name": "Divine Sense",
+      "source": "srd",
+      "page": 28,
+      "text": "The presence of strong evil registers on your senses like a noxious odor, and powerful good rings like heavenly music in your ears. As an action, you can open your awareness to detect such forces. Until the end of your next turn, you know the location of any celestial, fiend, or undead within 60 feet of you that is not behind total cover. You know the type (celestial, fiend, or undead) of any being whose presence you sense, but not its identity. Within the same radius, you also detect the presence of any place or object that has been consecrated or desecrated, as with the hallow spell.\n\nYou can use this feature a number of times equal to 1 + your Charisma modifier. When you finish a long rest, you regain all expended uses.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 1,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "resource",
+          "from": "resources",
+          "definition": {
+            "id": "uses",
+            "name": "Divine Sense",
+            "max": "max(1, 1 + @abilities.cha.mod)",
+            "recharge": "long-rest"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "divine-sense",
+            "name": "Divine Sense",
+            "activation": "action",
+            "cost": {
+              "uses": 1
+            },
+            "range": "60 feet",
+            "text": "Detect celestials, fiends and undead, and consecrated or desecrated places, within 60 feet until the end of your next turn."
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:paladin:lay-on-hands",
+      "kind": "class-feature",
+      "name": "Lay on Hands",
+      "source": "srd",
+      "page": 28,
+      "text": "Your blessed touch can heal wounds. You have a pool of healing power that replenishes when you take a long rest. With that pool, you can restore a total number of hit points equal to your paladin level × 5.\n\nAs an action, you can touch a creature and draw power from the pool to restore a number of hit points to that creature, up to the maximum amount remaining in your pool.\n\nAlternatively, you can expend 5 hit points from your pool of healing to cure the target of one disease or neutralize one poison affecting it. You can cure multiple diseases and neutralize multiple poisons with a single use of Lay on Hands, expending hit points separately for each one.\n\nThis feature has no effect on undead and constructs.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 1,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "resource",
+          "from": "resources",
+          "definition": {
+            "id": "srd:paladin:lay-on-hands",
+            "name": "Lay on Hands",
+            "max": "@table(paladin, lay-on-hands)",
+            "recharge": "long-rest",
+            "unit": "hit points"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "lay-on-hands",
+            "name": "Lay on Hands (heal)",
+            "activation": "action",
+            "cost": {
+              "srd:paladin:lay-on-hands": {
+                "min": 1,
+                "max": 100
+              }
+            },
+            "range": "Touch",
+            "text": "Restore hit points equal to the amount you spend from the pool."
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "lay-on-hands-cure",
+            "name": "Lay on Hands (cure disease or poison)",
+            "activation": "action",
+            "cost": {
+              "srd:paladin:lay-on-hands": 5
+            },
+            "range": "Touch",
+            "text": "Cure one disease or neutralize one poison."
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:paladin:spellcasting",
+      "kind": "class-feature",
+      "name": "Spellcasting",
+      "source": "srd",
+      "page": 28,
+      "text": "By 2nd level, you have learned to draw on divine magic through meditation and prayer to cast spells as a cleric does.\n\n**Preparing and Casting Spells.** You prepare the list of paladin spells that are available for you to cast, choosing from the paladin spell list. When you do so, choose a number of paladin spells equal to your Charisma modifier + half your paladin level, rounded down (minimum of one spell). The spells must be of a level for which you have spell slots.\n\n**Spellcasting Ability.** Charisma is your spellcasting ability for your paladin spells.\n\n**Spellcasting Focus.** You can use a holy symbol as a spellcasting focus for your paladin spells.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 2,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:paladin:divine-smite",
+      "kind": "class-feature",
+      "name": "Divine Smite",
+      "source": "srd",
+      "page": 28,
+      "text": "Starting at 2nd level, when you hit a creature with a melee weapon attack, you can expend one spell slot to deal radiant damage to the target, in addition to the weapon's damage. The extra damage is 2d8 for a 1st-level spell slot, plus 1d8 for each spell level higher than 1st, to a maximum of 5d8. The damage increases by 1d8 if the target is an undead or a fiend, to a maximum of 6d8.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 2,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "smite-1",
+            "name": "Divine Smite (1st-level slot)",
+            "activation": "free",
+            "cost": {
+              "slots.1": 1
+            },
+            "damage": "2d8",
+            "damageType": "radiant"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "smite-2",
+            "name": "Divine Smite (2nd-level slot)",
+            "activation": "free",
+            "cost": {
+              "slots.2": 1
+            },
+            "damage": "3d8",
+            "damageType": "radiant"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "smite-3",
+            "name": "Divine Smite (3rd-level slot)",
+            "activation": "free",
+            "cost": {
+              "slots.3": 1
+            },
+            "damage": "4d8",
+            "damageType": "radiant"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "smite-4",
+            "name": "Divine Smite (4th-level slot)",
+            "activation": "free",
+            "cost": {
+              "slots.4": 1
+            },
+            "damage": "5d8",
+            "damageType": "radiant"
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "smite-5",
+            "name": "Divine Smite (5th-level slot)",
+            "activation": "free",
+            "cost": {
+              "slots.5": 1
+            },
+            "damage": "5d8",
+            "damageType": "radiant",
+            "notes": "Divine Smite caps at 5d8 however high the slot."
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:fighting-style:defense",
+      "kind": "fighting-style",
+      "name": "Defense",
+      "source": "srd",
+      "page": 23,
+      "text": "While you are wearing armor, you gain a +1 bonus to AC.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 2,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "ac",
+            "op": "add",
+            "value": 1,
+            "when": {
+              "text": "while wearing armour",
+              "context": "wearing-armour"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:paladin:divine-health",
+      "kind": "class-feature",
+      "name": "Divine Health",
+      "source": "srd",
+      "page": 29,
+      "text": "By 3rd level, the divine magic flowing through you makes you immune to disease.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 3,
+        "via": [
+          "srd:class:paladin"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "passive",
+          "from": "modifiers",
+          "definition": {
+            "target": "conditionImmunities",
+            "op": "include",
+            "value": [
+              "disease"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "id": "srd:devotion:channel-divinity",
+      "kind": "subclass-feature",
+      "name": "Channel Divinity",
+      "source": "srd",
+      "page": 29,
+      "text": "Your oath allows you to channel divine energy to fuel magical effects. Each Channel Divinity option provided by your oath explains how to use it.\n\nWhen you use your Channel Divinity, you choose which option to use. You must then finish a short or long rest to use your Channel Divinity again.\n\nSome Channel Divinity effects require saving throws. When you use such an effect from this class, the DC equals your paladin spell save DC.\n\n**Sacred Weapon.** As an action, you can imbue one weapon that you are holding with positive energy, using your Channel Divinity. For 1 minute, you add your Charisma modifier to attack rolls made with that weapon (with a minimum bonus of +1). The weapon also emits bright light in a 20-foot radius and dim light 20 feet beyond that. If the weapon is not already magical, it becomes magical for the duration. You can end this effect on your turn as part of any other action. If you are no longer holding or carrying this weapon, or if you fall unconscious, this effect ends.\n\n**Turn the Unholy.** As an action, you present your holy symbol and speak a prayer censuring fiends and undead, using your Channel Divinity. Each fiend or undead that can see or hear you within 30 feet of you must make a Wisdom saving throw. If the creature fails its saving throw, it is turned for 1 minute or until it takes any damage.",
+      "provenance": {
+        "class": "srd:class:paladin",
+        "classLevel": 3,
+        "via": [
+          "srd:subclass:oath-of-devotion"
+        ]
+      },
+      "parts": [
+        {
+          "kind": "resource",
+          "from": "resources",
+          "definition": {
+            "id": "srd:paladin:channel-divinity",
+            "name": "Channel Divinity",
+            "max": 1,
+            "recharge": "short-rest"
+          }
+        },
+        {
+          "kind": "toggle",
+          "from": "effects",
+          "definition": {
+            "id": "srd:devotion:sacred-weapon",
+            "name": "Sacred Weapon",
+            "duration": "1 minute",
+            "modifiers": [
+              {
+                "target": "attacks.weapon",
+                "op": "add",
+                "value": "max(1, @abilities.cha.mod)"
+              }
+            ],
+            "notes": "The weapon sheds bright light in a 20-foot radius and dim light 20 feet beyond, and counts as magical. Ends if you stop holding the weapon or fall unconscious."
+          }
+        },
+        {
+          "kind": "toggle",
+          "from": "actions",
+          "definition": {
+            "id": "sacred-weapon",
+            "name": "Channel Divinity: Sacred Weapon",
+            "activation": "action",
+            "cost": {
+              "srd:paladin:channel-divinity": 1
+            },
+            "applies": "srd:devotion:sacred-weapon",
+            "text": "Imbue a weapon you are holding with positive energy for 1 minute."
+          }
+        },
+        {
+          "kind": "action",
+          "from": "actions",
+          "definition": {
+            "id": "turn-the-unholy",
+            "name": "Channel Divinity: Turn the Unholy",
+            "activation": "action",
+            "cost": {
+              "srd:paladin:channel-divinity": 1
+            },
+            "range": "30 feet",
+            "target": "Each fiend or undead that can see or hear you",
+            "save": {
+              "ability": "wis"
+            },
+            "text": "A fiend or undead that fails the save is turned for 1 minute or until it takes any damage."
+          }
+        }
+      ]
+    }
+  ],
+  "resources": [
+    {
+      "key": "srd:paladin:divine-sense:uses",
+      "id": "uses",
+      "name": "Divine Sense",
+      "max": 2,
+      "recharge": "long-rest",
+      "owner": "srd:paladin:divine-sense"
+    },
+    {
+      "key": "srd:paladin:lay-on-hands",
+      "id": "srd:paladin:lay-on-hands",
+      "name": "Lay on Hands",
+      "max": 15,
+      "recharge": "long-rest",
+      "unit": "hit points",
+      "owner": "srd:paladin:lay-on-hands"
+    },
+    {
+      "key": "srd:paladin:channel-divinity",
+      "id": "srd:paladin:channel-divinity",
+      "name": "Channel Divinity",
+      "max": 1,
+      "recharge": "short-rest",
+      "owner": "srd:devotion:channel-divinity"
+    }
+  ],
+  "spells": [
+    {
+      "id": "srd:spell:bless",
+      "name": "Bless",
+      "level": 1,
+      "school": "enchantment",
+      "source": "srd",
+      "class": "srd:class:paladin",
+      "known": false,
+      "prepared": true,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:command",
+      "name": "Command",
+      "level": 1,
+      "school": "enchantment",
+      "source": "srd",
+      "class": "srd:class:paladin",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:cure-wounds",
+      "name": "Cure Wounds",
+      "level": 1,
+      "school": "evocation",
+      "source": "srd",
+      "class": "srd:class:paladin",
+      "known": false,
+      "prepared": true,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:protection-from-evil-and-good",
+      "name": "Protection from Evil and Good",
+      "level": 1,
+      "school": "abjuration",
+      "source": "srd",
+      "class": "srd:class:paladin",
+      "known": false,
+      "prepared": true,
+      "alwaysPrepared": true,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:sanctuary",
+      "name": "Sanctuary",
+      "level": 1,
+      "school": "abjuration",
+      "source": "srd",
+      "class": "srd:class:paladin",
+      "known": false,
+      "prepared": true,
+      "alwaysPrepared": true,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:shield-of-faith",
+      "name": "Shield of Faith",
+      "level": 1,
+      "school": "abjuration",
+      "source": "srd",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": true
+    }
+  ],
+  "spellcasting": {
+    "classes": [
+      {
+        "class": "srd:class:paladin",
+        "ability": "cha",
+        "type": "prepared",
+        "progression": "half",
+        "dc": 11,
+        "attack": 3
+      }
+    ],
+    "slots": [
+      {
+        "level": 1,
+        "max": 3
+      }
+    ]
+  },
+  "inventory": {
+    "items": [
+      {
+        "uid": "inv-sword",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:longsword",
+        "name": "Longsword",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "inv-mail",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:chain-mail",
+        "name": "Chain Mail",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "inv-shield",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:shield",
+        "name": "Shield",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "inv-pack",
+        "quantity": 1,
+        "equipped": false,
+        "attuned": false,
+        "ref": "srd:item:backpack",
+        "name": "Backpack",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "inv-rope",
+        "quantity": 2,
+        "equipped": false,
+        "attuned": false,
+        "container": "inv-pack",
+        "ref": "srd:item:rope-hempen",
+        "name": "Rope, Hempen (50 Feet)",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "inv-book",
+        "quantity": 1,
+        "equipped": false,
+        "attuned": false,
+        "container": "inv-pack",
+        "notes": "Removed from the source.",
+        "ref": "srd:item:prayer-book-of-the-lost",
+        "name": "srd:item:prayer-book-of-the-lost",
+        "resolved": false,
+        "reason": "\"srd:item:prayer-book-of-the-lost\" is not in any loaded source"
+      },
+      {
+        "uid": "inv-token",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": true,
+        "custom": {
+          "id": "custom:item:oath-token",
+          "kind": "item",
+          "name": "Oath Token",
+          "source": "custom",
+          "weight": 0.1,
+          "text": "A pewter disc stamped with a hammer.",
+          "modifiers": [
+            {
+              "target": "saves.all",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        "name": "Oath Token",
+        "kind": "item",
+        "resolved": true
+      },
+      {
+        "uid": "inv-loose",
+        "quantity": 1,
+        "equipped": false,
+        "attuned": false,
+        "ref": "srd:item:rope-hempen",
+        "name": "Rope, Hempen (50 Feet)",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true,
+        "reason": "Held by \"inv-missing\", which is not an entry; exported as loose"
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 3,
+      "ep": 0,
+      "gp": 12,
+      "pp": 0
+    }
+  },
+  "details": {
+    "sections": [
+      {
+        "heading": "Backstory",
+        "text": "Brann swore the oath on the forge floor. See his journal and Ironvow Hall.\n\nA low hall of black stone, warmed by one forge."
+      },
+      {
+        "heading": "Bonds",
+        "text": "Creed\nAn oath is a weight carried gladly."
+      }
+    ]
+  },
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "unresolved-reference",
+      "message": "\"srd:fighting-style:gone-from-the-book\" is not in any loaded source (referenced by srd:class:paladin)",
+      "subject": "srd:fighting-style:gone-from-the-book"
+    },
+    {
+      "severity": "warning",
+      "code": "unresolved-reference",
+      "message": "Inventory item \"srd:item:prayer-book-of-the-lost\" is not in any loaded source",
+      "subject": "srd:item:prayer-book-of-the-lost"
+    },
+    {
+      "severity": "warning",
+      "code": "choice-invalid",
+      "message": "\"srd:fighting-style:gone-from-the-book\" is no longer a valid pick for Fighting Style",
+      "subject": "srd:class:paladin"
+    }
+  ]
+}

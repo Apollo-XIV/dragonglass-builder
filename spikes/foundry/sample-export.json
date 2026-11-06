@@ -1,0 +1,695 @@
+{
+  "envelope": {
+    "schemaVersion": "1.0",
+    "characterId": "Ilsa",
+    "exportedAt": "2026-11-06T18:53:07.421Z",
+    "pluginVersion": "cli",
+    "sources": [
+      {
+        "id": "srd",
+        "name": "System Reference Document 5.1",
+        "version": "5.1",
+        "ref": "sha256:688b0c30a4a9756019288c65cef2e631fd4d96388268724c5295765ae41bed50",
+        "refType": "hash",
+        "sourcebooks": [
+          "srd"
+        ]
+      }
+    ]
+  },
+  "identity": {
+    "name": "Bibby Longbottom",
+    "level": 2,
+    "xp": 6500,
+    "classes": [
+      {
+        "id": "srd:class:sorcerer",
+        "name": "Sorcerer",
+        "level": 2,
+        "hitDie": "d6"
+      }
+    ],
+    "species": {
+      "id": "srd:species:gnome",
+      "name": "Gnome",
+      "source": "srd",
+      "granted": [
+        {
+          "id": "srd:subspecies:rock-gnome",
+          "kind": "subspecies",
+          "via": [
+            "srd:species:gnome"
+          ]
+        },
+        {
+          "id": "srd:tool:tinkers-tools",
+          "kind": "tool",
+          "via": [
+            "srd:species:gnome",
+            "srd:subspecies:rock-gnome"
+          ]
+        },
+        {
+          "id": "srd:rock-gnome:artificers-lore",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:gnome",
+            "srd:subspecies:rock-gnome"
+          ]
+        },
+        {
+          "id": "srd:rock-gnome:tinker",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:gnome",
+            "srd:subspecies:rock-gnome"
+          ]
+        },
+        {
+          "id": "srd:language:common",
+          "kind": "language",
+          "via": [
+            "srd:species:gnome"
+          ]
+        },
+        {
+          "id": "srd:language:gnomish",
+          "kind": "language",
+          "via": [
+            "srd:species:gnome"
+          ]
+        },
+        {
+          "id": "srd:gnome:darkvision",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:gnome"
+          ]
+        },
+        {
+          "id": "srd:gnome:gnome-cunning",
+          "kind": "species-trait",
+          "via": [
+            "srd:species:gnome"
+          ]
+        }
+      ]
+    },
+    "background": {
+      "id": "srd:background:acolyte",
+      "name": "Acolyte",
+      "source": "srd",
+      "granted": [
+        {
+          "id": "srd:language:common",
+          "kind": "language",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:language:dwarvish",
+          "kind": "language",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:skill:insight",
+          "kind": "skill",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:skill:religion",
+          "kind": "skill",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        },
+        {
+          "id": "srd:acolyte:shelter-of-the-faithful",
+          "kind": "background-feature",
+          "via": [
+            "srd:background:acolyte"
+          ]
+        }
+      ]
+    },
+    "abilityMethod": "point-buy",
+    "abilityBase": {
+      "str": 16,
+      "dex": 10,
+      "con": 14,
+      "int": 8,
+      "wis": 12,
+      "cha": 14
+    },
+    "derived": {
+      "abilities": {
+        "str": 16,
+        "dex": 10,
+        "con": 15,
+        "int": 10,
+        "wis": 12,
+        "cha": 14
+      },
+      "proficiencyBonus": 2,
+      "hpMax": 14,
+      "ac": 18,
+      "speed": {
+        "walk": 25
+      }
+    }
+  },
+  "progression": [
+    {
+      "characterLevel": 1,
+      "class": "srd:class:sorcerer",
+      "classLevel": 1,
+      "hp": {
+        "method": "max",
+        "value": 6,
+        "die": "d6",
+        "forced": true
+      },
+      "choices": [
+        {
+          "id": "srd:class:sorcerer:skill-1",
+          "name": "Skill Proficiency",
+          "declaredBy": "srd:class:sorcerer",
+          "count": 2,
+          "picked": [],
+          "pending": true
+        },
+        {
+          "id": "srd:class:sorcerer:subclass",
+          "name": "Sorcerous Origin",
+          "declaredBy": "srd:class:sorcerer",
+          "count": 1,
+          "picked": [],
+          "pending": true
+        }
+      ],
+      "granted": [
+        {
+          "id": "srd:sorcerer:spellcasting",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:sorcerer"
+          ]
+        },
+        {
+          "id": "srd:sorcerer:sorcerous-origin",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:sorcerer"
+          ]
+        }
+      ]
+    },
+    {
+      "characterLevel": 2,
+      "class": "srd:class:sorcerer",
+      "classLevel": 2,
+      "hp": {
+        "method": "average",
+        "value": 4,
+        "die": "d6",
+        "forced": false
+      },
+      "choices": [],
+      "granted": [
+        {
+          "id": "srd:sorcerer:font-of-magic",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:sorcerer"
+          ]
+        },
+        {
+          "id": "srd:sorcerer:sorcery-points",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:sorcerer",
+            "srd:sorcerer:font-of-magic"
+          ]
+        },
+        {
+          "id": "srd:sorcerer:flexible-casting",
+          "kind": "class-feature",
+          "via": [
+            "srd:class:sorcerer",
+            "srd:sorcerer:font-of-magic"
+          ]
+        }
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "id": "srd:species:gnome:subspecies",
+      "name": "Subrace",
+      "declaredBy": "srd:species:gnome",
+      "count": 1,
+      "picked": [
+        "srd:subspecies:rock-gnome"
+      ],
+      "pending": false
+    },
+    {
+      "id": "srd:background:acolyte:language-1",
+      "name": "Language",
+      "declaredBy": "srd:background:acolyte",
+      "count": 2,
+      "picked": [
+        "srd:language:common",
+        "srd:language:dwarvish"
+      ],
+      "pending": false
+    }
+  ],
+  "features": [
+    {
+      "id": "srd:rock-gnome:artificers-lore",
+      "kind": "species-trait",
+      "name": "Artificer's Lore",
+      "source": "srd",
+      "page": "PHB 37",
+      "text": "Whenever you make an Intelligence (History) check related to magic items, alchemical objects, or technological devices, you can add twice your proficiency bonus, instead of any proficiency bonus you normally apply.",
+      "provenance": {
+        "via": [
+          "srd:species:gnome",
+          "srd:subspecies:rock-gnome"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:rock-gnome:tinker",
+      "kind": "species-trait",
+      "name": "Tinker",
+      "source": "srd",
+      "page": "PHB 37",
+      "text": "You have proficiency with artisan's tools (tinker's tools). Using those tools, you can spend 1 hour and 10 gp worth of materials to construct a Tiny clockwork device (AC 5, 1 hp). The device ceases to function after 24 hours (unless you spend 1 hour repairing it to keep the device functioning), or when you use your action to dismantle it; at that time, you can reclaim the materials used to create it. You can have up to three such devices active at a time.\n\nWhen you create a device, choose one of the following options:\n\n**Clockwork Toy.** This toy is a clockwork animal, monster, or person, such as a frog, mouse, bird, dragon, or soldier. When placed on the ground, the toy moves 5 feet across the ground on each of your turns in a random direction. It makes noises as appropriate to the creature it represents.\n\n**Fire Starter.** The device produces a miniature flame, which you can use to light a candle, torch, or campfire. Using the device requires your action.\n\n**Music Box.** When opened, this music box plays a single song at a moderate volume. The box stops playing when it reaches the song's end or when it is closed.",
+      "provenance": {
+        "via": [
+          "srd:species:gnome",
+          "srd:subspecies:rock-gnome"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:gnome:darkvision",
+      "kind": "species-trait",
+      "name": "Darkvision",
+      "source": "srd",
+      "page": "PHB 35",
+      "text": "Accustomed to life underground, you have superior vision in dark and dim conditions. You can see in dim light within 60 feet of you as if it were bright light, and in darkness as if it were dim light. You can't discern color in darkness, only shades of gray.",
+      "provenance": {
+        "via": [
+          "srd:species:gnome"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:gnome:gnome-cunning",
+      "kind": "species-trait",
+      "name": "Gnome Cunning",
+      "source": "srd",
+      "page": "PHB 35",
+      "text": "You have advantage on all Intelligence, Wisdom, and Charisma saving throws against magic.",
+      "provenance": {
+        "via": [
+          "srd:species:gnome"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:acolyte:shelter-of-the-faithful",
+      "kind": "background-feature",
+      "name": "Shelter of the Faithful",
+      "source": "srd",
+      "page": "PHB 127",
+      "text": "As an acolyte, you command the respect of those who share your faith, and you can perform the religious ceremonies of your deity. You and your adventuring companions can expect to receive free healing and care at a temple, shrine, or other established presence of your faith, though you must provide any material components needed for spells. Those who share your religion will support you (but only you) at a modest lifestyle.\n\nYou might also have ties to a specific temple dedicated to your chosen deity or pantheon, and you have a residence there. This could be the temple where you used to serve, if you remain on good terms with it, or a temple where you have found a new home. While near your temple, you can call upon the priests for assistance, provided the assistance you ask for is not hazardous and you remain in good standing with your temple.",
+      "provenance": {
+        "via": [
+          "srd:background:acolyte"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:sorcerer:spellcasting",
+      "kind": "class-feature",
+      "name": "Spellcasting",
+      "source": "srd",
+      "page": "PHB 99",
+      "text": "An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic. This font of magic, whatever its origin, fuels your spells. See chapter 10 for the general rules of spellcasting and chapter 11 for the sorcerer spell list.\n\n**Cantrips.** At 1st level, you know four cantrips of your choice from the sorcerer spell list. You learn an additional sorcerer cantrip of your choice at 4th level and another at 10th level.\n\n**Spell Slots.** The Sorcerer table shows how many spell slots you have to cast your sorcerer spells of 1st level and higher. To cast one of these sorcerer spells, you must expend a slot of the spell's level or higher. You regain all expended spell slots when you finish a long rest.\n\nFor example, if you know the 1st-level spell burning hands and have a 1st-level and a 2nd-level spell slot available, you can cast burning hands using either slot.\n\n**Spells Known of 1st Level and Higher.** You know two 1st-level spells of your choice from the sorcerer spell list.\n\nYou learn an additional sorcerer spell of your choice at each level except 12th, 14th, 16th, 18th, 19th, and 20th. Each of these spells must be of a level for which you have spell slots. For instance, when you reach 3rd level in this class, you can learn one new spell of 1st or 2nd level.\n\nAdditionally, when you gain a level in this class, you can choose one of the sorcerer spells you know and replace it with another spell from the sorcerer spell list, which also must be of a level for which you have spell slots.\n\n**Spellcasting Ability.** Charisma is your spellcasting ability for your sorcerer spells, since the power of your magic relies on your ability to project your will into the world. You use your Charisma whenever a spell refers to your spellcasting ability. In addition, you use your Charisma modifier when setting the saving throw DC for a sorcerer spell you cast and when making an attack roll with one.\n\n**Spell save DC** = 8 + your proficiency bonus + your Charisma modifier\n\n**Spell attack modifier** = your proficiency bonus + your Charisma modifier\n\n**Spellcasting Focus.** You can use an arcane focus as a spellcasting focus for your sorcerer spells.",
+      "provenance": {
+        "class": "srd:class:sorcerer",
+        "classLevel": 1,
+        "via": [
+          "srd:class:sorcerer"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:sorcerer:sorcerous-origin",
+      "kind": "class-feature",
+      "name": "Sorcerous Origin",
+      "source": "srd",
+      "page": "PHB 99",
+      "text": "Choose a sorcerous origin, which describes the source of your innate magical power, from the list of available origins.\n\nYour choice grants you features when you choose it at 1st level and again at 6th, 14th, and 18th level.",
+      "provenance": {
+        "class": "srd:class:sorcerer",
+        "classLevel": 1,
+        "via": [
+          "srd:class:sorcerer"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:sorcerer:font-of-magic",
+      "kind": "class-feature",
+      "name": "Font of Magic",
+      "source": "srd",
+      "page": "PHB 99",
+      "text": "At 2nd level, you tap into a deep wellspring of magic within yourself. This wellspring is represented by sorcery points, which allow you to create a variety of magical effects.",
+      "provenance": {
+        "class": "srd:class:sorcerer",
+        "classLevel": 2,
+        "via": [
+          "srd:class:sorcerer"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:sorcerer:sorcery-points",
+      "kind": "class-feature",
+      "name": "Sorcery Points",
+      "source": "srd",
+      "page": "PHB 99",
+      "text": "You have 2 sorcery points, and you gain one additional point every time you level up, to a maximum of 20 at level 20. You can never have more sorcery points than shown on the table for your level. You regain all spent sorcery points when you finish a long rest.",
+      "provenance": {
+        "class": "srd:class:sorcerer",
+        "classLevel": 2,
+        "via": [
+          "srd:class:sorcerer",
+          "srd:sorcerer:font-of-magic"
+        ]
+      },
+      "parts": []
+    },
+    {
+      "id": "srd:sorcerer:flexible-casting",
+      "kind": "class-feature",
+      "name": "Flexible Casting",
+      "source": "srd",
+      "page": "PHB 99",
+      "text": "You can use your sorcery points to gain additional spell slots, or sacrifice spell slots to gain additional sorcery points. You learn other ways to use your sorcery points as you reach higher levels.\n\n**Creating Spell Slots.** You can transform unexpended sorcery points into one spell slot as a bonus action on your turn. The created spell slots vanish at the end of a long rest. The Creating Spell Slots table shows the cost of creating a spell slot of a given level. You can create spell slots no higher in level than 5th.\n\n**Creating Spell Slots**\n| Spell Slot Level | Sorcery Point Cost |\n| --- | --- |\n| 1st | 2 |\n| 2nd | 3 |\n| 3rd | 5 |\n| 4th | 6 |\n| 5th | 7 |\n\n**Converting a Spell Slot to Sorcery Points.** As a bonus action on your turn, you can expend one spell slot and gain a number of sorcery points equal to the slot's level.",
+      "provenance": {
+        "class": "srd:class:sorcerer",
+        "classLevel": 2,
+        "via": [
+          "srd:class:sorcerer",
+          "srd:sorcerer:font-of-magic"
+        ]
+      },
+      "parts": []
+    }
+  ],
+  "resources": [],
+  "spells": [
+    {
+      "id": "srd:spell:dancing-lights",
+      "name": "Dancing Lights",
+      "level": 0,
+      "school": "evocation",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:fire-bolt",
+      "name": "Fire Bolt",
+      "level": 0,
+      "school": "evocation",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:message",
+      "name": "Message",
+      "level": 0,
+      "school": "transmutation",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:minor-illusion",
+      "name": "Minor Illusion",
+      "level": 0,
+      "school": "illusion",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:mage-armor",
+      "name": "Mage Armor",
+      "level": 1,
+      "school": "abjuration",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:magic-missile",
+      "name": "Magic Missile",
+      "level": 1,
+      "school": "evocation",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:alter-self",
+      "name": "Alter Self",
+      "level": 2,
+      "school": "transmutation",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    },
+    {
+      "id": "srd:spell:blur",
+      "name": "Blur",
+      "level": 2,
+      "school": "illusion",
+      "source": "srd",
+      "class": "srd:class:sorcerer",
+      "known": false,
+      "prepared": false,
+      "alwaysPrepared": false,
+      "extra": false
+    }
+  ],
+  "spellcasting": {
+    "classes": [
+      {
+        "class": "srd:class:sorcerer",
+        "ability": "cha",
+        "type": "known",
+        "progression": "full",
+        "dc": 12,
+        "attack": 4
+      }
+    ],
+    "slots": [
+      {
+        "level": 1,
+        "max": 3
+      }
+    ]
+  },
+  "inventory": {
+    "items": [
+      {
+        "uid": "legacy-1",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:longsword",
+        "name": "Longsword",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "legacy-2",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:chain-mail",
+        "name": "Chain Mail",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "legacy-3",
+        "quantity": 1,
+        "equipped": true,
+        "attuned": false,
+        "ref": "srd:item:shield",
+        "name": "Shield",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "legacy-4",
+        "quantity": 2,
+        "equipped": false,
+        "attuned": false,
+        "ref": "srd:item:potion-of-healing",
+        "name": "Potion of Healing",
+        "kind": "item",
+        "source": "srd",
+        "resolved": true
+      },
+      {
+        "uid": "legacy-5",
+        "quantity": 1,
+        "equipped": false,
+        "attuned": false,
+        "ref": "srd:item:holy-symbol",
+        "name": "srd:item:holy-symbol",
+        "resolved": false,
+        "reason": "\"srd:item:holy-symbol\" is not in any loaded source"
+      },
+      {
+        "uid": "legacy-6",
+        "quantity": 1,
+        "equipped": false,
+        "attuned": false,
+        "notes": "Not yet attuned to the oath.",
+        "custom": {
+          "id": "custom:item:forge-token",
+          "kind": "item",
+          "name": "Forge Token of Moradin",
+          "source": "custom",
+          "weight": 0.2,
+          "requiresEquipped": true,
+          "text": "A thumb of hammered iron, still warm. A keepsake from the temple forge.",
+          "modifiers": [
+            {
+              "target": "saves.all",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        "name": "Forge Token of Moradin",
+        "kind": "item",
+        "resolved": true
+      }
+    ],
+    "currency": {
+      "cp": 0,
+      "sp": 4,
+      "ep": 0,
+      "gp": 15,
+      "pp": 0
+    }
+  },
+  "details": {
+    "sections": [
+      {
+        "heading": "Backstory",
+        "text": "Raised in the temple forge at Hammerfall, Ilsa learned that an oath, like a weld, holds\nonly if you heat both sides of it. See Ilsa backstory for the long version."
+      },
+      {
+        "heading": "Personality Traits",
+        "text": "Quiet until the forge is lit. Speaks in finished sentences or not at all."
+      },
+      {
+        "heading": "Ideals",
+        "text": "Duty. A promise spoken aloud is already half a debt."
+      },
+      {
+        "heading": "Bonds",
+        "text": "The temple that raised her, and the apprentice she left behind to finish her work."
+      },
+      {
+        "heading": "Flaws",
+        "text": "Mistakes stubbornness for conviction, and only notices afterwards."
+      },
+      {
+        "heading": "Appearance",
+        "text": "Four foot nine, grey-eyed, with a smith's forearms and a burn scar shaped like a rune\nshe will not explain."
+      },
+      {
+        "heading": "Notes",
+        "text": ""
+      }
+    ]
+  },
+  "diagnostics": [
+    {
+      "severity": "warning",
+      "code": "unresolved-reference",
+      "message": "Inventory item \"srd:item:holy-symbol\" is not in any loaded source",
+      "subject": "srd:item:holy-symbol"
+    },
+    {
+      "severity": "warning",
+      "code": "spells-over-limit",
+      "message": "Sorcerer has 4 spells known, more than the 3 it allows",
+      "subject": "srd:class:sorcerer"
+    },
+    {
+      "severity": "warning",
+      "code": "spell-level-too-high",
+      "message": "Alter Self is level 2; Sorcerer can learn up to level 1",
+      "subject": "srd:spell:alter-self"
+    },
+    {
+      "severity": "warning",
+      "code": "spell-level-too-high",
+      "message": "Blur is level 2; Sorcerer can learn up to level 1",
+      "subject": "srd:spell:blur"
+    }
+  ]
+}

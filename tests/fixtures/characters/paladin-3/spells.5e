@@ -1,0 +1,10 @@
+{
+  "kind": "spells",
+  "schemaVersion": 1,
+  "spells": [
+    { "id": "srd:spell:bless", "class": "srd:class:paladin", "prepared": true },
+    { "id": "srd:spell:cure-wounds", "class": "srd:class:paladin", "prepared": true },
+    { "id": "srd:spell:command", "class": "srd:class:paladin" },
+    { "id": "srd:spell:shield-of-faith", "extra": true }
+  ]
+}

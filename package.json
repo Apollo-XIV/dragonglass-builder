@@ -13,7 +13,9 @@
     "validate": "tsx src/cli/validate.ts",
     "bundle:content": "node scripts/bundle-content.mjs",
     "srd:outline": "node scripts/srd.mjs outline",
-    "srd:section": "node scripts/srd.mjs section"
+    "srd:section": "node scripts/srd.mjs section",
+    "export:schema": "tsx scripts/export-schema.ts",
+    "export": "tsx src/cli/export.ts"
   },
   "keywords": [
     "obsidian",
@@ -35,6 +37,7 @@
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
+    "@sinclair/typebox": "^0.34.52",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }
