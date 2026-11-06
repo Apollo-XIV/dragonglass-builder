@@ -45,9 +45,9 @@ import {
   type LiveState,
   type PoolRule,
 } from "../state/fold";
+import { hitPointLevels } from "./hit-points";
 import { collect, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
-  averageForDie,
   casterLevel,
   maxForDie,
   pactSlots,
@@ -317,6 +317,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
       temp: live?.tempHp ?? 0,
       tempMax,
       hitDice,
+      levels: hitPointLevels(build, dieForClass(collected)),
     },
     ac,
     initiative,
@@ -465,24 +466,23 @@ function hitPointBase(
   engine: StatEngine,
 ): { value: number; rows: Contribution[] } {
   const con = engine.abilityMod("con");
+  const dieOf = dieForClass(collected);
   const rows: Contribution[] = [];
   const perClass = new Map<string, { name: string; total: number; levels: number }>();
   let total = 0;
 
-  (build.levels ?? []).forEach((lvl, i) => {
-    const cls = collected.classLevels.find((c) => c.id === lvl?.class)?.element as ClassElement | undefined;
-    const die = String(cls?.hitDie ?? "d8");
-    const rolled = i === 0 ? maxForDie(die) : hpForChoice(lvl?.hp, die);
-    const gained = Math.max(1, rolled + con);
+  hitPointLevels(build, dieOf).forEach((level) => {
+    const cls = collected.classLevels.find((c) => c.id === level.class)?.element as ClassElement | undefined;
+    const gained = Math.max(1, level.value + con);
     total += gained;
-    const bucket = perClass.get(lvl?.class ?? "?") ?? {
-      name: cls?.name ?? lvl?.class ?? "Unknown class",
+    const bucket = perClass.get(level.class ?? "?") ?? {
+      name: cls?.name ?? level.class ?? "Unknown class",
       total: 0,
       levels: 0,
     };
     bucket.total += gained;
     bucket.levels += 1;
-    perClass.set(lvl?.class ?? "?", bucket);
+    perClass.set(level.class ?? "?", bucket);
   });
 
   for (const [id, bucket] of perClass)
@@ -497,10 +497,11 @@ function hitPointBase(
   return { value: total, rows };
 }
 
-function hpForChoice(choice: BuildFile["levels"][number]["hp"] | undefined, die: string): number {
-  if (typeof choice === "number") return choice;
-  if (choice === "max") return maxForDie(die);
-  return averageForDie(die);
+function dieForClass(collected: CollectResult): (classId: string) => string {
+  return (classId) => {
+    const cls = collected.classLevels.find((c) => c.id === classId)?.element as ClassElement | undefined;
+    return String(cls?.hitDie ?? "d8");
+  };
 }
 
 // ---------------------------------------------------------------------------

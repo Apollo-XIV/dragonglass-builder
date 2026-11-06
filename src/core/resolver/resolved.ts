@@ -21,6 +21,9 @@ import type {
   SpellEntry,
   When,
 } from "../types";
+import type { HpLevel } from "./hit-points";
+
+export type { HpLevel } from "./hit-points";
 
 /** Where an element came from, innermost last: ["srd:class:paladin", "srd:paladin:spellcasting"]. */
 export type Origin = string[];
@@ -119,6 +122,8 @@ export interface ResolvedHp {
   temp: number;
   tempMax: number;
   hitDice: HitDicePool[];
+  /** What each level contributed before CON, in build order. */
+  levels: HpLevel[];
 }
 
 export interface ResolvedResource {
