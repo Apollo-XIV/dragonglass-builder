@@ -1,0 +1,1 @@
+{"name":"trystero-spike-throwaway","private":true,"type":"module","dependencies":{"@trystero-p2p/mqtt":"^0.26.0","@trystero-p2p/torrent":"^0.26.0","esbuild":"^0.25.0","trystero":"0.26.0"}}

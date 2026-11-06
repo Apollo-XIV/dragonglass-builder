@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import { CharacterStore } from "../src/obsidian/character-store";
@@ -6,6 +7,8 @@ import {
   embedReader,
   exportDocument,
   exportFileName,
+  exportText,
+  summariseExport,
   unsavedWarning,
   writeExport,
   type ExportDeps,
@@ -173,7 +176,7 @@ describe("writeExport", () => {
     const doc = await exportDocument(store, deps());
     const adapter = new MemoryAdapter();
     const path = await writeExport(adapter as never, "Exports", doc);
-    expect(path).toBe("Exports/Brann Ironvow.json");
+    expect(path).toBe("Exports/Brann Ironvow.5echar");
     expect(adapter.folders.has("Exports")).toBe(true);
     expect(JSON.parse(adapter.files.get(path)!).identity.name).toBe("Brann Ironvow");
   });
@@ -189,9 +192,9 @@ describe("writeExport", () => {
   });
 
   it("keeps a name safe as a file name", () => {
-    expect(exportFileName('A/B: "C"?')).toBe("A-B- -C--.json");
-    expect(exportFileName("  ")).toBe("Character.json");
-    expect(exportFileName("../x")).toBe("-x.json");
+    expect(exportFileName('A/B: "C"?')).toBe("A-B- -C--.5echar");
+    expect(exportFileName("  ")).toBe("Character.5echar");
+    expect(exportFileName("../x")).toBe("-x.5echar");
   });
 });
 
@@ -226,5 +229,18 @@ describe("embedReader", () => {
     expect(await read("Nope")).toBeUndefined();
     expect(await read("Note#Absent")).toBeUndefined();
     expect(await read("pic.png")).toBeUndefined();
+  });
+});
+
+describe("summariseExport", () => {
+  it("reads the name, id, version and time", () => {
+    const text = exportText(JSON.parse(readFileSync(join(__dirname, "fixtures/exports/paladin-3.json"), "utf8")));
+    const s = summariseExport(text);
+    expect(s).toMatchObject({ ok: true, name: "Brann Ironvow", schemaVersion: "1.1" });
+    expect(s.ok && s.characterId).toBeTruthy();
+  });
+  it("says so for text that is not an export", () => {
+    expect(summariseExport("nope").ok).toBe(false);
+    expect(summariseExport("{}").ok).toBe(false);
   });
 });

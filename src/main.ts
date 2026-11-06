@@ -1,4 +1,4 @@
-import { Notice, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import { Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import type { ContentIndex } from "./core/content";
 import type { FileKind, SourceRef, SourcesFile } from "./core/types";
 import { CharacterStore } from "./obsidian/character-store";
@@ -14,7 +14,16 @@ import {
   folderOf,
   serialiseJson,
 } from "./obsidian/character-files";
-import { ExportError, embedReader, exportDocument, unsavedWarning, writeExport } from "./obsidian/export-character";
+import {
+  EXPORT_EXTENSION,
+  ExportError,
+  embedReader,
+  exportDocument,
+  exportText,
+  unsavedWarning,
+  writeExport,
+} from "./obsidian/export-character";
+import { EXPORT_VIEW, ExportFileView } from "./obsidian/export-view";
 import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
@@ -62,6 +71,11 @@ export default class DragonglassPlugin extends Plugin {
     this.registerView(DRAGONGLASS_VIEW, (leaf) => new DragonglassFileView(leaf, this));
     this.registerExtensions(["5e"], DRAGONGLASS_VIEW);
 
+    // Exports get an extension of their own: Obsidian lists no .json file, and
+    // registering .json would take every other one in the vault.
+    this.registerView(EXPORT_VIEW, (leaf) => new ExportFileView(leaf));
+    this.registerExtensions([EXPORT_EXTENSION], EXPORT_VIEW);
+
     this.addSettingTab(new DragonglassSettingTab(this.app, this));
 
     const newCharacter = () =>
@@ -99,6 +113,17 @@ export default class DragonglassPlugin extends Plugin {
         const file = this.app.workspace.getActiveFile();
         if (!file || file.extension !== "5e") return false;
         if (!checking) void this.exportCharacter(folderOf(file.path), file.path);
+        return true;
+      },
+    });
+
+    this.addCommand({
+      id: "export-character-to-clipboard",
+      name: "Export character to clipboard",
+      checkCallback: (checking) => {
+        const file = this.app.workspace.getActiveFile();
+        if (!file || file.extension !== "5e") return false;
+        if (!checking) void this.exportCharacter(folderOf(file.path), file.path, "clipboard");
         return true;
       },
     });
@@ -156,8 +181,11 @@ export default class DragonglassPlugin extends Plugin {
     }, 800);
   }
 
-  /** Writes the character's export into the configured folder and says where it went. */
-  async exportCharacter(folder: string, fromPath: string): Promise<void> {
+  /**
+   * Builds the character's export and puts it in the configured folder or on the
+   * clipboard. Both are the same validated document.
+   */
+  async exportCharacter(folder: string, fromPath: string, to: "file" | "clipboard" = "file"): Promise<void> {
     const store = await this.acquireStore(folder);
     try {
       const warning = unsavedWarning(store);
@@ -168,14 +196,37 @@ export default class DragonglassPlugin extends Plugin {
         exportedAt: new Date().toISOString(),
         pluginVersion: this.manifest.version,
       });
+      if (to === "clipboard") {
+        await navigator.clipboard.writeText(exportText(doc));
+        new Notice(`Copied ${doc.identity.name} to the clipboard`);
+        return;
+      }
       const path = await writeExport(this.app.vault.adapter, this.settings.exportFolder, doc);
-      new Notice(`Exported ${doc.identity.name} to ${path}`);
+      this.noticeExported(doc.identity.name, path);
     } catch (e) {
       const lines = e instanceof ExportError ? e.lines : [];
       new Notice([`Export failed: ${e instanceof Error ? e.message : String(e)}`, ...lines].join("\n"), 10000);
     } finally {
       this.releaseStore(folder);
     }
+  }
+
+  /**
+   * "Show in folder" is Electron's, reached through an app method the public API does
+   * not declare. So it is offered only on desktop and only where the method exists.
+   */
+  private noticeExported(name: string, path: string): void {
+    const app = this.app as unknown as { showInFolder?: (path: string) => void };
+    const notice = new Notice(`Exported ${name} to ${path}`, 10000);
+    if (!Platform.isDesktopApp || typeof app.showInFolder !== "function") return;
+    notice.messageEl.createEl("button", { text: "Show in folder" }).addEventListener("click", () => {
+      try {
+        app.showInFolder?.(path);
+      } catch {
+        new Notice("Could not open the folder");
+      }
+      notice.hide();
+    });
   }
 
   /** Drops every cached index so the next resolve picks up new content. */

@@ -1,0 +1,89 @@
+{"who":"ffA","t":0,"msg":"start","extra":{"role":"vault","selfId":"2YzvrA7jqUSjp62iAGFl","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ffA","t":2,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ffB","t":1,"msg":"start","extra":{"role":"foundry","selfId":"16xQzIXcUBh6q8NrA6sV","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ffB","t":2,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ffA","t":4806,"msg":"peerJoin","extra":{"peerId":"16xQzIXcUBh6q8NrA6sV","t":4806}}
+{"who":"ffB","t":683,"msg":"peerJoin","extra":{"peerId":"2YzvrA7jqUSjp62iAGFl","t":683}}
+{"who":"ffB","t":684,"msg":"rpc listCharacters ok","extra":{"list":[{"id":"ilsa","name":"Ilsa"}],"ms":1}}
+{"who":"ffA","t":40002,"msg":"TIMEOUT: no peer","extra":{"waitMs":40000}}
+{"who":"---","msg":"STRATEGY mqtt"}
+{"who":"ff-mqtt-A","t":0,"msg":"start","extra":{"role":"vault","selfId":"BHFJoqwXobDVznEVrQoc","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ff-mqtt-A","t":22,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ff-mqtt-B","t":0,"msg":"start","extra":{"role":"foundry","selfId":"jyWiYedXu4uPAtVgYWlv","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ff-mqtt-B","t":27,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ff-mqtt-A","t":3749,"msg":"peerJoin","extra":{"peerId":"jyWiYedXu4uPAtVgYWlv","t":3749}}
+{"who":"ff-mqtt-B","t":723,"msg":"peerJoin","extra":{"peerId":"BHFJoqwXobDVznEVrQoc","t":723}}
+{"who":"ff-mqtt-B","t":725,"msg":"rpc listCharacters ok","extra":{"list":[{"id":"ilsa","name":"Ilsa"}],"ms":1}}
+{"who":"ff-mqtt-A","t":30305,"msg":"TIMEOUT: no peer","extra":{"waitMs":30000}}
+{"who":"---","msg":"STRATEGY torrent"}
+{"who":"ff-torrent-A","t":0,"msg":"start","extra":{"role":"vault","selfId":"f1G1Juj6afOr7tWC4z9p","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ff-torrent-A","t":4,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ff-torrent-B","t":1,"msg":"start","extra":{"role":"foundry","selfId":"3KA7eUDcwhqlrphI6rRB","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ff-torrent-B","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"ff-torrent-A","t":3983,"msg":"peerJoin","extra":{"peerId":"3KA7eUDcwhqlrphI6rRB","t":3983}}
+{"who":"ff-torrent-B","t":725,"msg":"peerJoin","extra":{"peerId":"f1G1Juj6afOr7tWC4z9p","t":725}}
+{"who":"ff-torrent-B","t":726,"msg":"rpc listCharacters ok","extra":{"list":[{"id":"ilsa","name":"Ilsa"}],"ms":1}}
+{"who":"ff-torrent-A","t":30016,"msg":"TIMEOUT: no peer","extra":{"waitMs":30000}}
+{"who":"obsidian","t":6,"msg":"view open","extra":{"mobile":false,"platform":"Linux x86_64","csp":true}}
+{"who":"obsidian","t":10,"msg":"start","extra":{"role":"vault","selfId":"qiamXJLhE8zg7PkfMjX3","ua":"Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) obsidian/1.14.5 Chrome/150.0.7871.250 Electron/43.8.3 Safari/537.36"}}
+{"who":"obsidian","t":20,"msg":"joinRoom returned (signalling is async)"}
+{"who":"---","msg":"OBSIDIAN(vault) <-> Firefox(foundry), nostr"}
+{"who":"ff-foundry","t":0,"msg":"start","extra":{"role":"foundry","selfId":"7CCS6hPNrNpPLt6x9RLg","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"ff-foundry","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"obsidian","t":6987,"msg":"peerJoin","extra":{"peerId":"7CCS6hPNrNpPLt6x9RLg","t":6987}}
+{"who":"ff-foundry","t":817,"msg":"peerJoin","extra":{"peerId":"qiamXJLhE8zg7PkfMjX3","t":817}}
+{"who":"ff-foundry","t":822,"msg":"rpc listCharacters ok","extra":{"list":[{"id":"ilsa","name":"Ilsa"}],"ms":4}}
+{"who":"obsidian","t":45969,"msg":"peerLeave","extra":{"peerId":"7CCS6hPNrNpPLt6x9RLg"}}
+{"who":"---","msg":"CASE wrong-password"}
+{"who":"A","t":0,"msg":"start","extra":{"role":"vault","selfId":"8eF56Ijd6p0TjLNVL6MP","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"A","t":2,"msg":"joinRoom returned (signalling is async)"}
+{"who":"B","t":0,"msg":"start","extra":{"role":"foundry","selfId":"2pIrWJp7xIqAuuvTSouZ","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"B","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"A","t":2887,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":2993,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":3324,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":4884,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":4984,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":5256,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":9678,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":9779,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":10126,"msg":"onJoinError","extra":{"error":"incorrect room password when decrypting offer","appId":"dragonglass-spike-0001","peerId":"2pIrWJp7xIqAuuvTSouZ","roomId":"pair-sharedpf"}}
+{"who":"A","t":25003,"msg":"TIMEOUT: no peer","extra":{"waitMs":25000}}
+{"who":"B","t":25003,"msg":"TIMEOUT: no peer","extra":{"waitMs":25000}}
+{"who":"---","msg":"CASE relay-only-no-turn"}
+{"who":"A","t":0,"msg":"start","extra":{"role":"vault","selfId":"TDH5FUbP7IFmLA2SxXnU","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"A","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"B","t":0,"msg":"start","extra":{"role":"foundry","selfId":"jHsBkFp1ZlKdYadpv1GR","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"B","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"B","t":464,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"B","t":492,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":3543,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":783,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":3842,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":1086,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":4258,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":1581,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":4743,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":2536,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":5587,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":2759,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":5929,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":4913,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":7965,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":5256,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":8428,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":7852,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":10903,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":8136,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":11308,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"B","t":11692,"msg":"onJoinError","extra":{"error":"could not connect to peer TDH5FUbP7IFmLA2SxXnU after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"TDH5FUbP7IFmLA2SxXnU","roomId":"pair-relaypfx"}}
+{"who":"A","t":14764,"msg":"onJoinError","extra":{"error":"could not connect to peer jHsBkFp1ZlKdYadpv1GR after exchanging SDP; configure TURN servers with turnConfig or rtcConfig.iceServers","appId":"dragonglass-spike-0001","peerId":"jHsBkFp1ZlKdYadpv1GR","roomId":"pair-relaypfx"}}
+{"who":"A","t":40004,"msg":"TIMEOUT: no peer","extra":{"waitMs":40000}}
+{"who":"B","t":40004,"msg":"TIMEOUT: no peer","extra":{"waitMs":40000}}
+{"who":"---","msg":"CASE dead-relays"}
+{"who":"A","t":0,"msg":"start","extra":{"role":"vault","selfId":"2U0eWzc5jYxxb939yXu4","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"A","t":3,"msg":"joinRoom returned (signalling is async)"}
+{"who":"B","t":0,"msg":"start","extra":{"role":"foundry","selfId":"7cS2B66I0mRJDj8HQFlH","ua":"Mozilla/5.0 (X11; Linux x86_64; rv:158.0) Gecko/20100101 Firefox/158.0"}}
+{"who":"B","t":2,"msg":"joinRoom returned (signalling is async)"}
+{"who":"A","t":20003,"msg":"TIMEOUT: no peer","extra":{"waitMs":20000}}
+{"who":"B","t":20003,"msg":"TIMEOUT: no peer","extra":{"waitMs":20000}}

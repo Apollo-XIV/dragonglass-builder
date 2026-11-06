@@ -4637,3 +4637,8 @@
     animation: none;
   }
 }
+
+.dg-export-view { padding: var(--size-4-6); max-width: 40rem; }
+.dg-export-view dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--size-4-1) var(--size-4-4); }
+.dg-export-view dt { color: var(--text-muted); }
+.dg-export-view dd { margin: 0; user-select: text; word-break: break-all; }

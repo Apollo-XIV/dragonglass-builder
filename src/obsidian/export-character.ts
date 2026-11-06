@@ -36,7 +36,7 @@ export function unsavedWarning(store: CharacterStore): string | undefined {
 
 /**
  * Builds and validates the document from what is saved, not from what the builder
- * is holding. Entries without ids are given them first and those are written.
+ * is holding. A character missing an id is refused, never given one.
  */
 export async function exportDocument(store: CharacterStore, deps: ExportDeps): Promise<ExportDocument> {
   if (store.idProblems.length) throw new ExportError(store.idProblems[0], store.idProblems.slice(1));
@@ -79,10 +79,47 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
   return doc;
 }
 
+/**
+ * Not `.json`: Obsidian shows no file with that extension, and claiming it would take
+ * every other JSON file in the vault. The content is plain JSON all the same.
+ */
+export const EXPORT_EXTENSION = "5echar";
+
+/** The text of an export, for a file and for the clipboard alike. */
+export function exportText(doc: ExportDocument): string {
+  return JSON.stringify(doc, null, 2) + "\n";
+}
+
+/** What the export file's view shows about it, or why it cannot. */
+export type ExportSummary =
+  | { ok: true; name: string; characterId: string; schemaVersion: string; exportedAt: string }
+  | { ok: false; error: string };
+
+export function summariseExport(text: string): ExportSummary {
+  let doc: unknown;
+  try {
+    doc = JSON.parse(text);
+  } catch {
+    return { ok: false, error: "This file is not valid JSON." };
+  }
+  const d = doc as Partial<ExportDocument> | null;
+  const str = (v: unknown) => (typeof v === "string" ? v : "");
+  const name = str(d?.identity?.name);
+  const characterId = str(d?.envelope?.characterId);
+  if (!name || !characterId) return { ok: false, error: "This file is not a character export." };
+  return {
+    ok: true,
+    name,
+    characterId,
+    schemaVersion: str(d?.envelope?.schemaVersion),
+    exportedAt: str(d?.envelope?.exportedAt),
+  };
+}
+
 /** A file name from a character's name: no path separators, nothing a filesystem refuses. */
 export function exportFileName(name: string): string {
   const safe = name.replace(/[\\/:*?"<>|#^[\]]/g, "-").replace(/\s+/g, " ").trim().replace(/^\.+/, "");
-  return `${safe || "Character"}.json`;
+  return `${safe || "Character"}.${EXPORT_EXTENSION}`;
 }
 
 export async function writeExport(
@@ -97,7 +134,7 @@ export async function writeExport(
     if (!(await adapter.exists(current))) await adapter.mkdir(current);
   }
   const path = normalizePath(`${dir}/${exportFileName(doc.identity.name)}`);
-  await adapter.write(path, JSON.stringify(doc, null, 2) + "\n");
+  await adapter.write(path, exportText(doc));
   return path;
 }
 
