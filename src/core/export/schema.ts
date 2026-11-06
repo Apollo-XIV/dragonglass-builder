@@ -268,11 +268,7 @@ export const ExportSpellcasting = Type.Object({
 // -- inventory ----------------------------------------------------------------
 
 export const ExportItem = Type.Object({
-  uid: Type.String({
-    minLength: 1,
-    description:
-      "This entry's own id, unique in the inventory. An inventory the plugin has not saved since entries gained ids exports provisional `legacy-N` ids, which change once it is.",
-  }),
+  uid: Type.String({ minLength: 1, description: "This entry's own id, unique in the inventory." }),
   ref: Type.Optional(Type.String({ description: "The element id, for an item from content." })),
   custom: Type.Optional(Obj),
   name: Type.String(),

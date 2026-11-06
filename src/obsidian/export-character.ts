@@ -39,12 +39,10 @@ export function unsavedWarning(store: CharacterStore): string | undefined {
  * is holding. Entries without ids are given them first and those are written.
  */
 export async function exportDocument(store: CharacterStore, deps: ExportDeps): Promise<ExportDocument> {
+  if (store.idProblems.length) throw new ExportError(store.idProblems[0], store.idProblems.slice(1));
   if (!store.savedData().build) throw new ExportError("This character has no build file to export");
   if (!store.index) throw new ExportError("The character's content has not loaded yet");
 
-  // Ids are given when an inventory is saved, so an old one gets them now, by
-  // the player's own action, and the file and the export agree on them.
-  store.saveInventoryIds();
   const saved = store.savedData();
   const build = saved.build!;
 
@@ -58,7 +56,7 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
   let doc: ExportDocument;
   try {
     doc = await buildExport({
-      characterId: store.ensureCharacterId(),
+      characterId: saved.sheet!.id,
       content: store.index,
       build,
       spells: saved.spells,

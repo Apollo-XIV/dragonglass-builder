@@ -4,6 +4,7 @@
  */
 
 import { useState, type ReactNode } from "react";
+import { appendInventoryEntry } from "../../../../core/inventory";
 import { levelForXp, setLevelHp } from "../../../../core/resolver/levels";
 import { averageForDie, maxForDie } from "../../../../core/resolver/spellslots";
 import type { HpChoice } from "../../../../core/types";
@@ -107,11 +108,9 @@ export function CustomItemForm({ store, close }: { store: CharacterStore; close:
   const create = (): void => {
     const file = store.data.inventory ?? { kind: "inventory" as const, schemaVersion: 1, items: [] };
     const id = `custom:item:${name.toLowerCase().replace(/[^a-z0-9]+/g, "-") || "item"}`;
-    store.update("inventory", {
-      ...file,
-      items: [
-        ...file.items,
-        {
+    store.update(
+      "inventory",
+      appendInventoryEntry(file, {
           item: {
             id,
             kind: "item",
@@ -124,9 +123,8 @@ export function CustomItemForm({ store, close }: { store: CharacterStore; close:
           },
           quantity: 1,
           equipped: false,
-        },
-      ],
-    });
+        }),
+    );
     close();
   };
 

@@ -1311,7 +1311,7 @@
             "properties": {
               "uid": {
                 "minLength": 1,
-                "description": "This entry's own id, unique in the inventory. An inventory the plugin has not saved since entries gained ids exports provisional `legacy-N` ids, which change once it is.",
+                "description": "This entry's own id, unique in the inventory.",
                 "type": "string"
               },
               "ref": {

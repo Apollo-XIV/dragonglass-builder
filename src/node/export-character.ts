@@ -1,6 +1,6 @@
 /**
- * Exports a character folder from disk. A sheet with no id falls back to the folder
- * name, since nothing here may write; the plugin's Export character gives it one.
+ * Exports a character folder from disk. A character missing its id or an
+ * inventory uid is refused.
  * For the export CLI and the golden tests; the
  * plugin builds the same document from its own store.
  */
@@ -8,6 +8,7 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { ContentIndex } from "../core/content";
+import { idProblems } from "../core/character-id";
 import { buildExport, contentHash, splitDetails, toPlainText, type ExportDocument } from "../core/export";
 import type { BuildFile, InventoryFile, SheetFile, SpellsFile } from "../core/types";
 import { loadSourceFromDisk, readSourceBundle } from "./load-source";
@@ -30,6 +31,10 @@ export async function exportFromDisk(opts: ExportFromDiskOptions): Promise<Expor
     const p = join(opts.characterDir, name);
     return existsSync(p) ? (JSON.parse(readFileSync(p, "utf8")) as T) : undefined;
   };
+  const sheet = read<SheetFile>("sheet.5e");
+  const inventory = read<InventoryFile>("inventory.5e");
+  const problems = idProblems(sheet, inventory);
+  if (problems.length) throw new Error(`${opts.characterDir}: ${problems.join(" ")}`);
   const build = read<BuildFile>("build.5e");
   if (!build) throw new Error(`No build.5e in ${opts.characterDir}`);
 
@@ -48,11 +53,11 @@ export async function exportFromDisk(opts: ExportFromDiskOptions): Promise<Expor
     : [];
 
   return buildExport({
-    characterId: read<SheetFile>("sheet.5e")?.id ?? opts.characterDir.replace(/\/+$/, "").split("/").pop()!,
+    characterId: sheet!.id,
     content,
     build,
     spells: read<SpellsFile>("spells.5e"),
-    inventory: read<InventoryFile>("inventory.5e"),
+    inventory,
     details,
     exportedAt: opts.exportedAt,
     pluginVersion: opts.pluginVersion,

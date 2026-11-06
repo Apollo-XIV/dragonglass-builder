@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { resolve } from "../src/core/resolver/resolve";
 import type { Element, InventoryFile, StateFile } from "../src/core/types";
-import { build, scores, testIndex, TEST_BOOK } from "./helpers";
+import { build, scores, testIndex, TEST_BOOK, withUids } from "./helpers";
 
 const CLASS_FIGHTER: Element = {
   id: "test:class:fighter",
@@ -692,8 +692,8 @@ describe("inventory", () => {
     },
   ]);
 
-  function inv(items: InventoryFile["items"]): InventoryFile {
-    return { kind: "inventory", schemaVersion: 1, items, currency: { gp: 15 } };
+  function inv(items: Omit<InventoryFile["items"][number], "uid">[]): InventoryFile {
+    return { kind: "inventory", schemaVersion: 1, items: withUids(items), currency: { gp: 15 } };
   }
 
   it("only applies an item's modifiers when it is equipped", () => {

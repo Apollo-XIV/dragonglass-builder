@@ -591,11 +591,10 @@ export interface SpellsFile extends CharacterFile {
 
 export interface InventoryEntry {
   /**
-   * This entry's own id, stable for the life of the entry and unique within the file.
-   * `container` points at it. Absent on files written before it existed; it is given
-   * the next time the inventory is saved, never on load.
+   * This entry's own id, given when it is added; stable for the life of the entry and
+   * unique within the file. `container` points at it. Required.
    */
-  uid?: string;
+  uid: string;
   /** Reference to source content. Mutually exclusive with `item`. */
   id?: string;
   /** An inline custom item, same element format as source content. */
@@ -636,11 +635,8 @@ export interface SourcesFile extends CharacterFile {
 
 export interface SheetFile extends CharacterFile {
   kind: "sheet";
-  /**
-   * A UUID that names this character for good, whatever its folder is called.
-   * Characters made before it existed gain one on their next save.
-   */
-  id?: string;
+  /** A UUID, made when the character is created, that names it whatever its folder is called. Required. */
+  id: string;
   name?: string;
   /** Data type -> file path, relative to the manifest. Absent entries use defaults. */
   files?: Partial<Record<Exclude<FileKind, "sheet">, string>>;

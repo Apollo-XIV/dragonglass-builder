@@ -64,10 +64,10 @@ const inventory: InventoryFile = {
   kind: "inventory",
   schemaVersion: 1,
   items: [
-    { id: "srd:item:longsword", equipped: true },
-    { id: "srd:item:chain-mail", equipped: true },
-    { id: "srd:item:shield", equipped: true },
-    { id: "srd:item:potion-of-healing", quantity: 2 },
+    { uid: "i1", id: "srd:item:longsword", equipped: true },
+    { uid: "i2", id: "srd:item:chain-mail", equipped: true },
+    { uid: "i3", id: "srd:item:shield", equipped: true },
+    { uid: "i4", id: "srd:item:potion-of-healing", quantity: 2 },
   ],
   currency: { gp: 15, sp: 4 },
 };
@@ -115,7 +115,7 @@ function makeStoreWith(index: ContentIndex, buildFile: BuildFile): CharacterStor
     writeDebounceMs: () => 0,
   };
   const store = new CharacterStore(host, "Characters/Staged");
-  store.data = { sheet: { kind: "sheet", schemaVersion: 1 }, build: buildFile };
+  store.data = { sheet: { kind: "sheet", schemaVersion: 1, id: "sheet-id" }, build: buildFile };
   store.index = index;
   store.loading = false;
   store.resolved = resolve({ content: index, build: buildFile });
@@ -132,7 +132,7 @@ function makeStore(overrides: Partial<CharacterStore["data"]> = {}): CharacterSt
     writeDebounceMs: () => 0,
   };
   const store = new CharacterStore(host, "Characters/Ilsa");
-  store.data = { sheet: { kind: "sheet", schemaVersion: 1 }, build, inventory, spells, state, details, ...overrides };
+  store.data = { sheet: { kind: "sheet", schemaVersion: 1, id: "sheet-id" }, build, inventory, spells, state, details, ...overrides };
   store.index = content;
   store.loading = false;
   store.resolved = resolve({

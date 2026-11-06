@@ -12,6 +12,7 @@ import {
 } from "../src/obsidian/export-character";
 import { indexFromDisk } from "../src/node/load-source";
 import { validateExport } from "../src/core/export";
+import { appendInventoryEntry } from "../src/core/inventory";
 import { CONTENT_ROOT } from "./helpers";
 
 class MemoryAdapter {
@@ -74,25 +75,23 @@ describe("exportDocument", () => {
     expect(validateExport(JSON.parse(JSON.stringify(doc))).ok).toBe(true);
   });
 
-  it("gives a legacy inventory its ids, and the export carries the ones that were saved", async () => {
+  it("refuses a character without its ids, with the loader's message, and writes nothing", async () => {
     const legacy = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:longsword" }] });
     const { store, adapter } = await open(legacy);
-    const doc = await exportDocument(store, deps());
+    const err = await exportDocument(store, deps()).catch((e) => e);
+    expect(err).toBeInstanceOf(ExportError);
+    expect(err.message).toBe("inventory.5e has 1 entry with no uid.");
+    expect(err.lines[0]).toContain("Rebuild this character in the builder");
     await store.flush();
-    const saved = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items[0].uid;
-    expect(saved).toMatch(/^inv-/);
-    expect(doc.inventory.items[0].uid).toBe(saved);
+    expect(adapter.files.get("Characters/B/inventory.5e")).toBe(legacy);
   });
 
-  it("gives a character without an id one, saved and exported", async () => {
+  it("refuses a character with no id", async () => {
     const { store, adapter } = await open();
     adapter.files.set("Characters/B/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "B" }));
     await store.load();
-    const doc = await exportDocument(store, deps());
-    await store.flush();
-    const saved = JSON.parse(adapter.files.get("Characters/B/sheet.5e")!).id;
-    expect(saved).toMatch(/^[0-9a-f-]{36}$/);
-    expect(doc.envelope.characterId).toBe(saved);
+    const err = await exportDocument(store, deps()).catch((e) => e);
+    expect(err.message).toBe("sheet.5e has no character id.");
   });
 
   it("does not touch an inventory that already has ids", async () => {
@@ -154,35 +153,17 @@ describe("exporting while the builder is open", () => {
     expect(doc.spells.length).toBeGreaterThan(0);
   });
 
-  it("writes missing inventory ids without saving the builder's work, and keeps them when it is saved", async () => {
-    const legacy = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:longsword" }] });
-    const { store, adapter } = await open(legacy);
+  it("keeps an entry's id between the export and the saved session", async () => {
+    const { store, adapter } = await open();
     store.beginEdit();
-    store.update("inventory", { ...store.data.inventory!, items: [...store.data.inventory!.items, { id: "srd:item:shield" }] });
-
+    store.update("inventory", appendInventoryEntry(store.data.inventory!, { id: "srd:item:torch" }));
     const doc = await exportDocument(store, deps());
-    await store.flush();
-    const onDisk = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items;
-    expect(onDisk).toHaveLength(1);
-    expect(onDisk[0].uid).toBe(doc.inventory.items[0].uid);
-
+    const ids = doc.inventory.items.map((i) => i.uid);
     store.commitEdit();
     await store.flush();
-    const after = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items;
-    expect(after).toHaveLength(2);
-    expect(after[0].uid).toBe(doc.inventory.items[0].uid);
-  });
-
-  it("keeps the character id when the session is discarded", async () => {
-    const { store, adapter } = await open();
-    adapter.files.set("Characters/B/sheet.5e", JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "B" }));
-    await store.load();
-    store.beginEdit();
-    const id = (await exportDocument(store, deps())).envelope.characterId;
-    store.discardEdit();
-    expect(store.ensureCharacterId()).toBe(id);
-    await store.flush();
-    expect(JSON.parse(adapter.files.get("Characters/B/sheet.5e")!).id).toBe(id);
+    const saved = JSON.parse(adapter.files.get("Characters/B/inventory.5e")!).items.map((e: { uid: string }) => e.uid);
+    expect(saved.slice(0, ids.length)).toEqual(ids);
+    expect(saved).toHaveLength(ids.length + 1);
   });
 });
 

@@ -3,8 +3,8 @@
  * point at a particular bag rather than at "a bag". Two copies of one item are one
  * entry with a quantity, so an entry is only ever split when it is put somewhere else.
  *
- * Ids are given when the inventory is written, never when it is read, so opening a
- * character never rewrites its files.
+ * An entry gets its id the moment it is added, so what the builder holds and what
+ * is saved always agree. Nothing gives an id to an entry that lacks one.
  */
 
 import type { Element, InventoryEntry, InventoryFile } from "./types";
@@ -20,34 +20,12 @@ export function randomUid(): string {
   return `inv-${Array.from(bytes, (b) => ALPHABET[b % ALPHABET.length]).join("")}`;
 }
 
-/**
- * Gives every entry without a `uid` one (and replaces a repeated one, which a
- * hand-copied entry produces), leaving the rest of the file as it was. Returns the
- * same object when nothing needed an id, so callers can tell nothing changed.
- */
-export function withInventoryIds(file: InventoryFile, next: UidSource = randomUid): InventoryFile {
-  const taken = new Set<string>();
-  let changed = false;
-  const fresh = (): string => {
-    let uid = next();
-    while (taken.has(uid)) uid = next();
-    return uid;
-  };
-  const items = file.items.map((entry) => {
-    if (entry.uid && !taken.has(entry.uid)) {
-      taken.add(entry.uid);
-      return entry;
-    }
-    changed = true;
-    const uid = fresh();
-    taken.add(uid);
-    return { ...entry, uid };
-  });
-  return changed ? { ...file, items } : file;
-}
-
-export function hasMissingIds(file: InventoryFile | undefined): boolean {
-  return !!file && withInventoryIds(file, () => "x") !== file;
+/** A uid no entry in the file has. */
+export function newEntryUid(file: InventoryFile, next: UidSource = randomUid): string {
+  const taken = new Set(file.items.map((e) => e.uid));
+  let uid = next();
+  while (taken.has(uid)) uid = next();
+  return uid;
 }
 
 /** Entry fields that are about the item rather than about this particular copy. */
@@ -85,16 +63,16 @@ export function addInventoryItem(
     const items = file.items.map((e, i) => (i === at ? { ...e, quantity: (e.quantity ?? 1) + 1 } : e));
     return { ...file, items };
   }
-  return withInventoryIds({ ...file, items: [...file.items, { id }] }, next);
+  return { ...file, items: [...file.items, { uid: newEntryUid(file, next), id }] };
 }
 
-/** Appends an entry, giving it an id. */
+/** Appends an entry, giving it its id now. */
 export function appendInventoryEntry(
   file: InventoryFile,
-  entry: InventoryEntry,
+  entry: Omit<InventoryEntry, "uid">,
   next: UidSource = randomUid,
 ): InventoryFile {
-  return withInventoryIds({ ...file, items: [...file.items, entry] }, next);
+  return { ...file, items: [...file.items, { ...entry, uid: newEntryUid(file, next) }] };
 }
 
 /**
@@ -113,24 +91,3 @@ export function removeInventoryEntry(file: InventoryFile, index: number): Invent
   return { ...file, items };
 }
 
-/**
- * Gives entries in `working` the ids `saved` has, where the entry at the same
- * position is the same item. For an inventory edited in a session after its ids
- * were written: the working copy may have been given ids of its own meanwhile, and
- * saving it should keep the ones that were exported. Containers follow the change.
- */
-export function adoptSavedIds(working: InventoryFile, saved: InventoryFile): InventoryFile {
-  const renamed = new Map<string, string>();
-  const items = working.items.map((entry, i) => {
-    const was = saved.items[i];
-    const same = was?.uid && was.uid !== entry.uid && was.id === entry.id && (was.item?.id ?? "") === (entry.item?.id ?? "");
-    if (!same) return entry;
-    if (entry.uid) renamed.set(entry.uid, was.uid!);
-    return { ...entry, uid: was.uid };
-  });
-  if (!renamed.size) return working;
-  return {
-    ...working,
-    items: items.map((e) => (e.container && renamed.has(e.container) ? { ...e, container: renamed.get(e.container) } : e)),
-  };
-}

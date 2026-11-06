@@ -121,7 +121,7 @@ describe("loading a character folder", () => {
     adapter.files.delete("Characters/Ilsa/spells.5e");
     adapter.files.set(
       "Characters/Ilsa/sheet.5e",
-      JSON.stringify({ kind: "sheet", schemaVersion: 1, files: { spells: "magic.5e" } }),
+      JSON.stringify({ kind: "sheet", schemaVersion: 1, id: "seed-id", files: { spells: "magic.5e" } }),
     );
     adapter.files.set(
       "Characters/Ilsa/magic.5e",
@@ -139,7 +139,7 @@ describe("loading a character folder", () => {
     seed(adapter);
     adapter.files.set(
       "Characters/Ilsa/sheet.5e",
-      JSON.stringify({ kind: "sheet", schemaVersion: 1, files: { spells: "magic.5e" }, kinds: { "magic.5e": "spells" } }),
+      JSON.stringify({ kind: "sheet", schemaVersion: 1, id: "seed-id", files: { spells: "magic.5e" }, kinds: { "magic.5e": "spells" } }),
     );
     adapter.files.set("Characters/Ilsa/magic.5e", JSON.stringify({ schemaVersion: 1, spells: [] }));
     const { host } = makeHost(adapter, index);
@@ -166,90 +166,59 @@ describe("loading a character folder", () => {
   });
 });
 
-describe("inventory ids", () => {
-  const LEGACY = JSON.stringify({ kind: "inventory", schemaVersion: 1, items: [{ id: "srd:item:rope" }] });
-
-  it("leaves a file without ids alone on load", async () => {
-    const { store, adapter } = await loadStore({ "Characters/Ilsa/inventory.5e": LEGACY });
-    await store.flush();
-    expect(adapter.writes).toEqual([]);
-    expect(adapter.files.get("Characters/Ilsa/inventory.5e")).toBe(LEGACY);
-    expect(store.data.inventory?.items[0].uid).toBeUndefined();
-  });
-
-  it("gives every entry an id the next time the inventory is saved", async () => {
-    const { store, adapter } = await loadStore({ "Characters/Ilsa/inventory.5e": LEGACY });
-    store.update("inventory", { ...store.data.inventory!, items: [...store.data.inventory!.items, { id: "srd:item:torch" }] });
-    await store.flush();
-    const items = JSON.parse(adapter.files.get("Characters/Ilsa/inventory.5e")!).items;
-    expect(items.every((e: { uid?: string }) => /^inv-/.test(e.uid ?? ""))).toBe(true);
-    expect(items[0].id).toBe("srd:item:rope");
-  });
-
-  it("keeps ids it already wrote on a later save", async () => {
-    const { store } = await loadStore();
-    store.update("inventory", { ...store.data.inventory!, items: [{ id: "srd:item:rope" }] });
-    const first = store.data.inventory!.items[0].uid;
-    store.update("inventory", { ...store.data.inventory!, currency: { gp: 3 } });
-    expect(store.data.inventory!.items[0].uid).toBe(first);
-  });
-});
-
-describe("character id", () => {
+describe("required ids", () => {
   const SHEET = "Characters/Ilsa/sheet.5e";
-  const LEGACY = { [SHEET]: JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "Ilsa" }) };
+  const INV = "Characters/Ilsa/inventory.5e";
+  const inv = (items: object[]) => JSON.stringify({ kind: "inventory", schemaVersion: 1, items });
 
-  it("does not rewrite a sheet without an id on load", async () => {
-    const { store, adapter } = await loadStore(LEGACY);
-    await store.flush();
-    expect(adapter.writes).toEqual([]);
-    expect(store.data.sheet?.id).toBeUndefined();
-  });
-
-  it("gives it an id with the next write of any kind, and keeps it", async () => {
-    const { store, adapter } = await loadStore(LEGACY);
+  it("refuses a character with no id, says why, and writes nothing", async () => {
+    const { store, adapter } = await loadStore({ [SHEET]: JSON.stringify({ kind: "sheet", schemaVersion: 1, name: "Ilsa" }) });
+    expect(store.resolved).toBeUndefined();
+    expect(store.idProblems[0]).toContain("no character id");
+    expect(store.fileDiagnostics[0].message).toContain("Rebuild this character in the builder");
     store.mutateBuild((b) => ({ ...b, xp: 10 }));
     await store.flush();
-    const id = JSON.parse(adapter.files.get(SHEET)!).id;
-    expect(id).toMatch(/^[0-9a-f-]{36}$/);
-    store.mutateBuild((b) => ({ ...b, xp: 20 }));
-    await store.flush();
-    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBe(id);
-    expect(JSON.parse(adapter.files.get(SHEET)!).name).toBe("Ilsa");
+    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBeUndefined();
   });
 
-  it("ensureCharacterId writes it on request and returns the existing one after", async () => {
-    const { store, adapter } = await loadStore(LEGACY);
-    const id = store.ensureCharacterId();
-    await store.flush();
-    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBe(id);
-    expect(store.ensureCharacterId()).toBe(id);
+  it("refuses an inventory entry with no uid, or a repeated one", async () => {
+    const none = await loadStore({ [INV]: inv([{ uid: "a", id: "srd:item:rope" }, { id: "srd:item:torch" }]) });
+    expect(none.store.resolved).toBeUndefined();
+    expect(none.store.idProblems[0]).toBe("inventory.5e has 1 entry with no uid.");
+    const twice = await loadStore({ [INV]: inv([{ uid: "a", id: "x" }, { uid: "a", id: "y" }]) });
+    expect(twice.store.idProblems[0]).toContain('uses the id "a" twice');
   });
 
-  it("creates the sheet file when the folder has none", async () => {
-    const adapter = new MemoryAdapter();
-    seed(adapter);
-    adapter.files.delete(SHEET);
-    const { host } = makeHost(adapter, index);
-    const store = new CharacterStore(host, "Characters/Ilsa");
-    await store.load();
-    const id = store.ensureCharacterId();
+  it("never invents ids: nothing is written on load, and the files are as they were", async () => {
+    const legacy = inv([{ id: "srd:item:rope" }]);
+    const { store, adapter } = await loadStore({ [INV]: legacy });
     await store.flush();
-    expect(JSON.parse(adapter.files.get(SHEET)!)).toMatchObject({ kind: "sheet", id });
+    expect(adapter.writes).toEqual([]);
+    expect(adapter.files.get(INV)).toBe(legacy);
+  });
+
+  it("loads a character that has both, and keeps its ids across writes", async () => {
+    const { store, adapter } = await loadStore({ [INV]: inv([{ uid: "a", id: "srd:item:rope" }]) });
+    expect(store.idProblems).toEqual([]);
+    expect(store.resolved).toBeDefined();
+    store.mutateBuild((b) => ({ ...b, xp: 10 }));
+    store.update("inventory", { ...store.data.inventory!, currency: { gp: 3 } });
+    await store.flush();
+    expect(JSON.parse(adapter.files.get(SHEET)!).id).toBe("seed-id");
+    expect(JSON.parse(adapter.files.get(INV)!).items[0].uid).toBe("a");
   });
 
   it("is the same character under another folder name", async () => {
-    const { store: first, adapter } = await loadStore();
+    const { adapter } = await loadStore();
     const moved = new MemoryAdapter();
     for (const [path, text] of adapter.files) moved.files.set(path.replace("Characters/Ilsa", "Characters/Renamed"), text);
     const { host } = makeHost(moved, index);
     const second = new CharacterStore(host, "Characters/Renamed");
     await second.load();
-    expect(second.ensureCharacterId()).toBe(first.ensureCharacterId());
-    expect(second.ensureCharacterId()).toBe("seed-id");
+    expect(second.data.sheet?.id).toBe("seed-id");
   });
 
-  it("is made for a new character", () => {
+  it("makes an id for a new character", () => {
     expect(blankSheet("Ilsa").id).toMatch(/^[0-9a-f-]{36}$/);
     expect(blankSheet("Ilsa").id).not.toBe(blankSheet("Ilsa").id);
   });
@@ -377,6 +346,7 @@ describe("file paths and kind detection", () => {
       detectKindFixture("Characters/Ilsa/magic.5e", "{}", {
         kind: "sheet",
         schemaVersion: 1,
+        id: "seed-id",
         kinds: { "magic.5e": "spells" },
       }),
     ).toBe("spells");

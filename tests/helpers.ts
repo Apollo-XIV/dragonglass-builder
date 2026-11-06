@@ -45,3 +45,8 @@ export function build(partial: Partial<BuildFile> = {}): BuildFile {
     ...partial,
   };
 }
+
+/** Gives plain test entries their required uids. */
+export function withUids(items: Omit<import("../src/core/types").InventoryEntry, "uid">[]): import("../src/core/types").InventoryEntry[] {
+  return items.map((e, i) => ({ uid: `t${i + 1}`, ...e }));
+}

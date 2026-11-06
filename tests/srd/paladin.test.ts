@@ -66,11 +66,11 @@ const inventory: InventoryFile = {
   kind: "inventory",
   schemaVersion: 1,
   items: [
-    { id: "srd:item:longsword", equipped: true },
-    { id: "srd:item:chain-mail", equipped: true },
-    { id: "srd:item:shield", equipped: true },
-    { id: "srd:item:potion-of-healing", quantity: 2 },
-    { id: "srd:item:holy-symbol" },
+    { uid: "i1", id: "srd:item:longsword", equipped: true },
+    { uid: "i2", id: "srd:item:chain-mail", equipped: true },
+    { uid: "i3", id: "srd:item:shield", equipped: true },
+    { uid: "i4", id: "srd:item:potion-of-healing", quantity: 2 },
+    { uid: "i5", id: "srd:item:holy-symbol" },
   ],
   currency: { gp: 15 },
 };

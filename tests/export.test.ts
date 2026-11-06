@@ -1,4 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
@@ -231,9 +232,30 @@ describe("what the export contains", () => {
     for (const r of doc.resources) expect(Object.keys(r)).not.toContain("spent");
   });
 
-  it("gives provisional ids to an inventory that has none", async () => {
-    const doc = await run("teste-character");
-    expect(doc.inventory.items).toEqual([]);
+  it("refuses a character missing its ids, naming the folder and what to do", async () => {
+    const copy = mkdtempSync(join(tmpdir(), "dg-export-"));
+    cpSync(join(FIXTURES, "characters", "paladin-3"), copy, { recursive: true });
+    const read = (f: string) => JSON.parse(readFileSync(join(copy, f), "utf8"));
+    const go = () =>
+      exportFromDisk({
+        characterDir: copy,
+        sourceDirs: [join(CONTENT_ROOT, "srd")],
+        coreDir: join(CONTENT_ROOT, "core"),
+        exportedAt: AT,
+        pluginVersion: "test",
+      });
+
+    const sheet = read("sheet.5e");
+    delete sheet.id;
+    writeFileSync(join(copy, "sheet.5e"), JSON.stringify(sheet));
+    await expect(go()).rejects.toThrow(/no character id.*Rebuild this character in the builder/);
+
+    writeFileSync(join(copy, "sheet.5e"), JSON.stringify({ ...sheet, id: "x" }));
+    const inventory = read("inventory.5e");
+    delete inventory.items[0].uid;
+    writeFileSync(join(copy, "inventory.5e"), JSON.stringify(inventory));
+    await expect(go()).rejects.toThrow(`${copy}: inventory.5e has 1 entry with no uid.`);
+    rmSync(copy, { recursive: true });
   });
 });
 

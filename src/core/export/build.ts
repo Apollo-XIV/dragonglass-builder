@@ -5,10 +5,10 @@
  */
 
 import type { ContentIndex } from "../content";
-import { withInventoryIds } from "../inventory";
+import { idProblems } from "../character-id";
 import { resolve } from "../resolver/resolve";
 import type { Contribution, NumericStat, PendingChoice, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
-import type { BuildFile, Element, InventoryEntry, InventoryFile, SpellsFile } from "../types";
+import type { BuildFile, Element, InventoryEntry, InventoryFile, SheetFile, SpellsFile } from "../types";
 import {
   EXPORT_SCHEMA_VERSION,
   type ExportChoice,
@@ -46,7 +46,9 @@ const INTERNAL_SOURCES = new Set(["core"]);
 
 export async function buildExport(input: BuildExportInput): Promise<ExportDocument> {
   const { content, build } = input;
-  const inventory = input.inventory && withProvisionalIds(input.inventory);
+  const inventory = input.inventory;
+  const bad = idProblems({ id: input.characterId } as SheetFile, inventory);
+  if (bad.length) throw new Error(bad.join(" "));
   const r = resolve({
     content,
     build,
@@ -280,17 +282,6 @@ function proficienciesOf(r: ResolvedCharacter, use: (id: string) => string | und
   };
 }
 
-function withProvisionalIds(file: InventoryFile): InventoryFile {
-  let n = 0;
-  const ids = new Set(file.items.map((e) => e.uid).filter(Boolean));
-  return withInventoryIds(file, () => {
-    let uid: string;
-    do uid = `legacy-${++n}`;
-    while (ids.has(uid));
-    return uid;
-  });
-}
-
 function featureOf(e: ResolvedElement, use: (id: string) => string | undefined): ExportFeature {
   use(e.id);
   return {
@@ -340,7 +331,7 @@ function itemOf(
 ): ExportItem {
   const held = entry.container && entry.container !== entry.uid && entryIds.has(entry.container);
   const common = {
-    uid: entry.uid!,
+    uid: entry.uid,
     quantity: entry.quantity ?? 1,
     equipped: entry.equipped === true,
     attuned: entry.attuned === true,

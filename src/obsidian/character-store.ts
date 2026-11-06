@@ -9,7 +9,7 @@
 
 import { normalizePath, type App, type EventRef, type TAbstractFile } from "obsidian";
 import type { ContentIndex } from "../core/content";
-import { adoptSavedIds, hasMissingIds, newCharacterId, resolve, withInventoryIds, type ResolvedCharacter } from "../core/index";
+import { idProblems, resolve, type ResolvedCharacter } from "../core/index";
 import type {
   BuildFile,
   Diagnostic,
@@ -67,6 +67,8 @@ export class CharacterStore {
   /** Problems reading or parsing the character's own files. */
   fileDiagnostics: Diagnostic[] = [];
   loading = true;
+  /** Why the character was refused: a missing character id or inventory uid. Empty when it loaded. */
+  idProblems: string[] = [];
   /** Bumped on every change, so React can subscribe without deep comparison. */
   version = 0;
   /** Unflushed changes, so a view can warn before closing. */
@@ -146,6 +148,10 @@ export class CharacterStore {
       session.baseMoved = true;
       for (const kind of session.touched) Object.assign(data, { [kind]: this.data[kind] });
     }
+
+    // A character without its ids is refused, not repaired: nothing here makes ids up.
+    this.idProblems = idProblems(data.sheet, data.inventory);
+    if (this.idProblems.length) this.fileError(this.folder, this.idProblems.join(" "));
 
     this.data = data;
     this.index = await this.host.indexFor(data.sources);
@@ -242,7 +248,7 @@ export class CharacterStore {
   }
 
   private recompute(): void {
-    if (!this.index || !this.data.build) {
+    if (!this.index || !this.data.build || this.idProblems.length) {
       this.resolved = undefined;
       return;
     }
@@ -308,30 +314,6 @@ export class CharacterStore {
     return saved;
   }
 
-  /**
-   * Gives the saved inventory the ids it lacks and writes them, without taking the
-   * builder's unsaved work with them. The session's working copy adopts the ids,
-   * so saving it later keeps them.
-   */
-  saveInventoryIds(): void {
-    const session = this.session;
-    if (!session?.kinds.has("inventory")) {
-      if (hasMissingIds(this.data.inventory)) this.update("inventory", this.data.inventory!);
-      return;
-    }
-    const saved = session.base.inventory;
-    if (!saved || !hasMissingIds(saved)) return;
-    const next = withInventoryIds(saved);
-    session.base = { ...session.base, inventory: next };
-    const working = this.data.inventory;
-    this.data = { ...this.data, inventory: working && working !== saved ? adoptSavedIds(working, next) : next };
-    const path = this.paths.byKind.inventory;
-    if (path) this.pending.set(path, serialiseJson(next));
-    this.recompute();
-    this.notify();
-    this.scheduleFlush();
-  }
-
   /** What the session started from, for a draft's base-version check. */
   get editBase(): CharacterData | undefined {
     return this.session?.base;
@@ -384,8 +366,6 @@ export class CharacterStore {
 
   /** Updates one JSON file and reresolves. Several calls in a tick write together. */
   update<K extends keyof CharacterData>(kind: K, next: CharacterData[K]): void {
-    if (kind !== "sheet") this.stageCharacterId();
-    if (kind === "inventory") next = withInventoryIds(next as InventoryFile) as CharacterData[K];
     this.data = { ...this.data, [kind]: next };
     const path = this.paths.byKind[kind as FileKind];
     if (!path) return;
@@ -409,8 +389,6 @@ export class CharacterStore {
    * like a level-up that adds spell choices and new resources at once.
    */
   updateMany(changes: Partial<CharacterData>): void {
-    if (!("sheet" in changes)) this.stageCharacterId();
-    if (changes.inventory) changes = { ...changes, inventory: withInventoryIds(changes.inventory) };
     this.data = { ...this.data, ...changes };
     for (const [kind, value] of Object.entries(changes)) {
       const path = this.paths.byKind[kind as FileKind];
@@ -420,31 +398,6 @@ export class CharacterStore {
     }
     this.recompute();
     this.notify();
-    this.scheduleFlush();
-  }
-
-  /**
-   * The character's id, given one if it has none. A character from before ids
-   * gets its first with the next write of any kind; Export character asks for it
-   * outright, and creates the sheet file if the folder has none.
-   */
-  ensureCharacterId(): string {
-    this.stageCharacterId(true);
-    return this.data.sheet!.id!;
-  }
-
-  private stageCharacterId(force = false): void {
-    const sheet = this.data.sheet;
-    if (sheet?.id) return;
-    if (!force && (this.loading || !sheet)) return;
-    const next: SheetFile = {
-      ...(sheet ?? { kind: "sheet" as const, schemaVersion: 1, name: this.data.build?.name }),
-      id: newCharacterId(),
-    };
-    this.data = { ...this.data, sheet: next };
-    // Discarding a session goes back to its base, which must not forget the id.
-    if (this.session) this.session.base = { ...this.session.base, sheet: next };
-    this.pending.set(this.paths.byKind.sheet!, serialiseJson(next));
     this.scheduleFlush();
   }
 

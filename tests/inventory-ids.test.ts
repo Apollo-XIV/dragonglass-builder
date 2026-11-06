@@ -1,47 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
   addInventoryItem,
-  adoptSavedIds,
-  hasMissingIds,
+  appendInventoryEntry,
+  newEntryUid,
   isStackable,
   removeInventoryEntry,
-  withInventoryIds,
 } from "../src/core/inventory";
 import type { Element, InventoryFile } from "../src/core/types";
 
-const file = (items: InventoryFile["items"]): InventoryFile => ({ kind: "inventory", schemaVersion: 1, items });
+const file = (items: InventoryFile["items"] = []): InventoryFile => ({ kind: "inventory", schemaVersion: 1, items });
 const counter = (): (() => string) => {
   let n = 0;
   return () => `u${++n}`;
 };
 
-describe("withInventoryIds", () => {
-  it("gives ids to entries without one and keeps existing ones", () => {
-    const out = withInventoryIds(file([{ id: "a" }, { uid: "keep", id: "b" }, { id: "c" }]), counter());
-    expect(out.items.map((e) => e.uid)).toEqual(["u1", "keep", "u2"]);
+describe("newEntryUid", () => {
+  it("makes real ids that are unique", () => {
+    let f = file([]);
+    for (let i = 0; i < 50; i++) f = appendInventoryEntry(f, { id: "a" });
+    expect(new Set(f.items.map((e) => e.uid)).size).toBe(50);
+    expect(f.items[0].uid).toMatch(/^inv-[a-z0-9]{8}$/);
   });
 
-  it("returns the same object when nothing needs an id", () => {
-    const f = file([{ uid: "x", id: "a" }]);
-    expect(withInventoryIds(f, counter())).toBe(f);
-  });
-
-  it("replaces a repeated uid and skips ids already taken", () => {
+  it("skips an id the file already has", () => {
     const next = ((ids) => () => ids.shift()!)(["x", "y"]);
-    const out = withInventoryIds(file([{ uid: "x", id: "a" }, { uid: "x", id: "b" }]), next);
-    expect(out.items.map((e) => e.uid)).toEqual(["x", "y"]);
+    expect(newEntryUid(file([{ uid: "x", id: "a" }]), next)).toBe("y");
   });
+});
 
-  it("generates real ids that are unique", () => {
-    const out = withInventoryIds(file(Array.from({ length: 50 }, () => ({ id: "a" }))));
-    expect(new Set(out.items.map((e) => e.uid)).size).toBe(50);
-    expect(out.items[0].uid).toMatch(/^inv-[a-z0-9]{8}$/);
-  });
-
-  it("detects missing ids without changing anything", () => {
-    expect(hasMissingIds(file([{ id: "a" }]))).toBe(true);
-    expect(hasMissingIds(file([{ id: "a", uid: "z" }]))).toBe(false);
-    expect(hasMissingIds(undefined)).toBe(false);
+describe("appendInventoryEntry", () => {
+  it("gives the entry its id as it is added", () => {
+    const f = appendInventoryEntry(file([]), { item: { id: "c", name: "C" }, quantity: 1 }, counter());
+    expect(f.items).toEqual([{ uid: "u1", item: { id: "c", name: "C" }, quantity: 1 }]);
   });
 });
 
@@ -112,24 +102,6 @@ describe("isStackable", () => {
     expect(isStackable(el({ resources: [{ id: "c", name: "Uses", max: 1, recharge: "dawn" }] }))).toBe(false);
     expect(isStackable(el({ attunement: true }))).toBe(false);
     expect(isStackable(undefined)).toBe(false);
-  });
-});
-
-describe("adoptSavedIds", () => {
-  it("takes the saved id for the same item at the same place, and moves containers with it", () => {
-    const saved = file([{ uid: "S1", id: "bag" }, { uid: "S2", id: "rope", container: "S1" }]);
-    const working = file([
-      { uid: "w1", id: "bag" },
-      { uid: "w2", id: "rope", container: "w1" },
-      { uid: "w3", id: "torch" },
-    ]);
-    const out = adoptSavedIds(working, saved);
-    expect(out.items.map((e) => [e.uid, e.container])).toEqual([["S1", undefined], ["S2", "S1"], ["w3", undefined]]);
-  });
-
-  it("leaves a working copy that has moved on alone", () => {
-    const working = file([{ uid: "w1", id: "torch" }]);
-    expect(adoptSavedIds(working, file([{ uid: "S1", id: "bag" }]))).toBe(working);
   });
 });
 
