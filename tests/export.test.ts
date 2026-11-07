@@ -281,13 +281,13 @@ describe("validateExport", () => {
 
   it("refuses a major version it does not read", async () => {
     const doc = clone(await base());
-    doc.envelope.schemaVersion = "2.0";
+    doc.envelope.schemaVersion = "3.0";
     expect(validateExport(doc).errors[0].message).toContain("not readable");
   });
 
   it("accepts a later minor version and fields it does not know", async () => {
     const doc = clone(await base()) as ExportDocument & { extra?: number };
-    doc.envelope.schemaVersion = "1.7";
+    doc.envelope.schemaVersion = "2.7";
     doc.extra = 1;
     expect(validateExport(doc).ok).toBe(true);
   });

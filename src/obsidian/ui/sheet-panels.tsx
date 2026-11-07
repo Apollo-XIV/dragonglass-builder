@@ -13,6 +13,7 @@ import type {
   ResolvedSpell,
 } from "../../core/resolver/resolved";
 import { describeEvent, event } from "../../core/state/fold";
+import { describeRecharge } from "../../core/state/recharge";
 import type { InventoryEntry, SpellEntry, StateEvent } from "../../core/types";
 import { removeInventoryEntry } from "../../core/index";
 import type { CharacterStore } from "../character-store";
@@ -208,7 +209,7 @@ export function ResourcesPanel({
               label={
                 <>
                   {resource.name}
-                  <span className="dg-muted"> · {resource.recharge.replace("-", " ")}</span>
+                  <span className="dg-muted"> · {describeRecharge(resource.recharge)}</span>
                 </>
               }
               value={resource.remaining}

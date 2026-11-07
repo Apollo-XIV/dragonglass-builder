@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "1.1",
+  "x-schemaVersion": "2.0",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -1115,10 +1115,33 @@
             "type": "number"
           },
           "recharge": {
-            "type": "string"
-          },
-          "rechargeAmount": {
-            "type": "number"
+            "description": "How uses come back. Empty means never by itself. When several rules match a rest, the largest amount applies.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "on",
+                "amount"
+              ],
+              "properties": {
+                "on": {
+                  "description": "short-rest, long-rest, dawn, dusk, turn or round.",
+                  "type": "string"
+                },
+                "amount": {
+                  "description": "\"all\" restores the whole pool; a number restores that many uses (evaluated at the character's level).",
+                  "anyOf": [
+                    {
+                      "const": "all",
+                      "type": "string"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                }
+              }
+            }
           },
           "unit": {
             "type": "string"

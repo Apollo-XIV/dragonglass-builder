@@ -10,6 +10,7 @@
  * reading of the resolved character rather than a layout decision.
  */
 
+import { hasRecharge } from "../state/recharge";
 import type { ResolvedCharacter, ResolvedResource } from "./resolved";
 
 export interface PinnedSlot {
@@ -34,8 +35,8 @@ export interface PinnedSlot {
 function weightOf(resource: ResolvedResource): number {
   if (resource.pin !== undefined) return resource.pin;
   let weight = 0;
-  if (resource.recharge === "short-rest") weight += 3;
-  if (resource.recharge === "long-rest") weight += 1;
+  if (hasRecharge(resource.recharge, "short-rest")) weight += 3;
+  else if (hasRecharge(resource.recharge, "long-rest")) weight += 1;
   // A pool of two or three uses reads as pips and is spent by hand; a pool of
   // sixty hit points is a number you look up rather than watch.
   if (resource.max > 0 && resource.max <= 6) weight += 2;

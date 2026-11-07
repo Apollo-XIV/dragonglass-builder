@@ -9,13 +9,14 @@
  * Versioning is major.minor. Adding a field bumps the minor. Changing what a field
  * means, removing one or tightening one bumps the major.
  *
- * 1.1 added `proficiencies`. Readers must ignore fields
- * they do not know, which is why no object here forbids extra properties.
+ * 1.1 added `proficiencies`. 2.0 changed `resources[].recharge` from a single word to a
+ * list of rules and dropped `rechargeAmount`. Readers must ignore fields they do not
+ * know, which is why no object here forbids extra properties.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "1.1";
+export const EXPORT_SCHEMA_VERSION = "2.0";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -179,13 +180,22 @@ export const ExportFeature = Type.Object({
   parts: Type.Array(ExportPart),
 });
 
+export const ExportRecharge = Type.Object({
+  on: Type.String({ description: "short-rest, long-rest, dawn, dusk, turn or round." }),
+  amount: Type.Union([Type.Literal("all"), Type.Number()], {
+    description: '"all" restores the whole pool; a number restores that many uses (evaluated at the character\'s level).',
+  }),
+});
+
 export const ExportResource = Type.Object({
   key: Type.String({ description: "Globally unique pool key." }),
   id: Type.String(),
   name: Type.String(),
   max: Type.Number({ description: "Evaluated at the character's level." }),
-  recharge: Type.String(),
-  rechargeAmount: Type.Optional(Type.Number()),
+  recharge: Type.Array(ExportRecharge, {
+    description:
+      "How uses come back. Empty means never by itself. When several rules match a rest, the largest amount applies.",
+  }),
   unit: Type.Optional(Type.String()),
   die: Type.Optional(Type.String()),
   owner: Type.String({ description: "The element that owns the resource." }),

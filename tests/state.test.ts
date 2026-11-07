@@ -15,10 +15,10 @@ const rules: FoldRules = {
   maxHp: 20,
   hitDice: [{ die: "d10", max: 4 }, { die: "d8", max: 2 }],
   pools: [
-    { key: "slots.1", max: 4, recharge: "long-rest" },
-    { key: "slots.2", max: 2, recharge: "long-rest" },
-    { key: "resources.srd:paladin:lay-on-hands", max: 10, recharge: "long-rest" },
-    { key: "resources.srd:paladin:channel-divinity", max: 1, recharge: "short-rest" },
+    { key: "slots.1", max: 4, recharge: [{ on: "long-rest", amount: "all" }] },
+    { key: "slots.2", max: 2, recharge: [{ on: "long-rest", amount: "all" }] },
+    { key: "resources.srd:paladin:lay-on-hands", max: 10, recharge: [{ on: "long-rest", amount: "all" }] },
+    { key: "resources.srd:paladin:channel-divinity", max: 1, recharge: [{ on: "short-rest", amount: "all" }] },
   ],
 };
 
@@ -202,10 +202,10 @@ describe("rests", () => {
     expect(live.spent.hitDice["d8"]).toBe(2);
   });
 
-  it("restores a partial pool with rechargeAmount", () => {
+  it("restores a partial pool when the rule has an amount", () => {
     const partial: FoldRules = {
       ...rules,
-      pools: [{ key: "resources.arcane-recovery", max: 10, recharge: "long-rest", rechargeAmount: 3 }],
+      pools: [{ key: "resources.arcane-recovery", max: 10, recharge: [{ on: "long-rest", amount: 3 }] }],
     };
     const live = foldState(
       stateWith(ev("spend", { target: "arcane-recovery", amount: 8 }), ev("rest.long")),

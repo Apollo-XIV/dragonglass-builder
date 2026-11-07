@@ -31,7 +31,7 @@ const SECOND_WIND: Element = {
   kind: "class-feature",
   name: "Second Wind",
   source: "test",
-  resources: [{ id: "uses", name: "Second Wind", max: 1, recharge: "short-rest" }],
+  resources: [{ id: "uses", name: "Second Wind", max: 1, recharge: [{ on: "short-rest", amount: "all" }] }],
   actions: [
     {
       id: "use",
@@ -48,7 +48,7 @@ const ACTION_SURGE: Element = {
   kind: "class-feature",
   name: "Action Surge",
   source: "test",
-  resources: [{ id: "surges", name: "Action Surges", max: "@table(fighter, surges)", recharge: "short-rest" }],
+  resources: [{ id: "surges", name: "Action Surges", max: "@table(fighter, surges)", recharge: [{ on: "short-rest", amount: "all" }] }],
 };
 
 const STYLE_DEFENSE: Element = {
@@ -104,7 +104,7 @@ const RAGE: Element = {
   kind: "class-feature",
   name: "Rage",
   source: "test",
-  resources: [{ id: "rages", name: "Rages", max: 2, recharge: "long-rest" }],
+  resources: [{ id: "rages", name: "Rages", max: 2, recharge: [{ on: "long-rest", amount: "all" }] }],
   actions: [{ id: "rage", activation: "bonus-action", cost: { rages: 1 }, applies: "raging" }],
   effects: [
     {

@@ -85,7 +85,7 @@ function checkExpressionsDeep(el: Element): Diagnostic[] {
     for (const [key, value] of Object.entries(node as Record<string, unknown>)) {
       const childPath = path ? `${path}.${key}` : key;
       // Only fields the engine evaluates as expressions; `text` stays prose.
-      if ((key === "max" || key === "value" || key === "dc" || key === "rechargeAmount" || key === "base") && (typeof value === "string" || typeof value === "number")) {
+      if ((key === "max" || key === "value" || key === "dc" || key === "amount" || key === "base") && (typeof value === "string" || typeof value === "number")) {
         const error = typeof value === "string" && !value.includes("@") && !/^[-+\d\s.()*/]+$/.test(value)
           ? undefined // a plain word like "proficient" or "expertise", not an expression
           : checkExpression(value);

@@ -91,7 +91,8 @@ These are the patterns worth learning. They cover most of a book.
 | **"when"**, **"against"**, **"related to"**, "while…" | a **situational** modifier: add `when`. See §6. |
 | "you have advantage on X" (unconditionally) | op `advantage` with no `when` |
 | "you can use this feature N times" | a `resource` with a `recharge` |
-| "you regain all expended uses when you finish a long rest" | `"recharge": "long-rest"` |
+| "you regain all expended uses when you finish a long rest" | `"recharge": [{ "on": "long-rest", "amount": "all" }]` |
+| "you regain one expended use when you finish a short rest, and all when you finish a long rest" | `"recharge": [{ "on": "short-rest", "amount": 1 }, { "on": "long-rest", "amount": "all" }]` |
 | "as an action/bonus action/reaction, you can…" | an `action` |
 | "for 1 minute, you gain…" | an `effect` the action `applies` |
 | "choose N from…" | a `choice` |
@@ -197,8 +198,10 @@ is still read when an attack is assembled. See `docs/schema.md`.
 
 These three work together and are easiest to learn as a set.
 
-- A **resource** is a pool: an id, a name, a `max` expression, and a `recharge`
-  (`short-rest`, `long-rest`, `dawn`, `dusk`, `turn`, `round`, `never`, `manual`).
+- A **resource** is a pool: an id, a name, a `max` expression, and a `recharge` list of
+  rules, each `{ "on": "long-rest", "amount": "all" }` (`on` is `short-rest`, `long-rest`,
+  `dawn`, `dusk`, `turn` or `round`; `amount` is `"all"` or an expression). An empty list
+  never recharges. "One use on a short rest, all on a long rest" is two rules.
   Use `unit` for pools counted in something other than uses ("hit points" for Lay on
   Hands). A resource id without a colon is namespaced by its element automatically.
 - An **action** is something the player activates: an `activation`, an optional `cost`
@@ -292,7 +295,7 @@ left as text.
   "tags": ["barbarian-feature"],
   "text": "In battle, you fight with primal ferocity…",
   "resources": [
-    { "id": "rages", "name": "Rages", "max": "@table(barbarian, rages)", "recharge": "long-rest" }
+    { "id": "rages", "name": "Rages", "max": "@table(barbarian, rages)", "recharge": [{ "on": "long-rest", "amount": "all" }] }
   ],
   "actions": [
     { "id": "rage", "name": "Rage", "activation": "bonus-action", "cost": { "rages": 1 }, "applies": "raging" }
@@ -315,7 +318,7 @@ left as text.
 Three actions spending one pool, each its own button on the sheet.
 
 ```json
-"resources": [{ "id": "ki", "name": "Ki", "max": "@level(monk)", "recharge": "short-rest" }],
+"resources": [{ "id": "ki", "name": "Ki", "max": "@level(monk)", "recharge": [{ "on": "short-rest", "amount": "all" }] }],
 "actions": [
   { "id": "flurry", "name": "Flurry of Blows", "activation": "bonus-action", "cost": { "ki": 1 } },
   { "id": "patient-defense", "name": "Patient Defense", "activation": "bonus-action", "cost": { "ki": 1 } },

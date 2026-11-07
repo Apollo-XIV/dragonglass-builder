@@ -98,8 +98,8 @@ describe("isStackable", () => {
   });
 
   it("refuses an item with charges, resources or attunement, or one it cannot find", () => {
-    expect(isStackable(el({ charges: { id: "c", name: "Charges", max: 7, recharge: "dawn" } }))).toBe(false);
-    expect(isStackable(el({ resources: [{ id: "c", name: "Uses", max: 1, recharge: "dawn" }] }))).toBe(false);
+    expect(isStackable(el({ charges: { id: "c", name: "Charges", max: 7, recharge: [{ on: "dawn", amount: "all" }] } }))).toBe(false);
+    expect(isStackable(el({ resources: [{ id: "c", name: "Uses", max: 1, recharge: [{ on: "dawn", amount: "all" }] }] }))).toBe(false);
     expect(isStackable(el({ attunement: true }))).toBe(false);
     expect(isStackable(undefined)).toBe(false);
   });

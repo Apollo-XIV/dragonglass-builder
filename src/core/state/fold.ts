@@ -9,15 +9,14 @@
  * here, because which pools recharge when is content, not plumbing.
  */
 
-import type { Checkpoint, Recharge, StateEvent, StateFile } from "../types";
+import type { Checkpoint, StateEvent, StateFile } from "../types";
+import { restoredOn, type ResolvedRecharge } from "./recharge";
 
 /** A spendable pool, addressed by its canonical key. */
 export interface PoolRule {
   key: string;
   max: number;
-  recharge: Recharge;
-  /** How much a recharge restores. Defaults to everything. */
-  rechargeAmount?: number;
+  recharge: ResolvedRecharge[];
 }
 
 export interface HitDiceRule {
@@ -128,20 +127,14 @@ function clamp(v: number, lo: number, hi: number): number {
   return Math.min(Math.max(v, lo), hi);
 }
 
-/** Pools that come back on this kind of rest. Dawn and dusk ride along with a long rest. */
-function rechargesOn(recharge: Recharge, rest: "short" | "long"): boolean {
-  if (rest === "short") return recharge === "short-rest";
-  return recharge === "short-rest" || recharge === "long-rest" || recharge === "dawn" || recharge === "dusk";
-}
-
 function applyRest(live: LiveState, rest: "short" | "long", rules: FoldRules): void {
   for (const pool of rules.pools) {
-    if (!rechargesOn(pool.recharge, rest)) continue;
+    const restored = restoredOn(pool.recharge, rest, pool.max);
+    if (!restored) continue;
     const { bucket, key } = bucketOf(pool.key);
     const map = live.spent[bucket];
     const spent = map[key] ?? 0;
     if (!spent) continue;
-    const restored = pool.rechargeAmount ?? pool.max;
     const next = Math.max(0, spent - restored);
     if (next) map[key] = next;
     else delete map[key];

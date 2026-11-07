@@ -112,14 +112,28 @@ export const RECHARGES = [
 ] as const;
 export type Recharge = (typeof RECHARGES)[number];
 
+/** What a resource can recharge on. Rests are applied by the sheet's rest buttons. */
+export const RECHARGE_TRIGGERS = ["short-rest", "long-rest", "dawn", "dusk", "turn", "round"] as const;
+export type RechargeOn = (typeof RECHARGE_TRIGGERS)[number];
+
+/**
+ * One way a resource gets uses back. A resource carries a list of them, so "one use
+ * on a short rest, all on a long rest" is two rules. When several match a rest, the
+ * largest amount wins: they are alternatives, not a sum.
+ */
+export interface RechargeRule {
+  on: RechargeOn;
+  /** "all" restores the whole pool; an expression restores that many uses. */
+  amount: "all" | Expr;
+}
+
 export interface ResourceDef {
   /** Local ("rages") or namespaced ("srd:paladin:lay-on-hands"). */
   id: string;
   name: string;
   max: Expr;
-  recharge: Recharge;
-  /** How much a recharge restores. Defaults to the full max. */
-  rechargeAmount?: Expr;
+  /** Empty means the resource never comes back by itself. */
+  recharge: RechargeRule[];
   /** Unit label for pools counted in points, e.g. "hit points" for Lay on Hands. */
   unit?: string;
   /** The die this resource is spent as, where it has one: Bardic Inspiration's d6. */

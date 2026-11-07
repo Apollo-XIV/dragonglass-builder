@@ -275,12 +275,11 @@ export class CharacterStore {
           key: `resources.${r.key}`,
           max: r.max,
           recharge: r.recharge,
-          rechargeAmount: r.rechargeAmount,
         })),
         ...(character.spellcasting?.slots ?? []).map((s) => ({
           key: `slots.${s.level}`,
           max: s.max,
-          recharge: "long-rest" as const,
+          recharge: [{ on: "long-rest" as const, amount: "all" as const }],
         })),
       ],
     };

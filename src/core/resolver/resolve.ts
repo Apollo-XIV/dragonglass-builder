@@ -17,6 +17,7 @@
 
 import {
   ABILITIES,
+  RECHARGE_TRIGGERS,
   type Ability,
   type ActionDef,
   type BuildFile,
@@ -35,6 +36,7 @@ import {
   type SubclassElement,
 } from "../types";
 import type { ContentIndex } from "../content";
+import type { ResolvedRecharge } from "../state/recharge";
 import { checkRequirement, describeRequirement, type RequirementContext } from "../content/requirements";
 import { resolveDice, tryEvaluate } from "../expr/evaluate";
 import {
@@ -534,7 +536,13 @@ function resolveResources(
     // Spent amounts above a new max are clamped, so a level-down can't leave a
     // resource reading -2 remaining.
     const used = Math.min(spent[key] ?? 0, max);
-    const rechargeAmount = def.rechargeAmount === undefined ? undefined : tryEvaluate(def.rechargeAmount, engine.ctx, max).value;
+    // Unknown triggers were already reported by the validator; the rule is dropped.
+    const recharge: ResolvedRecharge[] = (Array.isArray(def.recharge) ? def.recharge : [])
+      .filter((rule) => (RECHARGE_TRIGGERS as readonly string[]).includes(rule.on))
+      .map((rule) => ({
+        on: rule.on,
+        amount: rule.amount === "all" ? "all" : Math.max(0, Math.floor(tryEvaluate(rule.amount, engine.ctx, max).value)),
+      }));
     const existing = byKey.get(key);
     if (existing && existing.max >= max) continue;
     byKey.set(key, {
@@ -544,8 +552,7 @@ function resolveResources(
       max,
       spent: used,
       remaining: Math.max(0, max - used),
-      recharge: def.recharge,
-      rechargeAmount,
+      recharge,
       unit: def.unit,
       die: def.die,
       pin: def.pin,
@@ -579,12 +586,11 @@ function poolRules(resources: ResolvedResource[], plan: SpellPlan): PoolRule[] {
     key: canonicalPoolKey(r.key),
     max: r.max,
     recharge: r.recharge,
-    rechargeAmount: r.rechargeAmount,
   }));
   // Spell slots are pools like any other: they recharge on a long rest, and pact
   // magic slots come back on a short one.
-  plan.slotMaxes.forEach((max, i) => pools.push({ key: `slots.${i + 1}`, max, recharge: "long-rest" }));
-  if (plan.pact) pools.push({ key: "slots.pact", max: plan.pact.count, recharge: "short-rest" });
+  plan.slotMaxes.forEach((max, i) => pools.push({ key: `slots.${i + 1}`, max, recharge: [{ on: "long-rest", amount: "all" }] }));
+  if (plan.pact) pools.push({ key: "slots.pact", max: plan.pact.count, recharge: [{ on: "short-rest", amount: "all" }] });
   return pools;
 }
 

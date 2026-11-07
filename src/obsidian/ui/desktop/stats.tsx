@@ -11,6 +11,7 @@ import { useState, type ReactNode } from "react";
 import { choosePins, type PinnedSlot } from "../../../core/resolver/pins";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
+import { describeRecharge } from "../../../core/state/recharge";
 import type { CharacterStore } from "../../character-store";
 import { useSheet } from "../narrow/sheet";
 import { Pips, TextBody } from "../narrow/targets";
@@ -193,7 +194,7 @@ function PinnedResource({ slot, store }: { slot: PinnedSlot; store: CharacterSto
   const menu = (): void =>
     sheet.open({
       title: slot.name,
-      subtitle: slot.resource ? `${slot.resource.recharge.replace("-", " ")} · ${slot.resource.sourceName}` : undefined,
+      subtitle: slot.resource ? `${describeRecharge(slot.resource.recharge)} · ${slot.resource.sourceName}` : undefined,
       body: () => {
         const now = read();
         return (
@@ -227,7 +228,7 @@ function PinnedResource({ slot, store }: { slot: PinnedSlot; store: CharacterSto
   const { handlers, card } = useHoverCard(() => (
     <p className="dg-d-hovercard-formula">
       {slot.name} — {slot.remaining} of {slot.max}
-      {slot.resource ? ` · back on a ${slot.resource.recharge.replace("-", " ")}` : ""}
+      {slot.resource ? ` · recharges: ${describeRecharge(slot.resource.recharge)}` : ""}
     </p>
   ));
 

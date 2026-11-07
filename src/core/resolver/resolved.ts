@@ -17,10 +17,10 @@ import type {
   PreparationKind,
   ProficiencyLevel,
   ProgressionKind,
-  Recharge,
   SpellEntry,
   When,
 } from "../types";
+import type { ResolvedRecharge } from "../state/recharge";
 import type { HpLevel } from "./hit-points";
 
 export type { HpLevel } from "./hit-points";
@@ -135,8 +135,7 @@ export interface ResolvedResource {
   max: number;
   spent: number;
   remaining: number;
-  recharge: Recharge;
-  rechargeAmount?: number;
+  recharge: ResolvedRecharge[];
   unit?: string;
   /** The die it is spent as, where the content gives one. */
   die?: string;

@@ -154,7 +154,7 @@ describe("validateElement", () => {
   it("validates resources and actions", () => {
     const r = validateElement({
       id: "a", kind: "feat", name: "A", source: "srd",
-      resources: [{ id: "r", name: "R", max: "@prof", recharge: "long-rest" }],
+      resources: [{ id: "r", name: "R", max: "@prof", recharge: [{ on: "long-rest", amount: "all" }] }],
       actions: [{ id: "x", activation: "bonus-action", cost: { r: 1 } }],
     });
     expect(r.diagnostics).toHaveLength(0);

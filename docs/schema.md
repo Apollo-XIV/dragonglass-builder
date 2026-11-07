@@ -95,7 +95,7 @@ tab for them with no plugin change.
 | `grants` | Unconditionally adds other elements. A `Grant` is an element id, or `{ id, text?, notes? }` to attach authored commentary to the grant itself. |
 | `choices` | A player decision. See **The choice model**. |
 | `modifiers` | Passive changes to stat paths, optionally situational. |
-| `resources` | A pool with an expression `max` and a `recharge` rule. |
+| `resources` | A pool with an expression `max` and a `recharge` list of rules. See **Recharge rules**. |
 | `actions` | Something the player activates: `activation`, optional `cost`, optional `applies` naming an effect, plus `range`, `target`, `damage`, `damageType`, `save`, `recharge`. |
 | `effects` | A named, toggleable overlay of modifiers with a `duration` and optional `concentration`. Active effects live in `state.5e`. |
 
@@ -429,6 +429,27 @@ with `when` **never folds into the value**: it attaches as an annotation, attrib
 element, and the sheet shows it in the breakdown. `when.context` groups modifiers that
 apply together so the sheet can later offer one toggle. Every op is available
 situationally, not just numbers.
+
+## Recharge rules
+
+A resource's `recharge` is a **list** of rules, each `{ "on": <trigger>, "amount": "all" | <Expr> }`:
+
+```json
+"recharge": [
+  { "on": "short-rest", "amount": 1 },
+  { "on": "long-rest", "amount": "all" }
+]
+```
+
+- `on` is `short-rest`, `long-rest`, `dawn`, `dusk`, `turn` or `round`. The sheet's rest buttons
+  apply the rules that match: a short rest matches `short-rest`; a long rest matches
+  `short-rest`, `long-rest`, `dawn` and `dusk`. `turn` and `round` are descriptive only.
+- `amount` is `"all"` (the whole pool) or an expression for a number of uses, read at the
+  character's level. `"all"` is reserved.
+- When more than one rule matches a rest, the **largest amount** is restored. They are
+  alternatives, not a sum, so a long rest never gives back more than `max`.
+- An empty list means the resource never comes back by itself (a Healer's Kit).
+- `ActionDef.recharge` is unchanged: a single descriptive word for an action's own recharge.
 
 ## Expressions
 

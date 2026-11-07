@@ -242,7 +242,7 @@ One resource, one action, and one effect with several modifiers, plus a restrict
   "id": "srd:barbarian:rage", "kind": "class-feature", "name": "Rage", "source": "srd",
   "tags": ["barbarian-feature"],
   "text": "In battle, you fight with primal ferocity…",
-  "resources": [{ "id": "rages", "name": "Rages", "max": "@table(barbarian, rages)", "recharge": "long-rest" }],
+  "resources": [{ "id": "rages", "name": "Rages", "max": "@table(barbarian, rages)", "recharge": [{ "on": "long-rest", "amount": "all" }] }],
   "actions": [{ "id": "rage", "activation": "bonus-action", "cost": { "rages": 1 }, "applies": "raging" }],
   "effects": [{
     "id": "raging", "name": "Raging", "duration": "1 minute",

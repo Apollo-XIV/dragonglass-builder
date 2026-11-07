@@ -168,7 +168,7 @@ describe("Ilsa, dwarf paladin of Devotion", () => {
 
   it("has a Lay on Hands pool of 25, read from the class table", () => {
     const pool = character.resources.find((r) => r.key === "srd:paladin:lay-on-hands");
-    expect(pool).toMatchObject({ max: 25, remaining: 25, recharge: "long-rest", unit: "hit points" });
+    expect(pool).toMatchObject({ max: 25, remaining: 25, recharge: [{ on: "long-rest", amount: "all" }], unit: "hit points" });
   });
 
   it("has three uses of Divine Sense, from 1 + CHA", () => {
@@ -177,7 +177,7 @@ describe("Ilsa, dwarf paladin of Devotion", () => {
 
   it("has one Channel Divinity use that comes back on a short rest", () => {
     const cd = character.resources.find((r) => r.key === "srd:paladin:channel-divinity");
-    expect(cd).toMatchObject({ max: 1, recharge: "short-rest" });
+    expect(cd).toMatchObject({ max: 1, recharge: [{ on: "short-rest", amount: "all" }] });
   });
 
   it("has half-caster spell slots: four first and two second at level 5", () => {

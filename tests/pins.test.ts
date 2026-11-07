@@ -12,7 +12,7 @@ function resource(over: Partial<ResolvedResource>): ResolvedResource {
     max: 1,
     spent: 0,
     remaining: 1,
-    recharge: "long-rest",
+    recharge: [{ on: "long-rest", amount: "all" }],
     source: "src",
     sourceName: "Source",
     ...over,
@@ -25,7 +25,7 @@ function character(resources: ResolvedResource[], spellcasting?: ResolvedCharact
 
 describe("choosing pinned resources", () => {
   const rage = resource({ key: "rage", id: "rages", name: "Rage", max: 3, remaining: 2 });
-  const shortRest = resource({ key: "cd", id: "cd", name: "Channel Divinity", recharge: "short-rest" });
+  const shortRest = resource({ key: "cd", id: "cd", name: "Channel Divinity", recharge: [{ on: "short-rest", amount: "all" }] });
   const points = resource({ key: "loh", id: "loh", name: "Lay on Hands", max: 25, remaining: 25 });
 
   it("takes the two highest-weighted resources when nothing is pinned", () => {

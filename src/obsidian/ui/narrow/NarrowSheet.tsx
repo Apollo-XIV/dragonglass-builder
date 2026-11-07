@@ -9,6 +9,7 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { factsOf } from "../../../core/content/facts";
+import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
 import type { ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
@@ -95,7 +96,7 @@ export function NarrowSheet({
         label: "Features",
         // An unspent once-per-rest feature is worth a pip: it is the thing players
         // forget they still have.
-        attention: character.resources.some((r) => r.remaining === r.max && r.max > 0 && r.recharge.endsWith("rest")),
+        attention: character.resources.some((r) => r.remaining === r.max && r.max > 0 && rechargesOnRest(r.recharge)),
         status: `${features.length}`,
         body: <FeaturesSection store={store} character={character} />,
       });
@@ -302,7 +303,7 @@ function ResourceRow({ resource, store }: { resource: ResolvedResource; store: C
   return (
     <ReadRow
       title={resource.name}
-      subtitle={`${resource.recharge.replace("-", " ")} · ${resource.sourceName}`}
+      subtitle={`${describeRecharge(resource.recharge)} · ${resource.sourceName}`}
       text={resource.notes}
     >
       <ResourcePillFor resource={resource} store={store} />

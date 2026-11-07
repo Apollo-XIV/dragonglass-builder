@@ -1,6 +1,6 @@
 {
   "envelope": {
-    "schemaVersion": "1.1",
+    "schemaVersion": "2.0",
     "characterId": "c3b8a1e4-5a67-4c0e-8d2f-91b4f7e6a002",
     "exportedAt": "2026-01-01T00:00:00.000Z",
     "pluginVersion": "test",
@@ -9,7 +9,7 @@
         "id": "srd",
         "name": "SRD 5.1 (test slice)",
         "version": "5.1",
-        "ref": "sha256:9c0308ac8d97ceadbee7e17efd4e4968d75c1f444c729a096aa2b4943533c2da",
+        "ref": "sha256:cfbb52005fe0fb48b11c7c1938987989f6f80d9b3505f62b170c9447e170556d",
         "refType": "hash",
         "sourcebooks": [
           "srd"
@@ -752,7 +752,12 @@
             "id": "uses",
             "name": "Divine Sense",
             "max": "max(1, 1 + @abilities.cha.mod)",
-            "recharge": "long-rest"
+            "recharge": [
+              {
+                "on": "long-rest",
+                "amount": "all"
+              }
+            ]
           }
         },
         {
@@ -793,7 +798,12 @@
             "id": "srd:paladin:lay-on-hands",
             "name": "Lay on Hands",
             "max": "@table(paladin, lay-on-hands)",
-            "recharge": "long-rest",
+            "recharge": [
+              {
+                "on": "long-rest",
+                "amount": "all"
+              }
+            ],
             "unit": "hit points"
           }
         },
@@ -837,7 +847,12 @@
       "id": "uses",
       "name": "Divine Sense",
       "max": 1,
-      "recharge": "long-rest",
+      "recharge": [
+        {
+          "on": "long-rest",
+          "amount": "all"
+        }
+      ],
       "owner": "srd:paladin:divine-sense"
     },
     {
@@ -845,7 +860,12 @@
       "id": "srd:paladin:lay-on-hands",
       "name": "Lay on Hands",
       "max": 5,
-      "recharge": "long-rest",
+      "recharge": [
+        {
+          "on": "long-rest",
+          "amount": "all"
+        }
+      ],
       "unit": "hit points",
       "owner": "srd:paladin:lay-on-hands"
     }

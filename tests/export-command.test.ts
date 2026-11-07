@@ -236,7 +236,7 @@ describe("summariseExport", () => {
   it("reads the name, id, version and time", () => {
     const text = exportText(JSON.parse(readFileSync(join(__dirname, "fixtures/exports/paladin-3.json"), "utf8")));
     const s = summariseExport(text);
-    expect(s).toMatchObject({ ok: true, name: "Brann Ironvow", schemaVersion: "1.1" });
+    expect(s).toMatchObject({ ok: true, name: "Brann Ironvow", schemaVersion: "2.0" });
     expect(s.ok && s.characterId).toBeTruthy();
   });
   it("says so for text that is not an export", () => {

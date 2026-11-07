@@ -9,7 +9,7 @@ import {
   ACTIVATIONS,
   MODIFIER_OPS,
   PROFICIENCY_LEVELS,
-  RECHARGES,
+  RECHARGE_TRIGGERS,
   type ChoiceDef,
   type Diagnostic,
   type Modifier,
@@ -135,10 +135,25 @@ function validateResource(r: unknown, subject: string | undefined, path: string,
     const e = checkExpression(res.max as string | number);
     if (e) out.push(warn("expression-error", e, subject, `${path}.max`));
   }
-  if (typeof res.recharge !== "string") {
-    out.push(err("invalid-element", "resource needs a recharge rule", subject, path));
-  } else if (!(RECHARGES as readonly string[]).includes(res.recharge)) {
-    out.push(warn("invalid-element", `unknown recharge "${res.recharge}"; treated as manual`, subject, path));
+  if (!Array.isArray(res.recharge)) {
+    out.push(err("invalid-element", "resource needs a recharge list (empty if it never recharges)", subject, path));
+  } else {
+    res.recharge.forEach((rule, i) => validateRecharge(rule, subject, `${path}.recharge[${i}]`, out));
+  }
+}
+
+function validateRecharge(r: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!r || typeof r !== "object" || Array.isArray(r)) {
+    out.push(err("invalid-element", 'recharge rule must be { "on", "amount" }', subject, path));
+    return;
+  }
+  const rule = r as Record<string, unknown>;
+  if (!(RECHARGE_TRIGGERS as readonly unknown[]).includes(rule.on))
+    out.push(warn("invalid-element", `unknown recharge trigger "${String(rule.on)}"; the rule is ignored`, subject, `${path}.on`));
+  if (rule.amount === undefined) out.push(err("invalid-element", 'recharge rule needs an amount ("all" or an expression)', subject, path));
+  else if (rule.amount !== "all") {
+    const e = checkExpression(rule.amount as string | number);
+    if (e) out.push(warn("expression-error", e, subject, `${path}.amount`));
   }
 }
 

@@ -12,7 +12,7 @@
         "id": "uses",
         "name": "Divine Sense",
         "max": "max(1, 1 + @abilities.cha.mod)",
-        "recharge": "long-rest"
+        "recharge": [{ "on": "long-rest", "amount": "all" }]
       }
     ],
     "actions": [
@@ -40,7 +40,7 @@
         "id": "srd:paladin:lay-on-hands",
         "name": "Lay on Hands",
         "max": "@table(paladin, lay-on-hands)",
-        "recharge": "long-rest",
+        "recharge": [{ "on": "long-rest", "amount": "all" }],
         "unit": "hit points"
       }
     ],
@@ -159,7 +159,7 @@
     "tags": ["paladin-feature"],
     "text": "Beginning at 14th level, you can use your action to end one spell on yourself or on one willing creature that you touch.\n\nYou can use this feature a number of times equal to your Charisma modifier (a minimum of once). You regain expended uses when you finish a long rest.",
     "resources": [
-      { "id": "uses", "name": "Cleansing Touch", "max": "max(1, @abilities.cha.mod)", "recharge": "long-rest" }
+      { "id": "uses", "name": "Cleansing Touch", "max": "max(1, @abilities.cha.mod)", "recharge": [{ "on": "long-rest", "amount": "all" }] }
     ],
     "actions": [
       { "id": "cleansing-touch", "name": "Cleansing Touch", "activation": "action", "cost": { "uses": 1 }, "range": "Touch" }
