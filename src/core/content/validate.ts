@@ -196,15 +196,37 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
   }
 }
 
-function validateInnate(s: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+/** Checks a `{ choice }` reference: it names a choice, and one declared beside the part. */
+function choiceRef(v: unknown, siblings: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  const id = (v as { choice?: unknown }).choice;
+  if (typeof id !== "string" || !id) {
+    out.push(err("invalid-element", "a choice reference needs the id of a choice", subject, `${path}.choice`));
+    return;
+  }
+  const declared = Array.isArray(siblings) && siblings.some((c) => (c as { id?: unknown } | null)?.id === id);
+  if (!declared)
+    out.push(warn("unresolved-reference", `choice "${id}" is not declared beside this part, so it will never be answered`, subject, `${path}.choice`));
+}
+
+const isRef = (v: unknown): boolean => !!v && typeof v === "object" && !Array.isArray(v);
+
+function validateInnate(
+  s: unknown,
+  siblings: unknown,
+  subject: string | undefined,
+  path: string,
+  out: Diagnostic[],
+): void {
   if (!s || typeof s !== "object" || Array.isArray(s)) {
     out.push(err("invalid-element", "innate spell must be an object", subject, path));
     return;
   }
   const spell = s as Record<string, unknown>;
-  if (typeof spell.spell !== "string" || !spell.spell)
-    out.push(err("invalid-element", "innate spell needs the id of a spell", subject, `${path}.spell`));
-  if (spell.ability !== undefined && !(ABILITIES as readonly unknown[]).includes(spell.ability))
+  if (isRef(spell.spell)) choiceRef(spell.spell, siblings, subject, `${path}.spell`, out);
+  else if (typeof spell.spell !== "string" || !spell.spell)
+    out.push(err("invalid-element", "innate spell needs the id of a spell, or a choice", subject, `${path}.spell`));
+  if (isRef(spell.ability)) choiceRef(spell.ability, siblings, subject, `${path}.ability`, out);
+  else if (spell.ability !== undefined && !(ABILITIES as readonly unknown[]).includes(spell.ability))
     out.push(warn("invalid-element", `unknown ability "${String(spell.ability)}"; the class's is used`, subject, `${path}.ability`));
   if (spell.uses !== undefined) {
     const e = checkExpression(spell.uses as string | number);
@@ -344,7 +366,7 @@ export function validateElement(raw: unknown): ValidationResult {
   if (el.innateSpells !== undefined) {
     if (!Array.isArray(el.innateSpells))
       out.push(err("invalid-element", "innateSpells must be an array", subject, "innateSpells"));
-    else el.innateSpells.forEach((s, i) => validateInnate(s, subject, `innateSpells[${i}]`, out));
+    else el.innateSpells.forEach((s, i) => validateInnate(s, el.choices, subject, `innateSpells[${i}]`, out));
   }
   if (el.kind === "weapon-mastery") {
     if (typeof el.mastery !== "string" || !el.mastery)
@@ -403,7 +425,7 @@ export function validateElement(raw: unknown): ValidationResult {
           if (part === "resources") v.forEach((r, i) => validateResource(r, subject, `${p}[${i}]`, out));
           if (part === "actions") v.forEach((a, i) => validateAction(a, subject, `${p}[${i}]`, out));
           if (part === "effects") v.forEach((x, i) => validateEffect(x, subject, `${p}[${i}]`, out));
-          if (part === "innateSpells") v.forEach((x, i) => validateInnate(x, subject, `${p}[${i}]`, out));
+          if (part === "innateSpells") v.forEach((x, i) => validateInnate(x, e.choices, subject, `${p}[${i}]`, out));
         }
         for (const key of Object.keys(e))
           if (!(LEVEL_PARTS as readonly string[]).includes(key) && key !== "text" && !key.startsWith("x-"))

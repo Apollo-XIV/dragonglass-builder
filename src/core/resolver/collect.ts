@@ -6,7 +6,10 @@
  * that the stat engine then folds together.
  */
 
+import { ABILITIES } from "../types";
 import type {
+  Ability,
+  ChoiceRef,
   ActionDef,
   BuildFile,
   ChoiceDef,
@@ -14,6 +17,7 @@ import type {
   EffectDef,
   Element,
   Grant,
+  InnateSpell,
   InnateSpellDef,
   InventoryEntry,
   InventoryFile,
@@ -66,7 +70,7 @@ export interface CollectResult {
   actions: Part<ActionDef>[];
   effects: Part<EffectDef>[];
   /** Spells cast without preparing or slots. Their uses pools are already in `resources`. */
-  innate: Part<InnateSpellDef>[];
+  innate: Part<InnateSpell>[];
   choices: DeclaredChoice[];
   /** Class element id -> level taken, in build order. */
   classLevels: { element: Element; id: string; level: number; subclasses: Element[] }[];
@@ -78,7 +82,7 @@ export interface CollectResult {
 const LEVEL_PART_KEYS = ["modifiers", "resources", "actions", "effects", "innateSpells"] as const;
 
 /** The local id of the pool behind an innate spell's uses. */
-export function innatePoolId(def: InnateSpellDef): string {
+export function innatePoolId(def: InnateSpell): string {
   return `innate-${def.spell.slice(def.spell.lastIndexOf(":") + 1)}`;
 }
 
@@ -173,22 +177,42 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     });
   }
 
-  function addParts(el: Element, from: PartSource): void {
+  function addParts(el: Element, from: PartSource, ctx: Ctx): void {
     for (const m of el.modifiers ?? []) result.modifiers.push({ def: m, from });
     for (const r of el.resources ?? []) result.resources.push({ def: r, from });
     for (const a of el.actions ?? []) result.actions.push({ def: a, from });
     for (const e of el.effects ?? []) result.effects.push({ def: e, from });
-    for (const s of el.innateSpells ?? []) addInnate(s, from);
+    for (const s of el.innateSpells ?? []) addInnate(s, from, ctx);
   }
 
-  /** An innate spell with uses owns a pool, so rests, spending and pins treat it like any other. */
-  function addInnate(def: InnateSpellDef, from: PartSource): void {
+  /** The element a choice declared beside a part was answered with, if it was. */
+  function answered(ref: string | ChoiceRef | undefined, ctx: Ctx): Element | undefined {
+    if (typeof ref !== "object") return undefined;
+    const id = answerFor(build, ref.choice, ctx.scope, ctx.levelIndex)[0];
+    return id ? index.get(id) : undefined;
+  }
+
+  /**
+   * An innate spell with uses owns a pool, so rests, spending and pins treat it like
+   * any other. A spell or ability that comes from a choice is read here, so everything
+   * after collection sees a plain one; until the choice is answered the part is inert.
+   */
+  function addInnate(raw: InnateSpellDef, from: PartSource, ctx: Ctx): void {
+    const spell = typeof raw.spell === "string" ? raw.spell : answered(raw.spell, ctx)?.id;
+    if (!spell) return;
+    let ability: Ability | undefined;
+    if (typeof raw.ability === "string") ability = raw.ability;
+    else if (raw.ability) {
+      const picked = answered(raw.ability, ctx)?.ability;
+      if (ABILITIES.includes(picked as Ability)) ability = picked as Ability;
+    }
+    const def: InnateSpell = { ...raw, spell, ability };
     result.innate.push({ def, from });
     if (def.uses === undefined) return;
     result.resources.push({
       def: {
         id: innatePoolId(def),
-        name: index.get(def.spell)?.name ?? def.spell,
+        name: index.get(spell)?.name ?? spell,
         max: def.uses,
         recharge: def.recharge ?? [],
       },
@@ -237,7 +261,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     };
     result.elements.push(collected);
     result.byId.set(id, collected);
-    addParts(el, collected);
+    addParts(el, collected, ctx);
     declareChoices(el, ctx);
 
     for (const grant of el.grants ?? [])
@@ -282,6 +306,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     const levelIndex = classId ? levelIndexOf.get(classId)?.[level - 1] : level - 1;
     const from: PartSource = { element: owner, level, class: classId };
 
+    const levelCtx: Ctx = { origin: [owner.id], scope: "level", levelIndex, level, class: classId };
     for (const key of LEVEL_PART_KEYS) {
       const list = entry[key];
       if (!list) continue;
@@ -289,18 +314,12 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         if (key === "modifiers") result.modifiers.push({ def: def as Modifier, from });
         else if (key === "resources") result.resources.push({ def: def as ResourceDef, from });
         else if (key === "actions") result.actions.push({ def: def as ActionDef, from });
-        else if (key === "innateSpells") addInnate(def as InnateSpellDef, from);
+        else if (key === "innateSpells") addInnate(def as InnateSpellDef, from, levelCtx);
         else result.effects.push({ def: def as EffectDef, from });
       }
     }
 
-    const ctx: Ctx = {
-      origin: [owner.id],
-      scope: "level",
-      levelIndex,
-      level,
-      class: classId,
-    };
+    const ctx = levelCtx;
     for (const grant of entry.grants ?? []) visit(grantId(grant), ctx);
     for (const def of entry.choices ?? []) {
       const chosen = answerFor(build, def.id, "level", levelIndex);
@@ -389,7 +408,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       result.elements.push(collected);
       result.byId.set(element.id, collected);
     }
-    addParts(element, from);
+    addParts(element, from, { origin: ["inventory"], scope: "build" });
     for (const mod of armorModifiers(item)) result.modifiers.push({ def: mod, from });
     if (item.charges) result.resources.push({ def: item.charges, from });
     declareChoices(element, { origin: ["inventory"], scope: "build" });

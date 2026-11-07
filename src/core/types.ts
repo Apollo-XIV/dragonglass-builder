@@ -145,15 +145,31 @@ export interface ResourceDef {
 }
 
 /**
+ * "Whatever the player picked in this choice." `choice` is the id of a `ChoiceDef` on
+ * the same element, or in the same level entry, as the part holding the reference. An
+ * unanswered choice leaves the part inert, and answering it revives it.
+ */
+export interface ChoiceRef {
+  choice: string;
+}
+
+/** An innate spell once its choices are read: what the resolver and the export see. */
+export type InnateSpell = Omit<InnateSpellDef, "spell" | "ability"> & { spell: string; ability?: Ability };
+
+/**
  * A spell the character casts without preparing it or spending a slot: a species'
  * Misty Step, an invocation's Armor of Shadows. With `uses` it has a pool of its own,
  * recharged by the same rules as any resource; without, it is cast at will.
  */
 export interface InnateSpellDef {
-  /** The spell element's id. */
-  spell: string;
-  /** Casting ability for its save DC and attack. Defaults to the owning class's. */
-  ability?: Ability;
+  /** The spell element's id, or the choice (declared beside this part) whose answer is it. */
+  spell: string | ChoiceRef;
+  /**
+   * Casting ability for its save DC and attack: fixed, or the choice (declared beside
+   * this part) whose answer is an element carrying an `ability`. Defaults to the
+   * owning class's.
+   */
+  ability?: Ability | ChoiceRef;
   /** Casts before it recharges. Omitted means at will. */
   uses?: Expr;
   /** How the uses come back; empty or omitted means they do not. */
