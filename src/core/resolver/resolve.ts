@@ -36,6 +36,7 @@ import {
   type SubclassElement,
 } from "../types";
 import type { ContentIndex } from "../content";
+import { textOf } from "../content/mastery";
 import type { ResolvedRecharge } from "../state/recharge";
 import { checkRequirement, describeRequirement, type RequirementContext } from "../content/requirements";
 import { resolveDice, tryEvaluate } from "../expr/evaluate";
@@ -811,7 +812,7 @@ function resolveChoices(
         source: element.source,
         abbreviation: content.abbreviation(element.source),
         page: element.page,
-        text: typeof element.text === "string" ? element.text : undefined,
+        text: textOf(content, element),
         fluff: typeof element.fluff === "string" ? element.fluff : undefined,
         tags: element.tags ?? [],
         allowed: check.met,
@@ -1158,7 +1159,7 @@ function toResolved(
     source: element.source,
     abbreviation: content.abbreviation(element.source),
     page: element.page,
-    text: typeof element.text === "string" ? element.text : undefined,
+    text: textOf(content, element),
     fluff: typeof element.fluff === "string" ? element.fluff : undefined,
     tags: element.tags ?? [],
     level: collected?.level,

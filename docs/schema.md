@@ -372,6 +372,41 @@ with separate pools.
 A cast from a different source keeps its own pool: a species' Misty Step and an invocation's
 Misty Step do not share uses.
 
+### Weapon mastery
+
+A weapon mastery pick is an ordinary choice whose options are two core kinds, in the manner of
+`ability-point`: elements that exist to be chosen.
+
+| Kind | One per | Fields |
+| --- | --- | --- |
+| `weapon-mastery` | kind of weapon | `mastery` (the id of its property, required), `weapon` (the item it stands for, reference only), `tags`, no `text` of its own |
+| `mastery-property` | mastery property (Cleave, Graze, Nick...) | `key` (`"sap"`), `text` (the rules text, required) |
+
+```json
+{ "id": "srd24:mastery-property:sap", "kind": "mastery-property", "name": "Sap", "source": "srd24",
+  "key": "sap", "text": "If you hit a creature with this weapon, that creature has Disadvantage on its next attack roll before the start of your next turn." }
+{ "id": "srd24:mastery:longsword", "kind": "weapon-mastery", "name": "Longsword", "source": "srd24",
+  "weapon": "srd24:item:longsword", "mastery": "srd24:mastery-property:sap",
+  "tags": ["martial-weapon", "melee-weapon", "mastery:sap"] }
+```
+
+- **A pick is not the item.** It is a different element, so choosing one collects no parts from
+  the weapon and never touches `inventory.5e`. `weapon` is for display and for tools that
+  want to join the two; nothing in the engine reads it.
+- **Tagging.** A pick carries the weapon's own tags (`simple-weapon`, `martial-weapon`,
+  `melee-weapon`, `ranged-weapon`, `finesse`, `light`...) so a class's pool is an ordinary
+  filter (`tags` any, `allTags` all), plus `mastery:<key>` for its property. A pick that names
+  a property but lacks that tag, or whose `mastery` is not a loaded `mastery-property`, is a
+  warning on load.
+- **How many.** `Choice.count` is a number, so "2 at level 1, 3 at 4" is one choice per level
+  the total rises, as for fighting styles.
+- **Text.** The pick has none; the resolver reads `**<Property>.** <text>` from the property
+  for the sheet's Features list, the detail sheet and the picker. A pick's own `text` wins.
+- **The sheet.** `weapon-mastery` is on the `features` tab, so chosen picks list with the
+  class's features, grouped under the class that offered them.
+- **Not modelled.** "With which you have proficiency" is not stateable per option. Re-picking
+  on a long rest is an ordinary edit of the answer in the builder; there is no rest behaviour.
+
 A class's class level is **how many `levels` entries the build has for it**, which is why
 nothing renumbers when a level is removed.
 

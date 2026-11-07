@@ -280,6 +280,32 @@
     "text": "One point of increase to a single ability score, as an element a choice can offer. Untabbed, like skills and languages: it is a mechanism a feature spends, not a feature in its own right."
   },
   {
+    "id": "core:kind:weapon-mastery",
+    "kind": "kind",
+    "name": "Weapon mastery",
+    "source": "core",
+    "key": "weapon-mastery",
+    "label": "Weapon mastery",
+    "plural": "Weapon masteries",
+    "tab": "features",
+    "display": "list",
+    "order": 74,
+    "text": "A weapon mastery pick: one element per kind of weapon, offered by a choice and carrying that weapon's tags plus a `mastery:<property>` tag. `mastery` names its mastery-property element, whose text the sheet shows. It stands for the weapon without being the item: choosing one never adds anything to the inventory."
+  },
+  {
+    "id": "core:kind:mastery-property",
+    "kind": "kind",
+    "name": "Mastery property",
+    "source": "core",
+    "key": "mastery-property",
+    "label": "Mastery property",
+    "plural": "Mastery properties",
+    "tab": null,
+    "display": "list",
+    "order": 75,
+    "text": "A weapon mastery property (Cleave, Sap, Topple...): text only, read through the weapon-mastery picks that name it."
+  },
+  {
     "id": "core:kind:condition",
     "kind": "kind",
     "name": "Condition",

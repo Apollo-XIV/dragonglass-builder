@@ -9,11 +9,14 @@ import type {
   Element,
   Filter,
   KindElement,
+  MasteryPropertyElement,
   SkillElement,
   SourceRef,
   SourcebookElement,
   StatPathElement,
+  WeaponMasteryElement,
 } from "../types";
+import { masteryTag } from "./mastery";
 import { validateElement } from "./validate";
 
 export interface LoadedSource {
@@ -189,6 +192,22 @@ export class ContentIndex {
     this.checkReferences();
   }
 
+  /** A pick must name a mastery property that exists, and carry that property's tag. */
+  private checkMasteryPick(pick: Element, where: { source?: string; file?: string }): void {
+    const id = (pick as WeaponMasteryElement).mastery;
+    const property = typeof id === "string" ? this.elements.get(id) : undefined;
+    const problem = (message: string, code: Diagnostic["code"] = "invalid-element"): void => {
+      this.diagnostics.push({ severity: "warning", code, message, subject: pick.id, path: "mastery", ...where });
+    };
+    if (!property) {
+      problem(`"${pick.id}" names mastery property "${String(id)}", which is not loaded`, "unresolved-reference");
+    } else if (property.kind !== "mastery-property") {
+      problem(`"${pick.id}" names "${id}" as its mastery, but that is a "${property.kind}", not a mastery-property`);
+    } else if (!(pick.tags ?? []).includes(masteryTag(property as MasteryPropertyElement))) {
+      problem(`"${pick.id}" should carry the tag "${masteryTag(property as MasteryPropertyElement)}"`);
+    }
+  }
+
   private checkReferences(): void {
     for (const el of this.elements.values()) {
       const origin = this.origins.get(el.id);
@@ -224,6 +243,7 @@ export class ContentIndex {
             ...where,
           });
       }
+      if (el.kind === "weapon-mastery") this.checkMasteryPick(el, where);
       const levels = el.levels as Record<string, { grants?: (string | { id: string })[] }> | undefined;
       for (const [lvl, entry] of Object.entries(levels ?? {})) {
         for (const grant of entry.grants ?? []) {

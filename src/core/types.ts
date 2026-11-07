@@ -272,6 +272,22 @@ export interface Element {
   [key: string]: unknown;
 }
 
+/** A weapon mastery pick. See docs/schema.md, "Weapon mastery". */
+export interface WeaponMasteryElement extends Element {
+  kind: "weapon-mastery";
+  /** The `mastery-property` element this weapon's mastery is. */
+  mastery: string;
+  /** The item element the pick stands for. Reference only: never added to the inventory. */
+  weapon?: string;
+}
+
+/** A mastery property definition: text only. */
+export interface MasteryPropertyElement extends Element {
+  kind: "mastery-property";
+  /** Short key used in `mastery:<key>` tags, e.g. "sap". */
+  key: string;
+}
+
 export interface SourcebookElement extends Element {
   kind: "sourcebook";
   abbreviation: string;

@@ -346,6 +346,18 @@ export function validateElement(raw: unknown): ValidationResult {
       out.push(err("invalid-element", "innateSpells must be an array", subject, "innateSpells"));
     else el.innateSpells.forEach((s, i) => validateInnate(s, subject, `innateSpells[${i}]`, out));
   }
+  if (el.kind === "weapon-mastery") {
+    if (typeof el.mastery !== "string" || !el.mastery)
+      out.push(warn("invalid-element", "a weapon mastery pick needs `mastery`, the id of its mastery-property", subject, "mastery"));
+    if (el.weapon !== undefined && typeof el.weapon !== "string")
+      out.push(warn("invalid-element", "`weapon` must be an item id; ignored", subject, "weapon"));
+  }
+  if (el.kind === "mastery-property") {
+    if (typeof el.key !== "string" || !el.key)
+      out.push(warn("invalid-element", "a mastery property needs a `key` for its `mastery:<key>` tag", subject, "key"));
+    if (typeof el.text !== "string" || !el.text)
+      out.push(warn("invalid-element", "a mastery property is its text; this one has none", subject, "text"));
+  }
   if (el.requires !== undefined) validateRequirement(el.requires, subject, "requires", out);
 
   // Class and subclass progressions carry the same parts, keyed by level.
