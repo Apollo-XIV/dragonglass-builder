@@ -19,7 +19,7 @@ import {
 } from "../types";
 import { checkExpression } from "../expr/evaluate";
 
-const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells"] as const;
+const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"] as const;
 
 /** Parts a class/subclass level entry may carry, mirroring element parts. */
 const LEVEL_PARTS = KNOWN_PARTS;
@@ -257,6 +257,26 @@ function validateInnate(
   }
 }
 
+function validateListAddition(a: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!a || typeof a !== "object" || Array.isArray(a)) {
+    out.push(err("invalid-element", "spell list addition must be an object", subject, path));
+    return;
+  }
+  const add = a as Record<string, unknown>;
+  const ids = (key: "spells" | "fromClasses"): void => {
+    const v = add[key];
+    if (v === undefined) return;
+    if (!Array.isArray(v) || v.some((x) => typeof x !== "string" || !x))
+      out.push(err("invalid-element", `${key} must be an array of ids`, subject, `${path}.${key}`));
+  };
+  ids("spells");
+  ids("fromClasses");
+  if (add.class !== undefined && (typeof add.class !== "string" || !add.class))
+    out.push(err("invalid-element", "class must be a class id", subject, `${path}.class`));
+  if (add.spells === undefined && add.fromClasses === undefined)
+    out.push(warn("invalid-element", "adds nothing: give spells or fromClasses", subject, path));
+}
+
 function validateEffect(e: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
   if (!e || typeof e !== "object" || Array.isArray(e)) {
     out.push(err("invalid-element", "effect must be an object", subject, path));
@@ -394,6 +414,11 @@ export function validateElement(raw: unknown): ValidationResult {
     if (typeof el.text !== "string" || !el.text)
       out.push(warn("invalid-element", "a mastery property is its text; this one has none", subject, "text"));
   }
+  if (el.spellListAdditions !== undefined) {
+    if (!Array.isArray(el.spellListAdditions))
+      out.push(err("invalid-element", "spellListAdditions must be an array", subject, "spellListAdditions"));
+    else el.spellListAdditions.forEach((a, i) => validateListAddition(a, subject, `spellListAdditions[${i}]`, out));
+  }
   if (el.requires !== undefined) validateRequirement(el.requires, subject, "requires", out);
 
   // Class and subclass progressions carry the same parts, keyed by level.
@@ -440,6 +465,7 @@ export function validateElement(raw: unknown): ValidationResult {
           if (part === "resources") v.forEach((r, i) => validateResource(r, subject, `${p}[${i}]`, out));
           if (part === "actions") v.forEach((a, i) => validateAction(a, subject, `${p}[${i}]`, out));
           if (part === "effects") v.forEach((x, i) => validateEffect(x, subject, `${p}[${i}]`, out));
+          if (part === "spellListAdditions") v.forEach((x, i) => validateListAddition(x, subject, `${p}[${i}]`, out));
           if (part === "innateSpells") v.forEach((x, i) => validateInnate(x, e.choices, subject, `${p}[${i}]`, out));
         }
         for (const key of Object.keys(e))

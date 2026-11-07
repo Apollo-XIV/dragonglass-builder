@@ -253,6 +253,8 @@ export interface ResolvedSpellcastingClass {
   maxSpellLevel: number;
   /** Every pick the class can ever unlock outside its counts; filter by `level`. */
   extraPicks: ExtraSpellPick[];
+  /** What has been added to the class's list beyond the spells tagged with `list`. */
+  listAdditions: { spells: string[]; lists: string[] };
 }
 
 export interface ResolvedInnate {

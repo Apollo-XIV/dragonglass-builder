@@ -16,6 +16,7 @@ export type { ResolveInput, ResolveOptions } from "./resolver/resolve";
 export * from "./resolver/resolved";
 export { spellLimits, limitDiagnostics } from "./resolver/spell-limits";
 export type { ClassSpellLimits, Count } from "./resolver/spell-limits";
+export { classSpellList, onClassList } from "./resolver/spell-list";
 export {
   explainStat,
   explainSet,

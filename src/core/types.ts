@@ -172,6 +172,20 @@ export interface ChoiceRef {
   choice: string;
 }
 
+/**
+ * Spells added to a class's list as *options*: the class can learn or prepare them as
+ * though they were on it, and nothing is granted. Domain-style "expanded" lists and
+ * Magical Secrets are this.
+ */
+export interface SpellListAddition {
+  /** The class whose list grows. Defaults to the class that owns the part. */
+  class?: string;
+  /** Spell element ids added one by one. */
+  spells?: string[];
+  /** Class element ids whose entire spell list is added. */
+  fromClasses?: string[];
+}
+
 /** An innate spell once its choices are read: what the resolver and the export see. */
 export type InnateSpell = Omit<InnateSpellDef, "spell" | "ability"> & { spell: string; ability?: Ability };
 
@@ -302,6 +316,7 @@ export interface Element {
   actions?: ActionDef[];
   effects?: EffectDef[];
   innateSpells?: InnateSpellDef[];
+  spellListAdditions?: SpellListAddition[];
 
   /** Kind-specific fields and `x-` extensions. */
   [key: string]: unknown;
@@ -367,6 +382,7 @@ export interface LevelEntry {
   actions?: ActionDef[];
   effects?: EffectDef[];
   innateSpells?: InnateSpellDef[];
+  spellListAdditions?: SpellListAddition[];
   text?: string;
 }
 

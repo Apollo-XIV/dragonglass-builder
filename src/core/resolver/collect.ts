@@ -26,6 +26,7 @@ import type {
   Modifier,
   ResourceDef,
   SpellGrantMode,
+  SpellListAddition,
 } from "../types";
 import type { ContentIndex } from "../content";
 
@@ -74,6 +75,8 @@ export interface CollectResult {
   effects: Part<EffectDef>[];
   /** Spells cast without preparing or slots. Their uses pools are already in `resources`. */
   innate: Part<InnateSpell>[];
+  /** Options added to a class's spell list. Grants nothing. */
+  listAdditions: Part<SpellListAddition>[];
   choices: DeclaredChoice[];
   /** Class element id -> level taken, in build order. */
   classLevels: { element: Element; id: string; level: number; subclasses: Element[] }[];
@@ -82,7 +85,7 @@ export interface CollectResult {
   diagnostics: Diagnostic[];
 }
 
-const LEVEL_PART_KEYS = ["modifiers", "resources", "actions", "effects", "innateSpells"] as const;
+const LEVEL_PART_KEYS = ["modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"] as const;
 
 /** The local id of the pool behind an innate spell's uses. */
 export function innatePoolId(def: InnateSpell): string {
@@ -124,6 +127,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     actions: [],
     effects: [],
     innate: [],
+    listAdditions: [],
     choices: [],
     classLevels: [],
     items: [],
@@ -194,6 +198,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     for (const a of el.actions ?? []) result.actions.push({ def: a, from });
     for (const e of el.effects ?? []) result.effects.push({ def: e, from });
     for (const s of el.innateSpells ?? []) addInnate(s, from, ctx);
+    for (const a of el.spellListAdditions ?? []) result.listAdditions.push({ def: a, from });
   }
 
   /** The element a choice declared beside a part was answered with, if it was. */
@@ -328,6 +333,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         else if (key === "resources") result.resources.push({ def: def as ResourceDef, from });
         else if (key === "actions") result.actions.push({ def: def as ActionDef, from });
         else if (key === "innateSpells") addInnate(def as InnateSpellDef, from, levelCtx);
+        else if (key === "spellListAdditions") result.listAdditions.push({ def: def as SpellListAddition, from });
         else result.effects.push({ def: def as EffectDef, from });
       }
     }

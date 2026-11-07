@@ -49,6 +49,7 @@ import {
   type PoolRule,
 } from "../state/fold";
 import { hitPointLevels } from "./hit-points";
+import { onClassList } from "./spell-list";
 import { collect, innatePoolId, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
   casterLevel,
@@ -954,6 +955,7 @@ function resolveSpellcasting(
 
   const count = (expr: Spellcasting["prepared"]): number | undefined =>
     expr === undefined ? undefined : tryEvaluate(expr, engine.ctx, 0).value;
+  const listAdditions = readListAdditions(collected, plan.casting.map((c) => c.cls.id), content, diagnostics);
   const classes: ResolvedSpellcastingClass[] = plan.casting.map(({ cls, sc, level, slotLevel }) => {
     const key = shortKey(cls);
     return {
@@ -979,6 +981,7 @@ function resolveSpellcasting(
           ? plan.pact?.level ?? 0
           : plan.slotMaxes.reduce((top, max, i) => (max > 0 ? i + 1 : top), 0)),
       extraPicks: sc.extra ?? [],
+      listAdditions: listAdditions.get(cls.id) ?? { spells: [], lists: [] },
     };
   });
 
@@ -1002,7 +1005,7 @@ function resolveSpellcasting(
   const spells: ResolvedSpell[] = [];
   const orphaned: ResolvedSpell[] = [];
   const classIds = new Set(classes.map((c) => c.class));
-  const listTags = new Map(classes.map((c) => [c.class, c.list]));
+  const castingClasses = new Map(classes.map((c) => [c.class, c]));
   const seen = new Set<string>();
 
   const push = (
@@ -1051,8 +1054,8 @@ function resolveSpellcasting(
     // list says nothing about it: oath, domain and circle spells are rarely on it, and
     // Magical Secrets exists to learn spells that are not.
     if (fits && classId && !resolved.extra && !alwaysPrepared && !innateOnly && !learned) {
-      const tag = listTags.get(classId);
-      if (tag && !(element.tags ?? []).includes(tag))
+      const cls = castingClasses.get(classId);
+      if (cls && !onClassList(cls, element))
         diagnostics.push({
           severity: "warning",
           code: "spell-mismatch",
@@ -1216,5 +1219,60 @@ export function allAnnotations(character: ResolvedCharacter): { path: string; an
     for (const annotation of stat.annotations) out.push({ path, annotation });
   for (const [path, stat] of Object.entries(character.sets))
     for (const annotation of stat.annotations) out.push({ path, annotation });
+  return out;
+}
+
+/**
+ * What each casting class's list has gained, from every `spellListAdditions` part that
+ * applied. A part with no `class` extends the class that owns it. These only widen what
+ * can be chosen: nothing here puts a spell on the character.
+ */
+function readListAdditions(
+  collected: CollectResult,
+  casting: string[],
+  content: ContentIndex,
+  diagnostics: Diagnostic[],
+): Map<string, ResolvedSpellcastingClass["listAdditions"]> {
+  const out = new Map<string, ResolvedSpellcastingClass["listAdditions"]>();
+  const add = (list: string[], item: string): void => {
+    if (!list.includes(item)) list.push(item);
+  };
+  for (const { def, from } of collected.listAdditions) {
+    const target = def.class ?? from.class;
+    if (!target) {
+      diagnostics.push({
+        severity: "warning",
+        code: "unknown-part",
+        message: `${from.element.name} extends a spell list but names no class, and no class owns it`,
+        subject: from.element.id,
+      });
+      continue;
+    }
+    // A class the character does not cast with has no list to grow; the part waits.
+    if (!casting.includes(target)) continue;
+    const entry = out.get(target) ?? { spells: [], lists: [] };
+    out.set(target, entry);
+    for (const id of def.spells ?? []) {
+      if (content.get(id)?.kind === "spell") add(entry.spells, id);
+      else
+        diagnostics.push({
+          severity: "warning",
+          code: "unresolved-reference",
+          message: `"${id}" is not a spell in any loaded source (added to a list by ${from.element.name})`,
+          subject: from.element.id,
+        });
+    }
+    for (const id of def.fromClasses ?? []) {
+      const tag = (content.get(id) as { spellcasting?: { list?: string } } | undefined)?.spellcasting?.list;
+      if (tag) add(entry.lists, tag);
+      else
+        diagnostics.push({
+          severity: "warning",
+          code: "unresolved-reference",
+          message: `"${id}" is not a class with a spell list in any loaded source (added to a list by ${from.element.name})`,
+          subject: from.element.id,
+        });
+    }
+  }
   return out;
 }

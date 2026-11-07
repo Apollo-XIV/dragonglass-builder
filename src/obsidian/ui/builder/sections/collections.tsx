@@ -6,6 +6,7 @@ import type {
   ResolvedSpellcastingClass,
 } from "../../../../core/resolver/resolved";
 import { factsOf } from "../../../../core/content/facts";
+import { classSpellList } from "../../../../core/resolver/spell-list";
 import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-limits";
 import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
@@ -100,8 +101,7 @@ export function SpellsSection({
     picker({
       title: "Add spells",
       subtitle: cls.name,
-      options: index
-        .query({ kind: "spell", tags: [cls.list] })
+      options: classSpellList(index, cls)
         .filter((spell) => !known.has(spell.id))
         .map((spell) => optionOf(spell, limits, limits.maxSpellLevel)),
       buckets: {
@@ -138,8 +138,7 @@ export function SpellsSection({
     picker({
       title: "Add extra spells",
       subtitle: `${cls.name} · ${anyClass ? "any class" : "class list"}`,
-      options: index
-        .query(anyClass ? { kind: "spell" } : { kind: "spell", tags: [cls.list] })
+      options: (anyClass ? index.query({ kind: "spell" }) : classSpellList(index, cls))
         .filter((spell) => !known.has(spell.id))
         .map((spell) => ({ ...optionOf(spell, limits, ceiling), bucket: undefined })),
       selected: [],
