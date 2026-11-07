@@ -275,9 +275,10 @@ export function SpellsPanel({
   const setPrepared = (spell: ResolvedSpell, prepared: boolean): void => {
     const file = store.data.spells;
     if (!file) return;
-    const spells: SpellEntry[] = file.spells.map((entry) =>
-      entry.id === spell.id ? { ...entry, prepared } : entry,
-    );
+    // A learned spell is granted, so the file has no entry for it until it is prepared.
+    const spells: SpellEntry[] = file.spells.some((entry) => entry.id === spell.id)
+      ? file.spells.map((entry) => (entry.id === spell.id ? { ...entry, prepared } : entry))
+      : [...file.spells, { id: spell.id, class: spell.class, prepared }];
     store.update("spells", { ...file, spells });
   };
 

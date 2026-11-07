@@ -10,6 +10,7 @@ import {
   MODIFIER_OPS,
   PROFICIENCY_LEVELS,
   RECHARGE_TRIGGERS,
+  SPELL_GRANT_MODES,
   type ChoiceDef,
   type Diagnostic,
   type Modifier,
@@ -196,6 +197,22 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
   }
 }
 
+function validateGrant(g: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (typeof g === "string") return;
+  if (!g || typeof g !== "object" || typeof (g as Record<string, unknown>).id !== "string") {
+    out.push(err("invalid-element", "grant must be an id or {id}", subject, path));
+    return;
+  }
+  const grant = g as Record<string, unknown>;
+  if (grant.mode !== undefined && !(SPELL_GRANT_MODES as readonly unknown[]).includes(grant.mode))
+    out.push(warn("invalid-element", `unknown grant mode "${String(grant.mode)}"; treated as always-prepared`, subject, `${path}.mode`));
+  if (grant.counts !== undefined) {
+    if (typeof grant.counts !== "boolean") out.push(warn("invalid-element", "counts must be true or false", subject, `${path}.counts`));
+    else if (grant.mode !== "learned")
+      out.push(warn("invalid-element", 'counts only means something with mode "learned"', subject, `${path}.counts`));
+  }
+}
+
 /** Checks a `{ choice }` reference: it names a choice, and one declared beside the part. */
 function choiceRef(v: unknown, siblings: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
   const id = (v as { choice?: unknown }).choice;
@@ -336,10 +353,7 @@ export function validateElement(raw: unknown): ValidationResult {
   if (el.grants !== undefined) {
     if (!Array.isArray(el.grants)) out.push(err("invalid-element", "grants must be an array", subject, "grants"));
     else
-      el.grants.forEach((g, i) => {
-        const ok = typeof g === "string" || (!!g && typeof g === "object" && typeof (g as Record<string, unknown>).id === "string");
-        if (!ok) out.push(err("invalid-element", "grant must be an id or {id}", subject, `grants[${i}]`));
-      });
+      el.grants.forEach((g, i) => validateGrant(g, subject, `grants[${i}]`, out));
   }
   if (el.modifiers !== undefined) {
     if (!Array.isArray(el.modifiers))
@@ -420,6 +434,7 @@ export function validateElement(raw: unknown): ValidationResult {
             continue;
           }
           const p = `levels.${lvl}.${part}`;
+          if (part === "grants") v.forEach((x, i) => validateGrant(x, subject, `${p}[${i}]`, out));
           if (part === "modifiers") v.forEach((m, i) => validateModifier(m, subject, `${p}[${i}]`, out));
           if (part === "choices") v.forEach((c, i) => validateChoice(c, subject, `${p}[${i}]`, out));
           if (part === "resources") v.forEach((r, i) => validateResource(r, subject, `${p}[${i}]`, out));

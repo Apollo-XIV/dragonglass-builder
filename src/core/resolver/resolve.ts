@@ -1011,6 +1011,7 @@ function resolveSpellcasting(
     alwaysPrepared: boolean,
     classId?: string,
     innateOnly = false,
+    learned?: { counts: boolean },
   ): void => {
     if (seen.has(element.id)) return;
     seen.add(element.id);
@@ -1031,6 +1032,8 @@ function resolveSpellcasting(
       prepared: alwaysPrepared || entry.prepared === true,
       alwaysPrepared,
       extra: entry.extra === true,
+      learned: learned !== undefined,
+      free: learned !== undefined && !learned.counts,
       innate: [],
       innateOnly,
       class: classId,
@@ -1045,8 +1048,9 @@ function resolveSpellcasting(
     else spells.push(resolved);
 
     // Neither an extra spell nor a granted one was picked from the class's list, so the
-    // list says nothing about it: oath, domain and circle spells are rarely on it.
-    if (fits && classId && !resolved.extra && !alwaysPrepared && !innateOnly) {
+    // list says nothing about it: oath, domain and circle spells are rarely on it, and
+    // Magical Secrets exists to learn spells that are not.
+    if (fits && classId && !resolved.extra && !alwaysPrepared && !innateOnly && !learned) {
       const tag = listTags.get(classId);
       if (tag && !(element.tags ?? []).includes(tag))
         diagnostics.push({
@@ -1058,8 +1062,16 @@ function resolveSpellcasting(
     }
   };
 
-  for (const granted of grantedSpells)
-    push(granted.element, { id: granted.element.id, alwaysPrepared: true }, true, granted.class);
+  // A learned grant is a spell the character knows; whether it is prepared is still theirs
+  // to say, so the spells file's entry for it, if any, is the one the resolved spell keeps.
+  const filed = new Map((spellsFile?.spells ?? []).map((e) => [e.id, e]));
+  for (const granted of grantedSpells) {
+    const { element, spellGrant } = granted;
+    if (spellGrant?.mode === "learned") {
+      const entry = filed.get(element.id) ?? { id: element.id };
+      push(element, entry, false, granted.class ?? entry.class, false, { counts: spellGrant.counts });
+    } else push(element, { id: element.id, alwaysPrepared: true }, true, granted.class);
+  }
 
   for (const entry of spellsFile?.spells ?? []) {
     const element = content.get(entry.id);

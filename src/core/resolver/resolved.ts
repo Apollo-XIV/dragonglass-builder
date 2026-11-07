@@ -286,6 +286,10 @@ export interface ResolvedSpell {
   alwaysPrepared: boolean;
   /** Learned outside the class's progression; counts toward no limit. */
   extra: boolean;
+  /** Granted as learned (`mode: "learned"`): known or in the book, and not removable. */
+  learned: boolean;
+  /** A learned spell that takes no room against the class's limits (`counts: false`). */
+  free: boolean;
   /** Every way the character casts this without a slot. Empty for an ordinary spell. */
   innate: ResolvedInnate[];
   /** Here only because something grants it innately: not prepared, picked or counted. */

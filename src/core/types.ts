@@ -15,8 +15,27 @@ export type Expr = number | string;
 // Parts
 // ---------------------------------------------------------------------------
 
+/**
+ * What a granted spell is to the character. See docs/schema.md, "Granted and innate spells".
+ * - `always-prepared`: prepared, free, never in the spells file. The default.
+ * - `learned`: added to the spells known or the spellbook; whether it fills a slot in the
+ *   class's limits is the grant's `counts`.
+ */
+export const SPELL_GRANT_MODES = ["always-prepared", "learned"] as const;
+export type SpellGrantMode = (typeof SPELL_GRANT_MODES)[number];
+
 /** A grant is an element id, or an id with authored commentary attached. */
-export type Grant = string | { id: string; text?: string; notes?: string };
+export type Grant =
+  | string
+  | {
+      id: string;
+      text?: string;
+      notes?: string;
+      /** For a spell: how the character has it. Defaults to `always-prepared`. */
+      mode?: SpellGrantMode;
+      /** For `mode: "learned"`: whether it counts against the class's limits. Defaults to true. */
+      counts?: boolean;
+    };
 
 export interface Filter {
   /** One kind or several. An element matches if its kind is in the list. */

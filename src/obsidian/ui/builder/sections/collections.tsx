@@ -164,11 +164,12 @@ export function SpellsSection({
         <InfoRow
           key={spell.id}
           title={spell.name}
-          subtitle={`${spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`}${spell.extra ? " · Extra" : ""}${spell.innateOnly ? " · Innate" : ""}`}
+          subtitle={`${spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`}${spell.extra ? " · Extra" : ""}${spell.innateOnly ? " · Innate" : ""}${spell.learned ? " · Learned" : ""}`}
           text={spell.text}
           facts={factsOf(spell.element)}
         >
           {features.rowEditing &&
+          !spell.learned &&
           store.data.spells?.spells.some((entry) => entry.id === spell.id) ? (
             <button
               className="dg-row-remove"

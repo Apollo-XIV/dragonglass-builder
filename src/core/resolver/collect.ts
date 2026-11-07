@@ -25,6 +25,7 @@ import type {
   LevelEntry,
   Modifier,
   ResourceDef,
+  SpellGrantMode,
 } from "../types";
 import type { ContentIndex } from "../content";
 
@@ -44,6 +45,8 @@ export interface CollectedElement extends PartSource {
   /** Where an answer to this element's choices is written. */
   scope: "build" | "level";
   levelIndex?: number;
+  /** How the grant that brought a spell here asked for it to be held. */
+  spellGrant?: { mode: SpellGrantMode; counts: boolean };
 }
 
 export interface DeclaredChoice {
@@ -161,6 +164,14 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
      * occurrence's whole subtree shares one key.
      */
     occurrence?: string;
+    /** The grant that is being followed, when it said how to hold a spell. */
+    spellGrant?: CollectedElement["spellGrant"];
+  }
+
+  /** The mode a grant asks for, for the grant that reaches the element next. */
+  function spellGrantOf(grant: Grant): Ctx["spellGrant"] {
+    if (typeof grant === "string" || grant.mode !== "learned") return undefined;
+    return { mode: "learned", counts: grant.counts !== false };
   }
 
   /** One pick's occurrence key: which choice, answered where, and which pick. */
@@ -236,6 +247,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         visit(id, {
           ...ctx,
           origin: [...ctx.origin, el.id],
+          spellGrant: undefined,
           occurrence: occurrenceFor(def, ctx, pick),
         }),
       );
@@ -258,6 +270,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       levelIndex: ctx.levelIndex,
       level: ctx.level,
       class: ctx.class,
+      spellGrant: ctx.spellGrant,
     };
     result.elements.push(collected);
     result.byId.set(id, collected);
@@ -265,7 +278,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     declareChoices(el, ctx);
 
     for (const grant of el.grants ?? [])
-      visit(grantId(grant), { ...ctx, origin: [...ctx.origin, id] });
+      visit(grantId(grant), { ...ctx, origin: [...ctx.origin, id], spellGrant: spellGrantOf(grant) });
 
     if (el.levels && el.kind !== "class") {
       if (el.levelsBy === "character") {
@@ -320,7 +333,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     }
 
     const ctx = levelCtx;
-    for (const grant of entry.grants ?? []) visit(grantId(grant), ctx);
+    for (const grant of entry.grants ?? []) visit(grantId(grant), { ...ctx, spellGrant: spellGrantOf(grant) });
     for (const def of entry.choices ?? []) {
       const chosen = answerFor(build, def.id, "level", levelIndex);
       result.choices.push({
@@ -332,7 +345,9 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         class: classId,
         chosen,
       });
-      chosen.forEach((id, pick) => visit(id, { ...ctx, occurrence: occurrenceFor(def, ctx, pick) }));
+      chosen.forEach((id, pick) =>
+        visit(id, { ...ctx, spellGrant: undefined, occurrence: occurrenceFor(def, ctx, pick) }),
+      );
     }
   }
 
@@ -413,7 +428,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     if (item.charges) result.resources.push({ def: item.charges, from });
     declareChoices(element, { origin: ["inventory"], scope: "build" });
     for (const grant of element.grants ?? [])
-      visit(grantId(grant), { origin: ["inventory", element.id], scope: "build" });
+      visit(grantId(grant), { origin: ["inventory", element.id], scope: "build", spellGrant: spellGrantOf(grant) });
   });
 
   return result;
