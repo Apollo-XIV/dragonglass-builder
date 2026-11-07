@@ -1,6 +1,6 @@
 {
   "envelope": {
-    "schemaVersion": "2.0",
+    "schemaVersion": "2.1",
     "characterId": "6f1d7c52-0d0e-4a39-9f6b-3a1f0c7b9e11",
     "exportedAt": "2026-01-01T00:00:00.000Z",
     "pluginVersion": "test",
@@ -1164,6 +1164,7 @@
       "id": "uses",
       "name": "Divine Sense",
       "max": 2,
+      "unlimited": false,
       "recharge": [
         {
           "on": "long-rest",
@@ -1177,6 +1178,7 @@
       "id": "srd:paladin:lay-on-hands",
       "name": "Lay on Hands",
       "max": 15,
+      "unlimited": false,
       "recharge": [
         {
           "on": "long-rest",
@@ -1191,6 +1193,7 @@
       "id": "srd:paladin:channel-divinity",
       "name": "Channel Divinity",
       "max": 1,
+      "unlimited": false,
       "recharge": [
         {
           "on": "short-rest",
@@ -1212,6 +1215,8 @@
       "prepared": true,
       "alwaysPrepared": false,
       "extra": false,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     },
@@ -1226,6 +1231,8 @@
       "prepared": false,
       "alwaysPrepared": false,
       "extra": false,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     },
@@ -1240,6 +1247,8 @@
       "prepared": true,
       "alwaysPrepared": false,
       "extra": false,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     },
@@ -1254,6 +1263,8 @@
       "prepared": true,
       "alwaysPrepared": true,
       "extra": false,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     },
@@ -1268,6 +1279,8 @@
       "prepared": true,
       "alwaysPrepared": true,
       "extra": false,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     },
@@ -1281,6 +1294,8 @@
       "prepared": false,
       "alwaysPrepared": false,
       "extra": true,
+      "learned": false,
+      "free": false,
       "innateOnly": false,
       "innate": []
     }
@@ -1293,7 +1308,11 @@
         "type": "prepared",
         "progression": "half",
         "dc": 11,
-        "attack": 3
+        "attack": 3,
+        "listAdditions": {
+          "spells": [],
+          "lists": []
+        }
       }
     ],
     "slots": [

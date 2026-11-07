@@ -13,11 +13,16 @@
  * list of rules and dropped `rechargeAmount`; the same release added innate spells
  * (`spells[].innate`, `spells[].innateOnly` and the `innate-spell` part). Readers must
  * ignore fields they do not know, which is why no object here forbids extra properties.
+ *
+ * 2.1 added `resources[].unlimited`, `spells[].learned` and `.free`,
+ * `spellcasting.classes[].listAdditions` and the `spell-list` part (`from: "spellListAdditions"`).
+ * An innate spell's spell and ability may come from a choice in the authored part; the
+ * `spells[].innate` entries always carry the values it resolved to.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.0";
+export const EXPORT_SCHEMA_VERSION = "2.1";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -152,13 +157,13 @@ export const ExportLevel = Type.Object({
 export const ExportPart = Type.Object(
   {
     kind: Type.Union(
-      ["resource", "toggle", "passive", "action", "innate-spell"].map((k) => Type.Literal(k)),
+      ["resource", "toggle", "passive", "action", "innate-spell", "spell-list"].map((k) => Type.Literal(k)),
       {
         description:
-          "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part).",
+          "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part); its `spell` and `ability` may be `{ choice }` references here, and are resolved in spells[].innate. spell-list: options added to a class's spell list (nothing is granted).",
       },
     ),
-    from: Type.Union(["modifiers", "resources", "actions", "effects", "innateSpells"].map((k) => Type.Literal(k)), {
+    from: Type.Union(["modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"].map((k) => Type.Literal(k)), {
       description: "Which part list of the element it was read from.",
     }),
     definition: Obj,
@@ -192,7 +197,13 @@ export const ExportResource = Type.Object({
   key: Type.String({ description: "Globally unique pool key." }),
   id: Type.String(),
   name: Type.String(),
-  max: Type.Number({ description: "Evaluated at the character's level." }),
+  max: Type.Number({
+    description: "Evaluated at the character's level. 0 and meaningless when `unlimited`: JSON cannot carry infinity.",
+  }),
+  unlimited: Type.Boolean({
+    description:
+      "The max is unlimited (Rages at level 20): the sheet shows ∞, spending is never blocked, and rests leave it alone.",
+  }),
   recharge: Type.Array(ExportRecharge, {
     description:
       "How uses come back. Empty means never by itself. When several rules match a rest, the largest amount applies.",
@@ -269,6 +280,11 @@ export const ExportSpell = Type.Object({
   prepared: Type.Boolean(),
   alwaysPrepared: Type.Boolean(),
   extra: Type.Boolean({ description: "Learned outside the class's own progression." }),
+  learned: Type.Boolean({
+    description:
+      "Granted as a learned spell (known or in the book): not removable, and prepared only if the player prepares it.",
+  }),
+  free: Type.Boolean({ description: "A learned spell that takes no room against the class's limits." }),
   innateOnly: Type.Boolean({
     description:
       "Present only because something grants it as an innate cast: not prepared, not picked, counted against nothing.",
@@ -288,6 +304,13 @@ export const ExportSpellcasting = Type.Object({
       progression: Type.String(),
       dc: Type.Integer(),
       attack: Type.Integer(),
+      listAdditions: Type.Object(
+        {
+          spells: Type.Array(Id, { description: "Spells added to the class's list one by one." }),
+          lists: Type.Array(Type.String(), { description: "Spell list tags whose spells are all added (another class's list)." }),
+        },
+        { description: "Options added to the class's spell list beyond the spells tagged with its own. Grants nothing." },
+      ),
     }),
   ),
   slots: Type.Array(Type.Object({ level: Type.Integer(), max: Type.Integer() })),

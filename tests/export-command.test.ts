@@ -14,7 +14,7 @@ import {
   type ExportDeps,
 } from "../src/obsidian/export-character";
 import { indexFromDisk } from "../src/node/load-source";
-import { validateExport } from "../src/core/export";
+import { EXPORT_SCHEMA_VERSION, validateExport } from "../src/core/export";
 import { appendInventoryEntry } from "../src/core/inventory";
 import { CONTENT_ROOT } from "./helpers";
 
@@ -236,7 +236,7 @@ describe("summariseExport", () => {
   it("reads the name, id, version and time", () => {
     const text = exportText(JSON.parse(readFileSync(join(__dirname, "fixtures/exports/paladin-3.json"), "utf8")));
     const s = summariseExport(text);
-    expect(s).toMatchObject({ ok: true, name: "Brann Ironvow", schemaVersion: "2.0" });
+    expect(s).toMatchObject({ ok: true, name: "Brann Ironvow", schemaVersion: EXPORT_SCHEMA_VERSION });
     expect(s.ok && s.characterId).toBeTruthy();
   });
   it("says so for text that is not an export", () => {

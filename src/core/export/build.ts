@@ -112,6 +112,8 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
     prepared: s.prepared,
     alwaysPrepared: s.alwaysPrepared,
     extra: s.extra,
+    learned: s.learned,
+    free: s.free,
     innateOnly: s.innateOnly,
     innate: s.innate.map((i) => ({
       source: use(i.source) ?? i.source,
@@ -166,7 +168,8 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       key: x.key,
       id: x.id,
       name: x.name,
-      max: x.max,
+      max: x.unlimited ? 0 : x.max,
+      unlimited: x.unlimited,
       recharge: x.recharge.map((r) => ({ on: r.on, amount: r.amount })),
       ...(x.unit ? { unit: x.unit } : {}),
       ...(x.die ? { die: x.die } : {}),
@@ -181,6 +184,10 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
         progression: c.progression,
         dc: c.dc.value,
         attack: c.attack.value,
+        listAdditions: {
+          spells: c.listAdditions.spells.map((id) => use(id) ?? id),
+          lists: [...c.listAdditions.lists],
+        },
       })),
       slots: r.spellcasting.slots.map((s) => ({ level: s.level, max: s.max })),
       ...(r.spellcasting.pact ? { pact: { level: r.spellcasting.pact.level, max: r.spellcasting.pact.max } } : {}),
@@ -309,7 +316,7 @@ function featureOf(e: ResolvedElement, use: (id: string) => string | undefined):
   };
 }
 
-type PartList = "modifiers" | "resources" | "actions" | "effects" | "innateSpells";
+type PartList = "modifiers" | "resources" | "actions" | "effects" | "innateSpells" | "spellListAdditions";
 
 /** Reads an element's parts and gives each a kind the reader can switch on. */
 export function partsOf(el: Element): ExportPart[] {
@@ -328,6 +335,7 @@ export function partsOf(el: Element): ExportPart[] {
     });
   add("modifiers", "passive", el.modifiers);
   add("innateSpells", "innate-spell", el.innateSpells);
+  add("spellListAdditions", "spell-list", el.spellListAdditions);
   return out;
 }
 

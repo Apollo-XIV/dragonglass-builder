@@ -235,6 +235,73 @@ describe("what the export contains", () => {
     ]);
   });
 
+  it("carries unlimited resources, learned spells, list additions and chosen innate spells (2.1)", async () => {
+    const mk = (n: string, spellLevel: number, tags: string[] = []): Element =>
+      ({ id: `test:spell:${n}`, kind: "spell", name: n, source: "test", spellLevel, tags }) as Element;
+    const abilityEl: Element = { id: "test:casting-ability:int", kind: "casting-ability", name: "Intelligence", source: "test", ability: "int" } as Element;
+    const initiate: Element = {
+      id: "test:feat:initiate", kind: "feat", name: "Initiate", source: "test",
+      choices: [
+        { id: "ability", count: 1, from: { kind: "casting-ability" } },
+        { id: "spell", count: 1, from: { kind: "spell", tags: ["wizard-spell"] } },
+      ],
+      innateSpells: [{ spell: { choice: "spell" }, ability: { choice: "ability" }, uses: 1, recharge: [{ on: "long-rest", amount: "all" }] }],
+    } as Element;
+    const bard: Element = {
+      id: "test:class:bard", kind: "class", name: "Bardish", source: "test", key: "bard", hitDie: "d8",
+      spellcasting: { ability: "cha", progression: "full", type: "known", list: "bard-spell", known: 4 },
+      tables: { rages: [...Array.from({ length: 19 }, () => 3), "Unlimited"] },
+      resources: [{ id: "rages", name: "Rages", max: "@table(bard, rages)", recharge: [{ on: "long-rest", amount: "all" }] }],
+      levels: {
+        "1": {
+          grants: [{ id: "test:spell:secret", mode: "learned", counts: false }],
+          spellListAdditions: [{ spells: ["test:spell:fireball"], fromClasses: ["test:class:wiz"] }],
+        },
+      },
+    } as Element;
+    const wiz: Element = {
+      id: "test:class:wiz", kind: "class", name: "Wiz", source: "test", key: "wiz", hitDie: "d6",
+      spellcasting: { ability: "int", progression: "full", type: "prepared", list: "wizard-spell", prepared: 4 },
+    } as Element;
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, initiate, bard, wiz, abilityEl, mk("secret", 2), mk("fireball", 3), mk("sleep", 1, ["wizard-spell"])]),
+      build: build({
+        background: initiate.id,
+        choices: { ability: [abilityEl.id], spell: ["test:spell:sleep"] },
+        abilities: { method: "manual", base: scores({ int: 14 }) },
+        levels: Array.from({ length: 20 }, () => ({ class: bard.id, hp: "average" as const, choices: {} })),
+      }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(validateExport(clone(doc)).errors).toEqual([]);
+    expect(doc.envelope.schemaVersion).toBe("2.1");
+
+    // JSON has no infinity, so the document says so in words.
+    const rages = doc.resources.find((r) => r.id === "rages")!;
+    expect(rages).toMatchObject({ max: 0, unlimited: true });
+    expect(JSON.stringify(doc)).not.toContain("null,\"unlimited\"");
+    expect(doc.resources.filter((r) => r.id !== "rages").every((r) => r.unlimited === false)).toBe(true);
+
+    expect(doc.spells.find((s) => s.id === "test:spell:secret")).toMatchObject({ learned: true, free: true, prepared: false, alwaysPrepared: false });
+    expect(doc.spells.find((s) => s.id === "test:spell:sleep")).toMatchObject({ learned: false, free: false, alwaysPrepared: true });
+
+    // The part is as authored, with its references; the spell carries what they resolved to.
+    expect(partsOf(initiate).find((p) => p.kind === "innate-spell")!.definition).toMatchObject({ spell: { choice: "spell" }, ability: { choice: "ability" } });
+    expect(doc.spells.find((s) => s.id === "test:spell:sleep")!.innate).toEqual([
+      expect.objectContaining({ source: initiate.id, ability: "int", dc: expect.any(Number), resource: "test:feat:initiate:innate-sleep" }),
+    ]);
+
+    expect(doc.spellcasting!.classes.find((c) => c.class === bard.id)!.listAdditions).toEqual({
+      spells: ["test:spell:fireball"],
+      lists: ["wizard-spell"],
+    });
+    expect(doc.spellcasting!.classes.find((c) => c.class === wiz.id)).toBeUndefined();
+    expect(partsOf(bard).length).toBeGreaterThan(0);
+  });
+
   it("exports a weapon mastery pick as a feature with its property's text", async () => {
     const sap: Element = { id: "test:mastery-property:sap", kind: "mastery-property", name: "Sap", source: "test", key: "sap", text: "Disadvantage on its next attack." };
     const pickEl: Element = {

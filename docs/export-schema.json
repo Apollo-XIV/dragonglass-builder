@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "2.0",
+  "x-schemaVersion": "2.1",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -1034,7 +1034,7 @@
               ],
               "properties": {
                 "kind": {
-                  "description": "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part).",
+                  "description": "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part); its `spell` and `ability` may be `{ choice }` references here, and are resolved in spells[].innate. spell-list: options added to a class's spell list (nothing is granted).",
                   "anyOf": [
                     {
                       "const": "resource",
@@ -1054,6 +1054,10 @@
                     },
                     {
                       "const": "innate-spell",
+                      "type": "string"
+                    },
+                    {
+                      "const": "spell-list",
                       "type": "string"
                     }
                   ]
@@ -1080,6 +1084,10 @@
                     {
                       "const": "innateSpells",
                       "type": "string"
+                    },
+                    {
+                      "const": "spellListAdditions",
+                      "type": "string"
                     }
                   ]
                 },
@@ -1104,6 +1112,7 @@
           "id",
           "name",
           "max",
+          "unlimited",
           "recharge",
           "owner"
         ],
@@ -1119,8 +1128,12 @@
             "type": "string"
           },
           "max": {
-            "description": "Evaluated at the character's level.",
+            "description": "Evaluated at the character's level. 0 and meaningless when `unlimited`: JSON cannot carry infinity.",
             "type": "number"
+          },
+          "unlimited": {
+            "description": "The max is unlimited (Rages at level 20): the sheet shows ∞, spending is never blocked, and rests leave it alone.",
+            "type": "boolean"
           },
           "recharge": {
             "description": "How uses come back. Empty means never by itself. When several rules match a rest, the largest amount applies.",
@@ -1177,6 +1190,8 @@
           "prepared",
           "alwaysPrepared",
           "extra",
+          "learned",
+          "free",
           "innateOnly",
           "innate"
         ],
@@ -1214,6 +1229,14 @@
           },
           "extra": {
             "description": "Learned outside the class's own progression.",
+            "type": "boolean"
+          },
+          "learned": {
+            "description": "Granted as a learned spell (known or in the book): not removable, and prepared only if the player prepares it.",
+            "type": "boolean"
+          },
+          "free": {
+            "description": "A learned spell that takes no room against the class's limits.",
             "type": "boolean"
           },
           "innateOnly": {
@@ -1301,7 +1324,8 @@
               "type",
               "progression",
               "dc",
-              "attack"
+              "attack",
+              "listAdditions"
             ],
             "properties": {
               "class": {
@@ -1348,6 +1372,32 @@
               },
               "attack": {
                 "type": "integer"
+              },
+              "listAdditions": {
+                "description": "Options added to the class's spell list beyond the spells tagged with its own. Grants nothing.",
+                "type": "object",
+                "required": [
+                  "spells",
+                  "lists"
+                ],
+                "properties": {
+                  "spells": {
+                    "description": "Spells added to the class's list one by one.",
+                    "type": "array",
+                    "items": {
+                      "minLength": 1,
+                      "description": "An element id, e.g. srd:barbarian:rage.",
+                      "type": "string"
+                    }
+                  },
+                  "lists": {
+                    "description": "Spell list tags whose spells are all added (another class's list).",
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
               }
             }
           }
