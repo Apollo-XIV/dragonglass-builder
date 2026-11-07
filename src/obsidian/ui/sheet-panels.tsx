@@ -411,14 +411,17 @@ function SpellRow({
         <input
           type="checkbox"
           checked={spell.prepared}
-          disabled={readOnly || spell.alwaysPrepared}
-          title={spell.alwaysPrepared ? "Always prepared" : "Prepared"}
+          disabled={readOnly || spell.alwaysPrepared || spell.innateOnly}
+          title={spell.alwaysPrepared ? "Always prepared" : spell.innateOnly ? "Innate: not prepared" : "Prepared"}
           onChange={(e) => onPrepare(e.currentTarget.checked)}
         />
         <button className="dg-link" onClick={() => setOpen((v) => !v)}>
           {spell.name}
         </button>
         {spell.alwaysPrepared ? <Pill tone="info">always prepared</Pill> : null}
+        {spell.innate.length ? (
+          <Pill tone="info">{spell.innate.some((i) => !i.resource) ? "innate · at will" : "innate"}</Pill>
+        ) : null}
         {spell.concentration ? <Pill>conc.</Pill> : null}
         {spell.ritual ? <Pill>ritual</Pill> : null}
         {spell.abbreviation ? <Pill>{spell.abbreviation}{spell.page ? ` ${spell.page}` : ""}</Pill> : null}

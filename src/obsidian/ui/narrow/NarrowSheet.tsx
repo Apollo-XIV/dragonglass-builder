@@ -542,6 +542,7 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
             spell.range,
             spell.concentration ? "concentration" : undefined,
             spell.ritual ? "ritual" : undefined,
+            spell.innate.length ? (spell.innate.some((i) => !i.resource) ? "innate, at will" : "innate") : undefined,
           ]
             .filter(Boolean)
             .join(" · ")}

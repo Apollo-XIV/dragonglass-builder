@@ -48,7 +48,7 @@ import {
   type PoolRule,
 } from "../state/fold";
 import { hitPointLevels } from "./hit-points";
-import { collect, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
+import { collect, innatePoolId, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
   casterLevel,
   maxForDie,
@@ -948,7 +948,8 @@ function resolveSpellcasting(
   diagnostics: Diagnostic[],
 ): ResolvedSpellcasting | undefined {
   const grantedSpells = collected.elements.filter((c) => c.element.kind === "spell");
-  if (!plan.casting.length && !grantedSpells.length && !spellsFile?.spells?.length) return undefined;
+  if (!plan.casting.length && !grantedSpells.length && !collected.innate.length && !spellsFile?.spells?.length)
+    return undefined;
 
   const count = (expr: Spellcasting["prepared"]): number | undefined =>
     expr === undefined ? undefined : tryEvaluate(expr, engine.ctx, 0).value;
@@ -1008,6 +1009,7 @@ function resolveSpellcasting(
     entry: ResolvedSpell["entry"],
     alwaysPrepared: boolean,
     classId?: string,
+    innateOnly = false,
   ): void => {
     if (seen.has(element.id)) return;
     seen.add(element.id);
@@ -1028,6 +1030,8 @@ function resolveSpellcasting(
       prepared: alwaysPrepared || entry.prepared === true,
       alwaysPrepared,
       extra: entry.extra === true,
+      innate: [],
+      innateOnly,
       class: classId,
       source: element.source,
       abbreviation: content.abbreviation(element.source),
@@ -1039,8 +1043,9 @@ function resolveSpellcasting(
     if (!fits) orphaned.push(resolved);
     else spells.push(resolved);
 
-    // An extra spell is learned outside the class, so its list says nothing about it.
-    if (fits && classId && !resolved.extra) {
+    // Neither an extra spell nor a granted one was picked from the class's list, so the
+    // list says nothing about it: oath, domain and circle spells are rarely on it.
+    if (fits && classId && !resolved.extra && !alwaysPrepared && !innateOnly) {
       const tag = listTags.get(classId);
       if (tag && !(element.tags ?? []).includes(tag))
         diagnostics.push({
@@ -1067,6 +1072,37 @@ function resolveSpellcasting(
       continue;
     }
     push(element, entry, entry.alwaysPrepared === true, entry.class);
+  }
+
+  // Innate casts attach to the spell wherever it already is, or stand on their own.
+  for (const { def, from } of collected.innate) {
+    const element = content.get(def.spell);
+    if (!element || element.kind !== "spell") {
+      diagnostics.push({
+        severity: "warning",
+        code: "unresolved-reference",
+        message: `innate spell "${def.spell}" is not a spell in any loaded source (given by ${from.element.name})`,
+        subject: from.element.id,
+      });
+      continue;
+    }
+    push(element, { id: element.id }, false, from.class, true);
+    const spell = [...spells, ...orphaned].find((s) => s.id === element.id);
+    if (!spell) continue;
+    const owner = classes.find((c) => c.class === from.class);
+    const ability = def.ability ?? owner?.ability;
+    const attack = ability ? engine.get("proficiencyBonus").value + engine.abilityMod(ability) : undefined;
+    spell.innate.push({
+      source: from.element.id,
+      sourceName: from.element.name,
+      ability,
+      dc: attack === undefined ? undefined : 8 + attack,
+      attack,
+      resource:
+        def.uses === undefined ? undefined : resourceKey({ id: innatePoolId(def), name: "", max: 0, recharge: [] }, from),
+      text: def.text,
+      notes: def.notes,
+    });
   }
 
   if (!classes.length && spells.length)

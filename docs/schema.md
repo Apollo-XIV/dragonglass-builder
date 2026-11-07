@@ -97,6 +97,7 @@ tab for them with no plugin change.
 | `modifiers` | Passive changes to stat paths, optionally situational. |
 | `resources` | A pool with an expression `max` and a `recharge` list of rules. See **Recharge rules**. |
 | `actions` | Something the player activates: `activation`, optional `cost`, optional `applies` naming an effect, plus `range`, `target`, `damage`, `damageType`, `save`, `recharge`. |
+| `innateSpells` | A spell cast without preparing it or spending a slot, at will or on a pool of its own. See **Granted and innate spells**. |
 | `effects` | A named, toggleable overlay of modifiers with a `duration` and optional `concentration`. Active effects live in `state.5e`. |
 
 Any part may carry its own `text` or `notes` for the part of the rule it does not
@@ -325,6 +326,51 @@ subspecies to its species except that tag, which is what lets a later source add
   A spell learned outside the class's progression (a scroll, a feat, an item) is stored in
   the spells file with `extra: true`. It never counts toward any figure above, and the
   builder adds it through its own picker.
+
+### Granted and innate spells
+
+Two ways a character has a spell they did not choose from the class's list. Neither counts
+against `cantrips`, `known`, `prepared` or `spellbook`, neither is checked against the class's
+spell list, and neither can be removed from the spells file, because neither is in it.
+
+**Always prepared: `grants` a spell.** A spell element in any `grants` (a class or subclass
+level, a feature, a species, an item) is always prepared and takes no room. This is the whole
+representation for domain, oath and circle spells and for Paladin's Smite ("you always have
+Divine Smite prepared"). The spell is owned by the class whose level granted it, which is what
+matters for a multiclass character. `SpellEntry.alwaysPrepared` is the same thing for a spell
+the player writes into the spells file by hand.
+
+**Innate: the `innateSpells` part.** A list on an element or a level entry:
+
+```json
+"innateSpells": [
+  { "spell": "srd:spell:mage-armor", "ability": "cha", "notes": "On yourself, no slot or material components." },
+  { "spell": "srd:spell:misty-step", "ability": "cha", "uses": 1,
+    "recharge": [{ "on": "long-rest", "amount": "all" }] }
+]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `spell` | The id of a spell element. Required; an unknown id is an `unresolved-reference` warning. |
+| `ability` | Casting ability, for the save DC and attack shown with the spell. Defaults to the owning class's; absent when neither exists. |
+| `uses` | Casts before it recharges (an expression). Omitted means **at will**. |
+| `recharge` | The same rules as a resource's; empty or omitted means the uses do not come back. Meaningless without `uses`. |
+| `text`, `notes` | Conditions on the cast, shown with it. |
+
+With `uses`, the engine creates a resource for the cast, id `innate-<spell>` on the owning
+element, named for the spell. That is the only thing that makes it spendable: rests, the
+event log, pinning and the sheet's resource list treat it like any resource, and the resolved
+spell's `innate[].resource` names its key.
+
+The spell is listed with `innate` set and `innateOnly: true` if nothing else puts it there. It
+is not prepared and the checkbox is disabled. If the player has also picked the spell as one
+of their own, it is one resolved spell: `innateOnly` is false, it counts as a normal pick, and
+`innate` lists each way it can be cast. Two sources of the same spell are two `innate` entries
+with separate pools.
+
+A cast from a different source keeps its own pool: a species' Misty Step and an invocation's
+Misty Step do not share uses.
 
 A class's class level is **how many `levels` entries the build has for it**, which is why
 nothing renumbers when a level is removed.

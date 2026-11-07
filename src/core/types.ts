@@ -144,6 +144,24 @@ export interface ResourceDef {
   notes?: string;
 }
 
+/**
+ * A spell the character casts without preparing it or spending a slot: a species'
+ * Misty Step, an invocation's Armor of Shadows. With `uses` it has a pool of its own,
+ * recharged by the same rules as any resource; without, it is cast at will.
+ */
+export interface InnateSpellDef {
+  /** The spell element's id. */
+  spell: string;
+  /** Casting ability for its save DC and attack. Defaults to the owning class's. */
+  ability?: Ability;
+  /** Casts before it recharges. Omitted means at will. */
+  uses?: Expr;
+  /** How the uses come back; empty or omitted means they do not. */
+  recharge?: RechargeRule[];
+  text?: string;
+  notes?: string;
+}
+
 /** A cost is a pool key mapped to an amount, or a variable range (Mystic psi). */
 export type Cost = Record<string, number | { min: number; max: number }>;
 
@@ -248,6 +266,7 @@ export interface Element {
   resources?: ResourceDef[];
   actions?: ActionDef[];
   effects?: EffectDef[];
+  innateSpells?: InnateSpellDef[];
 
   /** Kind-specific fields and `x-` extensions. */
   [key: string]: unknown;
@@ -296,6 +315,7 @@ export interface LevelEntry {
   resources?: ResourceDef[];
   actions?: ActionDef[];
   effects?: EffectDef[];
+  innateSpells?: InnateSpellDef[];
   text?: string;
 }
 

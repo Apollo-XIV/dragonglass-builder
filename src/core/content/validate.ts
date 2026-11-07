@@ -18,7 +18,7 @@ import {
 } from "../types";
 import { checkExpression } from "../expr/evaluate";
 
-const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects"] as const;
+const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells"] as const;
 
 /** Parts a class/subclass level entry may carry, mirroring element parts. */
 const LEVEL_PARTS = KNOWN_PARTS;
@@ -196,6 +196,28 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
   }
 }
 
+function validateInnate(s: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!s || typeof s !== "object" || Array.isArray(s)) {
+    out.push(err("invalid-element", "innate spell must be an object", subject, path));
+    return;
+  }
+  const spell = s as Record<string, unknown>;
+  if (typeof spell.spell !== "string" || !spell.spell)
+    out.push(err("invalid-element", "innate spell needs the id of a spell", subject, `${path}.spell`));
+  if (spell.ability !== undefined && !(ABILITIES as readonly unknown[]).includes(spell.ability))
+    out.push(warn("invalid-element", `unknown ability "${String(spell.ability)}"; the class's is used`, subject, `${path}.ability`));
+  if (spell.uses !== undefined) {
+    const e = checkExpression(spell.uses as string | number);
+    if (e) out.push(warn("expression-error", e, subject, `${path}.uses`));
+  }
+  if (spell.recharge !== undefined) {
+    if (!Array.isArray(spell.recharge)) out.push(err("invalid-element", "recharge must be an array of rules", subject, `${path}.recharge`));
+    else spell.recharge.forEach((rule, i) => validateRecharge(rule, subject, `${path}.recharge[${i}]`, out));
+    if (spell.uses === undefined)
+      out.push(warn("invalid-element", "recharge on an at-will spell has nothing to recharge", subject, `${path}.recharge`));
+  }
+}
+
 function validateEffect(e: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
   if (!e || typeof e !== "object" || Array.isArray(e)) {
     out.push(err("invalid-element", "effect must be an object", subject, path));
@@ -319,6 +341,11 @@ export function validateElement(raw: unknown): ValidationResult {
     if (!Array.isArray(el.effects)) out.push(err("invalid-element", "effects must be an array", subject, "effects"));
     else el.effects.forEach((e, i) => validateEffect(e, subject, `effects[${i}]`, out));
   }
+  if (el.innateSpells !== undefined) {
+    if (!Array.isArray(el.innateSpells))
+      out.push(err("invalid-element", "innateSpells must be an array", subject, "innateSpells"));
+    else el.innateSpells.forEach((s, i) => validateInnate(s, subject, `innateSpells[${i}]`, out));
+  }
   if (el.requires !== undefined) validateRequirement(el.requires, subject, "requires", out);
 
   // Class and subclass progressions carry the same parts, keyed by level.
@@ -364,6 +391,7 @@ export function validateElement(raw: unknown): ValidationResult {
           if (part === "resources") v.forEach((r, i) => validateResource(r, subject, `${p}[${i}]`, out));
           if (part === "actions") v.forEach((a, i) => validateAction(a, subject, `${p}[${i}]`, out));
           if (part === "effects") v.forEach((x, i) => validateEffect(x, subject, `${p}[${i}]`, out));
+          if (part === "innateSpells") v.forEach((x, i) => validateInnate(x, subject, `${p}[${i}]`, out));
         }
         for (const key of Object.keys(e))
           if (!(LEVEL_PARTS as readonly string[]).includes(key) && key !== "text" && !key.startsWith("x-"))

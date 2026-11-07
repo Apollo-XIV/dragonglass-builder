@@ -57,8 +57,8 @@ export function spellLimits(
 ): ClassSpellLimits[] {
   return classes.map((cls) => {
     const mine = spells.filter((s) => owner(s, classes) === cls.class);
-    // Granted spells (oath, domain) were not chosen, so they take no room.
-    const chosen = mine.filter((s) => !s.alwaysPrepared);
+    // Granted spells (oath, domain) and innate ones were not chosen, so they take no room.
+    const chosen = mine.filter((s) => !s.alwaysPrepared && !s.innateOnly);
     const regular = chosen.filter((s) => !s.extra);
     const leveled = regular.filter((s) => s.spellLevel > 0);
     const known = { cap: cls.known, used: leveled.length };
@@ -109,7 +109,7 @@ export function limitDiagnostics(
     if (cls.type === "spellbook") over("spells in the spellbook", l.spellbook);
   }
   for (const spell of spells) {
-    if (spell.extra || spell.alwaysPrepared || spell.spellLevel === 0) continue;
+    if (spell.extra || spell.alwaysPrepared || spell.innateOnly || spell.spellLevel === 0) continue;
     const id = owner(spell, classes);
     const l = limits.find((x) => x.class === id);
     if (l && spell.spellLevel > l.maxSpellLevel)

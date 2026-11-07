@@ -255,6 +255,20 @@ export interface ResolvedSpellcastingClass {
   extraPicks: ExtraSpellPick[];
 }
 
+export interface ResolvedInnate {
+  /** The element that gives the cast. */
+  source: string;
+  sourceName: string;
+  /** Absent when neither the grant nor the owning class names one. */
+  ability?: Ability;
+  dc?: number;
+  attack?: number;
+  /** Key of the uses pool; absent when the spell is cast at will. */
+  resource?: string;
+  text?: string;
+  notes?: string;
+}
+
 export interface ResolvedSpell {
   id: string;
   name: string;
@@ -272,6 +286,10 @@ export interface ResolvedSpell {
   alwaysPrepared: boolean;
   /** Learned outside the class's progression; counts toward no limit. */
   extra: boolean;
+  /** Every way the character casts this without a slot. Empty for an ordinary spell. */
+  innate: ResolvedInnate[];
+  /** Here only because something grants it innately: not prepared, picked or counted. */
+  innateOnly: boolean;
   class?: string;
   source: string;
   abbreviation?: string;

@@ -14,6 +14,7 @@ import type {
   EffectDef,
   Element,
   Grant,
+  InnateSpellDef,
   InventoryEntry,
   InventoryFile,
   ItemElement,
@@ -64,6 +65,8 @@ export interface CollectResult {
   resources: Part<ResourceDef>[];
   actions: Part<ActionDef>[];
   effects: Part<EffectDef>[];
+  /** Spells cast without preparing or slots. Their uses pools are already in `resources`. */
+  innate: Part<InnateSpellDef>[];
   choices: DeclaredChoice[];
   /** Class element id -> level taken, in build order. */
   classLevels: { element: Element; id: string; level: number; subclasses: Element[] }[];
@@ -72,7 +75,12 @@ export interface CollectResult {
   diagnostics: Diagnostic[];
 }
 
-const LEVEL_PART_KEYS = ["modifiers", "resources", "actions", "effects"] as const;
+const LEVEL_PART_KEYS = ["modifiers", "resources", "actions", "effects", "innateSpells"] as const;
+
+/** The local id of the pool behind an innate spell's uses. */
+export function innatePoolId(def: InnateSpellDef): string {
+  return `innate-${def.spell.slice(def.spell.lastIndexOf(":") + 1)}`;
+}
 
 export function grantId(grant: Grant): string {
   return typeof grant === "string" ? grant : grant.id;
@@ -108,6 +116,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     resources: [],
     actions: [],
     effects: [],
+    innate: [],
     choices: [],
     classLevels: [],
     items: [],
@@ -169,6 +178,22 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     for (const r of el.resources ?? []) result.resources.push({ def: r, from });
     for (const a of el.actions ?? []) result.actions.push({ def: a, from });
     for (const e of el.effects ?? []) result.effects.push({ def: e, from });
+    for (const s of el.innateSpells ?? []) addInnate(s, from);
+  }
+
+  /** An innate spell with uses owns a pool, so rests, spending and pins treat it like any other. */
+  function addInnate(def: InnateSpellDef, from: PartSource): void {
+    result.innate.push({ def, from });
+    if (def.uses === undefined) return;
+    result.resources.push({
+      def: {
+        id: innatePoolId(def),
+        name: index.get(def.spell)?.name ?? def.spell,
+        max: def.uses,
+        recharge: def.recharge ?? [],
+      },
+      from,
+    });
   }
 
   function declareChoices(el: Element, ctx: Ctx): void {
@@ -264,6 +289,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         if (key === "modifiers") result.modifiers.push({ def: def as Modifier, from });
         else if (key === "resources") result.resources.push({ def: def as ResourceDef, from });
         else if (key === "actions") result.actions.push({ def: def as ActionDef, from });
+        else if (key === "innateSpells") addInnate(def as InnateSpellDef, from);
         else result.effects.push({ def: def as EffectDef, from });
       }
     }

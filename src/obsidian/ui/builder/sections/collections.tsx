@@ -164,7 +164,7 @@ export function SpellsSection({
         <InfoRow
           key={spell.id}
           title={spell.name}
-          subtitle={`${spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`}${spell.extra ? " · Extra" : ""}`}
+          subtitle={`${spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`}${spell.extra ? " · Extra" : ""}${spell.innateOnly ? " · Innate" : ""}`}
           text={spell.text}
           facts={factsOf(spell.element)}
         >
