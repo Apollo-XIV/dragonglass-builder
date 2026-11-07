@@ -300,7 +300,8 @@ progression browser reads straight off the data.
 - `hitDie`, optional `key` (the short name `@level(x)` and `@table(x, col)` use; defaults
   to the id's last segment), `primaryAbility`, `multiclassRequires`.
 - `tables` are named columns read by `@table(class, column)`, as an array indexed by level
-  or a map keyed by level.
+  or a map keyed by level. A cell the book prints as "Unlimited" is the string `"unlimited"`
+  (case does not matter; `"∞"` also works) and reads as no cap: see **Unlimited resources**.
 - A subclass declares its `class`, or carries the class's subclass tag, and may have its
   own `levels`, `tables` and `spellcasting`.
 - The subclass is **a choice at the level the class gains it** — not a schema concept.
@@ -371,6 +372,121 @@ with separate pools.
 
 A cast from a different source keeps its own pool: a species' Misty Step and an invocation's
 Misty Step do not share uses.
+
+#### Spells and abilities that are a choice
+
+`InnateSpell.spell` and `InnateSpell.ability` may each be `{ "choice": "<choice id>" }` instead
+of a fixed value. The id names a `ChoiceDef` declared **beside the part**: on the same element,
+or in the same level entry. The part reads the answer, so there is no new kind of choice, and
+validity works as it always does: until the choice is answered the part is inert (no spell is
+listed, no pool exists), and answering it brings it to life.
+
+- **`ability: { choice }`**: the answer is an element that carries an `ability` field
+  (`"int"`, `"wis"`...). The options are ordinary elements of a kind the source defines (say
+  `casting-ability`), one per ability; the choice is `{ "from": { "kind": "casting-ability",
+  "ids": [...] } }` to offer three of them. Every innate spell naming the same choice uses the
+  same ability, which is how a lineage picks once for all its spells. An unanswered choice leaves
+  `ability` unset, so the owning class's applies, or none.
+- **`spell: { choice }`**: the answer is a spell element. The pick is also collected like any
+  chosen element, so a spell picked this way is **granted** (always prepared, free, off the class
+  list without complaint) as well as innate: it is one resolved spell with `alwaysPrepared` and
+  an `innate` entry.
+
+```json
+{ "id": "srd24:feat:magic-initiate-wizard", "kind": "feat", "name": "Magic Initiate (Wizard)", "source": "srd24",
+  "choices": [
+    { "id": "ability", "count": 1, "from": { "ids": ["srd24:casting-ability:int", "srd24:casting-ability:wis", "srd24:casting-ability:cha"] } },
+    { "id": "spell",   "count": 1, "from": { "kind": "spell", "tags": ["wizard-spell"], "allTags": ["spell-level:1"] } }
+  ],
+  "innateSpells": [
+    { "spell": { "choice": "spell" }, "ability": { "choice": "ability" }, "uses": 1,
+      "recharge": [{ "on": "long-rest", "amount": "all" }] }
+  ] }
+{ "id": "srd24:casting-ability:int", "kind": "casting-ability", "name": "Intelligence", "source": "srd24", "ability": "int" }
+```
+
+A `Filter` cannot ask for a spell's level, so "a level 1 spell" is a tag the source puts on its
+spells (`spell-level:1`, in the manner of `mastery:<key>`); the schema reserves no such tag.
+
+A 2024 lineage is the same with only the `ability` reference, on several `innateSpells`
+entries that name one choice. Each spell's pool is `innate-<spell>` on the owning element, so a
+different pick moves the pool with it. A spell the player picked for itself and also gets
+innately is still one spell with an `innate` entry for each way of casting it.
+
+### Spell grant modes
+
+A spell element in `grants` is **always prepared and free** unless the grant says otherwise.
+A grant written as an object can name a `mode`:
+
+| `mode` | Meaning |
+| --- | --- |
+| `always-prepared` | The default, and what a bare id means. Prepared, takes no room, not in the spells file, not checked against the class list. |
+| `learned` | Added to the spells known or the spellbook. Not prepared until the player prepares it (the sheet writes the spells file's entry for that), not removable in the builder, and not checked against the class list. |
+
+`counts` (default `true`, only meaningful with `learned`) says whether the spell fills a slot
+in the owning class's limits: spells known, spells in the book, cantrips known and, once
+prepared, spells prepared. 2014 College of Lore's Magical Secrets counts; the 2024 Evoker's free
+spellbook spells (`"counts": false`) do not. A learned spell that does not count is skipped by
+the over-limit and level-too-high warnings.
+
+```json
+"grants": [
+  { "id": "srd24:spell:detect-magic", "mode": "learned", "counts": false },
+  "srd:spell:shield"
+]
+```
+
+The grant's class is the class whose level carries it, as for any grant. A grant's `mode` applies
+to the spell it names, not to what that element grants in turn. Anything picked through a
+**choice** is a pick and is granted as above; to make a chosen spell learned, grant the spell
+instead.
+
+### Extending a class's spell list
+
+A class's spell list is a tag on each spell. `spellListAdditions` is a part, on an element or a
+level entry, that adds **options** to one class's list. It grants nothing: the spells appear in
+that class's pickers, and a spell picked from them is not a `spell-mismatch`, nothing more.
+
+```json
+"spellListAdditions": [
+  { "spells": ["srd:spell:burning-hands", "srd:spell:command"] },
+  { "class": "srd24:class:bard", "fromClasses": ["srd24:class:cleric", "srd24:class:druid", "srd24:class:wizard"] }
+]
+```
+
+| Field | Meaning |
+| --- | --- |
+| `class` | The class whose list grows. Defaults to the class that owns the part (a subclass's `levels` belong to its class). Required on a part no class owns, such as a feat; without it the part does nothing and says so. |
+| `spells` | Spell element ids, added one by one. An unknown id is an `unresolved-reference` warning. |
+| `fromClasses` | Class element ids whose entire spell list (their `spellcasting.list` tag) is added. |
+
+A part waits for its level like any other, and for the target class to be one the character
+casts with. The resolver reads the result as
+`spellcasting.classes[].listAdditions: { spells, lists }`. This covers 2014 expanded lists
+(Fiend's, as `spells` on a level-1 entry) and 2024 Bard Magical Secrets (`fromClasses`, on the
+level that gives it). Granting the same spell for free is `grants`, a different thing.
+
+### Unlimited resources
+
+A resource whose `max` evaluates to unlimited has no cap. The one way to write it is a class
+table cell of `"unlimited"` read by `@table`: Rages at 2014 level 20 is
+`"tables": { "rages": [2, 2, 3, ..., 6, "unlimited"] }` with `"max": "@table(barbarian, rages)"`.
+The expression evaluates to infinity; `max: "unlimited"` written straight into a resource is not
+a form, and arithmetic on it is not meaningful (`0 * unlimited` is not a number).
+
+`ResolvedResource.unlimited` is then true and `max` and `remaining` are infinity in memory. The
+sheet shows ∞ and never refuses to spend; nothing is tallied, so there is nothing to restore and
+rests skip the pool. Actions whose `cost` names it are always available.
+
+**What a converter must not guess.**
+
+- A spell in `grants` with no `mode` is always prepared and free. Only map 5etools
+  `additionalSpells` to `learned` where the text says the character *learns* it, and to
+  `spellListAdditions` where it only says the spell is on the list.
+- Where `additionalSpells` lets the player choose the ability, use `ability: { choice }` and
+  declare the choice; do not pick one.
+- `Action.recharge` is its own type, a single descriptive word, and is not a `RechargeRule[]`.
+- Ritual-only casting is not modelled. Report it, and leave it as text.
 
 ### Weapon mastery
 
@@ -567,10 +683,19 @@ on features. A cast with uses names its pool by `innate[].resource`, which is th
 ordinary `resources[]` entry. Weapon mastery picks need nothing of their own: they are
 features of kind `weapon-mastery` whose `text` is already the property's.
 
+**Export 2.1** is additive. `resources[].unlimited` is true for an unlimited pool, whose `max`
+is then 0 because JSON has no infinity. `spells[].learned` and `.free` carry a learned grant.
+`spellcasting.classes[].listAdditions` is `{ spells, lists }`, the ids and list tags added to
+that class's options. A `spellListAdditions` part exports with kind `spell-list` and
+`from: "spellListAdditions"`. An `innate-spell` part is exported **as authored**, so its `spell`
+or `ability` may be a `{ choice }`; `spells[].innate` always carries the values the choices
+resolved to.
+
 ## Type reference
 
-The shapes added by recharge rules, innate spells and weapon mastery, for anything that
-mirrors `src/core/types.ts` (the converter's `src/types.ts` among them):
+The shapes added by recharge rules, innate spells, weapon mastery, grant modes, spell list
+additions and unlimited tables, for anything that mirrors `src/core/types.ts` (the converter's
+`src/types.ts` among them):
 
 ```ts
 type RechargeOn = "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round";
@@ -589,15 +714,35 @@ interface Action {
   // unchanged: a descriptive word on an action, not a rule list
 }
 
+interface ChoiceRef { choice: string }   // a ChoiceDef declared beside the part
+
 interface InnateSpell {
-  spell: string;                     // a spell element id
-  ability?: Ability;                 // defaults to the owning class's
+  spell: string | ChoiceRef;         // a spell element id, or the choice whose answer is one
+  ability?: Ability | ChoiceRef;     // defaults to the owning class's; a choice's answer is an
+                                     // element carrying `ability`
   uses?: Expr;                       // omitted = at will
   recharge?: RechargeRule[];         // only with `uses`
   text?: string; notes?: string;
 }
 // `innateSpells?: InnateSpell[]` is a part, on Element and on every level entry,
 // beside `resources`, `actions` and `effects`.
+
+type SpellGrantMode = "always-prepared" | "learned";
+type Grant =
+  | string                           // a bare id; for a spell, always-prepared
+  | { id: string; text?: string; notes?: string;
+      mode?: SpellGrantMode;         // for a spell; default "always-prepared"
+      counts?: boolean };            // with "learned": fills a slot in the limits; default true
+
+interface SpellListAddition {
+  class?: string;                    // default: the class that owns the part
+  spells?: string[];                 // spell element ids
+  fromClasses?: string[];            // class element ids; their whole list is added
+}
+// `spellListAdditions?: SpellListAddition[]` is a part, on Element and on every level entry.
+
+// A class table cell may be the string "unlimited" (or "∞"), meaning no cap.
+type TableCell = number | string | null;
 
 interface WeaponMastery extends Element {
   kind: "weapon-mastery";
@@ -612,7 +757,8 @@ interface MasteryProperty extends Element {
 }
 ```
 
-Always-prepared spells have no type of their own: they are a spell id in `grants`.
+Always-prepared spells have no type of their own: they are a spell id in `grants`, or a grant
+with `mode: "always-prepared"`.
 
 ## Versioning and conformance
 
