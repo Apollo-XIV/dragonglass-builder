@@ -11,6 +11,7 @@ import {
   validateExport,
   type ExportDocument,
 } from "../src/core/export";
+import { partsOf } from "../src/core/export/build";
 import { exportFromDisk } from "../src/node/export-character";
 import { schemaJson } from "../scripts/export-schema";
 import type { Element } from "../src/core/types";
@@ -181,6 +182,82 @@ describe("what the export contains", () => {
         by: [{ id: rogueish.id, kind: "species", via: [] }],
       }),
     ]);
+  });
+
+  it("exports innate spells, their pools and the recharge rules", async () => {
+    const spell: Element = { id: "test:spell:misty-step", kind: "spell", name: "Misty Step", source: "test", spellLevel: 2 };
+    const imp: Element = {
+      id: "test:species:imp",
+      kind: "species",
+      name: "Imp",
+      source: "test",
+      innateSpells: [
+        { spell: spell.id, ability: "cha", uses: 1, recharge: [{ on: "long-rest", amount: "all" }] },
+        { spell: "test:spell:light", ability: "cha" },
+      ],
+      resources: [
+        { id: "gift", name: "Gift", max: 3, recharge: [{ on: "short-rest", amount: 1 }, { on: "long-rest", amount: "all" }] },
+      ],
+    };
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, imp, spell, { ...spell, id: "test:spell:light", name: "Light", spellLevel: 0 }]),
+      build: build({ species: imp.id, levels: [], abilities: { method: "manual", base: scores({ cha: 16 }) } }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(validateExport(clone(doc)).errors).toEqual([]);
+
+    const misty = doc.spells.find((s) => s.id === spell.id)!;
+    expect(misty).toMatchObject({ innateOnly: true, prepared: false, alwaysPrepared: false });
+    expect(misty.innate).toEqual([
+      { source: imp.id, ability: "cha", dc: 13, attack: 5, resource: "test:species:imp:innate-misty-step" },
+    ]);
+    expect(doc.spells.find((s) => s.id === "test:spell:light")!.innate[0]).not.toHaveProperty("resource");
+
+    // The uses are an ordinary resource, found by the key the spell names.
+    expect(doc.resources.find((r) => r.key === misty.innate[0]!.resource)).toMatchObject({
+      max: 1,
+      recharge: [{ on: "long-rest", amount: "all" }],
+      owner: imp.id,
+    });
+    expect(doc.resources.find((r) => r.id === "gift")!.recharge).toEqual([
+      { on: "short-rest", amount: 1 },
+      { on: "long-rest", amount: "all" },
+    ]);
+    expect(doc.resources.every((r) => !("rechargeAmount" in r))).toBe(true);
+
+    // A species is not on the features tab, so its parts are read straight off the element.
+    expect(partsOf(imp).filter((p) => p.kind === "innate-spell")).toEqual([
+      { kind: "innate-spell", from: "innateSpells", definition: imp.innateSpells![0] },
+      { kind: "innate-spell", from: "innateSpells", definition: imp.innateSpells![1] },
+    ]);
+  });
+
+  it("exports a weapon mastery pick as a feature with its property's text", async () => {
+    const sap: Element = { id: "test:mastery-property:sap", kind: "mastery-property", name: "Sap", source: "test", key: "sap", text: "Disadvantage on its next attack." };
+    const pickEl: Element = {
+      id: "test:mastery:longsword", kind: "weapon-mastery", name: "Longsword", source: "test",
+      weapon: "test:item:longsword", mastery: sap.id, tags: ["martial-weapon", "mastery:sap"],
+    };
+    const fighter: Element = {
+      id: "test:class:fighter", kind: "class", name: "Fighter", source: "test", key: "fighter", hitDie: "d10",
+      levels: { "1": { choices: [{ id: "test:fighter:mastery", count: 1, from: { kind: "weapon-mastery" } }] } },
+    };
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, fighter, sap, pickEl]),
+      build: build({ levels: [{ class: fighter.id, hp: "average", choices: { "test:fighter:mastery": [pickEl.id] } }] }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(validateExport(clone(doc)).errors).toEqual([]);
+    expect(doc.features.find((f) => f.id === pickEl.id)).toMatchObject({
+      kind: "weapon-mastery", name: "Longsword", text: "**Sap.** Disadvantage on its next attack.",
+    });
+    expect(doc.inventory.items).toEqual([]);
   });
 
   it("lists every set even when nothing grants it", async () => {

@@ -1211,7 +1211,9 @@
       "known": false,
       "prepared": true,
       "alwaysPrepared": false,
-      "extra": false
+      "extra": false,
+      "innateOnly": false,
+      "innate": []
     },
     {
       "id": "srd:spell:command",
@@ -1223,7 +1225,9 @@
       "known": false,
       "prepared": false,
       "alwaysPrepared": false,
-      "extra": false
+      "extra": false,
+      "innateOnly": false,
+      "innate": []
     },
     {
       "id": "srd:spell:cure-wounds",
@@ -1235,7 +1239,9 @@
       "known": false,
       "prepared": true,
       "alwaysPrepared": false,
-      "extra": false
+      "extra": false,
+      "innateOnly": false,
+      "innate": []
     },
     {
       "id": "srd:spell:protection-from-evil-and-good",
@@ -1247,7 +1253,9 @@
       "known": false,
       "prepared": true,
       "alwaysPrepared": true,
-      "extra": false
+      "extra": false,
+      "innateOnly": false,
+      "innate": []
     },
     {
       "id": "srd:spell:sanctuary",
@@ -1259,7 +1267,9 @@
       "known": false,
       "prepared": true,
       "alwaysPrepared": true,
-      "extra": false
+      "extra": false,
+      "innateOnly": false,
+      "innate": []
     },
     {
       "id": "srd:spell:shield-of-faith",
@@ -1270,7 +1280,9 @@
       "known": false,
       "prepared": false,
       "alwaysPrepared": false,
-      "extra": true
+      "extra": true,
+      "innateOnly": false,
+      "innate": []
     }
   ],
   "spellcasting": {

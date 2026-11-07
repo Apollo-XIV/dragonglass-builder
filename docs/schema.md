@@ -559,6 +559,61 @@ The export document that leaves the plugin is defined in `src/core/export/schema
 `docs/export-schema.json` is generated from it with `npm run export:schema`, and
 `npm run export -- <character> <source>...` writes one from disk.
 
+**Export 2.0** changed `resources[].recharge` from one word to the list of rules described
+under **Recharge rules** and dropped `rechargeAmount`, which was folded into the rules'
+`amount`. That changes what a field means, so it is a major version. The same release added
+`spells[].innate` and `spells[].innateOnly`, and the `innate-spell` part (`from: "innateSpells"`)
+on features. A cast with uses names its pool by `innate[].resource`, which is the `key` of an
+ordinary `resources[]` entry. Weapon mastery picks need nothing of their own: they are
+features of kind `weapon-mastery` whose `text` is already the property's.
+
+## Type reference
+
+The shapes added by recharge rules, innate spells and weapon mastery, for anything that
+mirrors `src/core/types.ts` (the converter's `src/types.ts` among them):
+
+```ts
+type RechargeOn = "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round";
+interface RechargeRule { on: RechargeOn; amount: "all" | Expr }
+
+interface Resource {
+  id: string; name: string; max: Expr;
+  recharge: RechargeRule[];          // required; [] = never recharges by itself
+  unit?: string; die?: string; pin?: number; text?: string; notes?: string;
+  // gone: `rechargeAmount`, and `recharge` as a string
+}
+
+interface Action {
+  /* ... */
+  recharge?: "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round" | "never" | "manual";
+  // unchanged: a descriptive word on an action, not a rule list
+}
+
+interface InnateSpell {
+  spell: string;                     // a spell element id
+  ability?: Ability;                 // defaults to the owning class's
+  uses?: Expr;                       // omitted = at will
+  recharge?: RechargeRule[];         // only with `uses`
+  text?: string; notes?: string;
+}
+// `innateSpells?: InnateSpell[]` is a part, on Element and on every level entry,
+// beside `resources`, `actions` and `effects`.
+
+interface WeaponMastery extends Element {
+  kind: "weapon-mastery";
+  mastery: string;                   // id of a mastery-property
+  weapon?: string;                   // id of the item, reference only
+  // tags: the weapon's tags + `mastery:<key>`; no text
+}
+interface MasteryProperty extends Element {
+  kind: "mastery-property";
+  key: string;                       // "sap"
+  text: string;
+}
+```
+
+Always-prepared spells have no type of their own: they are a spell id in `grants`.
+
 ## Versioning and conformance
 
 - Content is validated by `npm run validate -- <source> --strict`, which shares the

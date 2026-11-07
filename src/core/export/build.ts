@@ -112,6 +112,16 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
     prepared: s.prepared,
     alwaysPrepared: s.alwaysPrepared,
     extra: s.extra,
+    innateOnly: s.innateOnly,
+    innate: s.innate.map((i) => ({
+      source: use(i.source) ?? i.source,
+      ...(i.ability ? { ability: i.ability } : {}),
+      ...(i.dc !== undefined ? { dc: i.dc } : {}),
+      ...(i.attack !== undefined ? { attack: i.attack } : {}),
+      ...(i.resource ? { resource: i.resource } : {}),
+      ...(i.text ? { text: i.text } : {}),
+      ...(i.notes ? { notes: i.notes } : {}),
+    })),
   }));
 
   const entryIds = new Set((inventory?.items ?? []).map((e) => e.uid));
@@ -299,7 +309,7 @@ function featureOf(e: ResolvedElement, use: (id: string) => string | undefined):
   };
 }
 
-type PartList = "modifiers" | "resources" | "actions" | "effects";
+type PartList = "modifiers" | "resources" | "actions" | "effects" | "innateSpells";
 
 /** Reads an element's parts and gives each a kind the reader can switch on. */
 export function partsOf(el: Element): ExportPart[] {
@@ -317,6 +327,7 @@ export function partsOf(el: Element): ExportPart[] {
       definition: a as unknown as Record<string, unknown>,
     });
   add("modifiers", "passive", el.modifiers);
+  add("innateSpells", "innate-spell", el.innateSpells);
   return out;
 }
 

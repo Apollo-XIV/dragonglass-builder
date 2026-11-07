@@ -1034,7 +1034,7 @@
               ],
               "properties": {
                 "kind": {
-                  "description": "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither.",
+                  "description": "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part).",
                   "anyOf": [
                     {
                       "const": "resource",
@@ -1050,6 +1050,10 @@
                     },
                     {
                       "const": "action",
+                      "type": "string"
+                    },
+                    {
+                      "const": "innate-spell",
                       "type": "string"
                     }
                   ]
@@ -1071,6 +1075,10 @@
                     },
                     {
                       "const": "effects",
+                      "type": "string"
+                    },
+                    {
+                      "const": "innateSpells",
                       "type": "string"
                     }
                   ]
@@ -1168,7 +1176,9 @@
           "known",
           "prepared",
           "alwaysPrepared",
-          "extra"
+          "extra",
+          "innateOnly",
+          "innate"
         ],
         "properties": {
           "id": {
@@ -1205,6 +1215,71 @@
           "extra": {
             "description": "Learned outside the class's own progression.",
             "type": "boolean"
+          },
+          "innateOnly": {
+            "description": "Present only because something grants it as an innate cast: not prepared, not picked, counted against nothing.",
+            "type": "boolean"
+          },
+          "innate": {
+            "description": "Each way the character casts this without a slot. Empty for an ordinary spell. A granted always-prepared spell is `alwaysPrepared`, not innate.",
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source"
+              ],
+              "properties": {
+                "source": {
+                  "minLength": 1,
+                  "description": "An element id, e.g. srd:barbarian:rage.",
+                  "type": "string"
+                },
+                "ability": {
+                  "anyOf": [
+                    {
+                      "const": "str",
+                      "type": "string"
+                    },
+                    {
+                      "const": "dex",
+                      "type": "string"
+                    },
+                    {
+                      "const": "con",
+                      "type": "string"
+                    },
+                    {
+                      "const": "int",
+                      "type": "string"
+                    },
+                    {
+                      "const": "wis",
+                      "type": "string"
+                    },
+                    {
+                      "const": "cha",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "dc": {
+                  "type": "integer"
+                },
+                "attack": {
+                  "type": "integer"
+                },
+                "resource": {
+                  "description": "The `key` of the resources[] entry holding its uses. Absent means at will.",
+                  "type": "string"
+                },
+                "text": {
+                  "type": "string"
+                },
+                "notes": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }

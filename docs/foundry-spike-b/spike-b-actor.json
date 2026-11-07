@@ -4,24 +4,63 @@
   "img": "icons/svg/mystery-man.svg",
   "system": {
     "abilities": {
-      "str": { "value": 16, "proficient": 1 },
-      "dex": { "value": 14, "proficient": 0 },
-      "con": { "value": 14, "proficient": 1 },
-      "int": { "value": 8, "proficient": 0 },
-      "wis": { "value": 12, "proficient": 0 },
-      "cha": { "value": 10, "proficient": 0 }
+      "str": {
+        "value": 16,
+        "proficient": 1
+      },
+      "dex": {
+        "value": 14,
+        "proficient": 0
+      },
+      "con": {
+        "value": 14,
+        "proficient": 1
+      },
+      "int": {
+        "value": 8,
+        "proficient": 0
+      },
+      "wis": {
+        "value": 12,
+        "proficient": 0
+      },
+      "cha": {
+        "value": 10,
+        "proficient": 0
+      }
     },
     "attributes": {
-      "hp": { "value": 30, "max": 35, "temp": 5, "tempmax": 0 },
-      "ac": { "calc": "flat", "flat": 16 },
-      "movement": { "walk": "30", "units": "ft" }
+      "hp": {
+        "value": 30,
+        "max": 35,
+        "temp": 5,
+        "tempmax": 0
+      },
+      "ac": {
+        "calc": "flat",
+        "flat": 16
+      },
+      "movement": {
+        "walk": "30",
+        "units": "ft"
+      }
     },
     "details": {
-      "xp": { "value": 0 },
-      "biography": { "value": "<p>Spike B test character. Not a real build.</p>" }
+      "xp": {
+        "value": 0
+      },
+      "biography": {
+        "value": "<p>Spike B test character. Not a real build.</p>"
+      }
     },
-    "currency": { "gp": 10 },
-    "skills": { "ath": { "value": 1 } }
+    "currency": {
+      "gp": 10
+    },
+    "skills": {
+      "ath": {
+        "value": 1
+      }
+    }
   },
   "items": [
     {
@@ -32,23 +71,39 @@
       "system": {
         "identifier": "barbarian",
         "levels": 1,
-        "hd": { "denomination": "d12", "spent": 0, "additional": "" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2014" },
-        "advancement": [
-          {
+        "hd": {
+          "denomination": "d12",
+          "spent": 0,
+          "additional": ""
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2014"
+        },
+        "advancement": {
+          "SpkHitPoints0001": {
             "_id": "SpkHitPoints0001",
             "type": "HitPoints",
             "configuration": {},
             "value": {},
             "title": ""
           },
-          {
+          "SpkGrant00000001": {
             "_id": "SpkGrant00000001",
             "type": "ItemGrant",
             "configuration": {
               "items": [
-                { "uuid": "Compendium.dnd5e.classfeatures.VoR0SUrNX5EJVPIO", "optional": false },
-                { "uuid": "Compendium.dnd5e.classfeatures.SZbsNbaxFFGwBpNK", "optional": false }
+                {
+                  "uuid": "Compendium.dnd5e.classfeatures.VoR0SUrNX5EJVPIO",
+                  "optional": false
+                },
+                {
+                  "uuid": "Compendium.dnd5e.classfeatures.SZbsNbaxFFGwBpNK",
+                  "optional": false
+                }
               ],
               "optional": false,
               "spell": null
@@ -62,22 +117,30 @@
             "level": 1,
             "title": "Features"
           },
-          {
+          "SpkGrant00000002": {
             "_id": "SpkGrant00000002",
             "type": "ItemGrant",
             "configuration": {
               "items": [
-                { "uuid": "Compendium.dnd5e.classfeatures.SCVjqRdlZ9cvHVSR", "optional": false },
-                { "uuid": "Compendium.dnd5e.classfeatures.vt31lWAULygEl7yk", "optional": false }
+                {
+                  "uuid": "Compendium.dnd5e.classfeatures.SCVjqRdlZ9cvHVSR",
+                  "optional": false
+                },
+                {
+                  "uuid": "Compendium.dnd5e.classfeatures.vt31lWAULygEl7yk",
+                  "optional": false
+                }
               ],
               "optional": false,
               "spell": null
             },
-            "value": { "added": {} },
+            "value": {
+              "added": {}
+            },
             "level": 2,
             "title": "Features"
           }
-        ]
+        }
       },
       "flags": {}
     },
@@ -88,9 +151,20 @@
       "img": "icons/creatures/abilities/mouth-teeth-human.webp",
       "system": {
         "identifier": "rage",
-        "description": { "value": "<p>Spike B placeholder text.</p>" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2014" },
-        "type": { "value": "class", "subtype": "barbarian" },
+        "description": {
+          "value": "<p>Spike B placeholder text.</p>"
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2014"
+        },
+        "type": {
+          "value": "class",
+          "subtype": "barbarian"
+        },
         "requirements": "Barbarian 1",
         "properties": []
       },
@@ -109,9 +183,20 @@
       "img": "icons/magic/defensive/shield-barrier-blue.webp",
       "system": {
         "identifier": "unarmored-defense",
-        "description": { "value": "<p>Spike B placeholder text.</p>" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2014" },
-        "type": { "value": "class", "subtype": "barbarian" },
+        "description": {
+          "value": "<p>Spike B placeholder text.</p>"
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2014"
+        },
+        "type": {
+          "value": "class",
+          "subtype": "barbarian"
+        },
         "requirements": "Barbarian 1",
         "properties": []
       },
@@ -130,8 +215,16 @@
       "img": "icons/svg/mystery-man.svg",
       "system": {
         "identifier": "dwarf",
-        "description": { "value": "<p>Spike B placeholder text. 2024 species, mixed with a 2014 class.</p>" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2024" }
+        "description": {
+          "value": "<p>Spike B placeholder text. 2024 species, mixed with a 2014 class.</p>"
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2024"
+        }
       },
       "flags": {}
     },
@@ -142,14 +235,33 @@
       "img": "icons/magic/acid/projectile-bubbles-explosion.webp",
       "system": {
         "identifier": "acid-splash",
-        "description": { "value": "<p>Spike B placeholder text.</p>" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2014" },
+        "description": {
+          "value": "<p>Spike B placeholder text.</p>"
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2014"
+        },
         "level": 0,
         "school": "con",
-        "properties": ["vocal", "somatic"],
-        "activation": { "type": "action", "value": 1 },
-        "range": { "value": 60, "units": "ft" },
-        "duration": { "units": "inst" },
+        "properties": [
+          "vocal",
+          "somatic"
+        ],
+        "activation": {
+          "type": "action",
+          "value": 1
+        },
+        "range": {
+          "value": 60,
+          "units": "ft"
+        },
+        "duration": {
+          "units": "inst"
+        },
         "method": "spell",
         "prepared": 0,
         "ability": ""
@@ -163,13 +275,30 @@
       "img": "icons/weapons/axes/axe-broad-steel.webp",
       "system": {
         "identifier": "greataxe",
-        "description": { "value": "<p>Spike B placeholder text.</p>" },
-        "source": { "book": "", "page": "", "custom": "", "license": "CC-BY-4.0", "rules": "2014" },
+        "description": {
+          "value": "<p>Spike B placeholder text.</p>"
+        },
+        "source": {
+          "book": "",
+          "page": "",
+          "custom": "",
+          "license": "CC-BY-4.0",
+          "rules": "2014"
+        },
         "quantity": 1,
-        "weight": { "value": 7, "units": "lb" },
-        "price": { "value": 30, "denomination": "gp" },
+        "weight": {
+          "value": 7,
+          "units": "lb"
+        },
+        "price": {
+          "value": 30,
+          "denomination": "gp"
+        },
         "equipped": true,
-        "type": { "value": "martial", "baseItem": "greataxe" },
+        "type": {
+          "value": "martial",
+          "baseItem": "greataxe"
+        },
         "properties": []
       },
       "flags": {}

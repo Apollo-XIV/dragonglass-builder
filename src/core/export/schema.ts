@@ -10,8 +10,9 @@
  * means, removing one or tightening one bumps the major.
  *
  * 1.1 added `proficiencies`. 2.0 changed `resources[].recharge` from a single word to a
- * list of rules and dropped `rechargeAmount`. Readers must ignore fields they do not
- * know, which is why no object here forbids extra properties.
+ * list of rules and dropped `rechargeAmount`; the same release added innate spells
+ * (`spells[].innate`, `spells[].innateOnly` and the `innate-spell` part). Readers must
+ * ignore fields they do not know, which is why no object here forbids extra properties.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
@@ -151,13 +152,13 @@ export const ExportLevel = Type.Object({
 export const ExportPart = Type.Object(
   {
     kind: Type.Union(
-      ["resource", "toggle", "passive", "action"].map((k) => Type.Literal(k)),
+      ["resource", "toggle", "passive", "action", "innate-spell"].map((k) => Type.Literal(k)),
       {
         description:
-          "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither.",
+          "resource: a pool of uses. toggle: an effect that is switched on, or an action that applies one. passive: always-on modifiers. action: something done that is neither. innate-spell: a spell cast without a slot (its uses, if any, are a separate resource part).",
       },
     ),
-    from: Type.Union(["modifiers", "resources", "actions", "effects"].map((k) => Type.Literal(k)), {
+    from: Type.Union(["modifiers", "resources", "actions", "effects", "innateSpells"].map((k) => Type.Literal(k)), {
       description: "Which part list of the element it was read from.",
     }),
     definition: Obj,
@@ -247,6 +248,16 @@ export const ExportProficiencies = Type.Object(
 
 // -- spells -----------------------------------------------------------------
 
+export const ExportInnateCast = Type.Object({
+  source: Id,
+  ability: Type.Optional(Ability),
+  dc: Type.Optional(Type.Integer()),
+  attack: Type.Optional(Type.Integer()),
+  resource: Type.Optional(Type.String({ description: "The `key` of the resources[] entry holding its uses. Absent means at will." })),
+  text: Type.Optional(Type.String()),
+  notes: Type.Optional(Type.String()),
+});
+
 export const ExportSpell = Type.Object({
   id: Id,
   name: Type.String(),
@@ -258,6 +269,14 @@ export const ExportSpell = Type.Object({
   prepared: Type.Boolean(),
   alwaysPrepared: Type.Boolean(),
   extra: Type.Boolean({ description: "Learned outside the class's own progression." }),
+  innateOnly: Type.Boolean({
+    description:
+      "Present only because something grants it as an innate cast: not prepared, not picked, counted against nothing.",
+  }),
+  innate: Type.Array(ExportInnateCast, {
+    description:
+      "Each way the character casts this without a slot. Empty for an ordinary spell. A granted always-prepared spell is `alwaysPrepared`, not innate.",
+  }),
 });
 
 export const ExportSpellcasting = Type.Object({
