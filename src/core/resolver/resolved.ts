@@ -132,7 +132,10 @@ export interface ResolvedResource {
   /** The id as authored. */
   id: string;
   name: string;
+  /** Infinity when `unlimited`. */
   max: number;
+  /** The max is unlimited (Rages at level 20): shown as ∞, never blocks spending, skipped by rests. */
+  unlimited: boolean;
   spent: number;
   remaining: number;
   recharge: ResolvedRecharge[];

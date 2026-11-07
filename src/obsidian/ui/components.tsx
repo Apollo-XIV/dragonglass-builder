@@ -290,20 +290,22 @@ export function Counter({
   disabled?: boolean;
   unit?: string;
 }): ReactNode {
+  // A pool with no cap has nothing to count, so it shows ∞ and its buttons rest.
+  const unlimited = max === Infinity;
   return (
     <div className="dg-counter">
       <span className="dg-counter-label">{label}</span>
       <div className="dg-counter-controls">
-        <button onClick={() => onChange(-1)} disabled={disabled || value <= 0} aria-label={`Spend one ${unit ?? ""}`}>
+        <button onClick={() => onChange(-1)} disabled={disabled || unlimited || value <= 0} aria-label={`Spend one ${unit ?? ""}`}>
           −
         </button>
         <span className="dg-counter-value">
-          {value}
-          {max !== undefined ? <span className="dg-muted"> / {max}</span> : null}
+          {unlimited ? "∞" : value}
+          {max !== undefined && !unlimited ? <span className="dg-muted"> / {max}</span> : null}
         </span>
         <button
           onClick={() => onChange(1)}
-          disabled={disabled || (max !== undefined && value >= max)}
+          disabled={disabled || unlimited || (max !== undefined && value >= max)}
           aria-label={`Regain one ${unit ?? ""}`}
         >
           +

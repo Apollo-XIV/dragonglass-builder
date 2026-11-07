@@ -17,6 +17,8 @@ export interface PoolRule {
   key: string;
   max: number;
   recharge: ResolvedRecharge[];
+  /** No cap: spending is recorded nowhere and rests leave it alone. */
+  unlimited?: boolean;
 }
 
 export interface HitDiceRule {
@@ -112,14 +114,19 @@ function spendInto(live: LiveState, target: string, amount: number, rules: FoldR
   const { bucket, key } = bucketOf(target);
   const map = live.spent[bucket];
   const next = (map[key] ?? 0) + amount;
-  const cap = poolCap(bucket, key, rules);
-  map[key] = clamp(next, 0, cap);
+  // An unlimited pool has nothing to count down, so it keeps no tally to restore.
+  if (rules.pools.some((p) => p.unlimited && p.key === canonicalOf(bucket, key))) return;
+  map[key] = clamp(next, 0, poolCap(bucket, key, rules));
   if (map[key] === 0) delete map[key];
+}
+
+function canonicalOf(bucket: PoolBucket, key: string): string {
+  return bucket === "resources" ? `resources.${key}` : `${bucket}.${key}`;
 }
 
 function poolCap(bucket: PoolBucket, key: string, rules: FoldRules): number {
   if (bucket === "hitDice") return rules.hitDice.find((h) => h.die === key)?.max ?? Infinity;
-  const canonical = bucket === "resources" ? `resources.${key}` : `${bucket}.${key}`;
+  const canonical = canonicalOf(bucket, key);
   return rules.pools.find((p) => p.key === canonical)?.max ?? Infinity;
 }
 
@@ -129,6 +136,7 @@ function clamp(v: number, lo: number, hi: number): number {
 
 function applyRest(live: LiveState, rest: "short" | "long", rules: FoldRules): void {
   for (const pool of rules.pools) {
+    if (pool.unlimited) continue;
     const restored = restoredOn(pool.recharge, rest, pool.max);
     if (!restored) continue;
     const { bucket, key } = bucketOf(pool.key);

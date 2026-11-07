@@ -425,6 +425,18 @@ export interface Spellcasting {
   notes?: string;
 }
 
+/**
+ * A table cell the book prints as "Unlimited" (Rages at level 20). It reads as Infinity,
+ * so a resource whose max is one has no cap. Matched case-insensitively; "∞" also works.
+ */
+export const UNLIMITED = "unlimited";
+
+export function isUnlimitedCell(raw: unknown): boolean {
+  if (typeof raw !== "string") return false;
+  const v = raw.trim().toLowerCase();
+  return v === UNLIMITED || v === "∞";
+}
+
 /** Class tables: named columns read by @table(class, column), indexed by level. */
 export type ClassTables = Record<string, (number | string | null)[] | Record<string, number | string | null>>;
 

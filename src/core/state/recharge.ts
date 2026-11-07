@@ -39,6 +39,11 @@ export function hasRecharge(rules: readonly ResolvedRecharge[], on: RechargeOn):
   return rules.some((r) => r.on === on);
 }
 
+/** "2 of 3", or "∞" for a pool with no cap. */
+export function describeUses(remaining: number, max: number): string {
+  return Number.isFinite(max) ? `${remaining} of ${max}` : "∞";
+}
+
 const words = (on: RechargeOn): string => on.replace("-", " ");
 
 /** "long rest", "3 on a long rest", "1 on a short rest, all on a long rest", "manual". */

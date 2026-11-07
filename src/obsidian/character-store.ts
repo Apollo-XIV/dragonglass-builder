@@ -275,6 +275,7 @@ export class CharacterStore {
           key: `resources.${r.key}`,
           max: r.max,
           recharge: r.recharge,
+          unlimited: r.unlimited,
         })),
         ...(character.spellcasting?.slots ?? []).map((s) => ({
           key: `slots.${s.level}`,

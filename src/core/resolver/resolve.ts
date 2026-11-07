@@ -34,6 +34,7 @@ import {
   type Spellcasting,
   type StateFile,
   type SubclassElement,
+  isUnlimitedCell,
 } from "../types";
 import type { ContentIndex } from "../content";
 import { textOf } from "../content/mastery";
@@ -132,6 +133,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
       if (!col) continue;
       const raw = Array.isArray(col) ? col[level - 1] : col[String(level)];
       if (raw === undefined || raw === null) continue;
+      if (isUnlimitedCell(raw)) return Infinity;
       const n = typeof raw === "number" ? raw : Number(raw);
       if (Number.isFinite(n)) return n;
       return undefined;
@@ -534,10 +536,13 @@ function resolveResources(
         message: `resource "${def.name || def.id}" max: ${error}`,
         subject: from.element.id,
       });
-    const max = Math.max(0, Math.floor(value));
+    // An unlimited max (a table cell that says so) has no cap to spend against; anything
+    // else that does not come out as a number is the expression error reported above.
+    const unlimited = value === Infinity;
+    const max = unlimited ? Infinity : Number.isNaN(value) ? 0 : Math.max(0, Math.floor(value));
     // Spent amounts above a new max are clamped, so a level-down can't leave a
-    // resource reading -2 remaining.
-    const used = Math.min(spent[key] ?? 0, max);
+    // resource reading -2 remaining. An unlimited resource is never spent.
+    const used = unlimited ? 0 : Math.min(spent[key] ?? 0, max);
     // Unknown triggers were already reported by the validator; the rule is dropped.
     const recharge: ResolvedRecharge[] = (Array.isArray(def.recharge) ? def.recharge : [])
       .filter((rule) => (RECHARGE_TRIGGERS as readonly string[]).includes(rule.on))
@@ -552,8 +557,9 @@ function resolveResources(
       id: def.id,
       name: def.name || content.get(from.element.id)?.name || def.id,
       max,
+      unlimited,
       spent: used,
-      remaining: Math.max(0, max - used),
+      remaining: unlimited ? Infinity : Math.max(0, max - used),
       recharge,
       unit: def.unit,
       die: def.die,
@@ -588,6 +594,7 @@ function poolRules(resources: ResolvedResource[], plan: SpellPlan): PoolRule[] {
     key: canonicalPoolKey(r.key),
     max: r.max,
     recharge: r.recharge,
+    unlimited: r.unlimited,
   }));
   // Spell slots are pools like any other: they recharge on a long rest, and pact
   // magic slots come back on a short one.

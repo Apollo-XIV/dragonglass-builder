@@ -10,6 +10,7 @@ function resource(over: Partial<ResolvedResource>): ResolvedResource {
     id: "x",
     name: "X",
     max: 1,
+    unlimited: false,
     spent: 0,
     remaining: 1,
     recharge: [{ on: "long-rest", amount: "all" }],

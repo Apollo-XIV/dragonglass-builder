@@ -11,6 +11,7 @@
 import { useRef, type ReactNode } from "react";
 import { describeRoll, rollNotation, type RollOptions } from "../../../core/dice";
 import type { Explanation, ExplainRow } from "../../../core/resolver/explain";
+import { describeUses } from "../../../core/state/recharge";
 import type { Fact } from "../../../core/content/facts";
 import { Facts, Icon, Markdown } from "../components";
 import { UI } from "./constants";
@@ -433,7 +434,7 @@ export function ResourcePill({
     }
     haptics.buzz(UI.rollHaptic);
     onSpend();
-    toast.show({ label: name, detail: `${now.remaining - 1} of ${now.max} left` });
+    toast.show({ label: name, detail: Number.isFinite(now.max) ? `${now.remaining - 1} of ${now.max} left` : "Unlimited" });
   };
 
   // The menu re-reads its numbers on every render of the host, so spending from
@@ -453,7 +454,7 @@ export function ResourcePill({
                 <button
                   onClick={() => onSet(Math.max(0, read().remaining - 1))}
                   aria-label="One fewer use"
-                  disabled={now.remaining <= 0}
+                  disabled={now.remaining <= 0 || !Number.isFinite(now.max)}
                 >
                   −
                 </button>
@@ -461,14 +462,12 @@ export function ResourcePill({
                 <button
                   onClick={() => onSet(Math.min(read().max, read().remaining + 1))}
                   aria-label="One more use"
-                  disabled={now.remaining >= now.max}
+                  disabled={now.remaining >= now.max || !Number.isFinite(now.max)}
                 >
                   +
                 </button>
               </div>
-              <span className="dg-uses-count">
-                {now.remaining} of {now.max}
-              </span>
+              <span className="dg-uses-count">{describeUses(now.remaining, now.max)}</span>
             </div>
           </>
         );
@@ -483,7 +482,7 @@ export function ResourcePill({
             <button
               className="dg-sheet-button"
               onClick={() => onSet(read().max)}
-              disabled={now.remaining >= now.max}
+              disabled={now.remaining >= now.max || !Number.isFinite(now.max)}
             >
               Restore all
             </button>
@@ -495,7 +494,7 @@ export function ResourcePill({
   const { handlers } = useHold({ onTap: spend, onHold: menu, className: "dg-resource-pill" });
 
   return (
-    <button {...handlers} style={handlers.style} aria-label={`${name}, ${remaining} of ${max} left`}>
+    <button {...handlers} style={handlers.style} aria-label={Number.isFinite(max) ? `${name}, ${remaining} of ${max} left` : `${name}, unlimited`}>
       <Pips total={max} filled={remaining} />
     </button>
   );
@@ -504,6 +503,7 @@ export function ResourcePill({
 /** Pips as plain marks: in the narrow layout the pill around them is the target. */
 export function Pips({ total, filled }: { total: number; filled: number }): ReactNode {
   // A long track of pips stops being countable, so past a dozen it becomes a number.
+  if (!Number.isFinite(total)) return <span className="dg-pip-count">∞</span>;
   if (total > 12) return <span className="dg-pip-count">{filled}</span>;
   return (
     <span className="dg-pip-row" aria-hidden="true">

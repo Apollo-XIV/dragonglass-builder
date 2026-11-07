@@ -11,7 +11,7 @@ import { useState, type ReactNode } from "react";
 import { choosePins, type PinnedSlot } from "../../../core/resolver/pins";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
-import { describeRecharge } from "../../../core/state/recharge";
+import { describeRecharge, describeUses } from "../../../core/state/recharge";
 import type { CharacterStore } from "../../character-store";
 import { useSheet } from "../narrow/sheet";
 import { Pips, TextBody } from "../narrow/targets";
@@ -203,23 +203,21 @@ function PinnedResource({ slot, store }: { slot: PinnedSlot; store: CharacterSto
             <div className="dg-uses">
               <span className="dg-uses-label">Uses left</span>
               <div className="dg-stepper">
-                <button onClick={() => set(Math.max(0, read().remaining - 1))} aria-label="One fewer use">
+                <button onClick={() => set(Math.max(0, read().remaining - 1))} aria-label="One fewer use" disabled={!Number.isFinite(now.max)}>
                   −
                 </button>
                 <Pips total={now.max} filled={now.remaining} />
-                <button onClick={() => set(Math.min(read().max, read().remaining + 1))} aria-label="One more use">
+                <button onClick={() => set(Math.min(read().max, read().remaining + 1))} aria-label="One more use" disabled={!Number.isFinite(now.max)}>
                   +
                 </button>
               </div>
-              <span className="dg-uses-count">
-                {now.remaining} of {now.max}
-              </span>
+              <span className="dg-uses-count">{describeUses(now.remaining, now.max)}</span>
             </div>
           </>
         );
       },
       actions: () => (
-        <button className="dg-sheet-button" onClick={() => set(read().max)}>
+        <button className="dg-sheet-button" onClick={() => set(read().max)} disabled={!Number.isFinite(read().max)}>
           Restore all
         </button>
       ),
@@ -227,7 +225,7 @@ function PinnedResource({ slot, store }: { slot: PinnedSlot; store: CharacterSto
 
   const { handlers, card } = useHoverCard(() => (
     <p className="dg-d-hovercard-formula">
-      {slot.name} — {slot.remaining} of {slot.max}
+      {slot.name} — {describeUses(slot.remaining, slot.max)}
       {slot.resource ? ` · recharges: ${describeRecharge(slot.resource.recharge)}` : ""}
     </p>
   ));
@@ -260,6 +258,12 @@ function PinUses({
   onSet: (to: number) => void;
 }): ReactNode {
   const { remaining, max } = read();
+  if (!Number.isFinite(max))
+    return (
+      <span className="dg-d-pin-count" aria-label={`${slot.name}, unlimited`}>
+        ∞
+      </span>
+    );
   if (max > 8)
     return (
       <span className="dg-d-pin-count">

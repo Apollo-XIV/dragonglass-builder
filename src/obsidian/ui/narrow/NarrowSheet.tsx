@@ -96,7 +96,7 @@ export function NarrowSheet({
         label: "Features",
         // An unspent once-per-rest feature is worth a pip: it is the thing players
         // forget they still have.
-        attention: character.resources.some((r) => r.remaining === r.max && r.max > 0 && rechargesOnRest(r.recharge)),
+        attention: character.resources.some((r) => !r.unlimited && r.remaining === r.max && r.max > 0 && rechargesOnRest(r.recharge)),
         status: `${features.length}`,
         body: <FeaturesSection store={store} character={character} />,
       });
