@@ -4697,7 +4697,16 @@
   height: 0.55rem;
   margin-left: 0.4rem;
   vertical-align: middle;
-  border: 1px dashed var(--text-faint);
+  border: 1px dashed var(--text-muted);
   border-radius: 50%;
-  opacity: 0.7;
+  opacity: 0.85;
+}
+
+/* An open picker takes the whole row, rather than squeezing the title beside it. */
+.dg-layout .dg-read-row:has(> .dg-use-picker) {
+  flex-wrap: wrap;
+}
+
+.dg-layout .dg-read-row > .dg-use-picker {
+  flex: 1 0 100%;
 }
