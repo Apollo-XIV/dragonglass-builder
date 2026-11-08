@@ -13,6 +13,7 @@ import type {
   ExtraSpellPick,
   InventoryEntry,
   Modifier,
+  PartProvenance,
   ModifierOp,
   PreparationKind,
   ProficiencyLevel,
@@ -147,6 +148,7 @@ export interface ResolvedResource {
   source: string;
   sourceName: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 /**

@@ -4689,3 +4689,15 @@
   display: flex;
   gap: var(--size-4-2);
 }
+
+/* The marker on a part nobody has reviewed: a dashed ring, a note and not a warning. */
+.dg-unverified {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  margin-left: 0.4rem;
+  vertical-align: middle;
+  border: 1px dashed var(--text-faint);
+  border-radius: 50%;
+  opacity: 0.7;
+}

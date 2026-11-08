@@ -11,6 +11,8 @@ export interface LayoutSettings {
   showBreakdowns: boolean;
   /** Hide builder controls on the sheet, for play at the table. */
   playMode: boolean;
+  /** Hide the marker on parts that nobody has reviewed. The parts behave the same either way. */
+  hideUnverifiedMarkers: boolean;
   /**
    * Resources every character pins to the stat cluster, most wanted first. A
    * character's own `layout.5e` pins come first; content weights come last.
@@ -102,6 +104,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     compact: false,
     showBreakdowns: true,
     playMode: false,
+    hideUnverifiedMarkers: false,
     pins: [],
   },
   narrow: {

@@ -90,3 +90,4 @@ export {
 export type { FoldRules, LiveState, PoolRule } from "./state/fold";
 export * from "./export/index";
 export * from "./state/use-action";
+export * from "./content/provenance";

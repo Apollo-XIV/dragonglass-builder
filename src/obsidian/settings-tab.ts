@@ -135,6 +135,19 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Hide unverified markers")
+      .setDesc(
+        "Parts the converter derived from Foundry's data or read from a feature's text carry a small marker until someone reviews them. " +
+          "The marker is only a note; hiding it changes nothing else.",
+      )
+      .addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.layout.hideUnverifiedMarkers).onChange(async (value) => {
+          this.plugin.settings.layout.hideUnverifiedMarkers = value;
+          await this.plugin.saveSettings();
+        }),
+      );
+
+    new Setting(containerEl)
       .setName("Start in play mode")
       .setDesc("Hides builder controls when a sheet opens. Useful at the table.")
       .addToggle((toggle) =>

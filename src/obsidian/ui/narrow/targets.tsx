@@ -14,6 +14,7 @@ import type { Explanation, ExplainRow } from "../../../core/resolver/explain";
 import { describeUses } from "../../../core/state/recharge";
 import type { Fact } from "../../../core/content/facts";
 import { Facts, Icon, Markdown } from "../components";
+import { ProvenanceMark } from "../provenance";
 import { UI } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHold } from "./hold";
@@ -329,8 +330,11 @@ export function ReadRow({
   children,
   onTap,
   className,
+  unverified,
 }: {
   title: string;
+  /** Why the row's parts are unverified, one note each; the marker is only drawn when there are some. */
+  unverified?: readonly string[];
   /** "Wizard 1 · Class feature". */
   subtitle?: string;
   text?: string;
@@ -363,7 +367,10 @@ export function ReadRow({
   return (
     <div {...handlers} style={handlers.style}>
       <span className="dg-read-main">
-        <span className="dg-read-title">{title}</span>
+        <span className="dg-read-title">
+          {title}
+          {unverified?.length ? <ProvenanceMark notes={unverified} /> : null}
+        </span>
         {subtitle ? <span className="dg-read-subtitle">{subtitle}</span> : null}
       </span>
       {children}

@@ -698,6 +698,30 @@ action:
   on `@spent` as `X` until an amount is chosen, and does not roll it. It does not apply healing for
   you: Lay on Hands usually heals someone else.
 
+## Part provenance
+
+Any part (a modifier, resource, action, effect, innate spell, spell list addition or choice, on an
+element or in a level entry) may carry an optional `provenance`, saying where it came from and
+whether anyone has checked it:
+
+```json
+{ "id": "rage", "activation": "bonus-action", "cost": { "rages": 1 },
+  "provenance": { "source": "pack:release-5.3.3", "review": "auto" } }
+```
+
+- `source` is `hand` (a person wrote it from the book), `approved-match` (a person approved a loose
+  class-table match), `prose` (an extractor read it from the feature's text) or `pack:<tag>` (derived
+  from the Foundry dnd5e system's data at that release). Any other string is kept and shown as written.
+- `review` is `reviewed`, `unreviewed` (a person wrote it and no one has checked it) or `auto`
+  (a tool derived it and no one has read it). Anything but `reviewed` counts as unverified.
+- **It never changes behaviour.** A part with provenance resolves, spends and exports exactly as
+  one without. A malformed value is a validator warning and is ignored.
+- The sheet puts a small dashed marker on an action, resource, effect or feature row that has an
+  unverified part, with a tooltip: "From Foundry's dnd5e data, not yet reviewed", "Read from the
+  feature's text, not yet reviewed", and so on. The setting **Hide unverified markers** hides them.
+- Not to be confused with a feature's export `provenance` (`class`, `classLevel`, `via`), which says
+  where the *feature* came from in the character's build.
+
 ## Expressions
 
 References `@abilities.con.mod`, `@prof`, `@level`, `@level(monk)`,
@@ -766,6 +790,10 @@ interface Resource {
 
 type CostAmount = number | { min: Expr; max?: Expr };  // object = chosen when used; max is a cap
 type Cost = Record<string, CostAmount>;                 // pool key -> amount
+
+interface PartProvenance { source: string; review: string }   // see "Part provenance"
+// `provenance?: PartProvenance` is optional on Modifier, Resource, Action, Effect, InnateSpell,
+// SpellListAddition and ChoiceDef.
 
 interface Action {
   /* ... */

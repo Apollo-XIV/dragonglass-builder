@@ -569,6 +569,7 @@ function resolveResources(
       source: from.element.id,
       sourceName: from.element.name,
       notes: def.notes,
+      ...(def.provenance ? { provenance: def.provenance } : {}),
     });
   }
   return [...byKey.values()];

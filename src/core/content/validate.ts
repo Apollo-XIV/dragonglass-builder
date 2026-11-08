@@ -215,6 +215,29 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
   }
 }
 
+const PROVENANCE_PARTS = ["modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions", "choices"] as const;
+
+/** A part's provenance is a note about it: a malformed one is dropped, never a reason to refuse the part. */
+function validateProvenances(el: Record<string, unknown>, subject: string | undefined, out: Diagnostic[]): void {
+  const check = (owner: Record<string, unknown>, base: string): void => {
+    for (const part of PROVENANCE_PARTS) {
+      const list = owner[part];
+      if (!Array.isArray(list)) continue;
+      list.forEach((item, i) => {
+        if (!item || typeof item !== "object" || (item as Record<string, unknown>).provenance === undefined) return;
+        const p = (item as { provenance: unknown }).provenance as Record<string, unknown> | null;
+        if (!p || typeof p !== "object" || Array.isArray(p) || typeof p.source !== "string" || !p.source || typeof p.review !== "string" || !p.review)
+          out.push(warn("invalid-element", 'provenance must be { "source", "review" } of non-empty strings; ignored', subject, `${base}${part}[${i}].provenance`));
+      });
+    }
+  };
+  check(el, "");
+  const levels = el.levels;
+  if (levels && typeof levels === "object" && !Array.isArray(levels))
+    for (const [lvl, entry] of Object.entries(levels as Record<string, unknown>))
+      if (entry && typeof entry === "object") check(entry as Record<string, unknown>, `levels.${lvl}.`);
+}
+
 function validateGrant(g: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
   if (typeof g === "string") return;
   if (!g || typeof g !== "object" || typeof (g as Record<string, unknown>).id !== "string") {
@@ -505,6 +528,8 @@ export function validateElement(raw: unknown): ValidationResult {
       }
     }
   }
+
+  validateProvenances(el, subject, out);
 
   if (el.tables !== undefined && (!el.tables || typeof el.tables !== "object" || Array.isArray(el.tables)))
     out.push(err("invalid-element", "tables must be a map of column name to values", subject, "tables"));

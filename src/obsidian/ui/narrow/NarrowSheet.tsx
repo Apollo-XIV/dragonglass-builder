@@ -14,6 +14,7 @@ import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
 import type { ResolvedAction, ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
+import { noteFor, unverifiedNotes } from "../../../core/content/provenance";
 import { withSpent } from "../../../core/state/use-action";
 import { mentionsSpent } from "../../../core/expr/evaluate";
 import type { CharacterStore } from "../../character-store";
@@ -307,6 +308,7 @@ function ResourceRow({ resource, store }: { resource: ResolvedResource; store: C
       title={resource.name}
       subtitle={`${describeRecharge(resource.recharge)} · ${resource.sourceName}`}
       text={resource.notes}
+      unverified={noteFor(resource.provenance)}
     >
       <ResourcePillFor resource={resource} store={store} />
     </ReadRow>
@@ -395,6 +397,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={action.key}
           title={action.name}
+          unverified={noteFor(action.definition.provenance)}
           subtitle={[
             action.activation.replace("-", " "),
             action.range,
@@ -434,7 +437,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           {character.effects
             .filter((e) => e.active)
             .map((effect) => (
-              <ReadRow key={effect.id} title={effect.name} subtitle={effect.duration ?? "active"} text={effect.text}>
+              <ReadRow key={effect.id} title={effect.name} subtitle={effect.duration ?? "active"} text={effect.text} unverified={noteFor(effect.definition.provenance)}>
                 <button
                   className="dg-n-chip is-action"
                   onClick={() => store.appendEvents(event("effect.end", { effect: effect.id }))}
@@ -655,6 +658,7 @@ export function FeaturesSection({ store, character }: { store: CharacterStore; c
               .filter(Boolean)
               .join(" · ")}
             text={feature.text}
+            unverified={unverifiedNotes(feature.element)}
           >
             {resource ? <ResourcePillFor resource={resource} store={store} /> : null}
           </ReadRow>

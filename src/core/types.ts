@@ -83,6 +83,7 @@ export interface ChoiceDef {
   counts?: boolean;
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 export const MODIFIER_OPS = [
@@ -113,6 +114,23 @@ export interface When {
   context?: string;
 }
 
+/**
+ * Where a part came from and whether anyone has checked it. Optional on every part; a
+ * source that does not track this leaves it off. It describes the part and never changes
+ * what it does: a part still applies when its review is not "reviewed".
+ */
+export interface PartProvenance {
+  /**
+   * "hand": written by a person from the book. "approved-match": a loose table match a
+   * person approved. "prose": read from the feature's text by an extractor.
+   * "pack:<tag>": derived from the Foundry dnd5e system's data at that release.
+   * Other values are kept and shown as written.
+   */
+  source: string;
+  /** "reviewed", "unreviewed" (checked by no one), or "auto" (derived by a tool, read by no one). */
+  review: string;
+}
+
 export interface Modifier {
   /** A stat path: "saves.str", "ac", "skills.stealth", "resistances". */
   target: string;
@@ -125,6 +143,7 @@ export interface Modifier {
   stackKey?: string;
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 export const RECHARGES = [
@@ -169,6 +188,7 @@ export interface ResourceDef {
   pin?: number;
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 /**
@@ -192,6 +212,7 @@ export interface SpellListAddition {
   spells?: string[];
   /** Class element ids whose entire spell list is added. */
   fromClasses?: string[];
+  provenance?: PartProvenance;
 }
 
 /** An innate spell once its choices are read: what the resolver and the export see. */
@@ -217,6 +238,7 @@ export interface InnateSpellDef {
   recharge?: RechargeRule[];
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 /**
@@ -265,6 +287,7 @@ export interface ActionDef {
   recharge?: Recharge;
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 export interface EffectDef {
@@ -276,6 +299,7 @@ export interface EffectDef {
   modifiers?: Modifier[];
   text?: string;
   notes?: string;
+  provenance?: PartProvenance;
 }
 
 // ---------------------------------------------------------------------------
