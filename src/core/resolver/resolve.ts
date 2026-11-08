@@ -665,11 +665,13 @@ function resolveActions(
         continue;
       }
       const counted = pool.remaining !== undefined && Number.isFinite(pool.remaining);
+      const range = typeof amount === "number" ? undefined : chosenRange(amount, pool.remaining, engine, def, from, diagnostics);
       const line: ResolvedCostLine = {
         key: pool.key,
-        amount: typeof amount === "number" ? amount : chosenRange(amount, pool.remaining, engine, def, from, diagnostics),
+        amount: range ? { min: range.min, max: range.max } : (amount as number),
         label: pool.label,
-        ...(counted && typeof amount !== "number" ? { remaining: pool.remaining } : {}),
+        ...(range && counted ? { remaining: pool.remaining } : {}),
+        ...(range?.cap !== undefined ? { cap: range.cap } : {}),
       };
       if (typeof amount !== "number") deferred.add(SPENT_REF);
       resolvedCost.push(line);
@@ -788,7 +790,7 @@ function chosenRange(
   def: ActionDef,
   from: PartSource,
   diagnostics: Diagnostic[],
-): { min: number; max: number } {
+): { min: number; max: number; cap?: number } {
   const read = (expr: Expr, what: string): number => {
     const out = tryEvaluate(expr, engine.ctx, 0);
     if (out.error)
@@ -804,7 +806,7 @@ function chosenRange(
   const cap = amount.max === undefined ? undefined : read(amount.max, "max");
   const left = remaining !== undefined && Number.isFinite(remaining) ? remaining : undefined;
   const max = cap !== undefined && left !== undefined ? Math.min(cap, left) : cap ?? left ?? min;
-  return { min, max };
+  return { min, max, ...(cap !== undefined ? { cap } : {}) };
 }
 
 /** The spell save DC of the class the action's element came from, when there is one. */

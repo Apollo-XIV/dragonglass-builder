@@ -277,7 +277,7 @@ describe("what the export contains", () => {
       sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
     });
     expect(validateExport(clone(doc)).errors).toEqual([]);
-    expect(doc.envelope.schemaVersion).toBe("2.2");
+    expect(doc.envelope.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
 
     // JSON has no infinity, so the document says so in words.
     const rages = doc.resources.find((r) => r.id === "rages")!;
@@ -332,7 +332,7 @@ describe("what the export contains", () => {
       sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
     });
     expect(validateExport(clone(doc)).errors).toEqual([]);
-    expect(doc.envelope.schemaVersion).toBe("2.2");
+    expect(doc.envelope.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
 
     const free = doc.progression[0]!.choices.find((c) => c.id === "free")!;
     expect(free).toMatchObject({ mode: "learned", counts: false });
@@ -343,6 +343,58 @@ describe("what the export contains", () => {
       expect(doc.spells.find((s) => s.id === `test:spell:${id}`)!.innate).toEqual([
         expect.objectContaining({ source: initiate.id, ability: "wis" }),
       ]);
+  });
+
+  it("carries what an action spends, resolved, and a part's provenance (2.3)", async () => {
+    const feature: Element = {
+      id: "test:feature:font", kind: "class-feature", name: "Font", source: "test",
+      resources: [{ id: "points", name: "Points", max: "@level(sorc) * 2", recharge: [], provenance: { source: "pack:release-5.3.3", review: "auto" } }],
+      actions: [
+        { id: "twin", name: "Twin", activation: "special", cost: { points: { min: 1, max: 9 } }, provenance: { source: "prose", review: "unreviewed" } },
+        { id: "heal", name: "Heal", activation: "bonus-action", cost: { points: { min: "@prof" } }, heal: "@spent" },
+        { id: "quick", name: "Quick", activation: "bonus-action", cost: { points: 2 }, provenance: { source: "hand", review: "reviewed" } },
+        { id: "free", name: "Free", activation: "action" },
+      ],
+    } as Element;
+    const sorc: Element = { id: "test:class:sorc", kind: "class", name: "Sorc", source: "test", key: "sorc", hitDie: "d6", levels: { "1": { grants: [feature.id] } } } as Element;
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, sorc, feature]),
+      build: build({ levels: [{ class: sorc.id, hp: "average", choices: {} }] }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(validateExport(clone(doc)).errors).toEqual([]);
+    expect(doc.envelope.schemaVersion).toBe(EXPORT_SCHEMA_VERSION);
+    const key = "test:feature:font:points";
+    const parts = doc.features.find((f) => f.id === feature.id)!.parts;
+    const action = (id: string) => parts.find((p) => (p.definition as { id?: string }).id === id)!;
+
+    // A chosen amount: the pool as a key, the minimum evaluated, the cap only when the content has one.
+    expect(action("twin").cost).toEqual([{ pool: key, min: 1, max: 9 }]);
+    expect(action("heal").cost).toEqual([{ pool: key, min: 2 }]);
+    expect(action("heal").cost![0]).not.toHaveProperty("max");
+    expect(action("quick").cost).toEqual([{ pool: key, amount: 2 }]);
+    expect(action("free")).not.toHaveProperty("cost");
+    expect(doc.resources.map((r) => r.key)).toContain(key);
+    // The authored definition is untouched, so a reader can still see @spent.
+    expect(action("heal").definition).toMatchObject({ heal: "@spent", cost: { points: { min: "@prof" } } });
+
+    expect(action("twin").provenance).toEqual({ source: "prose", review: "unreviewed" });
+    expect(action("quick").provenance).toEqual({ source: "hand", review: "reviewed" });
+    expect(action("free")).not.toHaveProperty("provenance");
+    expect(parts.find((p) => p.kind === "resource")!.provenance).toEqual({ source: "pack:release-5.3.3", review: "auto" });
+  });
+
+  it("refuses a malformed cost or provenance in a document", async () => {
+    const doc = clone(await run("paladin-3"));
+    const part = doc.features.flatMap((f) => f.parts).find((p) => p.kind === "action")!;
+    (part as { cost?: unknown }).cost = [{ pool: 7 }];
+    expect(validateExport(clone(doc)).ok).toBe(false);
+    (part as { cost?: unknown }).cost = [{ pool: "x", min: 1 }];
+    (part as { provenance?: unknown }).provenance = { source: "prose" };
+    expect(validateExport(clone(doc)).ok).toBe(false);
   });
 
   it("exports a weapon mastery pick as a feature with its property's text", async () => {

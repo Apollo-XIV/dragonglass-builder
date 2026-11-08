@@ -22,11 +22,16 @@
  * 2.2 added `choices[].mode` and `.counts`, set on a choice of spells whose picks are learned.
  * It also changed no existing field: a choice reference now resolves from anywhere in its
  * owning element and applies to each pick, so `spells[].innate` may hold one entry per pick.
+ *
+ * 2.3 added `features[].parts[].cost`, what an action or toggle spends with its pool resolved
+ * to a key and its amounts evaluated (an amount the player chooses has `min` and an optional
+ * `max`, a cap), and `features[].parts[].provenance`, where a part came from and whether it
+ * has been reviewed. Both are only present when there is something to say.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.2";
+export const EXPORT_SCHEMA_VERSION = "2.3";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -166,6 +171,35 @@ export const ExportLevel = Type.Object({
 
 // -- features, resources ------------------------------------------------------
 
+export const ExportCost = Type.Object(
+  {
+    pool: Type.String({
+      description:
+        "What is spent: the `key` of a `resources[]` entry, or `slots.<n>`, `pact` or `hitDice.<die>`.",
+    }),
+    amount: Type.Optional(Type.Number({ description: "A fixed cost. Absent when the player chooses the amount." })),
+    min: Type.Optional(Type.Number({ description: "A chosen amount: the least that can be spent." })),
+    max: Type.Optional(
+      Type.Number({
+        description:
+          "A chosen amount: a cap on what can be spent. Absent means no cap, so the most is whatever the pool has left. The pool's remainder is never applied here.",
+      }),
+    ),
+  },
+  {
+    description:
+      "One pool an action spends. A cost with `amount` is fixed; one with `min` is chosen by the player when the action is used, and the amount chosen is `@spent` in the action's `damage`, `heal` and `duration`.",
+  },
+);
+
+export const ExportPartProvenance = Type.Object(
+  {
+    source: Type.String({ description: "hand, approved-match, prose or pack:<tag>; any other string is kept as written." }),
+    review: Type.String({ description: "reviewed, unreviewed (written, not checked) or auto (derived by a tool, not read). Anything but reviewed is unverified." }),
+  },
+  { description: "Where a part came from and whether anyone has reviewed it. A note; it never changes what the part does." },
+);
+
 export const ExportPart = Type.Object(
   {
     kind: Type.Union(
@@ -179,6 +213,8 @@ export const ExportPart = Type.Object(
       description: "Which part list of the element it was read from.",
     }),
     definition: Obj,
+    cost: Type.Optional(Type.Array(ExportCost, { description: "On an action or toggle: what it spends, resolved. Absent when it spends nothing." })),
+    provenance: Type.Optional(ExportPartProvenance),
   },
   { description: "One part of a feature, as authored (see docs/schema.md), with a derived kind." },
 );
@@ -413,6 +449,8 @@ export type ExportChoice = Static<typeof ExportChoice>;
 export type ExportLevel = Static<typeof ExportLevel>;
 export type ExportFeature = Static<typeof ExportFeature>;
 export type ExportPart = Static<typeof ExportPart>;
+export type ExportCost = Static<typeof ExportCost>;
+export type ExportPartProvenance = Static<typeof ExportPartProvenance>;
 export type ExportProficiencies = Static<typeof ExportProficiencies>;
 export type ExportRating = Static<typeof ExportRating>;
 export type ExportResource = Static<typeof ExportResource>;

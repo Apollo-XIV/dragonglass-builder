@@ -162,6 +162,8 @@ export interface ResolvedCostLine {
   label: string;
   /** On a chosen amount: what the pool has left. Absent for an unlimited pool. */
   remaining?: number;
+  /** On a chosen amount: the content's own cap, before the pool's remainder is applied. Absent when it has none. */
+  cap?: number;
 }
 
 export interface ResolvedAction {

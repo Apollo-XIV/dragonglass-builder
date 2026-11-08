@@ -7,7 +7,7 @@
 import type { ContentIndex } from "../content";
 import { idProblems } from "../character-id";
 import { resolve } from "../resolver/resolve";
-import type { Contribution, NumericStat, PendingChoice, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
+import type { Contribution, NumericStat, PendingChoice, ResolvedAction, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
 import type { BuildFile, Element, InventoryEntry, InventoryFile, SheetFile, SpellsFile } from "../types";
 import {
   EXPORT_SCHEMA_VERSION,
@@ -100,7 +100,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       .map(grantOf),
   }));
 
-  const features = r.elements.filter(isFeature).map((e) => featureOf(e, use));
+  const features = r.elements.filter(isFeature).map((e) => featureOf(e, use, r.actions));
 
   const spells = (r.spellcasting?.spells ?? []).map((s) => ({
     id: use(s.id)!,
@@ -299,7 +299,7 @@ function proficienciesOf(r: ResolvedCharacter, use: (id: string) => string | und
   };
 }
 
-function featureOf(e: ResolvedElement, use: (id: string) => string | undefined): ExportFeature {
+function featureOf(e: ResolvedElement, use: (id: string) => string | undefined, actions: ResolvedAction[]): ExportFeature {
   use(e.id);
   return {
     id: e.id,
@@ -313,18 +313,45 @@ function featureOf(e: ResolvedElement, use: (id: string) => string | undefined):
       ...(e.level !== undefined && e.class ? { classLevel: e.level } : {}),
       via: [...e.origin],
     },
-    parts: partsOf(e.element),
+    parts: partsOf(e.element, actions),
   };
 }
 
 type PartList = "modifiers" | "resources" | "actions" | "effects" | "innateSpells" | "spellListAdditions";
 
-/** Reads an element's parts and gives each a kind the reader can switch on. */
-export function partsOf(el: Element): ExportPart[] {
+/**
+ * What a part says about its provenance, when it does. Read off the authored definition,
+ * which still carries it: the part is exported as authored.
+ */
+function provenanceOf(definition: unknown): Pick<ExportPart, "provenance"> {
+  const p = (definition as { provenance?: { source?: unknown; review?: unknown } } | null)?.provenance;
+  return p && typeof p.source === "string" && p.source && typeof p.review === "string" && p.review
+    ? { provenance: { source: p.source, review: p.review } }
+    : {};
+}
+
+/** What an action spends, resolved: the pool as a key, expressions evaluated. */
+function costOf(action: ResolvedAction | undefined): Pick<ExportPart, "cost"> {
+  const lines = action?.resolvedCost;
+  if (!lines?.length) return {};
+  return {
+    cost: lines.map((c) =>
+      typeof c.amount === "number"
+        ? { pool: c.key, amount: c.amount }
+        : { pool: c.key, min: c.amount.min, ...(c.cap !== undefined ? { max: c.cap } : {}) },
+    ),
+  };
+}
+
+/**
+ * Reads an element's parts and gives each a kind the reader can switch on. With the
+ * character's resolved actions, an action's cost comes with its pool and amounts resolved.
+ */
+export function partsOf(el: Element, actions: readonly ResolvedAction[] = []): ExportPart[] {
   const out: ExportPart[] = [];
   const add = (from: PartList, kind: ExportPart["kind"], defs: unknown): void => {
     if (!Array.isArray(defs)) return;
-    for (const definition of defs) out.push({ kind, from, definition: definition as Record<string, unknown> });
+    for (const definition of defs) out.push({ kind, from, definition: definition as Record<string, unknown>, ...provenanceOf(definition) });
   };
   add("resources", "resource", el.resources);
   add("effects", "toggle", el.effects);
@@ -333,6 +360,8 @@ export function partsOf(el: Element): ExportPart[] {
       kind: (a as { applies?: unknown }).applies ? "toggle" : "action",
       from: "actions",
       definition: a as unknown as Record<string, unknown>,
+      ...costOf(actions.find((x) => x.source === el.id && x.id === (a as { id?: unknown }).id)),
+      ...provenanceOf(a),
     });
   add("modifiers", "passive", el.modifiers);
   add("innateSpells", "innate-spell", el.innateSpells);

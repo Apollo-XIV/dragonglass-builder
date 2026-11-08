@@ -1,6 +1,6 @@
 {
   "envelope": {
-    "schemaVersion": "2.2",
+    "schemaVersion": "2.3",
     "characterId": "6f1d7c52-0d0e-4a39-9f6b-3a1f0c7b9e11",
     "exportedAt": "2026-01-01T00:00:00.000Z",
     "pluginVersion": "test",
@@ -846,7 +846,13 @@
             },
             "range": "60 feet",
             "text": "Detect celestials, fiends and undead, and consecrated or desecrated places, within 60 feet until the end of your next turn."
-          }
+          },
+          "cost": [
+            {
+              "pool": "srd:paladin:divine-sense:uses",
+              "amount": 1
+            }
+          ]
         }
       ]
     },
@@ -896,7 +902,14 @@
             },
             "range": "Touch",
             "text": "Restore hit points equal to the amount you spend from the pool."
-          }
+          },
+          "cost": [
+            {
+              "pool": "srd:paladin:lay-on-hands",
+              "min": 1,
+              "max": 100
+            }
+          ]
         },
         {
           "kind": "action",
@@ -910,7 +923,13 @@
             },
             "range": "Touch",
             "text": "Cure one disease or neutralize one poison."
-          }
+          },
+          "cost": [
+            {
+              "pool": "srd:paladin:lay-on-hands",
+              "amount": 5
+            }
+          ]
         }
       ]
     },
@@ -957,7 +976,13 @@
             },
             "damage": "2d8",
             "damageType": "radiant"
-          }
+          },
+          "cost": [
+            {
+              "pool": "slots.1",
+              "amount": 1
+            }
+          ]
         },
         {
           "kind": "action",
@@ -971,7 +996,13 @@
             },
             "damage": "3d8",
             "damageType": "radiant"
-          }
+          },
+          "cost": [
+            {
+              "pool": "slots.2",
+              "amount": 1
+            }
+          ]
         },
         {
           "kind": "action",
@@ -985,7 +1016,13 @@
             },
             "damage": "4d8",
             "damageType": "radiant"
-          }
+          },
+          "cost": [
+            {
+              "pool": "slots.3",
+              "amount": 1
+            }
+          ]
         },
         {
           "kind": "action",
@@ -999,7 +1036,13 @@
             },
             "damage": "5d8",
             "damageType": "radiant"
-          }
+          },
+          "cost": [
+            {
+              "pool": "slots.4",
+              "amount": 1
+            }
+          ]
         },
         {
           "kind": "action",
@@ -1014,7 +1057,13 @@
             "damage": "5d8",
             "damageType": "radiant",
             "notes": "Divine Smite caps at 5d8 however high the slot."
-          }
+          },
+          "cost": [
+            {
+              "pool": "slots.5",
+              "amount": 1
+            }
+          ]
         }
       ]
     },
@@ -1135,7 +1184,13 @@
             },
             "applies": "srd:devotion:sacred-weapon",
             "text": "Imbue a weapon you are holding with positive energy for 1 minute."
-          }
+          },
+          "cost": [
+            {
+              "pool": "srd:paladin:channel-divinity",
+              "amount": 1
+            }
+          ]
         },
         {
           "kind": "action",
@@ -1153,7 +1208,13 @@
               "ability": "wis"
             },
             "text": "A fiend or undead that fails the save is turned for 1 minute or until it takes any damage."
-          }
+          },
+          "cost": [
+            {
+              "pool": "srd:paladin:channel-divinity",
+              "amount": 1
+            }
+          ]
         }
       ]
     }

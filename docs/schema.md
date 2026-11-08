@@ -781,6 +781,15 @@ only on a choice of spells whose picks are learned; the picks themselves already
 resolves from anywhere in its owning element and applies to each pick, so `spells[].innate`
 can hold one entry per picked spell, each with its own `resource`.
 
+**Export 2.3** is additive. A feature's `parts[]` entry gains two optional fields. `cost` is on an action
+or toggle that spends something: a list of `{ pool, amount }` for a fixed cost or `{ pool, min, max? }` for an
+amount the player chooses (see **Chosen-amount costs**), with `pool` resolved to a key that matches a
+`resources[].key` (or `slots.<n>`, `pact`, `hitDice.<die>`) and the amounts evaluated at the character's
+level. `max` is the content's cap and is absent when it has none, meaning "all the pool has left"; the
+pool's remainder is never applied, because the export is not a play session. The authored `definition` is
+still exported as written, `@spent` and all. `provenance` is `{ source, review }` as authored (see **Part
+provenance**), lifted off the definition. Nothing existing changed meaning.
+
 ## Type reference
 
 The shapes added by recharge rules, innate spells, weapon mastery, grant modes, learned choices,
@@ -804,6 +813,11 @@ type Cost = Record<string, CostAmount>;                 // pool key -> amount
 interface PartProvenance { source: string; review: string }   // see "Part provenance"
 // `provenance?: PartProvenance` is optional on Modifier, Resource, Action, Effect, InnateSpell,
 // SpellListAddition and ChoiceDef.
+
+// In the export (2.3), on each feature part:
+interface ExportCost { pool: string; amount?: number; min?: number; max?: number }
+// `amount` for a fixed cost; `min` (and an optional `max` cap) for a chosen one.
+// ExportPart.cost?: ExportCost[]; ExportPart.provenance?: PartProvenance
 
 interface Action {
   /* ... */
