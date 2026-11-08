@@ -197,14 +197,39 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     for (const r of el.resources ?? []) result.resources.push({ def: r, from });
     for (const a of el.actions ?? []) result.actions.push({ def: a, from });
     for (const e of el.effects ?? []) result.effects.push({ def: e, from });
-    for (const s of el.innateSpells ?? []) addInnate(s, from, ctx);
+    for (const s of el.innateSpells ?? []) addInnate(s, from, ctx, el.choices);
     for (const a of el.spellListAdditions ?? []) result.listAdditions.push({ def: a, from });
   }
 
-  /** The element a choice declared beside a part was answered with, if it was. */
-  function answered(ref: string | ChoiceRef | undefined, ctx: Ctx): Element | undefined {
+  /**
+   * The answer to a choice a part refers to. The reference reaches anywhere in the owning
+   * element, so this looks where the choice is declared: beside the part first, then on the
+   * element itself, then in its level entries in order. The first declaration that has an
+   * answer wins; a choice declared nowhere reads like one beside the part (the build's
+   * flat answers still honour a hand-edited file).
+   */
+  function answerOf(ref: ChoiceRef, owner: Element, ctx: Ctx, here: ChoiceDef[] | undefined): string[] {
+    const declares = (list: ChoiceDef[] | undefined): boolean => !!list?.some((c) => c.id === ref.choice);
+    const sites: { scope: "build" | "level"; levelIndex?: number }[] = [];
+    if (declares(here)) sites.push({ scope: ctx.scope, levelIndex: ctx.levelIndex });
+    if (declares(owner.choices)) sites.push({ scope: "build" });
+    const entries = (owner.levels ?? {}) as Record<string, LevelEntry>;
+    for (const key of Object.keys(entries).sort((a, b) => Number(a) - Number(b))) {
+      if (!declares(entries[key]?.choices)) continue;
+      const levelIndex = ctx.class ? levelIndexOf.get(ctx.class)?.[Number(key) - 1] : Number(key) - 1;
+      if (levelIndex !== undefined) sites.push({ scope: "level", levelIndex });
+    }
+    for (const site of sites) {
+      const picks = answerFor(build, ref.choice, site.scope, site.levelIndex);
+      if (picks.length) return picks;
+    }
+    return answerFor(build, ref.choice, ctx.scope, ctx.levelIndex);
+  }
+
+  /** The element a choice a part refers to was answered with, if it was. */
+  function answered(ref: string | ChoiceRef | undefined, owner: Element, ctx: Ctx, here: ChoiceDef[] | undefined): Element | undefined {
     if (typeof ref !== "object") return undefined;
-    const id = answerFor(build, ref.choice, ctx.scope, ctx.levelIndex)[0];
+    const id = answerOf(ref, owner, ctx, here)[0];
     return id ? index.get(id) : undefined;
   }
 
@@ -213,13 +238,13 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
    * any other. A spell or ability that comes from a choice is read here, so everything
    * after collection sees a plain one; until the choice is answered the part is inert.
    */
-  function addInnate(raw: InnateSpellDef, from: PartSource, ctx: Ctx): void {
-    const spell = typeof raw.spell === "string" ? raw.spell : answered(raw.spell, ctx)?.id;
+  function addInnate(raw: InnateSpellDef, from: PartSource, ctx: Ctx, here: ChoiceDef[] | undefined): void {
+    const spell = typeof raw.spell === "string" ? raw.spell : answered(raw.spell, from.element, ctx, here)?.id;
     if (!spell) return;
     let ability: Ability | undefined;
     if (typeof raw.ability === "string") ability = raw.ability;
     else if (raw.ability) {
-      const picked = answered(raw.ability, ctx)?.ability;
+      const picked = answered(raw.ability, from.element, ctx, here)?.ability;
       if (ABILITIES.includes(picked as Ability)) ability = picked as Ability;
     }
     const def: InnateSpell = { ...raw, spell, ability };
@@ -332,7 +357,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         if (key === "modifiers") result.modifiers.push({ def: def as Modifier, from });
         else if (key === "resources") result.resources.push({ def: def as ResourceDef, from });
         else if (key === "actions") result.actions.push({ def: def as ActionDef, from });
-        else if (key === "innateSpells") addInnate(def as InnateSpellDef, from, levelCtx);
+        else if (key === "innateSpells") addInnate(def as InnateSpellDef, from, levelCtx, entry.choices);
         else if (key === "spellListAdditions") result.listAdditions.push({ def: def as SpellListAddition, from });
         else result.effects.push({ def: def as EffectDef, from });
       }

@@ -376,8 +376,11 @@ Misty Step do not share uses.
 #### Spells and abilities that are a choice
 
 `InnateSpell.spell` and `InnateSpell.ability` may each be `{ "choice": "<choice id>" }` instead
-of a fixed value. The id names a `ChoiceDef` declared **beside the part**: on the same element,
-or in the same level entry. The part reads the answer, so there is no new kind of choice, and
+of a fixed value. The id names a `ChoiceDef` declared **anywhere in the same owning element**: on the element
+itself or in any of its level entries, whichever the part is in. A lineage declares its ability
+choice once and every level entry that needs it just refers to it. (If two places in the element
+declare the same id, the one beside the part is read first, then the element's, then the level
+entries in order.) The part reads the answer, so there is no new kind of choice, and
 validity works as it always does: until the choice is answered the part is inert (no spell is
 listed, no pool exists), and answering it brings it to life.
 
