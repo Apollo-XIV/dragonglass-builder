@@ -7,7 +7,8 @@ import { describe, expect, it } from "vitest";
 import { validateElement } from "../src/core/content/validate";
 import { collect } from "../src/core/resolver/collect";
 import type { Element } from "../src/core/types";
-import { build, TEST_BOOK, testIndex } from "./helpers";
+import { resolve } from "../src/core/resolver/resolve";
+import { build, scores, TEST_BOOK, testIndex } from "./helpers";
 
 describe("a subclass's first level entry", () => {
   const sub = {
@@ -108,5 +109,56 @@ describe("validating a reference to a choice declared elsewhere in the element",
   it("still warns about a choice the element never declares", () => {
     const d = check({ choices: [choice("other")], levelsBy: "character", levels: { "3": { innateSpells: [ref] } } });
     expect(d.map((x) => x.code)).toEqual(["unresolved-reference"]);
+  });
+});
+
+describe("a reference to a choice with several picks", () => {
+  const initiate = {
+    id: "test:feat:initiate", kind: "feat", name: "Initiate", source: "test",
+    choices: [
+      { id: "ability", count: 1, from: { kind: "casting-ability" } },
+      { id: "cantrips", count: 2, from: { kind: "spell" } },
+      { id: "spell", count: 1, from: { kind: "spell" } },
+    ],
+    innateSpells: [
+      { spell: { choice: "cantrips" }, ability: { choice: "ability" } },
+      { spell: { choice: "spell" }, ability: { choice: "ability" }, uses: 1, recharge: [{ on: "long-rest", amount: "all" }] },
+    ],
+  } as Element;
+  const content = testIndex([
+    TEST_BOOK, initiate, ability("int"), ability("wis"), cantrip("light"), cantrip("shield"), cantrip("sleep"),
+  ]);
+  const picks = {
+    ability: ["test:casting-ability:wis"],
+    cantrips: ["test:spell:light", "test:spell:shield"],
+    spell: ["test:spell:sleep"],
+  };
+  const make = (choices: Record<string, string[]>) => collect(content, build({ background: initiate.id, choices }));
+
+  it("applies the part to each pick", () => {
+    const c = make(picks);
+    expect(c.innate.map((i) => i.def.spell).sort()).toEqual(["test:spell:light", "test:spell:shield", "test:spell:sleep"]);
+    expect(c.innate.map((i) => i.def.ability)).toEqual(["wis", "wis", "wis"]);
+  });
+
+  it("gives each pick its own pool when it has uses", () => {
+    const c = make({ ...picks, spell: ["test:spell:sleep", "test:spell:light"] });
+    expect(c.resources.map((r) => r.def.id).sort()).toEqual(["innate-light", "innate-sleep"]);
+  });
+
+  it("applies to the picks made so far when only some are made", () => {
+    const c = make({ ...picks, cantrips: ["test:spell:light"] });
+    expect(c.innate.filter((i) => i.def.uses === undefined).map((i) => i.def.spell)).toEqual(["test:spell:light"]);
+  });
+
+  it("casts every pick in the resolved character", () => {
+    const c = resolve({
+      content,
+      build: build({ background: initiate.id, choices: picks, abilities: { method: "manual", base: scores({ wis: 16 }) } }),
+    });
+    const light = c.spellcasting?.spells.find((s) => s.id === "test:spell:light");
+    const shield = c.spellcasting?.spells.find((s) => s.id === "test:spell:shield");
+    expect(light!.innate[0]).toMatchObject({ ability: "wis", dc: 13 });
+    expect(shield!.innate[0]).toMatchObject({ ability: "wis", dc: 13 });
   });
 });

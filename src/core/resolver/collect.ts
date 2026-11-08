@@ -226,39 +226,41 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     return answerFor(build, ref.choice, ctx.scope, ctx.levelIndex);
   }
 
-  /** The element a choice a part refers to was answered with, if it was. */
-  function answered(ref: string | ChoiceRef | undefined, owner: Element, ctx: Ctx, here: ChoiceDef[] | undefined): Element | undefined {
-    if (typeof ref !== "object") return undefined;
-    const id = answerOf(ref, owner, ctx, here)[0];
-    return id ? index.get(id) : undefined;
+  /** The elements a choice a part refers to was answered with, one per pick. */
+  function answered(ref: string | ChoiceRef | undefined, owner: Element, ctx: Ctx, here: ChoiceDef[] | undefined): Element[] {
+    if (typeof ref !== "object") return [];
+    return answerOf(ref, owner, ctx, here).flatMap((id) => index.get(id) ?? []);
   }
 
   /**
    * An innate spell with uses owns a pool, so rests, spending and pins treat it like
    * any other. A spell or ability that comes from a choice is read here, so everything
    * after collection sees a plain one; until the choice is answered the part is inert.
+   * A spell choice with several picks applies the part to each of them, every pick with
+   * a pool of its own. An ability choice is one decision: its first pick is the ability.
    */
   function addInnate(raw: InnateSpellDef, from: PartSource, ctx: Ctx, here: ChoiceDef[] | undefined): void {
-    const spell = typeof raw.spell === "string" ? raw.spell : answered(raw.spell, from.element, ctx, here)?.id;
-    if (!spell) return;
+    const spells = typeof raw.spell === "string" ? [raw.spell] : answered(raw.spell, from.element, ctx, here).map((e) => e.id);
     let ability: Ability | undefined;
     if (typeof raw.ability === "string") ability = raw.ability;
     else if (raw.ability) {
-      const picked = answered(raw.ability, from.element, ctx, here)?.ability;
+      const picked = answered(raw.ability, from.element, ctx, here)[0]?.ability;
       if (ABILITIES.includes(picked as Ability)) ability = picked as Ability;
     }
-    const def: InnateSpell = { ...raw, spell, ability };
-    result.innate.push({ def, from });
-    if (def.uses === undefined) return;
-    result.resources.push({
-      def: {
-        id: innatePoolId(def),
-        name: index.get(spell)?.name ?? spell,
-        max: def.uses,
-        recharge: def.recharge ?? [],
-      },
-      from,
-    });
+    for (const spell of spells) {
+      const def: InnateSpell = { ...raw, spell, ability };
+      result.innate.push({ def, from });
+      if (def.uses === undefined) continue;
+      result.resources.push({
+        def: {
+          id: innatePoolId(def),
+          name: index.get(spell)?.name ?? spell,
+          max: def.uses,
+          recharge: def.recharge ?? [],
+        },
+        from,
+      });
+    }
   }
 
   function declareChoices(el: Element, ctx: Ctx): void {

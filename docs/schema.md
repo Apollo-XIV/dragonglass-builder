@@ -393,7 +393,10 @@ listed, no pool exists), and answering it brings it to life.
 - **`spell: { choice }`**: the answer is a spell element. The pick is also collected like any
   chosen element, so a spell picked this way is **granted** (always prepared, free, off the class
   list without complaint) as well as innate: it is one resolved spell with `alwaysPrepared` and
-  an `innate` entry.
+  an `innate` entry. A choice with `count` above 1 applies the part to **each pick**: Magic
+  Initiate's two cantrips are one `innateSpells` entry naming a `count: 2` choice, and both are
+  cast with the chosen ability. Each pick has its own `innate-<spell>` pool if the part has
+  `uses`. An `ability` reference always reads its first pick, since it is one decision.
 
 ```json
 { "id": "srd24:feat:magic-initiate-wizard", "kind": "feat", "name": "Magic Initiate (Wizard)", "source": "srd24",
