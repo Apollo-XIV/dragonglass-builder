@@ -1,0 +1,24 @@
+{
+  "kind": "state",
+  "schemaVersion": 1,
+  "checkpoint": {
+    "damage": 0,
+    "tempHp": 0,
+    "tempMaxHp": [],
+    "spent": {
+      "slots": {},
+      "hitDice": {},
+      "resources": {}
+    },
+    "effects": [],
+    "conditions": [],
+    "exhaustion": 0,
+    "deathSaves": {
+      "successes": 0,
+      "failures": 0
+    },
+    "concentration": null,
+    "inspiration": false
+  },
+  "events": []
+}

@@ -1,0 +1,113 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Lore Bard 2014",
+  "level": 10,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 8,
+      "dex": 14,
+      "con": 14,
+      "int": 10,
+      "wis": 10,
+      "cha": 17
+    }
+  },
+  "levels": [
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {
+        "srd:class:bard:skill": [
+          "srd:skill:acrobatics",
+          "srd:skill:animal-handling",
+          "srd:skill:arcana"
+        ],
+        "srd:class:bard:tool": [
+          "srd:tool:bagpipes",
+          "srd:tool:drum",
+          "srd:tool:dulcimer"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {
+        "srd:class:bard:subclass": [
+          "srd:subclass:college-of-lore"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {
+        "srd:class:bard:asi-4": [
+          "srd:feature:ability-score-improvement"
+        ],
+        "srd:asi:points": [
+          "srd:ability-point:cha",
+          "srd:ability-point:cha"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {
+        "srd:subclass:college-of-lore:known-spells-6": [
+          "srd:spell:acid-arrow",
+          "srd:spell:acid-splash"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {
+        "srd:class:bard:asi-8": [
+          "srd:feature:ability-score-improvement"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:bard",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd:species:human:language": [
+      "srd:language:common"
+    ],
+    "srd:background:acolyte:language": [
+      "srd:language:common",
+      "srd:language:dwarvish"
+    ]
+  },
+  "species": "srd:species:human",
+  "background": "srd:background:acolyte"
+}

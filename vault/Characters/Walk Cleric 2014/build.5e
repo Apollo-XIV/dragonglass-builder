@@ -1,0 +1,77 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Cleric 2014",
+  "level": 6,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 10,
+      "dex": 10,
+      "con": 14,
+      "int": 8,
+      "wis": 17,
+      "cha": 10
+    }
+  },
+  "levels": [
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {
+        "srd:class:cleric:skill": [
+          "srd:skill:history",
+          "srd:skill:insight"
+        ],
+        "srd:class:cleric:subclass": [
+          "srd:subclass:life-domain"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {
+        "srd:class:cleric:asi-4": [
+          "srd:feature:ability-score-improvement"
+        ],
+        "srd:asi:points": [
+          "srd:ability-point:cha",
+          "srd:ability-point:cha"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:cleric",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd:species:human:language": [
+      "srd:language:common"
+    ],
+    "srd:background:acolyte:language": [
+      "srd:language:common",
+      "srd:language:dwarvish"
+    ]
+  },
+  "species": "srd:species:human",
+  "background": "srd:background:acolyte"
+}

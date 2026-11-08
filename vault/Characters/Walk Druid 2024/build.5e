@@ -1,0 +1,93 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Druid 2024",
+  "level": 5,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 8,
+      "dex": 14,
+      "con": 14,
+      "int": 10,
+      "wis": 17,
+      "cha": 8
+    }
+  },
+  "levels": [
+    {
+      "class": "srd24:class:druid",
+      "hp": "average",
+      "choices": {
+        "srd24:druid:primal-order:options": [
+          "srd24:druid:warden"
+        ],
+        "srd24:class:druid:skill": [
+          "srd24:skill:animal-handling",
+          "srd24:skill:arcana"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:druid",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd24:class:druid",
+      "hp": "average",
+      "choices": {
+        "srd24:class:druid:subclass": [
+          "srd24:subclass:circle-of-the-land"
+        ],
+        "srd24:subclass:circle-of-the-land:terrain": [
+          "srd24:terrain:arid-land"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:druid",
+      "hp": "average",
+      "choices": {
+        "srd24:class:druid:asi-4": [
+          "srd24:feat:ability-score-improvement"
+        ],
+        "srd24:feat:ability-score-improvement:abilities": [
+          "srd24:ability-point:wis",
+          "srd24:ability-point:wis"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:druid",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd24:species:human:skill": [
+      "srd24:skill:acrobatics"
+    ],
+    "srd24:species:human:feat": [
+      "srd24:feat:alert"
+    ],
+    "srd24:background:acolyte:abilities": [
+      "srd24:ability-point:wis",
+      "srd24:ability-point:wis",
+      "srd24:ability-point:cha"
+    ],
+    "srd24:feat:magic-initiate-cleric:known-spells": [
+      "srd24:spell:guidance",
+      "srd24:spell:sacred-flame"
+    ],
+    "srd24:feat:magic-initiate-cleric:ability": [
+      "srd24:casting-ability:wis"
+    ],
+    "srd24:feat:magic-initiate-cleric:innate-spells": [
+      "srd24:spell:cure-wounds"
+    ]
+  },
+  "species": "srd24:species:human",
+  "background": "srd24:background:acolyte"
+}

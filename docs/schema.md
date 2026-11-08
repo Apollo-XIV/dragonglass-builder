@@ -431,7 +431,8 @@ A grant written as an object can name a `mode`:
 
 `counts` (default `true`, only meaningful with `learned`) says whether the spell fills a slot
 in the owning class's limits: spells known, spells in the book, cantrips known and, once
-prepared, spells prepared. 2014 College of Lore's Magical Secrets counts; the 2024 Evoker's free
+prepared, spells prepared. The 2014 Bard's Magical Secrets counts (the text includes them in the Spells
+Known column); 2014 College of Lore's Additional Magical Secrets and the 2024 Evoker's free
 spellbook spells (`"counts": false`) do not. A learned spell that does not count is skipped by
 the over-limit and level-too-high warnings.
 
@@ -458,8 +459,8 @@ declares the choice, as for a grant (a subclass's levels belong to its class).
   "mode": "learned", "counts": false }
 ```
 
-2014 College of Lore's Magical Secrets is the first (it fills known spells); the 2024 Evoker's
-free spellbook spells are the second. `mode` on a choice of anything but spells does nothing and
+The 2014 Bard's Magical Secrets is the first (it fills known spells); College of Lore's Additional
+Magical Secrets and the 2024 Evoker's free spellbook spells are the second. `mode` on a choice of anything but spells does nothing and
 is a validator warning when the filter's `kind` says so.
 
 ### Extending a class's spell list

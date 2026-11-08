@@ -1,0 +1,77 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Paladin 2014",
+  "level": 5,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 16,
+      "dex": 10,
+      "con": 14,
+      "int": 8,
+      "wis": 12,
+      "cha": 14
+    }
+  },
+  "levels": [
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:class:paladin:skill": [
+          "srd:skill:athletics",
+          "srd:skill:insight"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:class:paladin:fighting-style-2": [
+          "srd:fighting-style:defense"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:class:paladin:subclass": [
+          "srd:subclass:oath-of-devotion"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd:class:paladin:asi-4": [
+          "srd:feature:ability-score-improvement"
+        ],
+        "srd:asi:points": [
+          "srd:ability-point:cha",
+          "srd:ability-point:cha"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:paladin",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd:species:human:language": [
+      "srd:language:common"
+    ],
+    "srd:background:acolyte:language": [
+      "srd:language:common",
+      "srd:language:dwarvish"
+    ]
+  },
+  "species": "srd:species:human",
+  "background": "srd:background:acolyte"
+}

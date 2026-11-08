@@ -1,0 +1,95 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Paladin 2024",
+  "level": 5,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 16,
+      "dex": 10,
+      "con": 14,
+      "int": 8,
+      "wis": 12,
+      "cha": 14
+    }
+  },
+  "levels": [
+    {
+      "class": "srd24:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd24:class:paladin:skill": [
+          "srd24:skill:athletics",
+          "srd24:skill:insight"
+        ],
+        "srd24:class:paladin:weapon-mastery-1": [
+          "srd24:mastery:longsword",
+          "srd24:mastery:greatsword"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd24:class:paladin:fighting-style-2": [
+          "srd24:feat:archery"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd24:class:paladin:subclass": [
+          "srd24:subclass:oath-of-devotion"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:paladin",
+      "hp": "average",
+      "choices": {
+        "srd24:class:paladin:asi-4": [
+          "srd24:feat:ability-score-improvement"
+        ],
+        "srd24:feat:ability-score-improvement:abilities": [
+          "srd24:ability-point:str",
+          "srd24:ability-point:str"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:paladin",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd24:species:human:skill": [
+      "srd24:skill:acrobatics"
+    ],
+    "srd24:species:human:feat": [
+      "srd24:feat:alert"
+    ],
+    "srd24:background:acolyte:abilities": [
+      "srd24:ability-point:cha",
+      "srd24:ability-point:cha",
+      "srd24:ability-point:wis"
+    ],
+    "srd24:feat:magic-initiate-cleric:known-spells": [
+      "srd24:spell:guidance",
+      "srd24:spell:sacred-flame"
+    ],
+    "srd24:feat:magic-initiate-cleric:ability": [
+      "srd24:casting-ability:wis"
+    ],
+    "srd24:feat:magic-initiate-cleric:innate-spells": [
+      "srd24:spell:cure-wounds"
+    ]
+  },
+  "species": "srd24:species:human",
+  "background": "srd24:background:acolyte"
+}

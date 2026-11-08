@@ -1,0 +1,76 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk Barbarian 2014",
+  "level": 5,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 17,
+      "dex": 12,
+      "con": 16,
+      "int": 8,
+      "wis": 10,
+      "cha": 8
+    }
+  },
+  "levels": [
+    {
+      "class": "srd:class:barbarian",
+      "hp": "average",
+      "choices": {
+        "srd:class:barbarian:skill": [
+          "srd:skill:animal-handling",
+          "srd:skill:athletics"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:barbarian",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd:class:barbarian",
+      "hp": "average",
+      "choices": {
+        "srd:class:barbarian:subclass": [
+          "srd:subclass:path-of-the-berserker"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:barbarian",
+      "hp": "average",
+      "choices": {
+        "srd:class:barbarian:asi-4": [
+          "srd:feature:ability-score-improvement"
+        ],
+        "srd:asi:points": [
+          "srd:ability-point:cha",
+          "srd:ability-point:cha"
+        ]
+      }
+    },
+    {
+      "class": "srd:class:barbarian",
+      "hp": "average",
+      "choices": {}
+    }
+  ],
+  "choices": {
+    "srd:species:dwarf:tool": [
+      "srd:tool:brewers-supplies"
+    ],
+    "srd:species:dwarf:subspecies": [
+      "srd:subspecies:hill-dwarf"
+    ],
+    "srd:background:acolyte:language": [
+      "srd:language:common",
+      "srd:language:dwarvish"
+    ]
+  },
+  "species": "srd:species:dwarf",
+  "background": "srd:background:acolyte"
+}

@@ -1,0 +1,101 @@
+{
+  "kind": "build",
+  "schemaVersion": 1,
+  "name": "Walk High Elf Wizard 2024",
+  "level": 5,
+  "xp": 0,
+  "abilities": {
+    "method": "manual",
+    "base": {
+      "str": 8,
+      "dex": 14,
+      "con": 14,
+      "int": 17,
+      "wis": 10,
+      "cha": 8
+    }
+  },
+  "levels": [
+    {
+      "class": "srd24:class:wizard",
+      "hp": "average",
+      "choices": {
+        "srd24:class:wizard:skill": [
+          "srd24:skill:arcana",
+          "srd24:skill:history"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:wizard",
+      "hp": "average",
+      "choices": {}
+    },
+    {
+      "class": "srd24:class:wizard",
+      "hp": "average",
+      "choices": {
+        "srd24:class:wizard:subclass": [
+          "srd24:subclass:evoker"
+        ],
+        "srd24:subclass:evoker:known-spells-3": [
+          "srd24:spell:magic-missile",
+          "srd24:spell:scorching-ray"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:wizard",
+      "hp": "average",
+      "choices": {
+        "srd24:class:wizard:asi-4": [
+          "srd24:feat:ability-score-improvement"
+        ],
+        "srd24:feat:ability-score-improvement:abilities": [
+          "srd24:ability-point:int",
+          "srd24:ability-point:int"
+        ]
+      }
+    },
+    {
+      "class": "srd24:class:wizard",
+      "hp": "average",
+      "choices": {
+        "srd24:subclass:evoker:known-spells-5": [
+          "srd24:spell:fireball"
+        ]
+      }
+    }
+  ],
+  "choices": {
+    "srd24:species:elf:skill": [
+      "srd24:skill:insight"
+    ],
+    "srd24:species:elf:subspecies": [
+      "srd24:subspecies:high-elf-lineage"
+    ],
+    "srd24:background:sage:abilities": [
+      "srd24:ability-point:int",
+      "srd24:ability-point:int",
+      "srd24:ability-point:con"
+    ],
+    "srd24:feat:magic-initiate-wizard:known-spells": [
+      "srd24:spell:mage-hand",
+      "srd24:spell:dancing-lights"
+    ],
+    "srd24:feat:magic-initiate-wizard:ability": [
+      "srd24:casting-ability:int"
+    ],
+    "srd24:feat:magic-initiate-wizard:innate-spells": [
+      "srd24:spell:shield"
+    ],
+    "srd24:subspecies:high-elf-lineage:known-spells": [
+      "srd24:spell:prestidigitation"
+    ],
+    "srd24:subspecies:high-elf-lineage:ability": [
+      "srd24:casting-ability:int"
+    ]
+  },
+  "species": "srd24:species:elf",
+  "background": "srd24:background:sage"
+}

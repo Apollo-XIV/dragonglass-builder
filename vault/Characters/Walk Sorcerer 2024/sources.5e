@@ -1,0 +1,21 @@
+{
+  "kind": "sources",
+  "schemaVersion": 1,
+  "sources": [
+    {
+      "type": "vault",
+      "location": "Sources/walk-patches",
+      "enabled": true,
+      "id": "walk-patches"
+    },
+    {
+      "type": "path",
+      "location": "/home/acrease/Documents/5etools-to-dragonglass/out/srd24",
+      "enabled": true,
+      "id": "srd24"
+    }
+  ],
+  "disabled": [
+    "srd"
+  ]
+}
