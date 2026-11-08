@@ -740,7 +740,40 @@ function resolveActions(
       definition: def satisfies ActionDef,
     });
   }
-  return out;
+  return withoutBarePoolButtons(out, resources);
+}
+
+/**
+ * A feature that owns a pool often carries an action of its own that does nothing but
+ * spend a use: 2014 Channel Divinity's "Use" beside Turn Undead and Preserve Life, which
+ * are what the use is actually spent on. Where other actions spend that pool the bare one
+ * is only a way to spend it without doing anything, so it is left out (it is named for
+ * the feature, not for something done). With no other
+ * spender it stays, and so does any action that does something of its own (Rage applies
+ * an effect).
+ */
+function withoutBarePoolButtons(actions: ResolvedAction[], resources: ResolvedResource[]): ResolvedAction[] {
+  const spenders = new Map<string, Set<string>>();
+  for (const a of actions)
+    for (const c of a.resolvedCost ?? []) {
+      const set = spenders.get(c.key) ?? new Set<string>();
+      set.add(a.key);
+      spenders.set(c.key, set);
+    }
+  const bare = (a: ResolvedAction): boolean => {
+    const d = a.definition;
+    if (a.resolvedCost?.length !== 1 || typeof a.resolvedCost[0].amount !== "number") return false;
+    if (d.applies || d.damage || d.heal || d.save || d.duration || d.range || d.target || d.text) return false;
+    const pool = resources.find((r) => r.key === a.resolvedCost![0].key);
+    // The pool is its own feature's and the action is named for the feature rather than
+    // for something it does, so it is that feature's button for the pool.
+    return pool?.source === a.source && a.name === a.sourceName && Object.keys(d.cost ?? {}).length === 1;
+  };
+  return actions.filter((a) => {
+    if (!bare(a)) return true;
+    const others = [...(spenders.get(a.resolvedCost![0].key) ?? [])].filter((k) => k !== a.key);
+    return others.length === 0;
+  });
 }
 
 /**

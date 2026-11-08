@@ -722,6 +722,15 @@ whether anyone has checked it:
 - Not to be confused with a feature's export `provenance` (`class`, `classLevel`, `via`), which says
   where the *feature* came from in the character's build.
 
+### The pool owner's bare action
+
+A feature that owns a pool may also carry an action that only spends a use of it (the converter
+writes one for 2014 Channel Divinity). While **another action** spends the same pool, Turn Undead
+and Preserve Life here, the sheet leaves that bare action out: it would be a way to spend a use on
+nothing. It is "bare" when it is named for the feature, costs only the pool the feature owns, and
+has no `applies`, `damage`, `heal`, `save`, `duration`, `range`, `target` or `text`. With no other
+spender it stays. Rage, which applies an effect, is never bare.
+
 ## Expressions
 
 References `@abilities.con.mod`, `@prof`, `@level`, `@level(monk)`,
