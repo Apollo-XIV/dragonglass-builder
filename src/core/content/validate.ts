@@ -17,7 +17,7 @@ import {
   type Requirement,
   type ResourceDef,
 } from "../types";
-import { checkExpression } from "../expr/evaluate";
+import { checkExpression, mentionsSpent } from "../expr/evaluate";
 
 const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"] as const;
 
@@ -182,18 +182,26 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
     if (!act.cost || typeof act.cost !== "object" || Array.isArray(act.cost)) {
       out.push(err("invalid-element", "cost must be a map of pool to amount", subject, `${path}.cost`));
     } else {
+      let chosen = false;
       for (const [key, amount] of Object.entries(act.cost as Record<string, unknown>)) {
-        const ok =
-          typeof amount === "number" ||
-          (!!amount &&
-            typeof amount === "object" &&
-            typeof (amount as Record<string, unknown>).min === "number" &&
-            typeof (amount as Record<string, unknown>).max === "number");
-        if (!ok)
-          out.push(
-            err("invalid-element", `cost "${key}" must be a number or {min,max}`, subject, `${path}.cost`),
-          );
+        if (typeof amount === "number") continue;
+        const range = amount as Record<string, unknown> | null;
+        const isExpr = (v: unknown): boolean => typeof v === "number" || typeof v === "string";
+        if (!range || typeof range !== "object" || Array.isArray(range) || !isExpr(range.min) || (range.max !== undefined && !isExpr(range.max))) {
+          out.push(err("invalid-element", `cost "${key}" must be a number or { min, max? } of expressions`, subject, `${path}.cost`));
+          continue;
+        }
+        chosen = true;
+        for (const bound of ["min", "max"] as const) {
+          if (range[bound] === undefined) continue;
+          const e = checkExpression(range[bound] as string | number);
+          if (e) out.push(warn("expression-error", e, subject, `${path}.cost.${key}.${bound}`));
+        }
       }
+      if (!chosen)
+        for (const field of ["damage", "heal", "duration"])
+          if (mentionsSpent(act[field] as string | undefined))
+            out.push(warn("expression-error", `${field} uses @spent, but no cost of this action is a chosen amount`, subject, `${path}.${field}`));
     }
   }
   if (act.save !== undefined) {

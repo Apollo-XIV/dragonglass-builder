@@ -219,8 +219,17 @@ export interface InnateSpellDef {
   notes?: string;
 }
 
-/** A cost is a pool key mapped to an amount, or a variable range (Mystic psi). */
-export type Cost = Record<string, number | { min: number; max: number }>;
+/**
+ * What one pool costs: a fixed amount, or an amount the player chooses when using the
+ * action. `min` is the least that can be spent; `max` is a cap, and the most that can
+ * be spent is the lesser of it and what the pool has left (no `max` means the pool's
+ * remainder). Both are expressions, read at the character's level. The amount chosen
+ * is `@spent` in the action's `damage`, `heal` and `duration`.
+ */
+export type CostAmount = number | { min: Expr; max?: Expr };
+
+/** A cost is a pool key mapped to an amount. */
+export type Cost = Record<string, CostAmount>;
 
 export const ACTIVATIONS = [
   "action",
@@ -247,6 +256,10 @@ export interface ActionDef {
   /** Dice notation, may contain expressions: "2d6 + @abilities.str.mod". */
   damage?: string;
   damageType?: string;
+  /** Hit points restored, in the same notation as `damage`: "@spent" for Lay on Hands. */
+  heal?: string;
+  /** Free text, such as "@spent minutes". `@spent` is the amount a chosen-amount cost was paid. */
+  duration?: string;
   /** "dex" plus the spell save DC, or an explicit expression. */
   save?: { ability: Ability; dc?: Expr };
   recharge?: Recharge;

@@ -24,6 +24,7 @@ import {
   type ClassElement,
   type Diagnostic,
   type EffectDef,
+  type Expr,
   type Element,
   type InventoryFile,
   type ItemElement,
@@ -40,7 +41,7 @@ import type { ContentIndex } from "../content";
 import { textOf } from "../content/mastery";
 import type { ResolvedRecharge } from "../state/recharge";
 import { checkRequirement, describeRequirement, type RequirementContext } from "../content/requirements";
-import { resolveDice, tryEvaluate } from "../expr/evaluate";
+import { mentionsSpent, resolveDice, SPENT_REF, tryEvaluate } from "../expr/evaluate";
 import {
   canonicalPoolKey,
   foldState,
@@ -70,6 +71,7 @@ import type {
   NumericStat,
   PendingChoice,
   ResolvedAction,
+  ResolvedCostLine,
   ResolvedCharacter,
   ResolvedClass,
   ResolvedEffect,
@@ -649,6 +651,7 @@ function resolveActions(
     let available = true;
     let unavailableReason: string | undefined;
 
+    const deferred = new Set<string>();
     for (const [costKey, amount] of Object.entries(def.cost ?? {})) {
       const pool = resolvePoolKey(costKey, from, resources, spellcasting, hitDicePools);
       if (!pool) {
@@ -660,24 +663,46 @@ function resolveActions(
         });
         continue;
       }
-      resolvedCost.push({ key: pool.key, amount, label: pool.label });
-      if (live) {
-        const need = typeof amount === "number" ? amount : amount.min;
-        if (pool.remaining !== undefined && pool.remaining < need) {
-          available = false;
-          unavailableReason = `Not enough ${pool.label}`;
-        }
+      const counted = pool.remaining !== undefined && Number.isFinite(pool.remaining);
+      const line: ResolvedCostLine = {
+        key: pool.key,
+        amount: typeof amount === "number" ? amount : chosenRange(amount, pool.remaining, engine, def, from, diagnostics),
+        label: pool.label,
+        ...(counted && typeof amount !== "number" ? { remaining: pool.remaining } : {}),
+      };
+      if (typeof amount !== "number") deferred.add(SPENT_REF);
+      resolvedCost.push(line);
+      const need = typeof line.amount === "number" ? line.amount : line.amount.min;
+      if (live && pool.remaining !== undefined && pool.remaining < need) {
+        available = false;
+        unavailableReason = `Not enough ${pool.label}`;
       }
     }
 
-    const damage = def.damage ? resolveDice(def.damage, engine.ctx) : undefined;
-    if (damage?.error)
-      diagnostics.push({
-        severity: "warning",
-        code: "expression-error",
-        message: `action "${def.name ?? def.id}" damage: ${damage.error}`,
-        subject: from.element.id,
-      });
+    const dice = (notation: string | undefined, what: string): { text: string } | undefined => {
+      if (!notation) return undefined;
+      const out = resolveDice(notation, engine.ctx, deferred);
+      if (out.error)
+        diagnostics.push({
+          severity: "warning",
+          code: "expression-error",
+          message: `action "${def.name ?? def.id}" ${what}: ${out.error}`,
+          subject: from.element.id,
+        });
+      return out;
+    };
+    const damage = dice(def.damage, "damage");
+    const heal = dice(def.heal, "heal");
+    const duration = dice(def.duration, "duration");
+    if (!deferred.size)
+      for (const field of ["damage", "heal", "duration"] as const)
+        if (mentionsSpent(def[field]))
+          diagnostics.push({
+            severity: "warning",
+            code: "expression-error",
+            message: `action "${def.name ?? def.id}" ${field} uses @spent, but no cost of it is a chosen amount`,
+            subject: from.element.id,
+          });
 
     let save: ResolvedAction["save"];
     if (def.save) {
@@ -701,6 +726,9 @@ function resolveActions(
       damage: def.damage,
       damageResolved: damage?.text,
       damageType: def.damageType,
+      heal: def.heal,
+      healResolved: heal?.text,
+      durationResolved: duration?.text,
       save,
       text: def.text,
       notes: def.notes,
@@ -712,6 +740,37 @@ function resolveActions(
     });
   }
   return out;
+}
+
+/**
+ * A chosen amount's range: `min`, up to the lesser of the content's cap and what the pool
+ * has left. With no cap the pool's remainder is the whole limit, and an uncounted pool
+ * (unlimited, or one the character cannot see) with no cap offers `min` alone.
+ */
+function chosenRange(
+  amount: { min: Expr; max?: Expr },
+  remaining: number | undefined,
+  engine: StatEngine,
+  def: ActionDef,
+  from: PartSource,
+  diagnostics: Diagnostic[],
+): { min: number; max: number } {
+  const read = (expr: Expr, what: string): number => {
+    const out = tryEvaluate(expr, engine.ctx, 0);
+    if (out.error)
+      diagnostics.push({
+        severity: "warning",
+        code: "expression-error",
+        message: `action "${def.name ?? def.id}" cost ${what}: ${out.error}`,
+        subject: from.element.id,
+      });
+    return Math.max(0, Math.floor(out.value));
+  };
+  const min = read(amount.min, "min");
+  const cap = amount.max === undefined ? undefined : read(amount.max, "max");
+  const left = remaining !== undefined && Number.isFinite(remaining) ? remaining : undefined;
+  const max = cap !== undefined && left !== undefined ? Math.min(cap, left) : cap ?? left ?? min;
+  return { min, max };
 }
 
 /** The spell save DC of the class the action's element came from, when there is one. */

@@ -14,7 +14,7 @@ import type {
 } from "../../core/resolver/resolved";
 import { describeEvent, event } from "../../core/state/fold";
 import { describeRecharge } from "../../core/state/recharge";
-import type { InventoryEntry, SpellEntry, StateEvent } from "../../core/types";
+import type { InventoryEntry, SpellEntry } from "../../core/types";
 import { removeInventoryEntry } from "../../core/index";
 import type { CharacterStore } from "../character-store";
 import { DETAIL_SECTIONS } from "../character-files";
@@ -30,6 +30,7 @@ import {
   UnmechanisedNote,
   signed,
 } from "./components";
+import { UseAction } from "./use-action";
 
 const ACTIVATION_ORDER = ["action", "bonus-action", "reaction", "free", "special", "minute", "hour", "passive"];
 
@@ -75,16 +76,6 @@ export function ActionsPanel({
     );
   }, [character.actions]);
 
-  const use = (action: ResolvedAction): void => {
-    const events: StateEvent[] = [];
-    for (const cost of action.resolvedCost ?? []) {
-      const amount = typeof cost.amount === "number" ? cost.amount : cost.amount.min;
-      events.push(event("spend", { target: cost.key, amount }));
-    }
-    if (action.applies) events.push(event("effect.start", { effect: action.applies, source: action.source }));
-    if (events.length) store.appendEvents(...events);
-  };
-
   return (
     <>
       {grouped.length === 0 ? <Empty>No activated features yet.</Empty> : null}
@@ -110,9 +101,7 @@ export function ActionsPanel({
                 {action.text ? <Markdown source={action.text} /> : null}
                 {action.notes ? <p className="dg-muted">{action.notes}</p> : null}
                 {!readOnly && (action.resolvedCost?.length || action.applies) ? (
-                  <button className="dg-button" onClick={() => use(action)} disabled={!action.available}>
-                    {action.applies ? "Use and apply" : "Use"}
-                  </button>
+                  <UseAction action={action} store={store} className="dg-button" label={action.applies ? "Use and apply" : "Use"} />
                 ) : null}
                 {!action.available && action.unavailableReason ? (
                   <Pill tone="warn">{action.unavailableReason}</Pill>

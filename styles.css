@@ -4642,3 +4642,50 @@
 .dg-export-view dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--size-4-1) var(--size-4-4); }
 .dg-export-view dt { color: var(--text-muted); }
 .dg-export-view dd { margin: 0; user-select: text; word-break: break-all; }
+
+/* The picker an action with a chosen-amount cost opens when it is used. */
+.dg-use-picker {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2);
+  border-radius: var(--radius-m);
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-use-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.dg-use-label {
+  flex: 1 1 auto;
+  font-weight: var(--font-semibold);
+}
+
+.dg-use-input {
+  width: 4.5em;
+  text-align: center;
+}
+
+.dg-use-left {
+  color: var(--text-muted);
+}
+
+.dg-use-problem {
+  flex-basis: 100%;
+  color: var(--text-warning);
+}
+
+.dg-use-preview {
+  color: var(--text-muted);
+}
+
+.dg-use-actions {
+  display: flex;
+  gap: var(--size-4-2);
+}

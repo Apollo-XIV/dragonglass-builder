@@ -8,7 +8,7 @@ export { checkRequirement, describeRequirement, describePredicate } from "./cont
 export type { RequirementContext, RequirementResult } from "./content/requirements";
 export { bundleToLoadedSource, parseManifest } from "./content/source-bundle";
 export type { SourceBundle, SourceFile, SourceManifest } from "./content/source-bundle";
-export { evaluate, tryEvaluate, checkExpression, resolveDice, dependencies } from "./expr/evaluate";
+export { evaluate, tryEvaluate, checkExpression, resolveDice, fillSpent, mentionsSpent, SPENT_REF, dependencies } from "./expr/evaluate";
 export type { ExprContext } from "./expr/evaluate";
 export { ExprError, parseExpression } from "./expr/parser";
 export { resolve, resourceKey, allAnnotations } from "./resolver/resolve";
@@ -89,3 +89,4 @@ export {
 } from "./state/fold";
 export type { FoldRules, LiveState, PoolRule } from "./state/fold";
 export * from "./export/index";
+export * from "./state/use-action";

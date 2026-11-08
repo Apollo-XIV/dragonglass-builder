@@ -149,6 +149,19 @@ export interface ResolvedResource {
   notes?: string;
 }
 
+/**
+ * One pool an action spends. A chosen amount arrives as `{ min, max }`, where `max` is
+ * already the lesser of the content's cap and `remaining`: the sheet needs no more than
+ * this to ask for an amount and refuse one that cannot be paid.
+ */
+export interface ResolvedCostLine {
+  key: string;
+  amount: number | { min: number; max: number };
+  label: string;
+  /** On a chosen amount: what the pool has left. Absent for an unlimited pool. */
+  remaining?: number;
+}
+
 export interface ResolvedAction {
   key: string;
   id: string;
@@ -156,7 +169,7 @@ export interface ResolvedAction {
   activation: Activation;
   cost?: Cost;
   /** Pool keys the cost resolved to, so the sheet can spend without re-resolving. */
-  resolvedCost?: { key: string; amount: number | { min: number; max: number }; label: string }[];
+  resolvedCost?: ResolvedCostLine[];
   applies?: string;
   range?: string;
   target?: string;
@@ -164,6 +177,11 @@ export interface ResolvedAction {
   /** Dice notation with expressions already substituted: "2d6 + 3". */
   damageResolved?: string;
   damageType?: string;
+  heal?: string;
+  /** `heal` with expressions substituted; `@spent` stays for the sheet to fill. */
+  healResolved?: string;
+  /** `duration` with expressions substituted; `@spent` stays for the sheet to fill. */
+  durationResolved?: string;
   save?: { ability: Ability; dc: number };
   text?: string;
   notes?: string;

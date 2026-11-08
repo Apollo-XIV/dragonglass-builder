@@ -12,8 +12,10 @@ import { factsOf } from "../../../core/content/facts";
 import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
-import type { ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
+import type { ResolvedAction, ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
+import { withSpent } from "../../../core/state/use-action";
+import { mentionsSpent } from "../../../core/expr/evaluate";
 import type { CharacterStore } from "../../character-store";
 import { AbilityBlock } from "../abilities";
 import { Markdown, signed } from "../components";
@@ -25,7 +27,7 @@ import { useSheet } from "./sheet";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
 import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
-import { useToast } from "./toast";
+import { UseAction } from "../use-action";
 
 /** Section ids are stable; the order comes from the settings (spec 4.4). */
 const SHEET_ICONS: Record<string, string> = {
@@ -342,6 +344,9 @@ const ACTIVATION_CHIPS = [
   { id: "reaction", label: "Reaction" },
 ];
 
+/** Damage that depends on the amount spent can only be rolled once an amount is chosen. */
+const variableDamage = (action: ResolvedAction): boolean => mentionsSpent(action.damageResolved);
+
 export function ActionsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const [filter, setFilter] = useState("all");
   const attacks = useMemo(() => weaponAttacks(character), [character]);
@@ -390,13 +395,20 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={action.key}
           title={action.name}
-          subtitle={[action.activation.replace("-", " "), action.range, action.save ? `DC ${action.save.dc} ${action.save.ability.toUpperCase()}` : undefined]
+          subtitle={[
+            action.activation.replace("-", " "),
+            action.range,
+            action.save ? `DC ${action.save.dc} ${action.save.ability.toUpperCase()}` : undefined,
+            action.healResolved ? `heals ${withSpent(action.healResolved, undefined)}` : undefined,
+            action.durationResolved ? withSpent(action.durationResolved, undefined) : undefined,
+            variableDamage(action) ? `${withSpent(action.damageResolved, undefined)} ${action.damageType ?? ""}`.trim() : undefined,
+          ]
             .filter(Boolean)
             .join(" · ")}
           text={action.text}
           className={action.available ? undefined : "is-unavailable"}
         >
-          {action.damageResolved ? (
+          {action.damageResolved && !variableDamage(action) ? (
             <RollBox
               kind="damage"
               display={action.damageResolved}
@@ -412,7 +424,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
             />
           ) : null}
           {action.resolvedCost?.length || action.applies ? (
-            <UseButton character={character} store={store} actionKey={action.key} />
+            <UseAction action={action} store={store} />
           ) : null}
         </ReadRow>
       ))}
@@ -434,38 +446,6 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         </div>
       ) : null}
     </>
-  );
-}
-
-function UseButton({
-  character,
-  store,
-  actionKey,
-}: {
-  character: ResolvedCharacter;
-  store: CharacterStore;
-  actionKey: string;
-}): ReactNode {
-  const toast = useToast();
-  const action = character.actions.find((a) => a.key === actionKey);
-  if (!action) return null;
-  return (
-    <button
-      className="dg-n-chip is-action"
-      disabled={!action.available}
-      onClick={() => {
-        const events = [];
-        for (const cost of action.resolvedCost ?? [])
-          events.push(
-            event("spend", { target: cost.key, amount: typeof cost.amount === "number" ? cost.amount : cost.amount.min }),
-          );
-        if (action.applies) events.push(event("effect.start", { effect: action.applies, source: action.source }));
-        if (events.length) store.appendEvents(...events);
-        toast.show({ label: action.name, detail: action.applies ? "Applied" : "Used" });
-      }}
-    >
-      Use
-    </button>
   );
 }
 

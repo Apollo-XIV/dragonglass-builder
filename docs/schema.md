@@ -669,6 +669,35 @@ A resource's `recharge` is a **list** of rules, each `{ "on": <trigger>, "amount
 - An empty list means the resource never comes back by itself (a Healer's Kit).
 - `ActionDef.recharge` is unchanged: a single descriptive word for an action's own recharge.
 
+## Chosen-amount costs
+
+An action's `cost` maps a pool to what using it spends. A number is a fixed amount. An object
+`{ "min": <Expr>, "max"?: <Expr> }` lets the player **choose** the amount when they use the
+action:
+
+```json
+"actions": [{
+  "id": "lay-on-hands", "activation": "bonus-action",
+  "cost": { "pool": { "min": 1 } },
+  "heal": "@spent"
+}]
+```
+
+- `min` is the least that can be spent. `max` is a **cap**, and is optional: the most that can be
+  spent is the lesser of the cap and what the pool has left. No `max` means "all that is left"
+  (Lay on Hands); `{ "min": 1, "max": 9 }` is Twinned Spell's 1 to 9, in sorcery points. Both are
+  expressions, read at the character's level, and are rounded down to whole numbers.
+- The sheet asks for the amount in a small picker when the action is used, shows what the pool has
+  left, and refuses an amount outside the range. If the pool cannot cover `min`, the action is
+  unavailable.
+- **`@spent`** is the amount chosen. It reads in the action's own `damage`, `heal` and `duration`
+  (`"@spent minutes"`), and nowhere else. An action with several chosen-amount costs reads the
+  first one's. Using `@spent` with no chosen-amount cost is a validator warning.
+- `heal` and `duration` are new on actions: `heal` is dice notation like `damage` and `duration` is
+  free text. Both may use any expression and `@spent`. The sheet shows a heal or damage that depends
+  on `@spent` as `X` until an amount is chosen, and does not roll it. It does not apply healing for
+  you: Lay on Hands usually heals someone else.
+
 ## Expressions
 
 References `@abilities.con.mod`, `@prof`, `@level`, `@level(monk)`,
@@ -735,8 +764,14 @@ interface Resource {
   // gone: `rechargeAmount`, and `recharge` as a string
 }
 
+type CostAmount = number | { min: Expr; max?: Expr };  // object = chosen when used; max is a cap
+type Cost = Record<string, CostAmount>;                 // pool key -> amount
+
 interface Action {
   /* ... */
+  cost?: Cost;
+  heal?: string;                     // dice notation; may use @spent
+  duration?: string;                 // free text; may use @spent
   recharge?: "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round" | "never" | "manual";
   // unchanged: a descriptive word on an action, not a rule list
 }

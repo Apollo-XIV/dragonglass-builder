@@ -118,9 +118,12 @@ const DICE_REF = /@[A-Za-z_][A-Za-z0-9_.]*(?:-[A-Za-z][A-Za-z0-9_.]*)*(?:\(\s*[A
 export function resolveDice(
   notation: string,
   ctx: ExprContext,
+  /** Paths left as written, without an error: values only the sheet knows, like `spent`. */
+  deferred?: ReadonlySet<string>,
 ): { text: string; error?: string } {
   let error: string | undefined;
   const text = notation.replace(DICE_REF, (match) => {
+    if (deferred?.has(match.slice(1))) return match;
     try {
       return String(evaluate(match, ctx));
     } catch (e) {
@@ -130,6 +133,25 @@ export function resolveDice(
   });
   // "2d6 + -1" reads badly; "2d6 - 1" does not.
   return { text: text.replace(/\+\s*-\s*/g, "- ").replace(/\s+/g, " ").trim(), error };
+}
+
+/** The name a chosen-amount cost's amount goes by in the action's own expressions. */
+export const SPENT_REF = "spent";
+
+/** Whether `text` still refers to the chosen amount. */
+export const mentionsSpent = (text: string | undefined): boolean => !!text && /@spent\b/.test(text);
+
+/**
+ * Fills in the amount the player chose, in text the resolver left `@spent` in.
+ * Everything else was substituted already, so only the chosen amount is left to read.
+ */
+export function fillSpent(text: string, spent: number): string {
+  const ctx: ExprContext = {
+    lookup: (path) => (path === SPENT_REF ? spent : undefined),
+    classLevel: () => 0,
+    table: () => undefined,
+  };
+  return resolveDice(text, ctx).text;
 }
 
 export { ExprError } from "./parser";
