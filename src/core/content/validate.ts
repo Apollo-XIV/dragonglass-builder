@@ -107,6 +107,16 @@ function validateChoice(c: unknown, subject: string | undefined, path: string, o
         path,
       ),
     );
+  if (ch.mode !== undefined && !(SPELL_GRANT_MODES as readonly unknown[]).includes(ch.mode))
+    out.push(warn("invalid-element", `unknown mode "${String(ch.mode)}"; the picks are treated as always-prepared`, subject, `${path}.mode`));
+  else if (ch.mode !== undefined && ch.from && typeof ch.from === "object" && (ch.from as { kind?: unknown }).kind !== undefined
+    && (ch.from as { kind?: unknown }).kind !== "spell")
+    out.push(warn("invalid-element", "`mode` only applies to a choice of spells", subject, `${path}.mode`));
+  if (ch.counts !== undefined) {
+    if (typeof ch.counts !== "boolean") out.push(warn("invalid-element", "counts must be true or false", subject, `${path}.counts`));
+    else if (ch.mode !== "learned")
+      out.push(warn("invalid-element", 'counts only means something with mode "learned"', subject, `${path}.counts`));
+  }
   if (ch.maxPer !== undefined && (typeof ch.maxPer !== "number" || ch.maxPer < 1))
     out.push(err("invalid-element", "choice `maxPer` must be a number of at least 1", subject, path));
   if (ch.maxPer !== undefined && ch.repeatable !== true)

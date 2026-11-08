@@ -162,3 +162,118 @@ describe("a reference to a choice with several picks", () => {
     expect(shield!.innate[0]).toMatchObject({ ability: "wis", dc: 13 });
   });
 });
+
+describe("a choice whose picks are learned", () => {
+  const spell = (n: string, spellLevel: number, tags = ["wizard-spell"]): Element =>
+    ({ id: `test:spell:${n}`, kind: "spell", name: n, source: "test", spellLevel, tags }) as Element;
+  const wizard = (levels: Record<string, unknown>): Element =>
+    ({
+      id: "test:class:wizard", kind: "class", name: "Wizardish", source: "test", key: "wizard", hitDie: "d6",
+      spellcasting: { ability: "int", progression: "full", type: "spellbook", list: "wizard-spell", prepared: 4, spellbook: 6 },
+      levels,
+    }) as Element;
+  const secrets = (extra: Record<string, unknown>) => ({
+    "1": { choices: [{ id: "secrets", count: 2, from: { kind: "spell" }, mode: "learned", ...extra }] },
+  });
+  const character = (levels: Record<string, unknown>, picks: string[], filed: { id: string; prepared?: boolean }[] = []) =>
+    resolve({
+      content: testIndex([
+        TEST_BOOK, wizard(levels), spell("sleep", 1), spell("shield", 1), spell("cure-wounds", 1, ["cleric-spell"]),
+      ]),
+      build: build({
+        abilities: { method: "manual", base: scores({ int: 16 }) },
+        levels: [{ class: "test:class:wizard", hp: "average", choices: { secrets: picks } }],
+      }),
+      spells: { kind: "spells", schemaVersion: 1, spells: filed },
+    });
+  const find = (c: ReturnType<typeof character>, n: string) => c.spellcasting!.spells.find((s) => s.id === `test:spell:${n}`);
+  const both = ["test:spell:cure-wounds", "test:spell:shield"];
+
+  it("learns each pick: held, unprepared, and not checked against the class list", () => {
+    const c = character(secrets({}), both);
+    expect(find(c, "cure-wounds")).toMatchObject({ learned: true, free: false, alwaysPrepared: false, prepared: false });
+    expect(find(c, "shield")).toMatchObject({ learned: true, alwaysPrepared: false });
+    expect(c.diagnostics.map((d) => d.code)).not.toContain("spell-mismatch");
+  });
+
+  it("counts against the spellbook by default", () => {
+    expect(character(secrets({}), both).spellcasting!.limits[0]!.spellbook.used).toBe(2);
+  });
+
+  it("takes no room with counts: false", () => {
+    const c = character(secrets({ counts: false }), both);
+    expect(find(c, "cure-wounds")).toMatchObject({ learned: true, free: true });
+    expect(c.spellcasting!.limits[0]!.spellbook.used).toBe(0);
+  });
+
+  it("takes the player's preparation from the spells file", () => {
+    const c = character(secrets({}), both, [{ id: "test:spell:shield", prepared: true }]);
+    expect(find(c, "shield")!.prepared).toBe(true);
+    expect(c.spellcasting!.spells.filter((s) => s.id === "test:spell:shield")).toHaveLength(1);
+  });
+
+  it("is the old behaviour with no mode: the picks are always prepared and free", () => {
+    const c = character({ "1": { choices: [{ id: "secrets", count: 2, from: { kind: "spell" } }] } }, both);
+    expect(find(c, "cure-wounds")).toMatchObject({ alwaysPrepared: true, learned: false });
+  });
+
+  it("does not make what a pick grants learned", () => {
+    const parent = { id: "test:feat:parent", kind: "feat", name: "Parent", source: "test", grants: ["test:spell:sleep"] } as Element;
+    const c = resolve({
+      content: testIndex([TEST_BOOK, wizard(secrets({ from: { kind: "feat" } })), parent, spell("sleep", 1)]),
+      build: build({
+        abilities: { method: "manual", base: scores({ int: 16 }) },
+        levels: [{ class: "test:class:wizard", hp: "average", choices: { secrets: [parent.id] } }],
+      }),
+    });
+    expect(find(c, "sleep")).toMatchObject({ alwaysPrepared: true, learned: false });
+  });
+
+  it("works from a subclass's level entry, owned by the class", () => {
+    const subclass = {
+      id: "test:subclass:lore", kind: "subclass", name: "Lore", source: "test", class: "test:class:wizard",
+      levels: { "1": { choices: [{ id: "secrets", count: 1, from: { kind: "spell" }, mode: "learned", counts: false }] } },
+    } as Element;
+    const base = wizard({ "1": { choices: [{ id: "path", count: 1, from: { kind: "subclass" } }] } });
+    const c = resolve({
+      content: testIndex([TEST_BOOK, base, subclass, spell("shield", 1)]),
+      build: build({
+        abilities: { method: "manual", base: scores({ int: 16 }) },
+        levels: [{ class: base.id, hp: "average", choices: { path: [subclass.id], secrets: ["test:spell:shield"] } }],
+      }),
+    });
+    expect(find(c, "shield")).toMatchObject({ learned: true, free: true, class: "test:class:wizard" });
+  });
+});
+
+describe("validating a choice's learned mode", () => {
+  const check = (choice: Record<string, unknown>) =>
+    validateElement({
+      id: "a", kind: "feature", name: "A", source: "srd",
+      choices: [{ id: "c", count: 1, from: { kind: "spell" }, ...choice }],
+    });
+
+  it("accepts the modes", () => {
+    expect(check({ mode: "learned", counts: false }).diagnostics).toEqual([]);
+    expect(check({ mode: "always-prepared" }).diagnostics).toEqual([]);
+  });
+
+  it("warns on an unknown mode, and on counts without learned", () => {
+    const r = check({ mode: "owned", counts: false });
+    expect(r.usable).toBe(true);
+    expect(r.diagnostics.map((d) => d.path)).toEqual(["choices[0].mode", "choices[0].counts"]);
+  });
+
+  it("warns when the options are plainly not spells", () => {
+    const r = check({ mode: "learned", from: { kind: "feat" } });
+    expect(r.diagnostics.map((d) => d.path)).toEqual(["choices[0].mode"]);
+  });
+
+  it("is checked in a level entry too", () => {
+    const r = validateElement({
+      id: "c", kind: "class", name: "C", source: "srd", hitDie: "d8",
+      levels: { "1": { choices: [{ id: "c", count: 1, from: { kind: "spell" }, mode: "owned" }] } },
+    });
+    expect(r.diagnostics.map((d) => d.path)).toEqual(["levels.1.choices[0].mode"]);
+  });
+});

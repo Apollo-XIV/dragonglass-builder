@@ -443,9 +443,24 @@ the over-limit and level-too-high warnings.
 ```
 
 The grant's class is the class whose level carries it, as for any grant. A grant's `mode` applies
-to the spell it names, not to what that element grants in turn. Anything picked through a
-**choice** is a pick and is granted as above; to make a chosen spell learned, grant the spell
-instead.
+to the spell it names, not to what that element grants in turn.
+
+A **choice of spells** takes the same two fields, `mode` and `counts`, and applies them to every
+pick. Without `mode` a picked spell is granted as above (always prepared, free). With
+`"mode": "learned"` each pick is added to the spells known or the spellbook: held, unprepared
+until the player prepares it, not checked against the class list, and counting against the
+owning class's limits unless `"counts": false`. The owning class is the class whose level entry
+declares the choice, as for a grant (a subclass's levels belong to its class).
+
+```json
+{ "id": "magical-secrets", "count": 2, "from": { "kind": "spell" }, "mode": "learned" }
+{ "id": "evoker-spells",   "count": 2, "from": { "kind": "spell", "tags": ["wizard-spell"] },
+  "mode": "learned", "counts": false }
+```
+
+2014 College of Lore's Magical Secrets is the first (it fills known spells); the 2024 Evoker's
+free spellbook spells are the second. `mode` on a choice of anything but spells does nothing and
+is a validator warning when the filter's `kind` says so.
 
 ### Extending a class's spell list
 

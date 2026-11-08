@@ -172,8 +172,8 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     spellGrant?: CollectedElement["spellGrant"];
   }
 
-  /** The mode a grant asks for, for the grant that reaches the element next. */
-  function spellGrantOf(grant: Grant): Ctx["spellGrant"] {
+  /** The mode a grant or a spell choice asks for, for the element that is reached next. */
+  function spellGrantOf(grant: Grant | ChoiceDef): Ctx["spellGrant"] {
     if (typeof grant === "string" || grant.mode !== "learned") return undefined;
     return { mode: "learned", counts: grant.counts !== false };
   }
@@ -279,7 +279,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         visit(id, {
           ...ctx,
           origin: [...ctx.origin, el.id],
-          spellGrant: undefined,
+          spellGrant: spellGrantOf(def),
           occurrence: occurrenceFor(def, ctx, pick),
         }),
       );
@@ -379,7 +379,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
         chosen,
       });
       chosen.forEach((id, pick) =>
-        visit(id, { ...ctx, spellGrant: undefined, occurrence: occurrenceFor(def, ctx, pick) }),
+        visit(id, { ...ctx, spellGrant: spellGrantOf(def), occurrence: occurrenceFor(def, ctx, pick) }),
       );
     }
   }

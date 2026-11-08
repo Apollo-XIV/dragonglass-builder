@@ -73,6 +73,14 @@ export interface ChoiceDef {
    * `maxPer: 2` is exactly the 2024 background rule.
    */
   maxPer?: number;
+  /**
+   * For a choice of spells: how the picks are held. `"learned"` adds each to the spells
+   * known or the spellbook, as a learned grant does; the default is the granted behaviour
+   * (always prepared, free). Applies to the picks themselves, not to what they grant.
+   */
+  mode?: SpellGrantMode;
+  /** With `mode: "learned"`: whether a pick fills a slot in the class's limits. Default true. */
+  counts?: boolean;
   text?: string;
   notes?: string;
 }
