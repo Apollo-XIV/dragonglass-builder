@@ -710,7 +710,7 @@ function resolveActions(
       const dc =
         def.save.dc !== undefined
           ? tryEvaluate(def.save.dc, engine.ctx, 0).value
-          : defaultSaveDc(from, engine, content);
+          : defaultSaveDc(from, engine, content, spellcasting);
       save = { ability: def.save.ability, dc };
     }
 
@@ -808,7 +808,15 @@ function chosenRange(
 }
 
 /** The spell save DC of the class the action's element came from, when there is one. */
-function defaultSaveDc(from: PartSource, engine: StatEngine, content: ContentIndex): number {
+function defaultSaveDc(
+  from: PartSource,
+  engine: StatEngine,
+  content: ContentIndex,
+  spellcasting?: ResolvedSpellcasting,
+): number {
+  // A spell cast innately, with no class behind it, uses the ability that grant chose.
+  const innate = from.class ? undefined : spellcasting?.spells.find((s) => s.id === from.element.id)?.innate.find((i) => i.dc !== undefined);
+  if (innate?.dc !== undefined) return innate.dc;
   const classId = from.class;
   const cls = classId ? content.get(classId) : undefined;
   const sc = (cls as ClassElement | undefined)?.spellcasting;

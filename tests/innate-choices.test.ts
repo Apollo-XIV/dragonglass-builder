@@ -116,3 +116,20 @@ describe("validating a choice reference", () => {
     expect(r.diagnostics).toEqual([]);
   });
 });
+
+describe("the save DC of an innate spell's own action", () => {
+  const withAction = (n: string): Element =>
+    ({ ...spell(n, 0), actions: [{ id: "cast", name: n, activation: "action", save: { ability: "dex" } }] }) as Element;
+  const lineage = { ...LINEAGE, grants: ["test:spell:light"] } as Element;
+  const index = testIndex([TEST_BOOK, lineage, ability("int"), ability("wis"), ability("cha"), withAction("light"), spell("misty-step", 2)]);
+
+  it("uses the casting ability the grant chose, not the bare 8 + proficiency", () => {
+    const c = resolve({
+      content: index,
+      build: build({ abilities: { method: "manual", base: scores({ wis: 12, cha: 16 }) }, species: LINEAGE.id, choices: { "lineage-ability": ["test:casting-ability:cha"] } }),
+    });
+    const action = c.actions.find((a) => a.name === "light");
+    expect(action?.save?.dc).toBe(8 + c.proficiencyBonus.value + 3);
+    expect(action?.save?.dc).toBe(c.spellcasting!.spells.find((s) => s.id === "test:spell:light")!.innate[0]!.dc);
+  });
+});
