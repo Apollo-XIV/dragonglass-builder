@@ -712,10 +712,16 @@ that class's options. A `spellListAdditions` part exports with kind `spell-list`
 or `ability` may be a `{ choice }`; `spells[].innate` always carries the values the choices
 resolved to.
 
+**Export 2.2** is additive. `choices[].mode` (always `"learned"`) and `choices[].counts` appear
+only on a choice of spells whose picks are learned; the picks themselves already carry
+`spells[].learned` and `.free`. Nothing existing changed meaning, but a choice reference now
+resolves from anywhere in its owning element and applies to each pick, so `spells[].innate`
+can hold one entry per picked spell, each with its own `resource`.
+
 ## Type reference
 
-The shapes added by recharge rules, innate spells, weapon mastery, grant modes, spell list
-additions and unlimited tables, for anything that mirrors `src/core/types.ts` (the converter's
+The shapes added by recharge rules, innate spells, weapon mastery, grant modes, learned choices,
+spell list additions and unlimited tables, for anything that mirrors `src/core/types.ts` (the converter's
 `src/types.ts` among them):
 
 ```ts
@@ -735,7 +741,17 @@ interface Action {
   // unchanged: a descriptive word on an action, not a rule list
 }
 
-interface ChoiceRef { choice: string }   // a ChoiceDef declared beside the part
+interface ChoiceRef { choice: string }   // a ChoiceDef declared anywhere in the owning element:
+                                         // on it, or in any of its level entries. A choice with
+                                         // count > 1 applies the part to each pick (`ability`
+                                         // reads the first).
+
+interface ChoiceDef {
+  /* id, name?, count, from, requires?, repeatable?, maxPer?, text?, notes?: unchanged */
+  mode?: SpellGrantMode;             // a choice of spells: "learned" holds each pick as a learned
+                                     // grant does; default is granted (always prepared, free)
+  counts?: boolean;                  // with "learned": fills a slot in the limits; default true
+}
 
 interface InnateSpell {
   spell: string | ChoiceRef;         // a spell element id, or the choice whose answer is one

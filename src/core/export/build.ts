@@ -85,6 +85,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       picked,
       pending: picked.length < c.count,
       ...(c.blocked ? { blocked: true } : {}),
+      ...(c.definition.mode === "learned" ? { mode: "learned" as const, counts: c.definition.counts !== false } : {}),
     };
   };
 

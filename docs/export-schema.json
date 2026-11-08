@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "2.1",
+  "x-schemaVersion": "2.2",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -456,6 +456,15 @@
                 "blocked": {
                   "description": "The choice's own requirement is not met.",
                   "type": "boolean"
+                },
+                "mode": {
+                  "description": "Present only on a choice of spells whose picks are learned (added to the spells known or the spellbook). Otherwise the picks are always prepared and free.",
+                  "const": "learned",
+                  "type": "string"
+                },
+                "counts": {
+                  "description": "With `mode`: whether a pick fills a slot in the owning class's limits.",
+                  "type": "boolean"
                 }
               }
             }
@@ -535,6 +544,15 @@
           },
           "blocked": {
             "description": "The choice's own requirement is not met.",
+            "type": "boolean"
+          },
+          "mode": {
+            "description": "Present only on a choice of spells whose picks are learned (added to the spells known or the spellbook). Otherwise the picks are always prepared and free.",
+            "const": "learned",
+            "type": "string"
+          },
+          "counts": {
+            "description": "With `mode`: whether a pick fills a slot in the owning class's limits.",
             "type": "boolean"
           }
         }

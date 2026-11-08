@@ -277,7 +277,7 @@ describe("what the export contains", () => {
       sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
     });
     expect(validateExport(clone(doc)).errors).toEqual([]);
-    expect(doc.envelope.schemaVersion).toBe("2.1");
+    expect(doc.envelope.schemaVersion).toBe("2.2");
 
     // JSON has no infinity, so the document says so in words.
     const rages = doc.resources.find((r) => r.id === "rages")!;
@@ -300,6 +300,49 @@ describe("what the export contains", () => {
     });
     expect(doc.spellcasting!.classes.find((c) => c.class === wiz.id)).toBeUndefined();
     expect(partsOf(bard).length).toBeGreaterThan(0);
+  });
+
+  it("carries a learned choice, and an innate reference with several picks (2.2)", async () => {
+    const mk = (n: string, spellLevel: number, tags: string[] = []): Element =>
+      ({ id: `test:spell:${n}`, kind: "spell", name: n, source: "test", spellLevel, tags }) as Element;
+    const abilityEl: Element = { id: "test:casting-ability:wis", kind: "casting-ability", name: "Wisdom", source: "test", ability: "wis" } as Element;
+    const initiate: Element = {
+      id: "test:feat:initiate", kind: "feat", name: "Initiate", source: "test",
+      choices: [
+        { id: "ability", count: 1, from: { kind: "casting-ability" } },
+        { id: "cantrips", count: 2, from: { kind: "spell" } },
+      ],
+      innateSpells: [{ spell: { choice: "cantrips" }, ability: { choice: "ability" } }],
+    } as Element;
+    const wiz: Element = {
+      id: "test:class:wiz", kind: "class", name: "Wiz", source: "test", key: "wiz", hitDie: "d6",
+      spellcasting: { ability: "int", progression: "full", type: "spellbook", list: "wizard-spell", prepared: 4, spellbook: 6 },
+      levels: { "1": { choices: [{ id: "free", count: 1, from: { kind: "spell" }, mode: "learned", counts: false }] } },
+    } as Element;
+    const doc = await buildExport({
+      characterId: "x",
+      content: testIndex([TEST_BOOK, initiate, wiz, abilityEl, mk("light", 0), mk("mending", 0), mk("sleep", 1)]),
+      build: build({
+        background: initiate.id,
+        choices: { ability: [abilityEl.id], cantrips: ["test:spell:light", "test:spell:mending"] },
+        levels: [{ class: wiz.id, hp: "average", choices: { free: ["test:spell:sleep"] } }],
+      }),
+      exportedAt: AT,
+      pluginVersion: "t",
+      sourceRef: async () => ({ ref: `sha256:${"b".repeat(64)}`, refType: "hash" }),
+    });
+    expect(validateExport(clone(doc)).errors).toEqual([]);
+    expect(doc.envelope.schemaVersion).toBe("2.2");
+
+    const free = doc.progression[0]!.choices.find((c) => c.id === "free")!;
+    expect(free).toMatchObject({ mode: "learned", counts: false });
+    expect(doc.choices.find((c) => c.id === "cantrips")).not.toHaveProperty("mode");
+    expect(doc.spells.find((s) => s.id === "test:spell:sleep")).toMatchObject({ learned: true, free: true });
+
+    for (const id of ["light", "mending"])
+      expect(doc.spells.find((s) => s.id === `test:spell:${id}`)!.innate).toEqual([
+        expect.objectContaining({ source: initiate.id, ability: "wis" }),
+      ]);
   });
 
   it("exports a weapon mastery pick as a feature with its property's text", async () => {

@@ -18,11 +18,15 @@
  * `spellcasting.classes[].listAdditions` and the `spell-list` part (`from: "spellListAdditions"`).
  * An innate spell's spell and ability may come from a choice in the authored part; the
  * `spells[].innate` entries always carry the values it resolved to.
+ *
+ * 2.2 added `choices[].mode` and `.counts`, set on a choice of spells whose picks are learned.
+ * It also changed no existing field: a choice reference now resolves from anywhere in its
+ * owning element and applies to each pick, so `spells[].innate` may hold one entry per pick.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.1";
+export const EXPORT_SCHEMA_VERSION = "2.2";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -90,6 +94,14 @@ export const ExportChoice = Type.Object(
     picked: Type.Array(Type.String(), { description: "Active picks only, as element ids." }),
     pending: Type.Boolean({ description: "True while fewer than `count` valid picks are made. Never omitted." }),
     blocked: Type.Optional(Type.Boolean({ description: "The choice's own requirement is not met." })),
+    mode: Type.Optional(
+      Type.Literal("learned", {
+        description: "Present only on a choice of spells whose picks are learned (added to the spells known or the spellbook). Otherwise the picks are always prepared and free.",
+      }),
+    ),
+    counts: Type.Optional(
+      Type.Boolean({ description: "With `mode`: whether a pick fills a slot in the owning class's limits." }),
+    ),
   },
   { description: "A decision the content asks for, answered or not." },
 );
