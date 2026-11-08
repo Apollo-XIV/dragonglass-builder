@@ -1,6 +1,6 @@
 # Dragonglass ↔ Foundry integration: design
 
-Nov 5, 2026 · @Alix
+Nov 5, 2026 · @Alix · synced with the spikes, the export and the converter Nov 8, 2026
 
 ## Summary
 
@@ -8,9 +8,10 @@ Dragonglass gets a Foundry module that pulls a resolved export of a character, f
 
 Items below are tagged so nothing suggested gets mistaken for agreed:
 
-- **Decided:** settled in the design discussion.
-- **Leaning:** the intended direction, not yet settled.
+- **Decided:** settled by the owner.
+- **Leaning:** the intended direction, not yet settled. Work that was built as a default, which the owner can overturn, is tagged this way too.
 - **Proposed:** a suggestion awaiting a decision.
+- **Verified:** not a decision but a finding, from a spike or from the code, with where it came from. Verified results can change a decision; they are never one themselves.
 
 ## Goals and non-goals
 
@@ -18,11 +19,11 @@ The first versions aim for a character that arrives in Foundry correct and level
 
 **Goals**
 
-- **Decided:** a player gets their dragonglass character into a DM's Foundry world as a native dnd5e actor, with working level-up for every feature the world can link to.
+- **Decided:** a player gets their dragonglass character into a DM's Foundry world as a native dnd5e actor, with working level-up for every feature the world can link to. The player imports into a character actor they already own (see the player workflow).
 - **Decided:** a DM prepares the world once, from a shareable sources list, with a "Build Compendium" action in the module.
 - **Decided:** the plugin carries no dnd5e or Foundry-version-specific code. Module releases track dnd5e versions.
 - **Decided:** dragonglass ships the 2014 and 2024 SRDs as linked sources, built from 5etools data. It publishes the converter and none of the data. Other sources are shared by their authors through GitHub or as a zip.
-- **Decided:** the module targets the latest dnd5e first, with a version toggle later.
+- **Decided:** the module targets **dnd5e 5.3.3** first, with one adapter per dnd5e series, chosen at runtime from the installed system version. Outside every declared range the module refuses with a plain message and does nothing. A later series is a new adapter, not a change to the old one. (This replaces "the latest dnd5e first, with a version toggle later".)
 
 **Non-goals for v1**
 
@@ -47,14 +48,16 @@ Read the top row left to right, then the bottom row right to left: the export dr
 
 **Each player, per character** (**Decided**)
 
+**Decided:** a player imports into an **existing** character actor they own, rather than the module creating one. **Proposed:** the DM creates the empty character actor and gives the player ownership, or the player does if the world lets them. **Verified (Spike C, dnd5e 5.3.3):** with default permissions a Player-role user can create embedded items on an actor they own, but cannot create world actors or world items. The import report names a missing permission as the cause when an import cannot proceed.
+
 1. Build the character in dragonglass using the sources on the list.
 2. Connect their vault to Foundry with the shared key, or export a file.
-3. Import. The module links what it can and reports what it couldn't.
+3. Import into a character actor they already own. The module links what it can and reports what it couldn't.
 4. **Proposed:** to level up, do it in the vault and re-import, since levelling in Foundry is discouraged at first.
 
 ## Resolved export document
 
-**Decided:** the plugin runs its own engine and emits one flat, versioned document per character, so the module never re-implements progression, invalid-pick handling or expression evaluation. The table shows the proposed shape; the spike fixes the real field names against the existing schema.
+**Decided:** the plugin runs its own engine and emits one flat, versioned document per character, so the module never re-implements progression, invalid-pick handling or expression evaluation. The table shows the shape as first proposed; the real one is `docs/export-schema.json`, generated from `src/core/export/schema.ts` and described under *Export contract* below.
 
 | Section | Carries | Why the module needs it |
 | --- | --- | --- |
@@ -73,11 +76,11 @@ Read the top row left to right, then the bottom row right to left: the export dr
 
 ## Stable ids and the source manifest
 
-**Proposed:** every feature, spell, item and source gets an id that never depends on its name, so the module never matches by name. ddb-importer's source is full of name-matching fallbacks, including one for two unrelated traits both called "Tireless"; we avoid that class of bug by owning the schema.
+**Proposed:** every feature, spell, item and source gets an id that never depends on its name, so the module never matches by name. **Verified (spike, the engine):** content elements already carry ids namespaced by their source (`srd:class:paladin`, `srd:paladin:lay-on-hands`); the character and inventory ids below were the missing pieces. ddb-importer's source is full of name-matching fallbacks, including one for two unrelated traits both called "Tireless"; we avoid that class of bug by owning the schema.
 
 **Ids**
 
-- **Proposed:** sourcebook abbreviation plus a slug, for example `abbr:slug`. The spike checks what the engine already uses and proposes the minimum change.
+- **Proposed:** sourcebook abbreviation plus a slug, for example `abbr:slug`. The engine's existing ids are namespaced by source and kind, which is the shape in use today.
 - **Proposed:** an id is permanent once published. Renames change the display name only. A removed entry keeps its id reserved.
 - **Proposed:** every document the module creates carries the dragonglass id in a flag. Re-runs find existing documents by that flag and keep Foundry's own `_id` and UUID, because imported characters record those UUIDs in their advancement ledger.
 
@@ -120,12 +123,16 @@ The module resolves each feature, spell and item to an existing compendium docum
 
 **Character import (player action)**
 
-**Proposed:** materialise the resolved character rather than replay levels through dnd5e's own advancement flow.
+**Proposed:** materialise the resolved character rather than replay levels through dnd5e's own advancement flow, into the actor the player already owns.
 
-1. Create class and subclass items first, one at a time, with `applyFeatures`, `addFeatures` and `promptAddFeatures` set to false, so the system neither prompts nor grants twice.
+**Verified (Spike B, dnd5e 5.3.3):** a class item created with its advancements already filled in (`value.added` on each item-grant, the picks on each item-choice) is read by the system as applied. No prompt appears; going from level 1 to 2 on the sheet grants only the new level's items and asks one hit points question; the maximum is computed from the HitPoints advancement; going back down removes the level's items. Granted items are created with `createEmbeddedDocuments`, which prompts for nothing. The tester reported these results; the exact dialog wording and permission settings were not recorded.
+
+**Verified (dnd5e source):** `applyFeatures`, `addFeatures` and `promptAddFeatures` **do not exist** in dnd5e. ddb-importer's use of them is not something to copy, and nothing in the import depends on any such option.
+
+1. Create class and subclass items on the actor one at a time, each already carrying its advancements and their filled ledger (step 4), so nothing prompts and nothing is granted twice. The pre-filled ledger is the mechanism; there is no switch to turn the system's granting off.
 2. Build each class item's advancements from the system's own advancement classes, so defaults follow the installed dnd5e. Item-grant advancements point at the resolved UUIDs.
 3. Create feature, spell and item documents on the actor, each flagged with its dragonglass id and resolving tier.
-4. Fill the ledger: `value.added` on each item-grant maps the actor's item id to its UUID, and granted items get `advancementOrigin`, `advancementRoot` and `sourceId` flags. Item-choice picks are recorded the same way.
+4. Fill the ledger: `value.added` on each item-grant maps the actor's item id to its UUID, and granted items get `advancementOrigin`, `advancementRoot` and `sourceId` flags. Item-choice picks are recorded the same way, under `value.added.<level>`.
 5. Anything unresolved arrives as a plain item with no advancement link. The import report lists these with their source.
 
 **Re-import**
@@ -136,9 +143,9 @@ The module resolves each feature, spell and item to an existing compendium docum
 
 **Permissions and versions**
 
-- **Proposed:** importing needs only rights to create items on the player's own actor. Creating the compendium needs GM rights. Without a built compendium the import still gives a working sheet, with no native level-up for unlinked features.
-- **Decided:** separate module releases track dnd5e versions.
-- **Proposed:** the mapping layer is the only version-specific code, behind one interface.
+- **Verified (Spike C):** importing needs only rights to create items on the player's own actor, which a Player-role user has by default. Creating a world actor or item does not (see the player workflow). **Proposed:** creating the compendium needs GM rights. Without a built compendium the import still gives a working sheet, with no native level-up for unlinked features.
+- **Decided:** separate module releases track dnd5e versions, and inside a release one adapter serves each dnd5e series.
+- **Proposed:** the mapping layer is the only version-specific code, behind the adapter interface; the module's core has no Foundry globals and no dnd5e knowledge.
 
 ## Connection and transport
 
@@ -196,7 +203,7 @@ ddb-importer solves the same problem against a source it doesn't control, so mos
 | Topic | What ddb-importer does | Our takeaway |
 | --- | --- | --- |
 | Getting the data | No public D&D Beyond API, so a proxy fetches the character with the user's session cookie | We own both ends: no proxy, no cookie |
-| Level-up | Builds class items from dnd5e's own advancement classes, fills `value.added` and the origin and root flags, and creates items with the system's add-features options off | Same approach |
+| Level-up | Builds class items from dnd5e's own advancement classes, fills `value.added` and the origin and root flags. (It also sets add-features options that dnd5e 5.3.3 does not have.) | Same approach, minus those options: the pre-filled ledger is what stops the system granting twice |
 | Grant targets | Item-grants point at compendium UUIDs found through its compendium index; with no match it skips the advancement and imports a plain item | The degrade path and the import report |
 | Matching | By name, with many fallbacks and collision fixes | Stable ids from day one |
 | Re-import | Matches by stored ids, keeps Foundry's `_id`, stamps an import id, keeps items it didn't import, and honours per-item retain flags | Same approach |
@@ -219,9 +226,9 @@ Phase 1 is the highlighted release. Each diamond is the check that closes the ph
 
 ## Open questions and risks
 
-Most open questions can be answered by reading the code or running an experiment, which is the spike's job.
+The spike has run (`docs/spikes/foundry-integration-findings.md`, and Spikes B and C in `docs/foundry-spike-b/`). Most of what was open is answered there or above; what follows is what still is.
 
-**For the spike**
+**Answered by the spike** (kept for the record; see the findings)
 
 - Which ids does the engine use for features, spells, items and sources today, and what is the smallest change to make them stable and permanent?
 - How does the existing sources manifest relate to the proposed `source.json`? Reconcile them rather than add a second format.
@@ -236,7 +243,7 @@ Most open questions can be answered by reading the code or running an experiment
 
 - Should the backstory export as plain text (resolving embeds), or stay out of the export?
 - Where does the module live: its own repository, and under which licence?
-- Input pending from a Foundry DM: do his players create their own actors and items, which compendiums he uses, what annoyed him about character imports, whether his players level up in Foundry, and whether he'd trust a module that connects to a player's vault.
+- Input pending from a Foundry DM: which compendiums he uses, what annoyed him about character imports, whether his players level up in Foundry, and whether he'd trust a module that connects to a player's vault. (Whether players can create their own actors and items is answered: by default they cannot, but they can create items on an actor they own.)
 
 **Risks**
 
@@ -246,18 +253,37 @@ Most open questions can be answered by reading the code or running an experiment
 | Names differ between the 5etools-derived SRD and the system's SRD items | An id map; unresolved entries fall through to a build |
 | Direct connections fail on strict networks | File import as the fallback; optional TURN server |
 | A world's source versions differ from a player's vault | Pinned versions in the sources list, with a warning on mismatch |
-| A world doesn't let players create items on their own actors | Import report says so; a GM-run import from a file works as a fallback |
+| A world doesn't let players create items on their own actors | Import report says so; a GM-run import from a file works as a fallback. Not the default: Spike C found a Player owner can |
+| A player has no character actor to import into, and cannot create one | The DM creates an empty character actor and gives them ownership; the import report says this when it applies |
+
+## Content mechanics: the converter's overlay
+
+**Leaning** (built in the converter, `5etools-to-dragonglass`, whose README is the authority; the owner has not signed off the whole design). The data the plugin runs on has no typed source for what a feature *does*, so the converter writes its mechanics (`resources`, `actions`, `effects`, `modifiers`) from three kinds of source, and each part says which:
+
+| `provenance.source` | Where the part came from |
+| --- | --- |
+| `hand` | A person wrote it from the book, in `mechanics/overlay.json` |
+| `approved-match` | A loose class-table match a person approved |
+| `pack:<tag>` | Derived from the dnd5e system's own pack data at that release (default `release-5.3.3`), by an allow-list of what can be translated safely; everything skipped is named in a report |
+| `prose` | Read from the feature's own text by a stock-phrase extractor ("As a Bonus Action", "a number of times equal to your Wisdom modifier") |
+
+- **Review status** is `reviewed`, `unreviewed` (a person wrote it and no one has checked it) or `auto` (a tool derived it and no one has read it). Parts that are not `reviewed` still apply; the converter lists them in its worklist and the plugin marks them on the sheet.
+- **Precedence is decided per field.** A person's entry wins. Where the feature's text plainly states a fact (an activation, a rest rule, a count, a condition), **the text wins over the pack's value**, and the pack's value is recorded as overridden. The pack fills what the text does not say structurally, and the prose extractors come last, filling only what is still missing. The pack never overrules the 5etools data.
+- **Per-part provenance is in the content format** (`docs/schema.md`, *Part provenance*) and in the export (2.3), so the module can say in its import report which parts were derived and unreviewed. **Proposed:** the module treats `pack:` parts as hints it may replace with the system's own item data when a tier-1 match exists, since the same source produced both.
+- **Licence.** Pack-derived facts carry the dnd5e data's attribution; `docs/pack-licence.md` in the converter says what covers them. Nothing from the pack is stored except the derived facts.
 
 ## Export contract: defaults chosen while building it
 
-Nothing below blocked the build, so each is a default the owner can overturn. The export is
+Nothing below blocked the build, so each is a default the owner can overturn, which makes each **Leaning** unless a line says otherwise. The export is
 generic: the plugin has no Foundry or dnd5e code in it.
 
-- **Schema version is 1.1.** It started at 1.0, not the spike's 0.1, and gained `proficiencies` in 1.1. The validator refuses another major and accepts a later minor and unknown fields.
+- **Schema version is 2.3.** It started at 1.0, not the spike's 0.1, and gained `proficiencies` in 1.1. **2.0** (a major: it changed what a field means) made `resources[].recharge` a list of rules and added innate spells. **2.1** added unlimited resources, learned and free spells, spell list additions and the `spell-list` part. **2.2** added `choices[].mode` and `.counts` for learned choices. **2.3** added a resolved `cost` and a `provenance` to a feature's parts. Every minor since 2.0 is additive. The validator refuses another major and accepts a later minor and unknown fields, so a module that reads 2.x reads every 2.x document. `docs/schema.md` has each release's detail.
+- **A cost the player chooses (2.3).** An action's cost may be an amount chosen when it is used (Lay on Hands, Metamagic). The export carries it as `cost: [{ pool, min, max? }]` with the pool resolved to a `resources[].key` and `max` the content's cap, absent when it has none (the pool's remainder is never applied). A fixed cost is `{ pool, amount }`. The authored part is exported unchanged, so `@spent` in `heal`, `damage` and `duration` still reads as written. **Proposed:** the module maps a chosen amount to whatever dnd5e offers for a variable spend, and otherwise leaves it as description text.
+- **Part provenance (2.3).** A part may carry `provenance: { source, review }` (see the overlay section). The export carries it as authored, and the module can list unreviewed parts in the import report. It never changes what a part does.
 - **Tooling.** The schema is written once in TypeBox (`src/core/export/schema.ts`). The TypeScript types and `docs/export-schema.json` derive from it, and a test fails if the checked-in JSON drifts. This adds `@sinclair/typebox` as a dependency.
-- **Character id is a required UUID in `sheet.5e`.** It is made when a character is created and survives renaming or moving the folder. There is no migration: a character without one is refused by the loader and the export CLI, with a message to rebuild it, and nothing makes an id up.
+- **Character id is a required UUID in `sheet.5e`.** It is made when a character is created and survives renaming or moving the folder. **Decided:** there is no migration support while there are no users: a character without one is refused by the loader and the export CLI, with a message to rebuild it, and nothing makes an id up. The same goes for the inventory `uid` below.
 - **Source pins.** `ref` is the GitHub pin, or `sha256:` of the source's files (path and text, sorted by path) read at export time. `version` comes from the first sourcebook that has one. `source.json` did not gain a `version` field.
-- **Inventory entry id** is a required `uid` (`id` already names the element), given the moment an entry is added in the builder, so the session and the files always agree. A character with an entry lacking one, or with a repeated one, is refused like one without a character id.
+- **Inventory entry id** is a required `uid` (`id` already names the element), given the moment an entry is added in the builder, so the session and the files always agree. A character with an entry lacking one, or with a repeated one, is refused like one without a character id, with no migration for the same reason.
 - **Stacking.** Adding an item raises the quantity of an existing entry only when copies are interchangeable: the item has no `charges`, no `resources` and no `attunement`, and the entry holds nothing but the item and a quantity. An entry that is equipped, attuned, in a bag, noted, named or carries any other field stays as it is, and the new copy is an entry of its own. An item that cannot be found never stacks. Removing a container frees what it held.
 - **A container that is not an entry** exports as loose with a `reason` on the entry, rather than failing the export.
 - **Pending means fewer valid picks than `count`.** Picks the engine marks invalid are left out of `picked`, and its warning stays in `diagnostics`.
@@ -265,11 +291,13 @@ generic: the plugin has no Foundry or dnd5e code in it.
 - **Proficiencies.** A top-level `proficiencies` carries all six saves and every skill (level none, half, proficient or expertise, the total bonus as the sheet rolls it, and the passive score for skills), then tools, armour, weapons and languages as the values the content states (element ids, categories such as `martial`, language names). Each carries `by`: the elements that grant it, with the chain of grants behind each. Only unconditional proficiencies are resolved; conditional ones stay in the features' parts.
 - **Details.** Text before the first heading exports under an empty heading. Embeds follow headings and blocks, to depth three, and images and missing notes read as nothing.
 - **Export reads the saved character.** If the builder holds unsaved changes, the command says so and exports what is in the files. Ids are already there, so nothing is written by an export.
-- **Export file extension is `.5echar`**, with the same JSON inside. Obsidian shows no `.json` file, and registering `.json` would take every other one in the vault. The plugin opens `.5echar` in a small read-only view (name, character id, schema version, export time, Copy to clipboard). An "Export character to clipboard" command copies the same validated document and works on mobile. After a file export the notice offers "Show in folder" on desktop, where the app has the method; it is not in Obsidian's public API, so it is feature-detected.
+- **Export file extension is `.5echar`**, with the same JSON inside. **Leaning:** built as a default. Obsidian shows no `.json` file, and registering `.json` would take every other one in the vault. The plugin opens `.5echar` in a small read-only view (name, character id, schema version, export time, Copy to clipboard). An "Export character to clipboard" command copies the same validated document and works on mobile. After a file export the notice offers "Show in folder" on desktop, where the app has the method; it is not in Obsidian's public API, so it is feature-detected.
 - **The Foundry module must accept a `.5echar` file, a `.json` file, or pasted text.** All three carry the same document, so the module reads them the same way and decides by content (`envelope.schemaVersion`), never by extension.
 - **Not exported:** per-character avatar, `layout.5e`, notes on `build`.
 
-## Spike prompt for Claude Code
+## Spike prompt for Claude Code (historical)
+
+The spike this prompt started has run; it is kept as a record of what was asked and under what rules. Its findings are in `docs/spikes/foundry-integration-findings.md`.
 
 Paste this into a Claude Code session in the dragonglass repo. First export this doc as Markdown and save it in the repo at `docs/foundry-integration-design.md`, since the prompt points there.
 
