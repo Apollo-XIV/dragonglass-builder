@@ -387,9 +387,11 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       return;
     }
     if (level === 1) visit(cls.id, { origin: [], scope: "build", class: cls.id, level: 1 });
+    // Only subclasses chosen at an earlier level ride along here. One chosen by this level's
+    // own entry has already been caught up to this level by `visit`.
+    const earlier = [...(progressionsByClass.get(cls.id) ?? [])];
     applyLevelEntry(cls, level, cls.id);
-    // Subclasses chosen earlier gain their feature for this level too.
-    for (const prog of progressionsByClass.get(cls.id) ?? []) applyLevelEntry(prog, level, cls.id);
+    for (const prog of earlier) applyLevelEntry(prog, level, cls.id);
   });
 
   // --- elements staged against total character level ------------------------
