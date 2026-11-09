@@ -99,11 +99,14 @@ describe.skipIf(!available)("spell limits over the converted SRD", () => {
       expect(bard.cantrips.cap).toBe(4);
     });
 
-    it("unlocks Magical Secrets from any list at 10th level", () => {
-      expect(casting("bard", 9).limits.extraPicks).toEqual([]);
-      expect(casting("bard", 10).limits.extraPicks).toEqual([
-        { level: 10, choose: 2, spellLevels: [0, 1, 2, 3, 4, 5], anyClass: true },
-      ]);
+    it("offers Magical Secrets at 10th level as learned picks, which count against the known spells", () => {
+      // The book says the chosen spells are included in the Spells Known column, so they are not
+      // `extraPicks` (those sit outside the counts).
+      expect(casting("bard", 10).limits.extraPicks).toEqual([]);
+      const pick = (level: number) => casting("bard", level).c.pendingChoices.find((p) => p.id === `srd:class:bard:known-spells-${level}`);
+      expect(pick(9)).toBeUndefined();
+      expect(pick(10)).toMatchObject({ count: 2, definition: { mode: "learned" } });
+      expect(pick(10)!.definition.counts).not.toBe(false);
     });
 
     it("limits a preparing caster by level + ability modifier", () => {
