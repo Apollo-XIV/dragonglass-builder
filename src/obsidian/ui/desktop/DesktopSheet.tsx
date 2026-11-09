@@ -1,5 +1,5 @@
 /**
- * The desktop character sheet (dragonglass desktop sheet spec).
+ * The desktop character sheet (docs/specs/desktop-sheet-spec.md).
  *
  * A header band and two columns. The left column carries the abilities and the
  * standing lists — skills, senses, proficiencies — and the right the stats, the

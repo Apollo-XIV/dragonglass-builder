@@ -1,6 +1,6 @@
 ---
 name: srd-spell-converter
-description: Converts a batch of D&D 5e SRD spells into dragonglass content JSON and validates them. Use for wave 0 of docs/plan-srd-conversion.md, one spell file per spawn.
+description: Converts a batch of D&D 5e SRD spells into dragonglass content JSON and validates them. Use for wave 0 of docs/plans/srd-conversion.md, one spell file per spawn.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 permissionMode: acceptEdits

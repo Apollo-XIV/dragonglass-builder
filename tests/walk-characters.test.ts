@@ -1,8 +1,8 @@
 /**
- * The walk characters in vault/Characters, resolved against the converter's output and
+ * The walk characters in tests/fixtures/walk-characters, resolved against the converter's output and
  * checked against the rules text longhand. The converter's output lives beside this
  * repository, so the suite is skipped where it is not checked out. What does not reconcile
- * is in docs/walk-report.md; the numbers here are the ones that do.
+ * is in docs/reports/walk-report.md; the numbers here are the ones that do.
  */
 
 import { existsSync, readFileSync } from "node:fs";
@@ -16,7 +16,7 @@ import { loadSourceFromDisk } from "../src/node/load-source";
 import { CONTENT_ROOT } from "./helpers";
 
 const OUT = join(__dirname, "..", "..", "5etools-to-dragonglass", "out");
-const VAULT = join(__dirname, "..", "vault");
+const FIXTURES = join(__dirname, "fixtures", "walk-characters");
 const present = existsSync(join(OUT, "srd")) && existsSync(join(OUT, "srd24"));
 
 const indexes = new Map<string, ContentIndex>();
@@ -29,7 +29,7 @@ function walk(dir: string, src: "srd" | "srd24", events: StateEvent[] = []): Res
     ]);
     indexes.set(src, index);
   }
-  const build = JSON.parse(readFileSync(join(VAULT, "Characters", dir, "build.5e"), "utf8")) as BuildFile;
+  const build = JSON.parse(readFileSync(join(FIXTURES, dir.toLowerCase().replace(/ /g, "-"), "build.5e"), "utf8")) as BuildFile;
   const state: StateFile | undefined = events.length
     ? { kind: "state", schemaVersion: 1, checkpoint: { damage: 0, tempHp: 0, tempMaxHp: [], spent: {}, effects: [] }, events }
     : undefined;

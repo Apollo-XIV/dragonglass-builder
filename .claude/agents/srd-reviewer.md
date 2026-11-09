@@ -1,6 +1,6 @@
 ---
 name: srd-reviewer
-description: Reviews converted dragonglass content against the original rules text for semantic mistakes the validator cannot catch. Use at the wave-1 checkpoint of docs/plan-srd-conversion.md, one converted file per spawn.
+description: Reviews converted dragonglass content against the original rules text for semantic mistakes the validator cannot catch. Use at the wave-1 checkpoint of docs/plans/srd-conversion.md, one converted file per spawn.
 tools: Read, Bash, Grep, Glob
 disallowedTools: Write, Edit
 model: opus

@@ -1,6 +1,6 @@
 # Backlog
 
-What is left after the plugin batch (chosen-amount costs, provenance markers, pool-owner buttons, the walk, export 2.3, the Foundry design sync) and the follow-up that pointed the walk at the converted SRD trees. Source: `docs/walk-report.md` and the batch's own notes. Nothing here is started.
+What is left after the plugin batch (chosen-amount costs, provenance markers, pool-owner buttons, the walk, export 2.3, the Foundry design sync) and the follow-up that pointed the walk at the converted SRD trees. Source: `docs/reports/walk-report.md` and the batch's own notes. Nothing here is started.
 
 ## Converter content (for the converter session)
 
@@ -35,9 +35,8 @@ What is left after the plugin batch (chosen-amount costs, provenance markers, po
 ## Owner decisions open
 
 - Which converter sources the owner signs off, so `unreviewed` and `auto` provenance can move to `reviewed`.
-- Who creates the empty character actor for a Foundry import (Proposed in `docs/foundry-integration-design.md`; DM or player).
+- Who creates the empty character actor for a Foundry import (Proposed in `docs/foundry/integration-design.md`; DM or player).
 - Display choices to confirm: the inline amount picker, "X" shown for `@spent` until an amount is chosen, and the dashed-ring marker.
-- The untracked `Dragonglass ↔ Foundry integration design.md` at the repo root differs from `docs/foundry-integration-design.md`. Left alone; one of them should go.
 
 ## Housekeeping
 

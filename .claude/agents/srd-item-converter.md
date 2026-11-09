@@ -1,6 +1,6 @@
 ---
 name: srd-item-converter
-description: Converts D&D 5e SRD equipment — weapons, armour, adventuring gear, magic items — into dragonglass content JSON and validates it. Use for wave 0 and wave 3 of docs/plan-srd-conversion.md.
+description: Converts D&D 5e SRD equipment — weapons, armour, adventuring gear, magic items — into dragonglass content JSON and validates it. Use for wave 0 and wave 3 of docs/plans/srd-conversion.md.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 permissionMode: acceptEdits

@@ -1,17 +1,17 @@
 # dragonglass-builder
 
 An Obsidian plugin for D&D 5e: a data-driven character builder and an interactive
-character sheet. Built from `Obsidian 5e Builder & Sheet Design Spec.md`, which is the
+character sheet. Built from `docs/specs/design-spec.md`, which is the
 authority on intent — read it before making a design decision.
 
 Four documents are authoritative, each over its own territory:
 
 | Document | Authority on |
 | --- | --- |
-| `Obsidian 5e Builder & Sheet Design Spec.md` | Intent, and everything not below |
+| `docs/specs/design-spec.md` | Intent, and everything not below |
 | `docs/schema.md` | The content format: elements, parts, choices, stat paths |
-| `mobile-ux-spec.md` | The narrow layout |
-| `dragonglass desktop sheet spec.md` | The desktop sheet |
+| `docs/specs/mobile-ux-spec.md` | The narrow layout |
+| `docs/specs/desktop-sheet-spec.md` | The desktop sheet |
 
 `docs/schema.md` is the one to read before touching `src/core/types.ts`, the validator, or
 any content. It defines the choice model — options are elements, nesting is how a
@@ -62,13 +62,14 @@ src/cli/validate.ts  the validation CLI
 src/node/            filesystem source loading, for the CLI and tests only
 content/core/        kinds and stat paths, bundled into the plugin at build time
 content/srd/         the converted SRD test slice
-vault/               test vault with the plugin installed and a sample character
+vault/               local test vault, git-ignored (see docs/development.md)
+docs/specs/          the three specs named above
 ```
 
 ## The two layouts
 
-`mobile-ux-spec.md` is the authority on the narrow layout and
-`dragonglass desktop sheet spec.md` on the desktop sheet; the design spec is the authority
+`docs/specs/mobile-ux-spec.md` is the authority on the narrow layout and
+`docs/specs/desktop-sheet-spec.md` on the desktop sheet; the design spec is the authority
 on everything else. **The layout is chosen from the view container's own width** (900px,
 40px of hysteresis), not the window's, so a side pane on a desktop gets the narrow
 layout too — `ui/narrow/layout-mode.ts`. Below that width `CharacterApp` renders
@@ -294,8 +295,8 @@ it just wrote, and reloads for anything else.
   invalidate-versus-remove rules; `tests/diff.test.ts` the save's change list;
   `tests/explain.test.ts` the breakdown wording and the dice.
 
-For a real end-to-end check, build into `vault/`, open it in Obsidian, and open
-`Characters/Ilsa/sheet.5e`. Obsidian can be driven over CDP
+For a real end-to-end check, build into `vault/` (git-ignored, so it may need creating;
+see `docs/development.md`), open it in Obsidian, and open a character's `sheet.5e`. Obsidian can be driven over CDP
 (`obsidian --remote-debugging-port=9222`, then Node 22's global `WebSocket`) if you need
 to verify rendering without a person looking at it — but **restore
 `~/.config/obsidian/obsidian.json` afterwards**, since registering a vault changes which
@@ -306,3 +307,7 @@ one the user's next launch opens.
 Use the `convert-5e-content` skill, which reads `docs/conversion-guide.md` for how to
 decide what text becomes, and `docs/schema.md` for what the fields mean. Never write
 into `content/core/` — that is the plugin's own kind and stat-path definitions.
+
+The converter agents and skills live in `.claude/agents/` and `.claude/skills/`;
+`docs/plans/srd-conversion.md` says which wave each agent is for. `docs/conversion-guide.md`
+is written for people and LLMs alike.

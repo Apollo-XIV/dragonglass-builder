@@ -133,7 +133,7 @@ This is a deliberate constraint, and it has a consequence worth stating plainly:
 decision whose outcome is *not* an element cannot be expressed. "Choose an ability score
 to raise" is not expressible as `from`; "choose the Ability Score Improvement element,
 which itself offers the six +1 elements" is. The schema's answer to parametrised choices
-is **nesting**, not a new option source. See `docs/plan-2024.md` for where that stops
+is **nesting**, not a new option source. See `docs/plans/2024.md` for where that stops
 being sufficient.
 
 ### Nesting

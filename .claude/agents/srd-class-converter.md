@@ -1,6 +1,6 @@
 ---
 name: srd-class-converter
-description: Converts one complete D&D 5e SRD class — levels 1 to 20, plus one subclass — into dragonglass content JSON, then writes its longhand test file. Use for waves 1 and 2 of docs/plan-srd-conversion.md, one class per spawn.
+description: Converts one complete D&D 5e SRD class — levels 1 to 20, plus one subclass — into dragonglass content JSON, then writes its longhand test file. Use for waves 1 and 2 of docs/plans/srd-conversion.md, one class per spawn.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: opus
 permissionMode: acceptEdits

@@ -1,6 +1,6 @@
 ---
 name: srd-origin-converter
-description: Converts D&D 5e SRD species, backgrounds and feats into dragonglass content JSON and validates them. Use for wave 3 of docs/plan-srd-conversion.md.
+description: Converts D&D 5e SRD species, backgrounds and feats into dragonglass content JSON and validates them. Use for wave 3 of docs/plans/srd-conversion.md.
 tools: Read, Write, Edit, Bash, Grep, Glob
 model: sonnet
 permissionMode: acceptEdits

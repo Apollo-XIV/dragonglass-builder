@@ -2,7 +2,7 @@
 import json,glob,collections,sys
 PARTS=['resources','actions','effects','modifiers','choices','grants']
 for s in ['srd','srd24']:
-    base=f'/home/acrease/Documents/5etools-to-dragonglass/out/{s}/content'
+    base=f'../5etools-to-dragonglass/out/{s}/content'
     els=[]
     for f in glob.glob(base+'/**/*.json',recursive=True):
         d=json.load(open(f)); els+= d if isinstance(d,list) else [d]

@@ -1067,7 +1067,7 @@
 /* ==========================================================================
  * The narrow layout: phones, vertical tablets and side panes.
  *
- * Driven by mobile-ux-spec.md. Three rules shape all of it: the colours are
+ * Driven by docs/specs/mobile-ux-spec.md. Three rules shape all of it: the colours are
  * Obsidian's variables so the sheet follows the theme; the layout owns its own
  * scrolling container, because sticky section headers only work if the scroller
  * is one of ours; and every rule that styles a <button> carries two classes.
@@ -2396,7 +2396,7 @@
 /* ==========================================================================
  * The desktop layout: panes 900px wide and up.
  *
- * Driven by `dragonglass desktop sheet spec.md`. Everything here takes its
+ * Driven by `docs/specs/desktop-sheet-spec.md`. Everything here takes its
  * colour, radius and spacing from Obsidian's variables through the five custom
  * properties declared on `.dg-desk`, so there is one gutter, one radius scale
  * and one type scale and the sheet follows the user's theme in both modes.

@@ -7,7 +7,7 @@ description: Run one wave of the SRD conversion plan by delegating to converter 
 
 You are the orchestrator. You **dispatch and verify**; you do not convert content yourself.
 
-`docs/plan-srd-conversion.md` is the plan and this file is the loop around it. Read the plan
+`docs/plans/srd-conversion.md` is the plan and this file is the loop around it. Read the plan
 first — specifically the wave you were asked for, the id convention, and the acceptance
 gate. Do not re-decide anything the plan has decided.
 

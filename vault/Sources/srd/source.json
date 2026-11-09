@@ -1,6 +1,0 @@
-{
-  "id": "srd",
-  "name": "SRD 5.1 (test slice)",
-  "description": "Enough converted SRD content to exercise the builder end to end: one species, one class, one subclass, one background, a handful of spells and items.",
-  "sourcebooks": ["srd"]
-}
