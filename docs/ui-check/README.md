@@ -1,7 +1,7 @@
 # UI check
 
 Screenshots of the plugin in a real Obsidian 1.14.5, driven over the Chrome DevTools protocol, taken on
-2026-11-08 against a **scratch copy of `vault/`** (the walk characters and `Sources/walk-patches`, with the
+2026-11-08 against a **scratch copy of `vault/`** (the walk characters and, at the time, a `Sources/walk-patches` source since removed, with the
 plugin as built at the time). Obsidian was started with its own `--user-data-dir`, so `~/.config/obsidian/obsidian.json`
 was never opened by it; its checksum was compared afterwards and is unchanged.
 

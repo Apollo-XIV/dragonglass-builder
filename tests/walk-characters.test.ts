@@ -24,7 +24,6 @@ function walk(dir: string, src: "srd" | "srd24", events: StateEvent[] = []): Res
   let index = indexes.get(src);
   if (!index) {
     index = ContentIndex.build([
-      loadSourceFromDisk(join(VAULT, "Sources", "walk-patches")),
       loadSourceFromDisk(join(OUT, src)),
       loadSourceFromDisk(join(CONTENT_ROOT, "core")),
     ]);
@@ -65,6 +64,8 @@ describe.skipIf(!present)("the walk characters", () => {
       const base = walk(dir, src);
       const rages = res(base, "rages");
       expect(rages.max, dir).toBe(uses);
+      // Unarmored Defense: 10 + Dex + Con.
+      expect(base.ac.value, dir).toBe(10 + base.abilities.dex.mod + base.abilities.con.mod);
       expect(rages.recharge.some((r) => r.on === "short-rest"), dir).toBe(shortRest);
       const key = `resources.${rages.key}`;
       const spent = [1, 2, 3].map((): StateEvent => ({ t, type: "spend", target: key, amount: 1 }));
@@ -79,6 +80,7 @@ describe.skipIf(!present)("the walk characters", () => {
 
   it("2014 Monk 5: ki pool, costs and Stunning Strike", () => {
     const c = walk("Walk Monk 2014", "srd");
+    expect(c.ac.value).toBe(10 + c.abilities.dex.mod + c.abilities.wis.mod);
     expect(res(c, "ki-points")).toMatchObject({ max: 5, recharge: [{ on: "short-rest", amount: "all" }] });
     for (const name of ["Flurry of Blows", "Patient Defense", "Step of the Wind", "Stunning Strike"])
       expect(act(c, name).resolvedCost![0].amount, name).toBe(1);
@@ -89,7 +91,11 @@ describe.skipIf(!present)("the walk characters", () => {
     const c = walk("Walk Sorcerer 2024", "srd24");
     expect(res(c, "sorcery-points").max).toBe(5);
     expect(act(c, "Quickened Spell").resolvedCost![0].amount).toBe(2);
-    expect(act(c, "Twinned Spell").resolvedCost![0]).toMatchObject({ amount: { min: 1, max: 5 }, remaining: 5 });
+    // The 2024 text is a flat point ("spend 1 Sorcery Point"); the level-sized cost was the 2014 rule.
+    expect(act(c, "Twinned Spell").resolvedCost![0].amount).toBe(1);
+    // Draconic Resilience: +3 hit points at 3rd and +1 per Sorcerer level after, and 10 + Dex + Cha unarmoured.
+    expect(c.hp.max.value).toBe(37);
+    expect(c.ac.value).toBe(10 + 2 + 5);
     expect(res(c, "innate-sorcery").max).toBe(2);
   });
 
@@ -138,9 +144,24 @@ describe.skipIf(!present)("the walk characters", () => {
   it("2014 Lore Bard 10: spells known, and what Magical Secrets does to them (see the report)", () => {
     const c = walk("Walk Lore Bard 2014", "srd");
     expect(c.spellcasting!.classes[0]).toMatchObject({ known: 14, cantrips: 4, maxSpellLevel: 5 });
-    expect(c.spellcasting!.limits[0].extraPicks).toEqual([{ level: 10, choose: 2, spellLevels: [0, 1, 2, 3, 4, 5], anyClass: true }]);
-    // Reported, not reconciled: Additional Magical Secrets says its two spells do not count against
-    // the spells known, and here they do (one cantrip, one spell).
-    expect(c.spellcasting!.limits[0]).toMatchObject({ cantrips: { used: 1 }, known: { cap: 14, used: 1 } });
+    // Lore's two (Fireball, Sacred Flame) are free; Magical Secrets at 10th (Fire Shield, Fire Bolt) counts:
+    // one cantrip against the cantrips and one spell against the 14 known.
+    expect(c.spellcasting!.limits[0]).toMatchObject({ cantrips: { cap: 4, used: 1 }, known: { cap: 14, used: 1 }, extras: 0 });
+    const free = Object.fromEntries(c.spellcasting!.spells.map((s) => [s.name, s.free]));
+    expect(free).toMatchObject({ Fireball: true, "Sacred Flame": true, "Fire Shield": false, "Fire Bolt": false });
+  });
+
+  it("2014 Bard: Magical Secrets at 10, 14 and 18 count, and Lore's level-6 choice does not", () => {
+    const index = indexes.get("srd")!;
+    const choicesAt = (cls: string, level: number) => (index.get(cls) as any).levels[level].choices ?? [];
+    for (const level of [10, 14, 18]) {
+      const picks = choicesAt("srd:class:bard", level).filter((ch: any) => ch.mode === "learned");
+      expect(picks, `level ${level}`).toHaveLength(1);
+      expect(picks[0]).toMatchObject({ count: 2 });
+      expect(picks[0].counts, `level ${level}`).not.toBe(false);
+    }
+    const lore = choicesAt("srd:subclass:college-of-lore", 6).filter((ch: any) => ch.mode === "learned");
+    expect(lore).toHaveLength(1);
+    expect(lore[0]).toMatchObject({ count: 2, counts: false });
   });
 });

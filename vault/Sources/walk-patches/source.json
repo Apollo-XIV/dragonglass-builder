@@ -1,5 +1,0 @@
-{
-  "id": "walk-patches",
-  "name": "Walk patches",
-  "description": "Replaces a few converted elements with the chosen-amount and provenance shapes, so the walk characters show them before the converter writes them. Not for play."
-}

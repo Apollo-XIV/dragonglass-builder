@@ -69,8 +69,8 @@
       "hp": "average",
       "choices": {
         "srd:subclass:college-of-lore:known-spells-6": [
-          "srd:spell:acid-arrow",
-          "srd:spell:acid-splash"
+          "srd:spell:fireball",
+          "srd:spell:sacred-flame"
         ]
       }
     },
@@ -96,7 +96,12 @@
     {
       "class": "srd:class:bard",
       "hp": "average",
-      "choices": {}
+      "choices": {
+        "srd:class:bard:known-spells-10": [
+          "srd:spell:fire-shield",
+          "srd:spell:fire-bolt"
+        ]
+      }
     }
   ],
   "choices": {
