@@ -9,7 +9,7 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as obsidian from "obsidian";
-import { OAUTH_SECRET_ID, clearGithubLogin, saveGithubLogin, saveGithubToken, secretIdFor } from "../src/obsidian/github-auth";
+import { clearSessionLogin, saveGithubToken, secretIdFor, setSessionLogin } from "../src/obsidian/github-auth";
 import { SourceManager } from "../src/obsidian/sources";
 import type { SourceRef } from "../src/core/types";
 
@@ -136,28 +136,100 @@ describe("private GitHub sources", () => {
     expect(() => saveGithubToken(old, "me/private", "x")).toThrow(/Obsidian 1\.11\.4/);
   });
 
-  it("reads an oauth source with the one login, shared by every source that names it", async () => {
-    saveGithubLogin(app, " gho_login ");
-    expect(secrets.get(OAUTH_SECRET_ID)).toBe("gho_login");
-    const manager = new SourceManager(app, ".obsidian/plugins/dragonglass", "smart");
-    const index = await manager.buildIndex([ref({ type: "oauth" })]);
-    expect(index.get("p:feat:a")).toBeDefined();
-    expect(calls.every((c) => c.headers?.Authorization === "Bearer gho_login")).toBe(true);
+  describe("session login", () => {
+    const login = { type: "oauth" as const };
+    const make = (tier: "none" | "smart" = "none") => {
+      const adapter = new MemoryAdapter();
+      const a = { vault: { adapter } } as unknown as import("obsidian").App;
+      return { adapter, manager: new SourceManager(a, ".obsidian/plugins/dragonglass", tier) };
+    };
+
+    beforeEach(() => clearSessionLogin());
+
+    it("fetches with the login, and caches the files even with caching off", async () => {
+      setSessionLogin(" gho_login ");
+      const { manager, adapter } = make("none");
+      const index = await manager.buildIndex([ref(login)]);
+      expect(index.get("p:feat:a")).toBeDefined();
+      expect(calls.every((c) => c.headers?.Authorization === "Bearer gho_login")).toBe(true);
+      await vi.waitFor(() => expect(adapter.files.has(".obsidian/plugins/dragonglass/source-cache.json")).toBe(true));
+      expect(adapter.files.get(".obsidian/plugins/dragonglass/source-cache.json")).toContain('"private":true');
+    });
+
+    it("never writes the login anywhere", async () => {
+      setSessionLogin("gho_login");
+      const { manager, adapter } = make("smart");
+      await manager.buildIndex([ref(login)]);
+      expect(secrets.size).toBe(0);
+      for (const text of adapter.files.values()) expect(text).not.toContain("gho_login");
+    });
+
+    it("then loads from the cache with no login and no request, across a reload", async () => {
+      setSessionLogin("gho_login");
+      const { manager } = make();
+      await manager.buildIndex([ref(login)]);
+      clearSessionLogin();
+      calls.length = 0;
+      manager.invalidate();
+      const index = await manager.buildIndex([ref(login)]);
+      expect(index.get("p:feat:a")).toBeDefined();
+      expect(calls).toHaveLength(0);
+      expect(manager.statusFor("p")).toMatchObject({ state: "loaded", diagnostics: [] });
+      expect(manager.statusFor("p")?.origin).toMatch(/sign in to update/);
+    });
+
+    it("survives a restart: a fresh manager reads the cache file", async () => {
+      setSessionLogin("gho_login");
+      const { manager, adapter } = make();
+      await manager.buildIndex([ref(login)]);
+      await vi.waitFor(() => expect(adapter.files.has(".obsidian/plugins/dragonglass/source-cache.json")).toBe(true));
+      clearSessionLogin();
+      calls.length = 0;
+      const restarted = new SourceManager({ vault: { adapter } } as unknown as import("obsidian").App, ".obsidian/plugins/dragonglass", "none");
+      expect((await restarted.buildIndex([ref(login)])).get("p:feat:a")).toBeDefined();
+      expect(calls).toHaveLength(0);
+    });
+
+    it("asks to sign in when there is no login and nothing cached", async () => {
+      const { manager } = make();
+      await manager.buildIndex([ref(login)]);
+      expect(manager.statusFor("p")?.state).toBe("error");
+      expect(manager.statusFor("p")?.diagnostics[0].message).toMatch(/not signed in to GitHub/);
+    });
+
+    it("refreshes on request, and keeps the cached copy if that fails", async () => {
+      setSessionLogin("gho_login");
+      const { manager } = make();
+      await manager.buildIndex([ref(login)]);
+      calls.length = 0;
+
+      manager.refresh("p");
+      await manager.buildIndex([ref(login)]);
+      expect(calls.length).toBeGreaterThan(0);
+
+      clearSessionLogin();
+      manager.refresh("p");
+      const index = await manager.buildIndex([ref(login)]);
+      expect(index.get("p:feat:a")).toBeDefined();
+      expect(manager.statusFor("p")?.state).toBe("cached");
+      expect(manager.statusFor("p")?.diagnostics[0].message).toMatch(/not signed in/);
+    });
+
+    it("treats a changed pin as a miss, and drops the copy on removal", async () => {
+      setSessionLogin("gho_login");
+      const { manager, adapter } = make();
+      await manager.buildIndex([ref(login)]);
+      clearSessionLogin();
+      manager.invalidate();
+      await manager.buildIndex([{ ...ref(login), pin: "v2" }]);
+      expect(manager.statusFor("p")?.diagnostics[0].message).toMatch(/not signed in/);
+
+      manager.invalidate("p");
+      await vi.waitFor(() => expect(adapter.files.get(".obsidian/plugins/dragonglass/source-cache.json")).toBe("[]"));
+    });
   });
 
-  it("asks to sign in when an oauth source has no login on this device, and after signing out", async () => {
-    const manager = new SourceManager(app, ".obsidian/plugins/dragonglass", "none");
-    await manager.buildIndex([ref({ type: "oauth" })]);
-    expect(manager.statusFor("p")?.diagnostics[0].message).toMatch(/not signed in to GitHub/);
-
-    saveGithubLogin(app, "gho_login");
-    clearGithubLogin(app);
-    await manager.buildIndex([ref({ type: "oauth" })]);
-    expect(manager.statusFor("p")?.diagnostics[0].message).toMatch(/not signed in to GitHub/);
-  });
-
-  it("gives a token source its own secret even after an oauth one has been saved", () => {
-    saveGithubLogin(app, "gho_login");
+  it("gives a token source its own secret", () => {
     expect(saveGithubToken(app, "me/private", "ghp", { type: "oauth" })).toEqual({
       type: "token",
       secret: secretIdFor("me/private"),

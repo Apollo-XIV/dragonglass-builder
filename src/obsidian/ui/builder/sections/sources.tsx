@@ -12,7 +12,8 @@ import type { CharacterStore } from "../../../character-store";
 import { blankSources } from "../../../character-files";
 import { createSource } from "../../../content-editor";
 import { nativeDialogAvailable, pickFolder } from "../../../native-dialog";
-import { SECRET_STORAGE_UPDATE_MESSAGE, githubLoginToken, saveGithubToken, secretStorageAvailable } from "../../../github-auth";
+import { SECRET_STORAGE_UPDATE_MESSAGE, saveGithubToken, secretStorageAvailable, sessionLoginToken } from "../../../github-auth";
+import { updateFromGithub } from "../../../github-login-modal";
 import { describeSource, parseSourceInput, suggestSourceId } from "../../../settings";
 import { isWritableSource } from "../../../sources";
 import { usePlugin } from "../../context";
@@ -413,10 +414,10 @@ function LocationField({
           </button>
         ) : null}
       </div>
-      {type === "github" && onUseLoginChange && githubLoginToken(plugin.app) ? (
+      {type === "github" && onUseLoginChange && sessionLoginToken() ? (
         <label className="dg-field">
           <input type="checkbox" checked={useLogin ?? false} onChange={(e) => onUseLoginChange(e.currentTarget.checked)} />
-          <span>Use my GitHub login (a private repo your account can read)</span>
+          <span>Use my GitHub login (a private repo your account can read; fetched now, then cached)</span>
         </label>
       ) : null}
       {type === "github" && onTokenChange && !useLogin ? (
@@ -464,6 +465,7 @@ function SourceRow({
   /** Replaces this GitHub source's token (or gives it one) without touching the rest of its entry. */
   onSaveToken?: (token: string) => Promise<void>;
 }): ReactNode {
+  const { plugin } = usePlugin();
   const [editingToken, setEditingToken] = useState(false);
   const [token, setToken] = useState("");
   const errors = status?.diagnostics.filter((d) => d.severity === "error").length ?? 0;
@@ -491,7 +493,12 @@ function SourceRow({
             Browse
           </button>
         ) : null}
-        {onSaveToken && ref_.type === "github" ? (
+        {ref_.auth?.type === "oauth" ? (
+          <button className="dg-button is-quiet" onClick={() => void updateFromGithub(plugin, ref_)}>
+            Update from GitHub
+          </button>
+        ) : null}
+        {onSaveToken && ref_.type === "github" && ref_.auth?.type !== "oauth" ? (
           <button className="dg-button is-quiet" onClick={() => setEditingToken((v) => !v)}>
             {ref_.auth?.type === "token" ? "Update token" : "Add token"}
           </button>

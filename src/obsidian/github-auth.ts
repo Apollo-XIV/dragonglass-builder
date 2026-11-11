@@ -38,33 +38,36 @@ export function saveGithubToken(app: App, location: string, token: string, exist
   return { type: "token", secret };
 }
 
-/** The one secret the GitHub login lives in, whatever the number of sources that use it. */
-export const OAUTH_SECRET_ID = "dragonglass-github-login";
+/**
+ * The GitHub login is for one session: it lives in memory, never in secret storage, a file
+ * or `data.json`, because Obsidian gives a plugin nowhere that other plugins can't read.
+ * It is only needed to fetch or update a source; the fetched files are cached in the vault,
+ * so day-to-day use never asks for it. Closing Obsidian (or reloading the plugin) ends it.
+ */
+let sessionLogin: string | undefined;
 
-/** Stores the access token from a completed sign-in. */
-export function saveGithubLogin(app: App, token: string): void {
-  if (!secretStorageAvailable(app)) throw new Error(SECRET_STORAGE_UPDATE_MESSAGE);
-  app.secretStorage.setSecret(OAUTH_SECRET_ID, token.trim());
+export function setSessionLogin(token: string): void {
+  sessionLogin = token.trim() || undefined;
 }
 
-/** Forgets the login on this device. Sources keep `auth: oauth` and report "sign in" until there is another. */
-export function clearGithubLogin(app: App): void {
-  if (secretStorageAvailable(app)) app.secretStorage.setSecret(OAUTH_SECRET_ID, "");
+export function clearSessionLogin(): void {
+  sessionLogin = undefined;
 }
 
-export function githubLoginToken(app: App): string | undefined {
-  if (!secretStorageAvailable(app)) return undefined;
-  return app.secretStorage.getSecret(OAUTH_SECRET_ID) || undefined;
+export function sessionLoginToken(): string | undefined {
+  return sessionLogin;
 }
+
+export const NOT_SIGNED_IN =
+  "not signed in to GitHub; sign in from the GitHub account section of the settings to fetch or update this source";
 
 /** The token a ref points at, or why there isn't one. */
 export function readGithubToken(app: App, auth: SourceAuth): string {
-  if (!secretStorageAvailable(app)) throw new Error(SECRET_STORAGE_UPDATE_MESSAGE);
   if (auth.type === "oauth") {
-    const login = githubLoginToken(app);
-    if (!login) throw new Error("not signed in to GitHub on this device; sign in from the sources settings");
-    return login;
+    if (!sessionLogin) throw new Error(NOT_SIGNED_IN);
+    return sessionLogin;
   }
+  if (!secretStorageAvailable(app)) throw new Error(SECRET_STORAGE_UPDATE_MESSAGE);
   const token = app.secretStorage.getSecret(auth.secret);
   if (!token) throw new Error(`no token is stored under "${auth.secret}" on this device; add it again in the sources settings`);
   return token;

@@ -1,5 +1,7 @@
 import { Modal, Notice, requestUrl, type App } from "obsidian";
-import { saveGithubLogin, secretStorageAvailable, SECRET_STORAGE_UPDATE_MESSAGE } from "./github-auth";
+import type DragonglassPlugin from "../main";
+import type { SourceRef } from "../core/types";
+import { sessionLoginToken, setSessionLogin } from "./github-auth";
 import { pollForToken, requestDeviceCode, type DeviceCode, type PostForm } from "./github-oauth";
 
 export const postForm: PostForm = async (url, form) => {
@@ -26,10 +28,6 @@ export class GithubLoginModal extends Modal {
 
   onOpen(): void {
     this.setTitle("Sign in to GitHub");
-    if (!secretStorageAvailable(this.app)) {
-      this.contentEl.createEl("p", { text: SECRET_STORAGE_UPDATE_MESSAGE });
-      return;
-    }
     this.contentEl.createEl("p", { text: "Asking GitHub for a code…" });
     void this.run();
   }
@@ -39,7 +37,7 @@ export class GithubLoginModal extends Modal {
       const code = await requestDeviceCode(postForm);
       this.showCode(code);
       const token = await pollForToken(postForm, code, { cancelled: () => this.cancelled });
-      saveGithubLogin(this.app, token);
+      setSessionLogin(token);
       this.close();
       await this.onDone();
     } catch (e) {
@@ -63,9 +61,10 @@ export class GithubLoginModal extends Modal {
     el.createEl("p", {
       cls: "dg-muted",
       text:
-        "This lets Dragonglass read every private repo your GitHub account can. GitHub offers no read-only " +
-        "scope for private repos, so the login can also write to them; Dragonglass only ever reads. " +
-        "Waiting for you to approve…",
+        "This lets Dragonglass read the private repos your GitHub account can, to fetch sources. GitHub offers " +
+        "no read-only scope for them, so the login can also write wherever you can; Dragonglass only ever reads. " +
+        "It is kept in memory for this session only and forgotten when Obsidian closes; fetched sources are " +
+        "cached in your vault. Waiting for you to approve…",
     });
   }
 
@@ -73,4 +72,18 @@ export class GithubLoginModal extends Modal {
     this.cancelled = true;
     this.contentEl.empty();
   }
+}
+
+/**
+ * Fetches a login-backed source from GitHub again, asking for the login first if this session
+ * has none. The cached copy stays as the fallback, so a failed update loses nothing.
+ */
+export async function updateFromGithub(plugin: DragonglassPlugin, ref: SourceRef): Promise<void> {
+  const run = async (): Promise<void> => {
+    plugin.sources.refresh(ref.id);
+    await plugin.reloadSources();
+    new Notice(`Updated "${ref.name ?? ref.id}" from GitHub`);
+  };
+  if (sessionLoginToken()) await run();
+  else new GithubLoginModal(plugin.app, run).open();
 }

@@ -43,6 +43,12 @@ interface CacheEntry {
   fetchedAt: string;
   manifest: SourceBundle["manifest"];
   files: SourceFile[];
+  /**
+   * Fetched with a session login, so this copy is the only one the user has until they sign in
+   * again: it is used without asking GitHub, written whatever the cache tier, and kept by a
+   * plain `invalidate()`.
+   */
+  private?: boolean;
 }
 
 const CACHE_FILE = "source-cache.json";
@@ -61,6 +67,8 @@ export class SourceManager {
   private loaded = new Map<string, LoadedSource>();
   private statuses = new Map<string, SourceStatus>();
   private cacheLoaded = false;
+  /** Sources whose next load asks GitHub again even though a private copy is cached. */
+  private refreshing = new Set<string>();
 
   constructor(
     private readonly app: App,
@@ -80,15 +88,25 @@ export class SourceManager {
     return this.statuses.get(id);
   }
 
-  /** Forgets a source so the next build refetches it. */
+  /**
+   * Forgets a source so the next build refetches it. A named source loses its cached copy too,
+   * which is what a removal or a new pin wants; with no name, private copies stay, because
+   * a reload shouldn't cost a login.
+   */
   invalidate(id?: string): void {
     if (id) {
       this.loaded.delete(id);
-      this.cache.delete(id);
+      if (this.cache.delete(id)) void this.saveCache();
     } else {
       this.loaded.clear();
-      this.cache.clear();
+      for (const [key, entry] of this.cache) if (!entry.private) this.cache.delete(key);
     }
+  }
+
+  /** Fetch from GitHub on the next load, keeping the cached copy as the fallback if that fails. */
+  refresh(id: string): void {
+    this.loaded.delete(id);
+    this.refreshing.add(id);
   }
 
   private get adapter(): DataAdapter {
@@ -113,9 +131,11 @@ export class SourceManager {
   }
 
   private async saveCache(): Promise<void> {
-    if (this.tier === "none") return;
+    // With caching off, private copies are still kept: they are the only way back in without a login.
+    const entries = [...this.cache.values()].filter((e) => this.tier !== "none" || e.private);
     try {
-      await this.adapter.write(this.cachePath(), JSON.stringify([...this.cache.values()]));
+      if (this.tier === "none" && !entries.length && !(await this.adapter.exists(this.cachePath()))) return;
+      await this.adapter.write(this.cachePath(), JSON.stringify(entries));
     } catch {
       // Caching is an optimisation; failing to write one is not worth an error.
     }
@@ -195,6 +215,13 @@ export class SourceManager {
     let diagnostics: Diagnostic[] = [];
     let origin = ref.location;
 
+    // A source fetched with the session login is read from its cached copy; GitHub is asked
+    // only when there is none for this pin, or the user asked for an update.
+    const isPrivate = ref.auth?.type === "oauth";
+    const copy = this.cache.get(ref.id);
+    if (isPrivate && copy && copy.key === `${ref.id}@${ref.pin ?? ""}` && !this.refreshing.has(ref.id))
+      return this.fromCache(ref, copy, [], "loaded", `cached ${copy.fetchedAt}; sign in to update`);
+
     try {
       ({ bundle, origin } = await this.readBundle(ref));
     } catch (e) {
@@ -203,23 +230,7 @@ export class SourceManager {
 
     if (!bundle) {
       const fallback = this.cache.get(ref.id);
-      if (fallback) {
-        // A cached copy keeps characters working offline, with the failure still shown.
-        const loaded = bundleToLoadedSource({ manifest: fallback.manifest, files: fallback.files });
-        loaded.id = fallback.manifest.id || ref.id;
-        loaded.ref = ref;
-        loaded.diagnostics = [...(loaded.diagnostics ?? []), ...diagnostics];
-        this.loaded.set(ref.id, loaded);
-        this.statuses.set(ref.id, {
-          ref,
-          state: "cached",
-          elementCount: loaded.elements.length,
-          diagnostics: loaded.diagnostics,
-          origin: `cache from ${fallback.fetchedAt}`,
-          sourceId: loaded.id,
-        });
-        return loaded;
-      }
+      if (fallback) return this.fromCache(ref, fallback, diagnostics, "cached", `cache from ${fallback.fetchedAt}`);
       const empty: LoadedSource = { id: ref.id, name: ref.name, elements: [], diagnostics };
       this.statuses.set(ref.id, { ref, state: "error", elementCount: 0, diagnostics, origin, sourceId: ref.id });
       return empty;
@@ -234,6 +245,7 @@ export class SourceManager {
     loaded.diagnostics = [...(loaded.diagnostics ?? []), ...diagnostics];
 
     this.loaded.set(ref.id, loaded);
+    this.refreshing.delete(ref.id);
     this.statuses.set(ref.id, {
       ref,
       state: "loaded",
@@ -242,15 +254,41 @@ export class SourceManager {
       origin,
       sourceId: loaded.id,
     });
-    if (this.tier !== "none") {
+    if (this.tier !== "none" || isPrivate) {
       this.cache.set(ref.id, {
         key: `${ref.id}@${ref.pin ?? ""}`,
         fetchedAt: new Date().toISOString(),
         manifest: bundle.manifest,
         files: bundle.files,
+        ...(isPrivate ? { private: true } : {}),
       });
       void this.saveCache();
     }
+    return loaded;
+  }
+
+  /** Builds a source from a cached copy, with whatever `diagnostics` explain why it isn't a fresh fetch. */
+  private fromCache(
+    ref: SourceRef,
+    entry: CacheEntry,
+    diagnostics: Diagnostic[],
+    state: SourceStatus["state"],
+    origin: string,
+  ): LoadedSource {
+    const loaded = bundleToLoadedSource({ manifest: entry.manifest, files: entry.files });
+    loaded.id = entry.manifest.id || ref.id;
+    loaded.name = entry.manifest.name ?? ref.name;
+    loaded.ref = ref;
+    loaded.diagnostics = [...(loaded.diagnostics ?? []), ...diagnostics];
+    this.loaded.set(ref.id, loaded);
+    this.statuses.set(ref.id, {
+      ref,
+      state,
+      elementCount: loaded.elements.length,
+      diagnostics: loaded.diagnostics,
+      origin,
+      sourceId: loaded.id,
+    });
     return loaded;
   }
 

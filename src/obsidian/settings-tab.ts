@@ -2,12 +2,12 @@ import { Modal, Notice, PluginSettingTab, Setting, type App } from "obsidian";
 import type DragonglassPlugin from "../main";
 import {
   SECRET_STORAGE_UPDATE_MESSAGE,
-  clearGithubLogin,
-  githubLoginToken,
+  clearSessionLogin,
   saveGithubToken,
   secretStorageAvailable,
+  sessionLoginToken,
 } from "./github-auth";
-import { GithubLoginModal } from "./github-login-modal";
+import { GithubLoginModal, updateFromGithub } from "./github-login-modal";
 import { fetchGithubUser } from "./github-user";
 import type { SourceRef } from "../core/types";
 import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
@@ -305,39 +305,33 @@ export class DragonglassSettingTab extends PluginSettingTab {
   }
 
   private renderGithubAccount(containerEl: HTMLElement): void {
-    const signedIn = !!githubLoginToken(this.app);
-    const setting = new Setting(containerEl)
-      .setName("GitHub account")
-      .setDesc(
-        secretStorageAvailable(this.app)
-          ? signedIn
-            ? "Signed in. Sources set to use your GitHub login can read any private repo you can."
-            : "Sign in once to add private repos you have access to, including ones you don't own. This device only; the login isn't stored in the vault."
-          : SECRET_STORAGE_UPDATE_MESSAGE,
-      );
-    if (signedIn) {
-      void fetchGithubUser(githubLoginToken(this.app) ?? "").then((login) => {
-        if (login) setting.setDesc(`Signed in as ${login}. Sources set to use your GitHub login can read any private repo you can.`);
+    const token = sessionLoginToken();
+    const setting = new Setting(containerEl).setName("GitHub account");
+    if (token) {
+      const note = "Signed in until Obsidian closes. Private sources you add with your login can be updated.";
+      setting.setDesc(note);
+      void fetchGithubUser(token).then((login) => {
+        if (login) setting.setDesc(`Signed in as ${login}. ${note}`);
       });
       setting.addButton((button) =>
-        button.setButtonText("Sign out").onClick(async () => {
-          clearGithubLogin(this.app);
-          await this.plugin.reloadSources();
+        button.setButtonText("Sign out").onClick(() => {
+          clearSessionLogin();
           this.display();
         }),
       );
-    } else if (secretStorageAvailable(this.app)) {
-      setting.addButton((button) =>
-        button
-          .setButtonText("Sign in")
-          .setCta()
-          .onClick(() =>
-            new GithubLoginModal(this.app, async () => {
-              await this.plugin.reloadSources();
-              this.display();
-            }).open(),
-          ),
-      );
+    } else {
+      setting
+        .setDesc(
+          "Sign in to add a private repo you can read, including ones you don't own, or to update one. " +
+            "The login is kept in memory for this session only; fetched sources are cached in the vault, " +
+            "so you won't need it again until you want an update.",
+        )
+        .addButton((button) =>
+          button
+            .setButtonText("Sign in")
+            .setCta()
+            .onClick(() => new GithubLoginModal(this.app, () => this.display()).open()),
+        );
     }
   }
 
@@ -390,10 +384,10 @@ export class DragonglassSettingTab extends PluginSettingTab {
             this.display();
           }),
       );
-    if (githubLoginToken(this.app))
+    if (sessionLoginToken())
       new Setting(containerEl)
         .setName("Use my GitHub login")
-        .setDesc("For a private repo your account can read. Overrides the token below.")
+        .setDesc("For a private repo your account can read. It is fetched now and cached in the vault. Overrides the token below.")
         .addToggle((toggle) => toggle.onChange((value) => (useLogin = value)));
     const tokenSetting = new Setting(containerEl)
       .setName("Access token (private repos)")
@@ -446,7 +440,15 @@ export class DragonglassSettingTab extends PluginSettingTab {
           }),
       );
 
-      if (ref.type === "github")
+      if (ref.auth?.type === "oauth")
+        setting.addExtraButton((button) =>
+          button
+            .setIcon("refresh-cw")
+            .setTooltip("Update from GitHub")
+            .onClick(() => void updateFromGithub(this.plugin, ref)),
+        );
+
+      if (ref.type === "github" && ref.auth?.type !== "oauth")
         setting.addExtraButton((button) =>
           button
             .setIcon("key-round")
