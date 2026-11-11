@@ -470,10 +470,11 @@ describe("the narrow layout", () => {
     expect(html).toContain("dg-roll-box is-dice");
   });
 
-  it("shows hit points from the live state, flagged low", () => {
-    expect(html).toContain("37 / 49");
-    // 37 of 49 is above half, so the amber treatment stays off.
-    expect(html).not.toContain("dg-n-hp-figure is-low");
+  it("shows hit points in the vial and register, with a rest row", () => {
+    expect(html).toContain("dg-hp-panel");
+    expect(html).toContain("dg-hp-register");
+    expect(html).toContain("37");
+    expect(html).toContain("Short rest");
   });
 
   it("shows resources as pill targets rather than steppers", () => {

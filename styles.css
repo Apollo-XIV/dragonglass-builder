@@ -1784,50 +1784,26 @@
 
 .dg-n-hp {
   display: flex;
-  align-items: center;
-  gap: var(--size-4-3);
+  flex-direction: column;
+  gap: var(--size-4-2);
   padding: var(--size-4-2) 0;
 }
 
-.dg-layout .dg-n-hp-step {
-  width: 48px;
-  height: 48px;
-  font-size: 1.4em;
+/* The register is a till roll, so it needs a height of its own here: on the
+ * desktop the row sets it, and in a scroll column nothing does. */
+.dg-n-hp .dg-hp-panel {
+  height: 14rem;
 }
 
-.dg-n-hp-figure {
-  flex: 1;
-  border-bottom: none;
-  justify-content: center;
-}
-
-.dg-n-hp-figure .dg-read-title {
-  font-size: 1.8em;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-/* Amber at half HP or below (spec 2.3). */
-.dg-n-hp-figure.is-low .dg-read-title {
-  color: var(--text-warning);
-}
-
-.dg-n-temp {
-  color: var(--text-accent);
-  font-size: var(--font-ui-smaller);
-}
-
-.dg-n-hp-editor input {
-  width: 100%;
-  min-height: 44px;
-  font-size: 1.2em;
-  text-align: center;
-}
-
-.dg-n-hp-buttons {
+.dg-n-hp-rests {
+  padding: var(--size-4-2) 0;
   display: flex;
+  align-items: center;
   gap: var(--size-4-2);
-  padding-top: var(--size-4-2);
+}
+
+.dg-n-hp-rests .dg-muted {
+  margin-left: auto;
 }
 
 .dg-n-stat-row {
@@ -4233,10 +4209,21 @@
   font-size: var(--font-ui-smaller);
 }
 
+/* Docked to the top edge of the keyboard (`bottom` is set from the visual
+ * viewport), not tucked under the field where the keyboard would cover it. */
 .dg-hp-symbols {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 50;
   display: flex;
   gap: 0.2rem;
-  padding-top: 0.2rem;
+  /* The extra bottom padding lifts the buttons clear of the keyboard's edge. The
+   * strip itself is see-through and lets taps fall to what is behind it, so only
+   * the buttons catch them. */
+  padding: 0.3rem 0.3rem 0.525rem;
+  background: transparent;
+  pointer-events: none;
 }
 
 .dg-layout .dg-hp-symbol {
@@ -4244,9 +4231,32 @@
   height: 2rem;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--d-radius, var(--radius-s));
-  background: transparent;
+  background: var(--background-primary);
   box-shadow: none;
+  pointer-events: auto;
   font-family: var(--font-monospace);
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+}
+
+.dg-layout .dg-hp-symbol.is-heal {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-layout .dg-hp-symbol.is-damage {
+  color: var(--d-hp, var(--color-red));
+}
+
+.dg-layout .dg-hp-symbol.is-set {
+  color: var(--d-set, var(--color-orange));
+}
+
+.dg-layout .dg-hp-symbol.is-temp {
+  color: var(--d-temp, var(--color-blue));
+}
+
+.dg-layout .dg-hp-symbol.is-tempMax {
+  color: var(--d-tempmax, var(--color-purple));
 }
 
 /* -- Desktop builder ----------------------------------------------------- */

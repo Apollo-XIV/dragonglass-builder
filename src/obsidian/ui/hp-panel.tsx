@@ -306,7 +306,96 @@ function formatTime(iso: string): string {
 // The readout and the calc
 // ---------------------------------------------------------------------------
 
-const SYMBOLS = ["+", "−", "=", "t", "m"];
+/**
+ * How far the on-screen keyboard covers the bottom of the layout viewport, so the
+ * symbol strip can sit on its top edge. Where the window itself resizes for the
+ * keyboard this is 0 and the strip is already at the bottom of what is visible.
+ *
+ * It also notices the keyboard being put away with its own hide button, which
+ * leaves the input focused, and calls `onHide`. Obsidian on Android never resizes
+ * the viewport for the keyboard, so there the shell's `keyboardDidShow` and
+ * `keyboardDidHide` window events are the signal; elsewhere the viewport shrinking
+ * and growing back is. Nothing fires if the keyboard never appeared, so a hardware
+ * keyboard keeps the field open.
+ */
+function useKeyboardInset(track: boolean, active: boolean, onHide: () => void): number {
+  const [inset, setInset] = useState(0);
+  const hide = useRef(onHide);
+  hide.current = onHide;
+  const live = useRef(active);
+  live.current = active;
+  useEffect(() => {
+    const viewport = window.visualViewport;
+    if (!track) return;
+    const KEYBOARD = 100;
+    const heightNow = (): number => (viewport ? viewport.height : window.innerHeight);
+    // The full height is learned from before the field is focused: the keyboard
+    // is usually already opening by the time the focus event lands, so a
+    // baseline taken then is the shrunk one and a hide never looks like one.
+    let full = Math.max(heightNow(), window.innerHeight);
+    // Two independent witnesses, each only ever ended by its own evidence: one
+    // that the viewport shrank, one that the shell said the keyboard was up.
+    let shown = false;
+    let announced = false;
+    const check = (): void => {
+      const height = heightNow();
+      full = Math.max(full, height);
+      const covered = height < full - KEYBOARD;
+      if (live.current) {
+        setInset(viewport ? Math.max(0, window.innerHeight - height - viewport.offsetTop) : 0);
+      }
+      if (covered) shown = true;
+      else if (shown) {
+        shown = false;
+        if (live.current) hide.current();
+      }
+    };
+    // The Android shell reports the keyboard on its own events; where it does,
+    // they are more reliable than a size that may only change after the animation.
+    const keyboardShown = (): void => {
+      announced = true;
+    };
+    const keyboardHidden = (): void => {
+      if (!announced) return;
+      announced = false;
+      if (live.current) hide.current();
+    };
+    const onResize = (): void => check();
+    // A rotation changes the full height rather than covering any of it.
+    const reset = (): void => {
+      full = Math.max(heightNow(), window.innerHeight);
+      shown = false;
+    };
+    check();
+    viewport?.addEventListener("resize", onResize);
+    viewport?.addEventListener("scroll", onResize);
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", reset);
+    window.addEventListener("keyboardDidShow", keyboardShown);
+    window.addEventListener("keyboardDidHide", keyboardHidden);
+    return () => {
+      viewport?.removeEventListener("resize", onResize);
+      viewport?.removeEventListener("scroll", onResize);
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", reset);
+      window.removeEventListener("keyboardDidShow", keyboardShown);
+      window.removeEventListener("keyboardDidHide", keyboardHidden);
+    };
+  }, [track]);
+  useEffect(() => {
+    if (!active) setInset(0);
+  }, [active]);
+  return inset;
+}
+
+/** Each symbol carries the role its token gets in the calc, so the colours match. */
+const SYMBOLS: { symbol: string; role: HpToken["role"] }[] = [
+  { symbol: "+", role: "heal" },
+  { symbol: "−", role: "damage" },
+  { symbol: "=", role: "set" },
+  { symbol: "t", role: "temp" },
+  { symbol: "m", role: "tempMax" },
+];
 
 function Readout({
   character,
@@ -339,6 +428,9 @@ function Readout({
   const current = preview?.current ?? character.hp.current;
   const temp = preview?.temp ?? character.hp.temp;
   const open = editing || Boolean(text);
+  const [focused, setFocused] = useState(false);
+  const showStrip = symbolStrip === true && open && focused;
+  const keyboardInset = useKeyboardInset(symbolStrip === true, showStrip, () => inputRef.current?.blur());
 
   return (
     <div className="dg-hp-readout">
@@ -374,7 +466,8 @@ function Readout({
               className="dg-hp-calc-input"
               value={text}
               aria-label="Hit point entry"
-              inputMode="text"
+              // A phone gets the number pad; the symbol strip supplies what it lacks.
+              inputMode={symbolStrip ? "decimal" : "text"}
               spellCheck={false}
               onChange={(e) => onText(e.currentTarget.value)}
               onKeyDown={(e) => {
@@ -388,19 +481,28 @@ function Readout({
               }}
               // Clicking away closes an empty box; one with text in it stays, so
               // the pending diff stays on screen with it.
+              onFocus={() => setFocused(true)}
               onBlur={() => {
+                setFocused(false);
                 if (!text.trim()) onCancel();
               }}
             />
           </div>
-          {symbolStrip ? (
-            <div className="dg-hp-symbols">
-              {SYMBOLS.map((symbol) => (
+          {showStrip ? (
+            <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
+              {SYMBOLS.map(({ symbol, role }) => (
                 <button
                   key={symbol}
                   type="button"
-                  className="dg-hp-symbol"
-                  onClick={() => onText(text + (symbol === "−" ? "-" : symbol))}
+                  className={`dg-hp-symbol is-${role}`}
+                  // Pressing a button would take focus from the input, which closes
+                  // an empty one and drops the keyboard before the click lands.
+                  onPointerDown={(e) => e.preventDefault()}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => {
+                    onText(text + (symbol === "−" ? "-" : symbol));
+                    inputRef.current?.focus();
+                  }}
                 >
                   {symbol}
                 </button>
