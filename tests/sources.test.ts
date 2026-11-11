@@ -9,7 +9,19 @@
 
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import * as obsidian from "obsidian";
-import { clearSessionLogin, saveGithubToken, secretIdFor, setSessionLogin } from "../src/obsidian/github-auth";
+import {
+  LOGIN_SECRET_ID,
+  clearSessionLogin,
+  forgetLogin,
+  saveGithubToken,
+  saveLogin,
+  savedLoginExists,
+  secretIdFor,
+  sessionLoginToken,
+  setSessionLogin,
+  unlockLogin,
+} from "../src/obsidian/github-auth";
+import { WrongPasswordError } from "../src/obsidian/login-crypto";
 import { SourceManager } from "../src/obsidian/sources";
 import type { SourceRef } from "../src/core/types";
 
@@ -175,7 +187,7 @@ describe("private GitHub sources", () => {
       expect(index.get("p:feat:a")).toBeDefined();
       expect(calls).toHaveLength(0);
       expect(manager.statusFor("p")).toMatchObject({ state: "loaded", diagnostics: [] });
-      expect(manager.statusFor("p")?.origin).toMatch(/sign in to update/);
+      expect(manager.statusFor("p")?.origin).toMatch(/sign in to check for updates/);
     });
 
     it("survives a restart: a fresh manager reads the cache file", async () => {
@@ -226,6 +238,44 @@ describe("private GitHub sources", () => {
 
       manager.invalidate("p");
       await vi.waitFor(() => expect(adapter.files.get(".obsidian/plugins/dragonglass/source-cache.json")).toBe("[]"));
+    });
+  });
+
+  describe("saved login", () => {
+    const login = { type: "oauth" as const };
+    beforeEach(() => clearSessionLogin());
+
+    it("is stored sealed, unlocks with the password, and is gone when forgotten", async () => {
+      await saveLogin(app, "gho_login", "pw");
+      expect(secrets.get(LOGIN_SECRET_ID)).not.toContain("gho_login");
+      expect(savedLoginExists(app)).toBe(true);
+
+      clearSessionLogin();
+      expect(sessionLoginToken()).toBeUndefined();
+      await expect(unlockLogin(app, "nope")).rejects.toBeInstanceOf(WrongPasswordError);
+      expect(sessionLoginToken()).toBeUndefined();
+      await unlockLogin(app, "pw");
+      expect(sessionLoginToken()).toBe("gho_login");
+
+      forgetLogin(app);
+      expect(sessionLoginToken()).toBeUndefined();
+      expect(savedLoginExists(app)).toBe(false);
+    });
+
+    it("tells a cached source to enter the password, and a locked refresh says the same", async () => {
+      // Its own adapter, so another test's cache file can't stand in for the copy this one makes.
+      const own = { ...app, vault: { adapter: new MemoryAdapter() } } as unknown as import("obsidian").App;
+      await saveLogin(own, "gho_login", "pw");
+      const manager = new SourceManager(own, ".obsidian/plugins/dragonglass", "none");
+      await manager.buildIndex([ref(login)]);
+      manager.invalidate();
+      clearSessionLogin();
+      await manager.buildIndex([ref(login)]);
+      expect(manager.statusFor("p")?.origin).toMatch(/enter password to check for updates/);
+
+      manager.refresh("p");
+      await manager.buildIndex([ref(login)]);
+      expect(manager.statusFor("p")?.diagnostics[0].message).toBe("enter your password to check for updates");
     });
   });
 

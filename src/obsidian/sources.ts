@@ -9,7 +9,7 @@
 
 import { Platform, requestUrl, normalizePath, type App, type DataAdapter } from "obsidian";
 import type { Diagnostic, SourceRef } from "../core/types";
-import { readGithubToken } from "./github-auth";
+import { readGithubToken, savedLoginExists } from "./github-auth";
 import { ContentIndex, type LoadedSource } from "../core/content";
 import { contentHash } from "../core/export/hash";
 import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile } from "../core/content/source-bundle";
@@ -219,8 +219,8 @@ export class SourceManager {
     // only when there is none for this pin, or the user asked for an update.
     const isPrivate = ref.auth?.type === "oauth";
     const copy = this.cache.get(ref.id);
-    if (isPrivate && copy && copy.key === `${ref.id}@${ref.pin ?? ""}` && !this.refreshing.has(ref.id))
-      return this.fromCache(ref, copy, [], "loaded", `cached ${copy.fetchedAt}; sign in to update`);
+    if (isPrivate && copy?.private && copy.key === `${ref.id}@${ref.pin ?? ""}` && !this.refreshing.has(ref.id))
+      return this.fromCache(ref, copy, [], "loaded", `cached ${copy.fetchedAt}; ${savedLoginExists(this.app) ? "enter password" : "sign in"} to check for updates`);
 
     try {
       ({ bundle, origin } = await this.readBundle(ref));

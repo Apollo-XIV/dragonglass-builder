@@ -12,7 +12,7 @@ import type { CharacterStore } from "../../../character-store";
 import { blankSources } from "../../../character-files";
 import { createSource } from "../../../content-editor";
 import { nativeDialogAvailable, pickFolder } from "../../../native-dialog";
-import { SECRET_STORAGE_UPDATE_MESSAGE, saveGithubToken, secretStorageAvailable, sessionLoginToken } from "../../../github-auth";
+import { SECRET_STORAGE_UPDATE_MESSAGE, saveGithubToken, savedLoginExists, secretStorageAvailable, sessionLoginToken } from "../../../github-auth";
 import { updateFromGithub } from "../../../github-login-modal";
 import { describeSource, parseSourceInput, suggestSourceId } from "../../../settings";
 import { isWritableSource } from "../../../sources";
@@ -495,7 +495,7 @@ function SourceRow({
         ) : null}
         {ref_.auth?.type === "oauth" ? (
           <button className="dg-button is-quiet" onClick={() => void updateFromGithub(plugin, ref_)}>
-            Update from GitHub
+            {sessionLoginToken() ? "Check for updates" : savedLoginExists(plugin.app) ? "Enter password to check for updates" : "Sign in to check for updates"}
           </button>
         ) : null}
         {onSaveToken && ref_.type === "github" && ref_.auth?.type !== "oauth" ? (

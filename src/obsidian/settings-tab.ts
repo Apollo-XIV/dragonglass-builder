@@ -3,11 +3,14 @@ import type DragonglassPlugin from "../main";
 import {
   SECRET_STORAGE_UPDATE_MESSAGE,
   clearSessionLogin,
+  forgetLogin,
   saveGithubToken,
+  saveLogin,
+  savedLoginExists,
   secretStorageAvailable,
   sessionLoginToken,
 } from "./github-auth";
-import { GithubLoginModal, updateFromGithub } from "./github-login-modal";
+import { GithubLoginModal, PasswordModal, ensureLogin, updateFromGithub } from "./github-login-modal";
 import { fetchGithubUser } from "./github-user";
 import type { SourceRef } from "../core/types";
 import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
@@ -306,33 +309,56 @@ export class DragonglassSettingTab extends PluginSettingTab {
 
   private renderGithubAccount(containerEl: HTMLElement): void {
     const token = sessionLoginToken();
+    const saved = savedLoginExists(this.app);
     const setting = new Setting(containerEl).setName("GitHub account");
+    const again = (): void => this.display();
     if (token) {
-      const note = "Signed in until Obsidian closes. Private sources you add with your login can be updated.";
+      const note = saved
+        ? "Unlocked until Obsidian closes."
+        : "Signed in until Obsidian closes; nothing is saved on this device.";
       setting.setDesc(note);
       void fetchGithubUser(token).then((login) => {
         if (login) setting.setDesc(`Signed in as ${login}. ${note}`);
       });
       setting.addButton((button) =>
-        button.setButtonText("Sign out").onClick(() => {
+        button.setButtonText(saved ? "Lock" : "Sign out").onClick(() => {
           clearSessionLogin();
-          this.display();
+          again();
         }),
       );
+      if (!saved && secretStorageAvailable(this.app))
+        setting.addButton((button) =>
+          button.setButtonText("Save with a password").onClick(() =>
+            new PasswordModal(this.app, "set", (password) => saveLogin(this.app, token, password), again).open(),
+          ),
+        );
+    } else if (saved) {
+      setting
+        .setDesc("A GitHub login is saved on this device, sealed with your password. Enter it to check private sources for updates.")
+        .addButton((button) => button.setButtonText("Enter password").setCta().onClick(() => ensureLogin(this.app, again)));
     } else {
       setting
         .setDesc(
           "Sign in to add a private repo you can read, including ones you don't own, or to update one. " +
-            "The login is kept in memory for this session only; fetched sources are cached in the vault, " +
-            "so you won't need it again until you want an update.",
+            "Fetched sources are cached in the vault, so you only need the login again to check for updates.",
         )
         .addButton((button) =>
           button
             .setButtonText("Sign in")
             .setCta()
-            .onClick(() => new GithubLoginModal(this.app, () => this.display()).open()),
+            .onClick(() => new GithubLoginModal(this.app, again).open()),
         );
     }
+    if (saved)
+      setting.addExtraButton((button) =>
+        button
+          .setIcon("trash")
+          .setTooltip("Forget the saved login")
+          .onClick(() => {
+            forgetLogin(this.app);
+            again();
+          }),
+      );
   }
 
   private renderSourceAdder(containerEl: HTMLElement): void {

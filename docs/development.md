@@ -115,17 +115,20 @@ nothing else. Until one is set, the sign-in dialog says it isn't set up in this 
    public, so it is committed. Do not generate or keep a client secret; nothing uses one.
 5. Check it end to end in Obsidian: Settings → Dragonglass → GitHub account →
    **Sign in**, enter the code at github.com/login/device, then add a private repo with
-   **Use my GitHub login**. Check "Signed in as <login>" shows and a repo you don't own but
-   can read loads. Then **Sign out** (or restart Obsidian): the source must still load from
-   its cache with no request, and **Update from GitHub** must ask you to sign in again.
+   **Use my GitHub login**. When asked, set a password. Check "Signed in as <login>" shows and
+   a repo you don't own but can read loads. Then restart Obsidian: the source must still load
+   from its cache with no request and say "enter password to check for updates", and its
+   button must ask for the password, accept the right one and reject a wrong one. Also try
+   "Don't save (this session only)", and the trash button that forgets the saved login.
 
 Things to know:
 
 - The only scope that reads private repos is `repo`, which also writes wherever the user
   can. The sign-in dialog says so. Obsidian has no storage other plugins can't read, so the
-  login is held in memory for the session and never saved; sources fetched with it are cached
-  in the vault. Sign out only forgets it in memory; to revoke the token itself, remove the app
-  under GitHub → Settings → Applications → Authorized OAuth Apps.
+  login is sealed with a password the user types before it is saved, and held in memory once
+  unlocked; sources fetched with it are cached in the vault, so the password is only needed to
+  check for updates. Forgetting the login only deletes our copy; to revoke the token itself,
+  remove the app under GitHub → Settings → Applications → Authorized OAuth Apps.
 - An organisation with third-party app restrictions blocks the app until an admin approves
   it, and GitHub then answers 404 for that org's repos. The source error mentions this.
 - Classic OAuth App tokens don't expire, so there is no refresh. A 401 means the token was

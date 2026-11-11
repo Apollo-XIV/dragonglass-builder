@@ -5,6 +5,7 @@
  */
 import type { App } from "obsidian";
 import type { SourceAuth } from "../core/types";
+import { openToken, sealToken } from "./login-crypto";
 
 export const SECRET_STORAGE_MIN_VERSION = "1.11.4";
 
@@ -39,17 +40,20 @@ export function saveGithubToken(app: App, location: string, token: string, exist
 }
 
 /**
- * The GitHub login is for one session: it lives in memory, never in secret storage, a file
- * or `data.json`, because Obsidian gives a plugin nowhere that other plugins can't read.
- * It is only needed to fetch or update a source; the fetched files are cached in the vault,
- * so day-to-day use never asks for it. Closing Obsidian (or reloading the plugin) ends it.
+ * The GitHub login. Obsidian gives a plugin nowhere other plugins can't read, so what is
+ * saved is the token *sealed with a password the user types* (`login-crypto.ts`); the password
+ * is never stored. Unlocking it puts the token in memory for the session, and it is needed only
+ * to fetch or update a source: the files are cached in the vault, so day-to-day use never asks.
  */
+export const LOGIN_SECRET_ID = "dragonglass-github-login";
+
 let sessionLogin: string | undefined;
 
 export function setSessionLogin(token: string): void {
   sessionLogin = token.trim() || undefined;
 }
 
+/** Locks: forgets the token in memory. The saved, sealed copy stays. */
 export function clearSessionLogin(): void {
   sessionLogin = undefined;
 }
@@ -58,13 +62,39 @@ export function sessionLoginToken(): string | undefined {
   return sessionLogin;
 }
 
+/** Whether a sealed login is saved on this device, waiting for its password. */
+export function savedLoginExists(app: App): boolean {
+  return secretStorageAvailable(app) && !!app.secretStorage.getSecret(LOGIN_SECRET_ID);
+}
+
+/** Seals the token under the password, saves it, and keeps it unlocked for this session. */
+export async function saveLogin(app: App, token: string, password: string): Promise<void> {
+  if (!secretStorageAvailable(app)) throw new Error(SECRET_STORAGE_UPDATE_MESSAGE);
+  app.secretStorage.setSecret(LOGIN_SECRET_ID, await sealToken(token.trim(), password));
+  setSessionLogin(token);
+}
+
+/** Decrypts the saved login for this session. Throws `WrongPasswordError` on a wrong password. */
+export async function unlockLogin(app: App, password: string): Promise<void> {
+  const sealed = secretStorageAvailable(app) ? app.secretStorage.getSecret(LOGIN_SECRET_ID) : null;
+  if (!sealed) throw new Error("There is no saved GitHub login on this device");
+  setSessionLogin(await openToken(sealed, password));
+}
+
+/** Forgets the login everywhere. There is no delete in secret storage, so the saved copy is blanked. */
+export function forgetLogin(app: App): void {
+  clearSessionLogin();
+  if (secretStorageAvailable(app)) app.secretStorage.setSecret(LOGIN_SECRET_ID, "");
+}
+
 export const NOT_SIGNED_IN =
   "not signed in to GitHub; sign in from the GitHub account section of the settings to fetch or update this source";
+export const LOCKED = "enter your password to check for updates";
 
 /** The token a ref points at, or why there isn't one. */
 export function readGithubToken(app: App, auth: SourceAuth): string {
   if (auth.type === "oauth") {
-    if (!sessionLogin) throw new Error(NOT_SIGNED_IN);
+    if (!sessionLogin) throw new Error(savedLoginExists(app) ? LOCKED : NOT_SIGNED_IN);
     return sessionLogin;
   }
   if (!secretStorageAvailable(app)) throw new Error(SECRET_STORAGE_UPDATE_MESSAGE);
