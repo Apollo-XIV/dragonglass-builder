@@ -19,6 +19,7 @@ import { withSpent } from "../../../core/state/use-action";
 import { mentionsSpent } from "../../../core/expr/evaluate";
 import type { CharacterStore } from "../../character-store";
 import { AbilityBlock } from "../abilities";
+import { HpPanel } from "../hp-panel";
 import { Markdown, signed } from "../components";
 import { prettyPath } from "../sheet-panels";
 import { useNarrowSettings } from "./context";
@@ -160,12 +161,17 @@ export function featureList(character: ResolvedCharacter): ResolvedCharacter["fe
 export function OverviewSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   return (
     <>
-      <HpBlock store={store} character={character} />
+      <RestRow store={store} character={character} />
       <div className="dg-d-cluster dg-n-stat-cluster">
         <SpeedTile character={character} Read={HoldReadTarget} />
         <ArmourTile character={character} Read={HoldReadTarget} />
         <InitiativeTile character={character} Roll={HoldRollTarget} />
         <ProficiencyTile character={character} Read={HoldReadTarget} />
+      </div>
+
+      {/* HP is the most-used thing here, so it sits below the reference numbers, nearest the thumb. */}
+      <div className="dg-n-hp">
+        <HpPanel store={store} character={character} symbolStrip />
       </div>
 
       <div className="dg-n-ability-block">
@@ -183,71 +189,19 @@ export function OverviewSection({ store, character }: { store: CharacterStore; c
   );
 }
 
-/**
- * HP. The pair of buttons takes one point at a time, which is what a torch or a
- * second of concentration costs; holding the number opens the sheet where damage
- * and healing are entered properly.
- */
-function HpBlock({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
-  const sheet = useSheet();
-  const max = character.hp.max.value + character.hp.tempMax;
-  const low = character.hp.current <= max / 2;
-
-  const open = (): void =>
-    sheet.open({
-      title: "Hit points",
-      subtitle: `${character.hp.current} of ${max}`,
-      body: () => <HpEditor store={store} character={character} />,
-    });
-
+/** Rests have no other home in this layout, so they sit with the hit dice. */
+function RestRow({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   return (
-    <div className="dg-n-hp">
-      <button className="dg-n-hp-step" onClick={() => store.appendEvents(event("damage", { amount: 1 }))} aria-label="Take one damage">
-        −
+    <div className="dg-n-hp-rests">
+      <button className="dg-sheet-button" onClick={() => store.rest("short")}>
+        Short rest
       </button>
-      <ReadRow title={`${character.hp.current} / ${max}`} onTap={open} className={low ? "dg-n-hp-figure is-low" : "dg-n-hp-figure"}>
-        {character.hp.temp > 0 ? <span className="dg-n-temp">+{character.hp.temp} temp</span> : null}
-      </ReadRow>
-      <button className="dg-n-hp-step" onClick={() => store.appendEvents(event("heal", { amount: 1 }))} aria-label="Heal one point">
-        +
+      <button className="dg-sheet-button" onClick={() => store.rest("long")}>
+        Long rest
       </button>
-    </div>
-  );
-}
-
-function HpEditor({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
-  const [amount, setAmount] = useState(1);
-  return (
-    <div className="dg-n-hp-editor">
-      <input
-        type="number"
-        min={0}
-        value={amount}
-        aria-label="Amount"
-        onChange={(e) => setAmount(Math.max(0, Number(e.currentTarget.value)))}
-      />
-      <div className="dg-n-hp-buttons">
-        <button className="dg-sheet-button" onClick={() => store.appendEvents(event("damage", { amount }))}>
-          Damage
-        </button>
-        <button className="dg-sheet-button is-primary" onClick={() => store.appendEvents(event("heal", { amount }))}>
-          Heal
-        </button>
-        <button className="dg-sheet-button" onClick={() => store.appendEvents(event("temp-hp", { amount }))}>
-          Temp HP
-        </button>
-      </div>
-      <div className="dg-n-hp-buttons">
-        <button className="dg-sheet-button" onClick={() => store.rest("short")}>
-          Short rest
-        </button>
-        <button className="dg-sheet-button" onClick={() => store.rest("long")}>
-          Long rest
-        </button>
-      </div>
-      <p className="dg-muted">
+      <span className="dg-muted">
         Hit dice: {character.hp.hitDice.map((pool) => `${pool.remaining}${pool.die}`).join(", ") || "none"}
-      </p>
+      </span>
     </div>
   );
 }
