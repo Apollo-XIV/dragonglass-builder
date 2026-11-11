@@ -97,3 +97,33 @@ Not yet, and deliberately out of the MVP (see also [backlog.md](backlog.md)):
 - Link indexing for `.5e` files: Obsidian's metadata cache doesn't see wikilinks inside
   them, so backlinks and the graph miss them.
 - Mobile has not been tested on a device.
+
+## Registering the GitHub OAuth App
+
+Signing in to GitHub (for private sources) uses the device flow, which needs a client id and
+nothing else. Until one is set, the sign-in dialog says it isn't set up in this build.
+
+1. GitHub → Settings → Developer settings → OAuth Apps → **New OAuth App**. (Use an
+   organisation's settings instead if the app should belong to one.)
+2. Fill it in:
+   - **Application name:** Dragonglass (or similar; users see it on the consent screen).
+   - **Homepage URL:** the repository's URL.
+   - **Authorization callback URL:** required by the form but unused by the device flow;
+     any valid URL works, e.g. the repository's URL.
+3. After creating it, tick **Enable Device Flow** and save.
+4. Copy the **Client ID** into `GITHUB_CLIENT_ID` in `src/obsidian/github-oauth.ts`. It is
+   public, so it is committed. Do not generate or keep a client secret; nothing uses one.
+5. Check it end to end in Obsidian (1.11.4+): Settings → Dragonglass → GitHub account →
+   **Sign in**, enter the code at github.com/login/device, then add a private repo with
+   **Use my GitHub login**. Check "Signed in as <login>" shows, a repo you don't own but can
+   read loads, and **Sign out** makes the source report "not signed in".
+
+Things to know:
+
+- The only scope that reads private repos is `repo`, which also writes. The sign-in dialog
+  says so. Sign out only forgets the token on the device; to revoke it, remove the app under
+  GitHub → Settings → Applications → Authorized OAuth Apps.
+- An organisation with third-party app restrictions blocks the app until an admin approves
+  it, and GitHub then answers 404 for that org's repos. The source error mentions this.
+- Classic OAuth App tokens don't expire, so there is no refresh. A 401 means the token was
+  revoked and the user signs in again.
