@@ -12,6 +12,7 @@ import type { CharacterStore } from "../../../character-store";
 import { blankSources } from "../../../character-files";
 import { createSource } from "../../../content-editor";
 import { nativeDialogAvailable, pickFolder } from "../../../native-dialog";
+import { SECRET_STORAGE_UPDATE_MESSAGE, githubLoginToken, saveGithubToken, secretStorageAvailable } from "../../../github-auth";
 import { describeSource, parseSourceInput, suggestSourceId } from "../../../settings";
 import { isWritableSource } from "../../../sources";
 import { usePlugin } from "../../context";
@@ -27,6 +28,8 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
   const disabled = new Set(store.data.sources?.disabled ?? []);
   const [addType, setAddType] = useState<LocationType>("github");
   const [addValue, setAddValue] = useState("");
+  const [addToken, setAddToken] = useState("");
+  const [addUseLogin, setAddUseLogin] = useState(false);
   const [busy, setBusy] = useState(false);
   const [creating, setCreating] = useState(false);
   const [browsing, setBrowsing] = useState<{ ref: SourceRef; startNew?: boolean } | undefined>();
@@ -43,10 +46,23 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
       new Notice(addType === "github" ? "Enter owner/repo or a GitHub URL." : "Enter a location.");
       return;
     }
+    let auth: SourceRef["auth"];
+    if (addType === "github" && addUseLogin) {
+      auth = { type: "oauth" };
+    } else if (addType === "github" && addToken.trim()) {
+      try {
+        auth = saveGithubToken(plugin.app, parsed.location, addToken);
+      } catch (e) {
+        new Notice(e instanceof Error ? e.message : String(e));
+        return;
+      }
+    }
     const file = store.data.sources ?? blankSources();
     const id = uniqueId(suggestSourceId(parsed), [...own.map((s) => s.id), ...plugin.settings.sources.map((s) => s.id)]);
-    store.update("sources", { ...file, sources: [...own, { ...parsed, id } as SourceRef] });
+    store.update("sources", { ...file, sources: [...own, { ...parsed, id, ...(auth ? { auth } : {}) } as SourceRef] });
     setAddValue("");
+    setAddToken("");
+    setAddUseLogin(false);
     setBusy(true);
     await plugin.reloadSources();
     setBusy(false);
@@ -73,6 +89,23 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
 
   const statusFor = (id: string) => plugin.sources.statusFor(id);
 
+  // Replaces only the secret. A source that had no token yet gains `auth`, and that is the
+  // only field of its entry that changes, so a pin is never touched by a token update.
+  const saveToken = async (ref: SourceRef, token: string): Promise<void> => {
+    const auth = saveGithubToken(plugin.app, ref.location, token, ref.auth);
+    if (ref.auth?.type !== "token") {
+      if (own.some((s) => s.id === ref.id)) {
+        const file = store.data.sources ?? blankSources();
+        store.update("sources", { ...file, sources: own.map((s) => (s.id === ref.id ? { ...s, auth } : s)) });
+      } else {
+        plugin.settings.sources = plugin.settings.sources.map((s) => (s.id === ref.id ? { ...s, auth } : s));
+        await plugin.saveSettings();
+      }
+    }
+    await plugin.reloadSources();
+    new Notice(`Token saved for "${ref.name ?? ref.id}"`);
+  };
+
   if (browsing && index)
     return (
       <SourceBrowser
@@ -95,9 +128,15 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
           onTypeChange={(t) => {
             setAddType(t);
             setAddValue("");
+            setAddToken("");
+            setAddUseLogin(false);
           }}
           value={addValue}
           onChange={setAddValue}
+          token={addToken}
+          onTokenChange={setAddToken}
+          useLogin={addUseLogin}
+          onUseLoginChange={setAddUseLogin}
           vaultFolderOptions={vaultFolders}
           allowGithub
           onEnter={() => void addOwn()}
@@ -131,6 +170,7 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
                 enabled={ref.enabled !== false}
                 onToggle={(on) => void toggleOwn(ref.id, on)}
                 onRemove={() => void removeOwn(ref.id)}
+                onSaveToken={(token) => saveToken(ref, token)}
                 onBrowse={index ? () => setBrowsing({ ref }) : undefined}
               />
             ))}
@@ -157,6 +197,7 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
                 status={statusFor(ref.id)}
                 enabled={!disabled.has(ref.id)}
                 onToggle={(on) => void toggleVaultSource(ref.id, on)}
+                onSaveToken={(token) => saveToken(ref, token)}
                 onBrowse={index ? () => setBrowsing({ ref }) : undefined}
               />
             ))}
@@ -295,6 +336,10 @@ function LocationField({
   onChange,
   vaultFolderOptions,
   allowGithub,
+  token,
+  onTokenChange,
+  useLogin,
+  onUseLoginChange,
   onEnter,
 }: {
   type: LocationType;
@@ -303,9 +348,17 @@ function LocationField({
   onChange: (value: string) => void;
   vaultFolderOptions: string[];
   allowGithub: boolean;
+  /** A GitHub token for a private repo; omit both to hide the field. */
+  token?: string;
+  onTokenChange?: (token: string) => void;
+  /** Offered only while signed in to GitHub. */
+  useLogin?: boolean;
+  onUseLoginChange?: (on: boolean) => void;
   onEnter?: () => void;
 }): ReactNode {
   const [browsing, setBrowsing] = useState(false);
+  const { plugin } = usePlugin();
+  const canStoreToken = secretStorageAvailable(plugin.app);
 
   const browse = async (): Promise<void> => {
     setBrowsing(true);
@@ -360,6 +413,28 @@ function LocationField({
           </button>
         ) : null}
       </div>
+      {type === "github" && onUseLoginChange && githubLoginToken(plugin.app) ? (
+        <label className="dg-field">
+          <input type="checkbox" checked={useLogin ?? false} onChange={(e) => onUseLoginChange(e.currentTarget.checked)} />
+          <span>Use my GitHub login (a private repo your account can read)</span>
+        </label>
+      ) : null}
+      {type === "github" && onTokenChange && !useLogin ? (
+        <>
+          <div className="dg-field">
+            <span>Token</span>
+            <input
+              type="password"
+              className="dg-location-input"
+              autoComplete="off"
+              placeholder="Only for a private repo: a fine-grained token with read access to Contents"
+              value={token ?? ""}
+              onChange={(e) => onTokenChange(e.currentTarget.value)}
+            />
+          </div>
+          {!canStoreToken ? <p className="dg-muted">{SECRET_STORAGE_UPDATE_MESSAGE}</p> : null}
+        </>
+      ) : null}
       <p className="dg-muted">
         {type === "github"
           ? "Pinned to a tag or commit once added, so an upstream change can't silently shift anyone's numbers."
@@ -378,6 +453,7 @@ function SourceRow({
   onToggle,
   onRemove,
   onBrowse,
+  onSaveToken,
 }: {
   ref_: SourceRef;
   status?: { state: string; elementCount: number; diagnostics: Diagnostic[]; origin?: string };
@@ -385,7 +461,11 @@ function SourceRow({
   onToggle?: (on: boolean) => void;
   onRemove?: () => void;
   onBrowse?: () => void;
+  /** Replaces this GitHub source's token (or gives it one) without touching the rest of its entry. */
+  onSaveToken?: (token: string) => Promise<void>;
 }): ReactNode {
+  const [editingToken, setEditingToken] = useState(false);
+  const [token, setToken] = useState("");
   const errors = status?.diagnostics.filter((d) => d.severity === "error").length ?? 0;
   return (
     <li className="dg-source">
@@ -396,6 +476,7 @@ function SourceRow({
         <strong>{ref_.name ?? ref_.id}</strong>
         <span className="dg-muted">{describeSource(ref_)}</span>
         {isWritableSource(ref_) ? null : <Pill tone="info">read-only</Pill>}
+        {ref_.auth ? <Pill tone="info">{ref_.auth.type === "oauth" ? "GitHub login" : "private"}</Pill> : null}
         {status ? (
           <Pill tone={status.state === "error" ? "error" : status.state === "cached" ? "warn" : undefined}>
             {status.state}
@@ -410,12 +491,44 @@ function SourceRow({
             Browse
           </button>
         ) : null}
+        {onSaveToken && ref_.type === "github" ? (
+          <button className="dg-button is-quiet" onClick={() => setEditingToken((v) => !v)}>
+            {ref_.auth?.type === "token" ? "Update token" : "Add token"}
+          </button>
+        ) : null}
         {onRemove ? (
           <button className="dg-button is-quiet" onClick={onRemove}>
             Remove
           </button>
         ) : null}
       </div>
+      {editingToken && onSaveToken ? (
+        <div className="dg-field">
+          <span>Token</span>
+          <input
+            type="password"
+            className="dg-location-input"
+            autoComplete="off"
+            placeholder="A new fine-grained token. The pin and everything else stay as they are."
+            value={token}
+            onChange={(e) => setToken(e.currentTarget.value)}
+          />
+          <button
+            className="dg-button"
+            disabled={!token.trim()}
+            onClick={() => {
+              onSaveToken(token)
+                .then(() => {
+                  setToken("");
+                  setEditingToken(false);
+                })
+                .catch((e) => new Notice(e instanceof Error ? e.message : String(e)));
+            }}
+          >
+            Save token
+          </button>
+        </div>
+      ) : null}
       {status?.origin ? <div className="dg-muted">{status.origin}</div> : null}
       {status?.diagnostics.length ? <Diagnostics diagnostics={status.diagnostics} title="Source problems" /> : null}
     </li>

@@ -9,6 +9,7 @@
 
 import { Platform, requestUrl, normalizePath, type App, type DataAdapter } from "obsidian";
 import type { Diagnostic, SourceRef } from "../core/types";
+import { readGithubToken } from "./github-auth";
 import { ContentIndex, type LoadedSource } from "../core/content";
 import { contentHash } from "../core/export/hash";
 import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile } from "../core/content/source-bundle";
@@ -425,7 +426,9 @@ export class SourceManager {
   private async readGithub(ref: SourceRef): Promise<{ bundle: SourceBundle; origin: string }> {
     const [owner, repo] = ref.location.split("/");
     if (!owner || !repo) throw new Error(`"${ref.location}" is not an owner/repo pair`);
-    const pin = ref.pin ?? (await this.defaultBranch(owner, repo));
+    // Resolved up front so a missing token fails with its own message, not a 404.
+    const token = ref.auth ? readGithubToken(this.app, ref.auth) : undefined;
+    const pin = ref.pin ?? (await this.defaultBranch(owner, repo, token));
     if (!ref.pin) {
       // Not fatal, but worth saying: an unpinned source can change under the user.
       this.statuses.set(ref.id, {
@@ -447,16 +450,24 @@ export class SourceManager {
 
     const tree = await this.json<{ tree: { path: string; type: string }[]; truncated?: boolean }>(
       `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(pin)}?recursive=1`,
+      token,
     );
     if (tree.truncated)
       throw new Error(`"${ref.location}" is too large to list in one request; split the source`);
 
-    const raw = (file: string) =>
-      `https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(pin)}/${file}`;
+    // raw.githubusercontent.com doesn't take a token header reliably, so a private
+    // repo's files come through the contents API, which does.
+    const fetchFile = (file: string): Promise<string> =>
+      token
+        ? this.text(
+            `https://api.github.com/repos/${owner}/${repo}/contents/${file.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(pin)}`,
+            token,
+          )
+        : this.text(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(pin)}/${file}`);
 
     const manifestEntry = tree.tree.find((e) => e.path === "source.json");
     const { manifest } = parseManifest(
-      manifestEntry ? await this.text(raw("source.json")) : "{}",
+      manifestEntry ? await fetchFile("source.json") : "{}",
       ref.id,
     );
 
@@ -464,7 +475,7 @@ export class SourceManager {
       (e) => e.type === "blob" && e.path.startsWith("content/") && e.path.endsWith(".json"),
     );
     const files: SourceFile[] = [];
-    for (const entry of contentFiles) files.push({ path: entry.path, text: await this.text(raw(entry.path)) });
+    for (const entry of contentFiles) files.push({ path: entry.path, text: await fetchFile(entry.path) });
 
     return {
       bundle: { manifest: { ...manifest, id: manifest.id || ref.id }, files },
@@ -481,24 +492,41 @@ export class SourceManager {
     };
   }
 
-  private async defaultBranch(owner: string, repo: string): Promise<string> {
-    const info = await this.json<{ default_branch?: string }>(`https://api.github.com/repos/${owner}/${repo}`);
+  private async defaultBranch(owner: string, repo: string, token?: string): Promise<string> {
+    const info = await this.json<{ default_branch?: string }>(`https://api.github.com/repos/${owner}/${repo}`, token);
     return info.default_branch ?? "main";
   }
 
   /** Obsidian's requestUrl works on mobile and avoids CORS. */
-  private async text(url: string): Promise<string> {
-    const response = await requestUrl({ url, throw: false });
-    if (response.status >= 400) throw new Error(`${response.status} fetching ${url}`);
+  private async text(url: string, token?: string): Promise<string> {
+    const headers: Record<string, string> = {};
+    // The contents API answers with the file itself, not JSON wrapping base64, for this type.
+    if (token) Object.assign(headers, { Accept: "application/vnd.github.raw+json", Authorization: `Bearer ${token}` });
+    const response = await requestUrl({ url, throw: false, headers });
+    if (response.status >= 400) throw new Error(this.failure(response.status, url, token));
     return response.text;
   }
 
-  private async json<T>(url: string): Promise<T> {
-    const response = await requestUrl({ url, throw: false, headers: { Accept: "application/vnd.github+json" } });
-    if (response.status >= 400) {
-      const hint = response.status === 403 ? " (GitHub rate limit, most likely)" : "";
-      throw new Error(`${response.status} fetching ${url}${hint}`);
-    }
+  private async json<T>(url: string, token?: string): Promise<T> {
+    const headers: Record<string, string> = { Accept: "application/vnd.github+json" };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    const response = await requestUrl({ url, throw: false, headers });
+    if (response.status >= 400) throw new Error(this.failure(response.status, url, token));
     return response.json as T;
+  }
+
+  private failure(status: number, url: string, token?: string): string {
+    // GitHub answers 404, not 403, for a private repo the caller can't see.
+    const hint =
+      status === 401
+        ? " (GitHub rejected the token or login; it may have expired or been revoked, so sign in or add it again)"
+        : status === 404 && token
+          ? " (not found, or the token or login has no access to this repo; an organisation may need to approve the app)"
+          : status === 404 && url.startsWith("https://api.github.com/")
+            ? " (not found; if the repo is private, add an access token)"
+            : status === 403
+              ? " (GitHub rate limit, most likely)"
+              : "";
+    return `${status} fetching ${url}${hint}`;
   }
 }

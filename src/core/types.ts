@@ -771,6 +771,16 @@ export interface InventoryFile extends CharacterFile {
   currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number };
 }
 
+/**
+ * How a source proves it may be read. Only ever a *reference*: `SourceRef`s live in
+ * plugin settings and in a character's `sources.5e`, both of which sync and get shared,
+ * so the credential itself goes in Obsidian's secret storage and this names it.
+ * `token` is a personal access token for one repo, named by its secret. `oauth` is the
+ * plugin-wide GitHub login: it names no secret because there is only one, so a shared
+ * `sources.5e` stays portable and each device signs in for itself.
+ */
+export type SourceAuth = { type: "token"; secret: string } | { type: "oauth" };
+
 export interface SourceRef {
   /** Stable id, matching the source's own source.json id where possible. */
   id: string;
@@ -779,6 +789,8 @@ export interface SourceRef {
   location: string;
   /** Tag or commit SHA. Required for github sources so content can't drift. */
   pin?: string;
+  /** Credentials for a private GitHub repo. Absent for a public one. */
+  auth?: SourceAuth;
   enabled?: boolean;
   name?: string;
 }

@@ -4756,3 +4756,11 @@
 .dg-layout .dg-read-row > .dg-use-picker {
   flex: 1 0 100%;
 }
+
+.dg-device-code {
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-larger, 1.4em);
+  letter-spacing: 0.15em;
+  text-align: center;
+  user-select: all;
+}

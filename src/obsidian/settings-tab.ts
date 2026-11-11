@@ -1,5 +1,14 @@
-import { Notice, PluginSettingTab, Setting, type App } from "obsidian";
+import { Modal, Notice, PluginSettingTab, Setting, type App } from "obsidian";
 import type DragonglassPlugin from "../main";
+import {
+  SECRET_STORAGE_UPDATE_MESSAGE,
+  clearGithubLogin,
+  githubLoginToken,
+  saveGithubToken,
+  secretStorageAvailable,
+} from "./github-auth";
+import { GithubLoginModal } from "./github-login-modal";
+import { fetchGithubUser } from "./github-user";
 import type { SourceRef } from "../core/types";
 import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
 import { HOLD } from "./ui/narrow/constants";
@@ -24,6 +33,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
         "in its sources file. The plugin's own core definitions always load last, so any source can replace them.",
     });
 
+    this.renderGithubAccount(containerEl);
     this.renderSourceAdder(containerEl);
     this.renderSourceList(containerEl);
 
@@ -294,8 +304,47 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
   }
 
+  private renderGithubAccount(containerEl: HTMLElement): void {
+    const signedIn = !!githubLoginToken(this.app);
+    const setting = new Setting(containerEl)
+      .setName("GitHub account")
+      .setDesc(
+        secretStorageAvailable(this.app)
+          ? signedIn
+            ? "Signed in. Sources set to use your GitHub login can read any private repo you can."
+            : "Sign in once to add private repos you have access to, including ones you don't own. This device only; the login isn't stored in the vault."
+          : SECRET_STORAGE_UPDATE_MESSAGE,
+      );
+    if (signedIn) {
+      void fetchGithubUser(githubLoginToken(this.app) ?? "").then((login) => {
+        if (login) setting.setDesc(`Signed in as ${login}. Sources set to use your GitHub login can read any private repo you can.`);
+      });
+      setting.addButton((button) =>
+        button.setButtonText("Sign out").onClick(async () => {
+          clearGithubLogin(this.app);
+          await this.plugin.reloadSources();
+          this.display();
+        }),
+      );
+    } else if (secretStorageAvailable(this.app)) {
+      setting.addButton((button) =>
+        button
+          .setButtonText("Sign in")
+          .setCta()
+          .onClick(() =>
+            new GithubLoginModal(this.app, async () => {
+              await this.plugin.reloadSources();
+              this.display();
+            }).open(),
+          ),
+      );
+    }
+  }
+
   private renderSourceAdder(containerEl: HTMLElement): void {
     let input = "";
+    let token = "";
+    let useLogin = false;
     new Setting(containerEl)
       .setName("Add a source")
       .setDesc(
@@ -317,11 +366,50 @@ export class DragonglassSettingTab extends PluginSettingTab {
               new Notice("Enter a repo, URL or folder.");
               return;
             }
-            await this.plugin.addSource({ ...parsed, id: suggestSourceId(parsed) } as SourceRef);
+            let auth: SourceRef["auth"];
+            if (useLogin) {
+              if (parsed.type !== "github") {
+                new Notice("A GitHub login is only for a GitHub repo.");
+                return;
+              }
+              auth = { type: "oauth" };
+            } else if (token.trim()) {
+              if (parsed.type !== "github") {
+                new Notice("A token is only for a private GitHub repo.");
+                return;
+              }
+              try {
+                auth = saveGithubToken(this.app, parsed.location, token);
+              } catch (e) {
+                new Notice(e instanceof Error ? e.message : String(e));
+                return;
+              }
+            }
+            await this.plugin.addSource({ ...parsed, id: suggestSourceId(parsed), ...(auth ? { auth } : {}) } as SourceRef);
             new Notice(`Added ${describeSource(parsed as SourceRef)}`);
             this.display();
           }),
       );
+    if (githubLoginToken(this.app))
+      new Setting(containerEl)
+        .setName("Use my GitHub login")
+        .setDesc("For a private repo your account can read. Overrides the token below.")
+        .addToggle((toggle) => toggle.onChange((value) => (useLogin = value)));
+    const tokenSetting = new Setting(containerEl)
+      .setName("Access token (private repos)")
+      .setDesc(
+        secretStorageAvailable(this.app)
+          ? "Optional. A fine-grained personal access token with read-only access to the repo's Contents. Stored in Obsidian's secret storage, not in the vault."
+          : SECRET_STORAGE_UPDATE_MESSAGE,
+      )
+      .addText((text) => {
+        text.inputEl.type = "password";
+        text.inputEl.autocomplete = "off";
+        text.onChange((value) => {
+          token = value;
+        });
+      });
+    if (!secretStorageAvailable(this.app)) tokenSetting.setDisabled(true);
   }
 
   private renderSourceList(containerEl: HTMLElement): void {
@@ -357,6 +445,27 @@ export class DragonglassSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings();
           }),
       );
+
+      if (ref.type === "github")
+        setting.addExtraButton((button) =>
+          button
+            .setIcon("key-round")
+            .setTooltip(ref.auth?.type === "token" ? "Update token" : "Add token")
+            .onClick(() =>
+              new TokenModal(this.app, ref, async (token) => {
+                // Only the secret changes; a source that had no token gains `auth` and nothing else.
+                const auth = saveGithubToken(this.app, ref.location, token, ref.auth);
+                if (ref.auth?.type !== "token") {
+                  this.plugin.settings.sources[i] = { ...ref, auth };
+                  await this.plugin.saveSettings();
+                }
+                this.plugin.sources.invalidate(ref.id);
+                await this.plugin.reloadSources();
+                new Notice(`Token saved for "${ref.name ?? ref.id}"`);
+                this.display();
+              }).open(),
+            ),
+        );
 
       setting.addToggle((toggle) =>
         toggle
@@ -394,5 +503,54 @@ export class DragonglassSettingTab extends PluginSettingTab {
           }),
       );
     });
+  }
+}
+
+/** Asks for a replacement token, so changing it never means editing the source's entry. */
+class TokenModal extends Modal {
+  constructor(
+    app: App,
+    private readonly ref: SourceRef,
+    private readonly onSave: (token: string) => Promise<void>,
+  ) {
+    super(app);
+  }
+
+  onOpen(): void {
+    let token = "";
+    this.setTitle(this.ref.auth?.type === "token" ? "Update token" : "Add token");
+    this.contentEl.createEl("p", {
+      text: `A fine-grained token with read-only Contents access to ${this.ref.location}. The pin and the rest of the source stay as they are.`,
+    });
+    if (!secretStorageAvailable(this.app)) {
+      this.contentEl.createEl("p", { text: SECRET_STORAGE_UPDATE_MESSAGE });
+      return;
+    }
+    new Setting(this.contentEl)
+      .addText((text) => {
+        text.inputEl.type = "password";
+        text.inputEl.autocomplete = "off";
+        text.onChange((value) => {
+          token = value;
+        });
+      })
+      .addButton((button) =>
+        button
+          .setButtonText("Save")
+          .setCta()
+          .onClick(async () => {
+            if (!token.trim()) return;
+            try {
+              await this.onSave(token);
+              this.close();
+            } catch (e) {
+              new Notice(e instanceof Error ? e.message : String(e));
+            }
+          }),
+      );
+  }
+
+  onClose(): void {
+    this.contentEl.empty();
   }
 }

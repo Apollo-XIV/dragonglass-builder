@@ -183,7 +183,7 @@ export function withDefaults(stored: Partial<DragonglassSettings> | null | undef
 export function describeSource(ref: SourceRef): string {
   switch (ref.type) {
     case "github":
-      return `GitHub ${ref.location}${ref.pin ? `@${ref.pin}` : " (unpinned)"}`;
+      return `GitHub${ref.auth ? " (private)" : ""} ${ref.location}${ref.pin ? `@${ref.pin}` : " (unpinned)"}`;
     case "vault":
       return `Vault folder ${ref.location}`;
     case "path":
