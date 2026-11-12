@@ -1,7 +1,7 @@
 {
   "id": "dragonglass-builder",
   "name": "Dragonglass Builder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "minAppVersion": "1.5.0",
   "description": "A data-driven D&D 5e character builder and interactive character sheet.",
   "author": "Apollo-XIV",
