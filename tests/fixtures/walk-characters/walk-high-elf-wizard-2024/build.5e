@@ -72,7 +72,7 @@
       "srd24:skill:insight"
     ],
     "srd24:species:elf:subspecies": [
-      "srd24:subspecies:high-elf-lineage"
+      "srd24:subspecies:elf-high-elf-lineage"
     ],
     "srd24:background:sage:abilities": [
       "srd24:ability-point:int",
@@ -89,10 +89,10 @@
     "srd24:feat:magic-initiate-wizard:innate-spells": [
       "srd24:spell:shield"
     ],
-    "srd24:subspecies:high-elf-lineage:known-spells": [
+    "srd24:subspecies:elf-high-elf-lineage:known-spells": [
       "srd24:spell:prestidigitation"
     ],
-    "srd24:subspecies:high-elf-lineage:ability": [
+    "srd24:subspecies:elf-high-elf-lineage:ability": [
       "srd24:casting-ability:int"
     ]
   },

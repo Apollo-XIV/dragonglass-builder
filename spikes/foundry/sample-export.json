@@ -35,7 +35,7 @@
       "source": "srd",
       "granted": [
         {
-          "id": "srd:subspecies:rock-gnome",
+          "id": "srd:subspecies:gnome-rock",
           "kind": "subspecies",
           "via": [
             "srd:species:gnome"
@@ -46,23 +46,23 @@
           "kind": "tool",
           "via": [
             "srd:species:gnome",
-            "srd:subspecies:rock-gnome"
+            "srd:subspecies:gnome-rock"
           ]
         },
         {
-          "id": "srd:rock-gnome:artificers-lore",
+          "id": "srd:subspecies:gnome-rock:artificers-lore",
           "kind": "species-trait",
           "via": [
             "srd:species:gnome",
-            "srd:subspecies:rock-gnome"
+            "srd:subspecies:gnome-rock"
           ]
         },
         {
-          "id": "srd:rock-gnome:tinker",
+          "id": "srd:subspecies:gnome-rock:tinker",
           "kind": "species-trait",
           "via": [
             "srd:species:gnome",
-            "srd:subspecies:rock-gnome"
+            "srd:subspecies:gnome-rock"
           ]
         },
         {
@@ -254,7 +254,7 @@
       "declaredBy": "srd:species:gnome",
       "count": 1,
       "picked": [
-        "srd:subspecies:rock-gnome"
+        "srd:subspecies:gnome-rock"
       ],
       "pending": false
     },
@@ -516,7 +516,7 @@
             "kind": "tool",
             "via": [
               "srd:species:gnome",
-              "srd:subspecies:rock-gnome"
+              "srd:subspecies:gnome-rock"
             ]
           }
         ]
@@ -616,7 +616,7 @@
   },
   "features": [
     {
-      "id": "srd:rock-gnome:artificers-lore",
+      "id": "srd:subspecies:gnome-rock:artificers-lore",
       "kind": "species-trait",
       "name": "Artificer's Lore",
       "source": "srd",
@@ -625,13 +625,13 @@
       "provenance": {
         "via": [
           "srd:species:gnome",
-          "srd:subspecies:rock-gnome"
+          "srd:subspecies:gnome-rock"
         ]
       },
       "parts": []
     },
     {
-      "id": "srd:rock-gnome:tinker",
+      "id": "srd:subspecies:gnome-rock:tinker",
       "kind": "species-trait",
       "name": "Tinker",
       "source": "srd",
@@ -640,7 +640,7 @@
       "provenance": {
         "via": [
           "srd:species:gnome",
-          "srd:subspecies:rock-gnome"
+          "srd:subspecies:gnome-rock"
         ]
       },
       "parts": []

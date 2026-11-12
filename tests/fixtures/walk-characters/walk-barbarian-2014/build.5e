@@ -64,7 +64,7 @@
       "srd:tool:brewers-supplies"
     ],
     "srd:species:dwarf:subspecies": [
-      "srd:subspecies:hill-dwarf"
+      "srd:subspecies:dwarf-hill"
     ],
     "srd:background:acolyte:language": [
       "srd:language:common",
