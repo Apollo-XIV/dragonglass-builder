@@ -422,6 +422,19 @@ describe("edit sessions", () => {
     expect(adapter.writes).not.toContain("Characters/Ilsa/build.5e");
   });
 
+  it("keeps an avatar set during a session when the session is discarded", async () => {
+    const { store } = await loadStore({
+      "Characters/Ilsa/details.5e": "---\nkind: details\nschemaVersion: 1\n---\n## Backstory\nHi.\n",
+    });
+    store.beginEdit();
+    store.setAvatar("Art/new.png");
+    store.discardEdit();
+    await store.flush();
+
+    expect(store.data.details?.frontmatter.avatar).toBe("Art/new.png");
+    expect(store.resolved?.avatar).toBe("Art/new.png");
+  });
+
   it("lets live play through: the sheet's hit points are not part of the edit", async () => {
     const { store, adapter } = await loadStore();
     store.beginEdit();

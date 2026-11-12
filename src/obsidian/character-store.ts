@@ -353,7 +353,11 @@ export class CharacterStore {
     const session = this.session;
     if (!session) return;
     this.session = undefined;
-    this.data = session.base;
+    // Only the kinds the session held go back; the rest (the avatar in details.5e)
+    // wrote through while it was open and must keep what they were given.
+    const restored: Partial<CharacterData> = {};
+    for (const kind of session.kinds) Object.assign(restored, { [kind]: session.base[kind] });
+    this.data = { ...this.data, ...restored };
     this.recompute();
     this.notify();
   }
