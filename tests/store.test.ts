@@ -163,6 +163,20 @@ describe("loading a character folder", () => {
     expect(store.data.details?.frontmatter.avatar).toBe("Art/ilsa.png");
     expect(store.data.details?.sections.map((s) => s.heading)).toEqual(["Backstory", "Flaws"]);
     expect(store.data.details?.sections[0].body).toBe("Forge-raised.");
+    expect(store.resolved?.avatar).toBe("Art/ilsa.png");
+  });
+
+  it("sets and clears the avatar, writing it through to details.5e", async () => {
+    const { store, adapter } = await loadStore({
+      "Characters/Ilsa/details.5e": "---\nkind: details\nschemaVersion: 1\n---\n## Backstory\nHi.\n",
+    });
+    store.setAvatar("Art/new.png");
+    expect(store.resolved?.avatar).toBe("Art/new.png");
+    await store.flush();
+    expect(await adapter.read("Characters/Ilsa/details.5e")).toContain("avatar: Art/new.png");
+    store.setAvatar(undefined);
+    await store.flush();
+    expect(await adapter.read("Characters/Ilsa/details.5e")).not.toContain("avatar");
   });
 });
 
@@ -314,6 +328,13 @@ describe("details documents", () => {
     const out = parseDetails(serialiseDetails(doc));
     expect(out.frontmatter).toEqual(doc.frontmatter);
     expect(out.sections).toEqual(doc.sections);
+  });
+
+  it("keeps frontmatter keys it does not own when it writes", () => {
+    const doc = parseDetails("---\nkind: details\nschemaVersion: 1\nalignment: neutral good\n---\n## Backstory\nHi.\n");
+    const text = serialiseDetails({ ...doc, frontmatter: { ...doc.frontmatter, avatar: "Art/y.png" } });
+    expect(text).toContain("avatar: Art/y.png");
+    expect(text).toContain("alignment: neutral good");
   });
 
   it("keeps a section the file did not have when one is set", () => {

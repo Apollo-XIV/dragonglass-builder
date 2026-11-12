@@ -790,6 +790,11 @@ pool's remainder is never applied, because the export is not a play session. The
 still exported as written, `@spent` and all. `provenance` is `{ source, review }` as authored (see **Part
 provenance**), lifted off the definition. Nothing existing changed meaning.
 
+**Export 2.4** is additive. `identity.avatar` is the character's portrait as a base64 data URL
+(`data:image/webp;base64,...`), taken from the `avatar` path in `details.5e`. The plugin shrinks it to fit 512px
+and 512 KB; a picture that is missing, unreadable or still too large is left out, and the export carries on. It is
+the Foundry actor's portrait and token image.
+
 ## Type reference
 
 The shapes added by recharge rules, innate spells, weapon mastery, grant modes, learned choices,

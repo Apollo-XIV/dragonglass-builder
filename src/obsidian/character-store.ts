@@ -28,6 +28,7 @@ import {
   parseDetails,
   parseJsonFile,
   resolvePaths,
+  SCHEMA_VERSION,
   serialiseDetails,
   serialiseJson,
   type CharacterPaths,
@@ -171,7 +172,13 @@ export class CharacterStore {
     const { vault } = this.host.app;
     const onChange = (file: TAbstractFile) => void this.onExternalChange(file.path);
     this.vaultRefs.push(vault.on("modify", onChange));
-    this.vaultRefs.push(vault.on("rename", onChange));
+    this.vaultRefs.push(
+      vault.on("rename", (file: TAbstractFile, oldPath: string) => {
+        // An avatar that was moved in the vault should still be the avatar.
+        if (oldPath && oldPath === this.data.details?.frontmatter.avatar) this.setAvatar(file.path);
+        onChange(file);
+      }),
+    );
     this.vaultRefs.push(vault.on("create", onChange));
     this.vaultRefs.push(vault.on("delete", onChange));
   }
@@ -399,6 +406,18 @@ export class CharacterStore {
     this.recompute();
     this.notify();
     this.scheduleFlush();
+  }
+
+  /** Sets or clears the avatar (a vault path). It lives in details.5e, which a builder session leaves alone. */
+  setAvatar(path: string | undefined): void {
+    const details: DetailsDocument = this.data.details ?? {
+      frontmatter: { kind: "details", schemaVersion: SCHEMA_VERSION },
+      sections: [],
+      preamble: "",
+      raw: "",
+    };
+    if (details.frontmatter.avatar === (path || undefined)) return;
+    this.update("details", { ...details, frontmatter: { ...details.frontmatter, avatar: path || undefined } });
   }
 
   mutateBuild(mutate: (build: BuildFile) => BuildFile): void {

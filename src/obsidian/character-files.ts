@@ -138,7 +138,7 @@ const FRONTMATTER = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?/;
 /**
  * A deliberately small frontmatter reader. `details.5e` only carries scalars
  * (`kind`, `schemaVersion`, `avatar`), so a YAML dependency would be overkill, and
- * anything it doesn't understand is preserved on write rather than dropped.
+ * any other scalar key is kept in `extra` and written back rather than dropped.
  */
 export function parseDetails(text: string): DetailsDocument {
   const match = text.match(FRONTMATTER);
@@ -149,6 +149,10 @@ export function parseDetails(text: string): DetailsDocument {
       if (!kv) continue;
       frontmatter[kv[1]] = kv[2].trim().replace(/^["']|["']$/g, "");
     }
+
+  const extra: Record<string, string> = {};
+  for (const [key, value] of Object.entries(frontmatter))
+    if (!["kind", "schemaVersion", "avatar"].includes(key)) extra[key] = value;
 
   const body = match ? text.slice(match[0].length) : text;
   const sections: DetailsDocument["sections"] = [];
@@ -175,6 +179,7 @@ export function parseDetails(text: string): DetailsDocument {
       kind: "details",
       schemaVersion: Number(frontmatter.schemaVersion) || SCHEMA_VERSION,
       avatar: frontmatter.avatar || undefined,
+      extra: Object.keys(extra).length ? extra : undefined,
     },
     sections,
     preamble,
@@ -185,6 +190,7 @@ export function parseDetails(text: string): DetailsDocument {
 export function serialiseDetails(doc: DetailsDocument): string {
   const lines = ["---", "kind: details", `schemaVersion: ${doc.frontmatter.schemaVersion || SCHEMA_VERSION}`];
   if (doc.frontmatter.avatar) lines.push(`avatar: ${doc.frontmatter.avatar}`);
+  for (const [key, value] of Object.entries(doc.frontmatter.extra ?? {})) lines.push(`${key}: ${value}`);
   lines.push("---", "");
   if (doc.preamble) lines.push(doc.preamble, "");
   for (const section of doc.sections) {

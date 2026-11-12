@@ -32,7 +32,7 @@ Set max widths where the formatting starts to break, and choose them by testing 
 
 The name sits on the first line in bold. Beneath it, in italics, is species, class and level ("Dwarf Paladin 5"). Multiclass characters list each class ("Paladin 3 / Sorcerer 2").
 
-The avatar comes from gallery.5e once that exists, which is post-MVP. Until then, show initials on a colour derived from the character, so every character still has a distinct tile.
+The avatar is the image `details.5e` names in its `avatar` frontmatter, set from the builder's Details section. The gallery (`gallery.5e`) is post-MVP. A character with no avatar, or whose image cannot be loaded, shows initials on a colour derived from the character, so every character still has a distinct tile.
 
 **Rest** opens a small menu with short and long rest. Rests apply recharges through the existing engine, and a short rest offers hit dice spending.
 

@@ -18,6 +18,7 @@ import { noteFor, unverifiedNotes } from "../../../core/content/provenance";
 import { withSpent } from "../../../core/state/use-action";
 import { mentionsSpent } from "../../../core/expr/evaluate";
 import type { CharacterStore } from "../../character-store";
+import { Avatar } from "../avatar";
 import { AbilityBlock } from "../abilities";
 import { HpPanel } from "../hp-panel";
 import { Markdown, signed } from "../components";
@@ -112,7 +113,7 @@ export function NarrowSheet({
     });
 
     if (store.data.details)
-      available.set("details", { id: "details", label: "Details", body: <DetailsSection store={store} /> });
+      available.set("details", { id: "details", label: "Details", body: <DetailsSection store={store} character={character} /> });
 
     // The settings give the order; anything a newer version adds and the stored
     // order doesn't know about is appended rather than dropped.
@@ -718,7 +719,7 @@ export function ProficienciesSection({
   );
 }
 
-export function DetailsSection({ store }: { store: CharacterStore }): ReactNode {
+export function DetailsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const details = store.data.details;
   if (!details) return null;
   // `kind` and `schemaVersion` say what the file is, not what the character is
@@ -729,6 +730,8 @@ export function DetailsSection({ store }: { store: CharacterStore }): ReactNode 
   );
   return (
     <>
+      {/* The mobile spec allows no persistent header, so the portrait lives here. */}
+      <Avatar className="dg-n-avatar" name={character.name} path={details.frontmatter.avatar} />
       {traits.map(([key, value]) => (
         <ReadRow key={key} title={String(value)} subtitle={key} />
       ))}

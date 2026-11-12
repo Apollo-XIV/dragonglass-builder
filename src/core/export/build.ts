@@ -35,6 +35,8 @@ export interface BuildExportInput {
   inventory?: InventoryFile;
   /** Sections of details.5e with links and embeds already flattened. */
   details?: { heading: string; text: string }[];
+  /** The portrait as a data URL, read and shrunk by the caller: the engine reads no files. */
+  avatar?: string;
   exportedAt: string;
   pluginVersion: string;
   /** The pin or content hash for a source, by the id its source.json gives it. */
@@ -140,6 +142,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
     },
     identity: {
       name: r.name,
+      ...(input.avatar ? { avatar: input.avatar } : {}),
       level: r.level,
       ...(r.xp !== undefined ? { xp: r.xp } : {}),
       classes: r.classes.map((c) => ({

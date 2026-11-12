@@ -303,6 +303,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
 
   return {
     name: input.details?.name ?? build.name ?? "Unnamed",
+    avatar: input.details?.avatar,
     level: totalLevel,
     xp: build.xp,
     live: Boolean(state),

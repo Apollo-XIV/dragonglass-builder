@@ -21,6 +21,7 @@ import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
 import { DesktopBuilder } from "../src/obsidian/ui/desktop/DesktopBuilder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
 import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
+import { DetailsSection } from "../src/obsidian/ui/builder/sections/collections";
 import { upcomingStaged } from "../src/obsidian/ui/builder/model";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 import { SourceBrowser } from "../src/obsidian/ui/content-browser";
@@ -141,7 +142,7 @@ function makeStore(overrides: Partial<CharacterStore["data"]> = {}): CharacterSt
     inventory: (overrides.inventory ?? inventory) as InventoryFile,
     spells: (overrides.spells ?? spells) as SpellsFile,
     state: (overrides.state ?? state) as StateFile,
-    details: { name: build.name },
+    details: { name: build.name, avatar: store.data.details?.frontmatter.avatar },
   });
   return store;
 }
@@ -175,8 +176,19 @@ describe("the desktop sheet", () => {
   it("shows the character's identity in the header band", () => {
     expect(html).toContain("Ilsa Stonebrook");
     expect(html).toContain("Dwarf Paladin 5");
-    // No gallery yet, so the avatar is initials on a colour of its own.
-    expect(html).toContain(">IS<");
+    // The fixture's details name an image, so the header shows it.
+    expect(html).toContain('src="app://local/Art/ilsa.png"');
+    expect(html).toContain("dg-d-avatar is-image");
+  });
+
+  it("falls back to initials on a colour of its own when there is no avatar", () => {
+    const bare = makeStore({ details: { ...details, frontmatter: { kind: "details", schemaVersion: 1 } } });
+    const out = render(
+      createElement(DesktopSheet, { store: bare, character: bare.resolved as ResolvedCharacter, settings: DEFAULT_SETTINGS }),
+      bare,
+    );
+    expect(out).toContain(">IS<");
+    expect(out).not.toContain("is-image");
   });
 
   it("shows hit points as a readout over a register", () => {
@@ -315,6 +327,29 @@ describe("panel dispatch by file kind", () => {
     blank.data = { ...blank.data, build: undefined };
     const html = render(createElement(CharacterApp, { store: blank, kind: "sheet", path: "x" }), blank);
     expect(html).toContain("Nothing to resolve yet");
+  });
+});
+
+describe("the builder's avatar field", () => {
+  it("shows the current portrait with the ways to change it", () => {
+    const store = makeStore();
+    const html = render(
+      createElement(DetailsSection, { store, character: store.resolved as ResolvedCharacter }),
+      store,
+    );
+    expect(html).toContain('src="app://local/Art/ilsa.png"');
+    expect(html).toContain("Choose from vault");
+    expect(html).toContain("Import image");
+    expect(html).toContain(">Remove<");
+  });
+
+  it("offers no Remove when there is no avatar", () => {
+    const store = makeStore({ details: { ...details, frontmatter: { kind: "details", schemaVersion: 1 } } });
+    const html = render(
+      createElement(DetailsSection, { store, character: store.resolved as ResolvedCharacter }),
+      store,
+    );
+    expect(html).not.toContain(">Remove<");
   });
 });
 

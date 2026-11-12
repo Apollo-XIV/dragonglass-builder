@@ -22,7 +22,7 @@ Status: **design settled; Spike A done; Spike B written, not yet run in Foundry;
   state for level state, with state for live state.
 - **HP maps directly** (`hp.value`, `hp.max`, `hp.temp`, `hp.tempmax`). Whether `hp.max` is an override
   or left for Foundry to derive is still open (Spike B).
-- **The avatar is the actor's portrait and token image.**
+- **The avatar is the actor's portrait and token image.** It arrives as the data URL `identity.avatar` (2.4); the module writes it to a file and points the actor at it.
 - **Two export modes, a toggle on each export.**
   - **Full export**: features are written as world items, and the class's `ItemGrant`s point at them.
     Levelling works. Larger export. The items must be imported before the character.

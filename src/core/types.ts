@@ -806,6 +806,8 @@ export interface DetailsFrontmatter {
   kind: "details";
   schemaVersion: number;
   avatar?: string;
+  /** Any other scalar keys the file carried, kept so a write doesn't drop them. */
+  extra?: Record<string, string>;
 }
 
 // ---------------------------------------------------------------------------

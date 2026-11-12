@@ -1,6 +1,6 @@
 /** Spells, equipment and details: the lists a character carries and the facts about it. */
 
-import { type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
 import type {
   ResolvedCharacter,
   ResolvedSpellcastingClass,
@@ -10,6 +10,8 @@ import { classSpellList } from "../../../../core/resolver/spell-list";
 import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-limits";
 import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
+import { chooseAvatar, importAvatar } from "../../../avatar-actions";
+import { Avatar } from "../../avatar";
 import { usePlugin } from "../../context";
 import { addInventoryItem, isStackable, removeInventoryEntry } from "../../../../core/index";
 import { useSheet } from "../../narrow/sheet";
@@ -308,6 +310,48 @@ export function EquipmentSection({
   );
 }
 
+/**
+ * The portrait row: what is showing now, and the three ways to change it. The
+ * avatar is a path in details.5e, so it saves at once rather than with the build.
+ */
+function AvatarField({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+  const { app } = usePlugin();
+  const input = useRef<HTMLInputElement>(null);
+  return (
+    <div className="dg-field dg-avatar-field">
+      <span>Avatar</span>
+      <div className="dg-avatar-field-row">
+        <Avatar className="dg-avatar-preview" name={character.name} path={character.avatar} />
+        <div className="dg-avatar-field-actions">
+          <button type="button" onClick={() => chooseAvatar(app, store)}>
+            Choose from vault…
+          </button>
+          <button type="button" onClick={() => input.current?.click()}>
+            Import image…
+          </button>
+          {character.avatar ? (
+            <button type="button" onClick={() => store.setAvatar(undefined)}>
+              Remove
+            </button>
+          ) : null}
+        </div>
+        <input
+          ref={input}
+          type="file"
+          accept="image/*"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void importAvatar(app, store, file);
+          }}
+        />
+      </div>
+      {character.avatar ? <small className="dg-muted">{character.avatar}</small> : null}
+    </div>
+  );
+}
+
 export function DetailsSection({
   store,
   character,
@@ -320,6 +364,7 @@ export function DetailsSection({
   if (!build) return null;
   return (
     <>
+      <AvatarField store={store} character={character} />
       <label className="dg-field">
         <span>Name</span>
         <input

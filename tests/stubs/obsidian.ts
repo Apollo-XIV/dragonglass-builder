@@ -39,6 +39,7 @@ export class Component {
 
 export class FileView extends Component {}
 export class Modal extends Component {}
+export class FuzzySuggestModal extends Modal {}
 export class Plugin extends Component {}
 export class PluginSettingTab extends Component {}
 export class Setting {}

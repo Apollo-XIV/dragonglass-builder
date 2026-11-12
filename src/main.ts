@@ -1,6 +1,7 @@
 import { Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import type { ContentIndex } from "./core/content";
 import type { FileKind, SourceRef, SourcesFile } from "./core/types";
+import { exportAvatar } from "./obsidian/avatar-actions";
 import { CharacterStore } from "./obsidian/character-store";
 import {
   DEFAULT_FILE_NAMES,
@@ -193,6 +194,7 @@ export default class DragonglassPlugin extends Plugin {
       const doc = await exportDocument(store, {
         sources: this.sources,
         embed: embedReader(this.app, fromPath),
+        avatar: (path) => exportAvatar(this.app, path),
         exportedAt: new Date().toISOString(),
         pluginVersion: this.manifest.version,
       });

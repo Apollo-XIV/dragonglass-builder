@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "2.3",
+  "x-schemaVersion": "2.4",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -113,6 +113,11 @@
       ],
       "properties": {
         "name": {
+          "type": "string"
+        },
+        "avatar": {
+          "pattern": "^data:image/[a-z0-9.+-]+;base64,",
+          "description": "The portrait, and the token image, as a base64 data URL.",
           "type": "string"
         },
         "level": {

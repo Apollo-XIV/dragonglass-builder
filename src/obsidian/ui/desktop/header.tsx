@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import type { CharacterStore } from "../../character-store";
+import { Avatar } from "../avatar";
 import { Icon } from "../components";
 import { useHoverCard } from "./targets";
 
@@ -49,7 +50,7 @@ export function DeskHeader({
 
   return (
     <header className="dg-d-header">
-      <Avatar character={character} />
+      <Avatar className="dg-d-avatar" name={character.name} path={character.avatar} />
       <div className="dg-d-identity">
         <h2 className="dg-d-name">{character.name}</h2>
         <p className="dg-d-subline">{subtitle}</p>
@@ -74,33 +75,6 @@ export function DeskHeader({
       </div>
       <StatusChips store={store} character={character} />
     </header>
-  );
-}
-
-/**
- * Initials on a colour derived from the name. `gallery.5e` will replace this, but
- * until then every character still needs to be a different tile at a glance —
- * which is the one place a colour cannot come from a theme variable, since the
- * whole point is that it differs per character.
- */
-function Avatar({ character }: { character: ResolvedCharacter }): ReactNode {
-  const initials = character.name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((word) => word[0]?.toUpperCase() ?? "")
-    .join("");
-  let hash = 0;
-  for (const char of character.name) hash = (hash * 31 + char.charCodeAt(0)) % 360;
-  return (
-    <div
-      className="dg-d-avatar"
-      style={{ background: `hsl(${hash} 32% 38%)` }}
-      role="img"
-      aria-label={character.name}
-    >
-      <span>{initials || "?"}</span>
-    </div>
   );
 }
 

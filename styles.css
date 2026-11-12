@@ -134,18 +134,6 @@
   margin-bottom: var(--dg-gap);
 }
 
-.dg-avatar {
-  border-radius: var(--dg-radius);
-  flex: 0 0 auto;
-  height: 5rem;
-  object-fit: cover;
-  width: 5rem;
-}
-
-.dg-avatar.is-empty {
-  background: var(--background-modifier-border);
-}
-
 .dg-identity {
   flex: 1 1 14rem;
   min-width: 0;
@@ -346,6 +334,36 @@
   font-size: var(--font-ui-small);
   gap: var(--size-2-2);
   margin-bottom: var(--size-2-2);
+}
+
+.dg-avatar-field-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--size-4-3);
+}
+
+.dg-avatar-field-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+}
+
+.dg-avatar-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  color: var(--text-on-accent);
+  font-weight: 600;
+  object-fit: cover;
+}
+
+.dg-avatar-preview.is-image {
+  display: block;
 }
 
 .dg-field > span:first-child {
@@ -1008,12 +1026,6 @@
 @media (max-width: 36rem) {
   .dg-root {
     padding: var(--size-4-2);
-  }
-
-  .dg-avatar,
-  .dg-avatar.is-empty {
-    height: 3.5rem;
-    width: 3.5rem;
   }
 
   /* The header's buttons drop below the name rather than squeezing it. */
@@ -2601,6 +2613,30 @@
   font-weight: 600;
   letter-spacing: 0.05em;
   user-select: none;
+}
+
+.dg-n-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 6rem;
+  height: 6rem;
+  margin: 0 0 var(--size-4-3);
+  border-radius: 50%;
+  color: var(--text-on-accent);
+  font-size: var(--font-ui-large);
+  font-weight: 600;
+  user-select: none;
+}
+
+.dg-n-avatar.is-image {
+  display: block;
+  object-fit: cover;
+}
+
+.dg-d-avatar.is-image {
+  display: block;
+  object-fit: cover;
 }
 
 .dg-d-identity {

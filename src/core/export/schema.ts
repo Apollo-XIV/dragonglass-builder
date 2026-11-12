@@ -27,11 +27,14 @@
  * to a key and its amounts evaluated (an amount the player chooses has `min` and an optional
  * `max`, a cap), and `features[].parts[].provenance`, where a part came from and whether it
  * has been reviewed. Both are only present when there is something to say.
+ *
+ * 2.4 added `identity.avatar`, the character's portrait as a data URL, already shrunk to fit.
+ * Absent when the character has none or the picture could not be read or was too large.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.3";
+export const EXPORT_SCHEMA_VERSION = "2.4";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -122,6 +125,12 @@ const ExportOrigin = Type.Object({
 
 export const ExportIdentity = Type.Object({
   name: Type.String(),
+  avatar: Type.Optional(
+    Type.String({
+      pattern: "^data:image/[a-z0-9.+-]+;base64,",
+      description: "The portrait, and the token image, as a base64 data URL.",
+    }),
+  ),
   level: Type.Integer({ minimum: 0 }),
   xp: Type.Optional(Type.Integer({ minimum: 0 })),
   classes: Type.Array(

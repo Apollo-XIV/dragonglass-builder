@@ -520,7 +520,7 @@ owner decision 11 below.
 4. **Manifest.** *Extend `source.json` with optional `version`; no second format;* licence and attribution stay
    on the sourcebook; `ref` is computed.
 5. **Export file.** *One JSON file;* the source details are already in the envelope, so a zip adds nothing
-   until we ship binary assets (avatar).
+   until we ship binary assets (avatar). The avatar shipped as a shrunk data URL in `identity.avatar` (2.4), so one file still suffices.
 6. **Backstory.** *Export it, as plain text with embeds resolved by the plugin at export time* (it has the
    metadata cache; the module doesn't). Skip it from the paired-connection document only if size matters.
 7. **Content mechanisation before phase 1 means anything.** 0 resources and 0 toggles in the SRD features.

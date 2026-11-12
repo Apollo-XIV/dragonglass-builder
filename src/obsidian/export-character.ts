@@ -23,6 +23,8 @@ export interface ExportDeps {
   sources: Pick<SourceManager, "exportRef">;
   /** The plain text of what `![[target]]` embeds. */
   embed: (target: string) => Promise<string | undefined>;
+  /** The avatar at a vault path as a data URL, or nothing if it cannot be had. */
+  avatar?: (path: string) => Promise<string | undefined>;
   exportedAt: string;
   pluginVersion: string;
 }
@@ -53,6 +55,9 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
     })),
   );
 
+  const avatarPath = saved.details?.frontmatter.avatar;
+  const avatar = avatarPath && deps.avatar ? await deps.avatar(avatarPath).catch(() => undefined) : undefined;
+
   let doc: ExportDocument;
   try {
     doc = await buildExport({
@@ -62,6 +67,7 @@ export async function exportDocument(store: CharacterStore, deps: ExportDeps): P
       spells: saved.spells,
       inventory: saved.inventory,
       details,
+      avatar,
       exportedAt: deps.exportedAt,
       pluginVersion: deps.pluginVersion,
       sourceRef: (id) => deps.sources.exportRef(id),

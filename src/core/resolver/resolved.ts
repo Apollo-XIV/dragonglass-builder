@@ -385,6 +385,8 @@ export interface LiveStatus {
 
 export interface ResolvedCharacter {
   name: string;
+  /** A vault path from details.5e. The engine never reads it; the view does. */
+  avatar?: string;
   level: number;
   xp?: number;
   /** True when state.5e was folded in. */

@@ -63,6 +63,17 @@ describe("golden exports", () => {
   });
 });
 
+describe("the avatar in an export", () => {
+  it("is carried as a data URL, and only a data URL passes the check", async () => {
+    const doc = clone(await run("paladin-3"));
+    expect(doc.identity.avatar).toBeUndefined();
+    doc.identity.avatar = "data:image/webp;base64,aGk=";
+    expect(validateExport(clone(doc)).ok).toBe(true);
+    doc.identity.avatar = "Art/ilsa.png";
+    expect(validateExport(clone(doc)).ok).toBe(false);
+  });
+});
+
 describe("what the export contains", () => {
   it("states the version, the character and a hash for a source with no pin", async () => {
     const { envelope } = await run("paladin-3");
