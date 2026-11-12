@@ -13,7 +13,7 @@ Notes for working on dragonglass-builder. For what the project is, see the
 | `src/obsidian/ui/` | React. The sheet, the builder, and the focused per-file viewers. |
 | `src/cli/` | The validation and export CLIs, sharing the plugin's own code. |
 | `content/core/` | Kind and stat-path definitions, bundled into the plugin at build time. |
-| `content/srd/` | The converted SRD content. |
+| `content/srd/` | A small hand-converted SRD slice, used by the tests and the CLI. The plugin's default sources are the full SRD repos instead. |
 | `docs/` | Schema, conversion guide, specs, plans and findings; see [README.md](README.md). |
 | `spikes/` | Throwaway research code for the Foundry integration. Nothing imports it. |
 | `tests/` | Engine, content, store and UI render tests. |
@@ -36,9 +36,11 @@ opening `vault/` in Obsidian and reloading picks up changes. `vault/` is git-ign
 it is your own scratch space and Obsidian writes its state there.
 
 To set one up, create `vault/`, open it in Obsidian, enable community plugins, run
-`npm run dev`, and reload. Add `content/srd/` to the vault (for example as
-`vault/Sources/srd`) as a vault source, then create a character from the plugin's
-commands. No test reads from `vault/`; test characters live in `tests/fixtures/`.
+`npm run dev`, and reload. A fresh install loads the two public SRD repos
+(`DEFAULT_SOURCES` in `src/obsidian/settings.ts`) from GitHub, so a new vault needs no
+setup; to work on the hand-written slice instead, remove them in settings and add
+`content/srd/` as a vault source (for example as `vault/Sources/srd`). Then create a
+character from the plugin's commands. No test reads from `vault/`; test characters live in `tests/fixtures/`.
 
 ## Architecture
 

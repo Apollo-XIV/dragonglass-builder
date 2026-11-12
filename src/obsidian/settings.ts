@@ -92,8 +92,31 @@ export interface DragonglassSettings {
   writeDebounceMs: number;
 }
 
+/**
+ * The sources a fresh install starts with: the two converted SRDs. Pinned to a commit,
+ * so a push to either repo never changes a character's content underneath it. Moving to
+ * a newer conversion is a pin edit in settings. They are only seeded when no settings
+ * have been saved, so removing them sticks.
+ */
+export const DEFAULT_SOURCES: readonly SourceRef[] = [
+  {
+    id: "srd",
+    type: "github",
+    location: "Apollo-XIV/dragonglass-source-5e-srd-5.1",
+    pin: "32a754c4809d579909ab7a68efead6793c4f9d9a",
+    name: "System Reference Document 5.1",
+  },
+  {
+    id: "srd24",
+    type: "github",
+    location: "Apollo-XIV/dragonglass-source-5e-srd-5.2",
+    pin: "5b98d41797954ed41369983247e869ffbeb65e71",
+    name: "System Reference Document 5.2",
+  },
+];
+
 export const DEFAULT_SETTINGS: DragonglassSettings = {
-  sources: [],
+  sources: DEFAULT_SOURCES.map((ref) => ({ ...ref })),
   caching: "smart",
   enforceRequirements: false,
   charactersFolder: "Characters",
@@ -153,7 +176,7 @@ export function withDefaults(stored: Partial<DragonglassSettings> | null | undef
       ...(stored?.narrow ?? {}),
       sheetSections: railOrder(stored?.narrow?.sheetSections),
     },
-    sources: stored?.sources ?? [],
+    sources: stored?.sources ?? DEFAULT_SETTINGS.sources.map((ref) => ({ ...ref })),
   };
 }
 
