@@ -8,7 +8,7 @@
  * The client id of Dragonglass's GitHub OAuth App (Device Flow enabled). Empty until the
  * app is registered; sign-in reports that rather than failing at GitHub.
  */
-export const GITHUB_CLIENT_ID = "";
+export const GITHUB_CLIENT_ID = "Ov23lioDitveVtCNCMty";
 
 /**
  * `repo` is the only scope that reads private repositories, and it is read *and write* on
