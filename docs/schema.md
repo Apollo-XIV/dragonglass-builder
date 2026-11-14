@@ -357,6 +357,7 @@ the player writes into the spells file by hand.
 | `ability` | Casting ability, for the save DC and attack shown with the spell. Defaults to the owning class's; absent when neither exists. |
 | `uses` | Casts before it recharges (an expression). Omitted means **at will**. |
 | `recharge` | The same rules as a resource's; empty or omitted means the uses do not come back. Meaningless without `uses`. |
+| `cost` | Cast by spending **another** pool: the same map as an action's `cost` (`{ "srd:monk:ki-points": 2 }`, or `{ "min": 2 }` for a chosen amount). See below. |
 | `text`, `notes` | Conditions on the cast, shown with it. |
 
 With `uses`, the engine creates a resource for the cast, id `innate-<spell>` on the owning
@@ -372,6 +373,16 @@ with separate pools.
 
 A cast from a different source keeps its own pool: a species' Misty Step and an invocation's
 Misty Step do not share uses.
+
+**Cast from another pool.** "You can spend 2 ki points to cast *Burning Hands*" is `cost`, with
+the same shape and resolution as an action's: pool keys resolve locally then globally, a
+`{ min, max? }` amount is chosen when the spell is cast, and an unknown pool is an
+`unresolved-reference` warning. `cost` and `uses` are **exclusive** on one entry, and both is a
+validator error: a spell is cast from its own pool or from another's. With `cost` no
+`innate-<spell>` resource is made; the resolved `innate[]` entry carries `cost` and
+`resolvedCost` as an action does, the spells panel shows "2 ki points" where a pooled cast shows
+its uses, and casting spends through the same path a resource action uses. `@spent` is not read
+anywhere on a spell.
 
 #### Spells and abilities that are a choice
 
@@ -831,7 +842,8 @@ provenance**), lifted off the definition. Nothing existing changed meaning.
 
 **Export 2.5** is additive. An action part whose definition carries `attack` gains `attack`:
 the type, ability, whether proficiency applied, the bonus and its parts, resolved as a weapon
-row's are.
+row's are. An innate cast that spends another pool carries `cost`, in the same shape as an
+action part's.
 
 **Export 2.4** is additive. `identity.avatar` is the character's portrait as a base64 data URL
 (`data:image/webp;base64,...`), taken from the `avatar` path in `details.5e`. The plugin shrinks it to fit 512px
@@ -901,6 +913,7 @@ interface InnateSpell {
                                      // element carrying `ability`
   uses?: Expr;                       // omitted = at will
   recharge?: RechargeRule[];         // only with `uses`
+  cost?: Cost;                       // cast by spending another pool; exclusive with `uses`
   text?: string; notes?: string;
 }
 // `innateSpells?: InnateSpell[]` is a part, on Element and on every level entry,

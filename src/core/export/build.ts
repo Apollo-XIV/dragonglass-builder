@@ -124,6 +124,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       ...(i.dc !== undefined ? { dc: i.dc } : {}),
       ...(i.attack !== undefined ? { attack: i.attack } : {}),
       ...(i.resource ? { resource: i.resource } : {}),
+      ...costOf(i),
       ...(i.text ? { text: i.text } : {}),
       ...(i.notes ? { notes: i.notes } : {}),
     })),
@@ -333,8 +334,8 @@ function provenanceOf(definition: unknown): Pick<ExportPart, "provenance"> {
     : {};
 }
 
-/** What an action spends, resolved: the pool as a key, expressions evaluated. */
-function costOf(action: ResolvedAction | undefined): Pick<ExportPart, "cost"> {
+/** What an action or an innate cast spends, resolved: the pool as a key, expressions evaluated. */
+function costOf(action: Pick<ResolvedAction, "resolvedCost"> | undefined): Pick<ExportPart, "cost"> {
   const lines = action?.resolvedCost;
   if (!lines?.length) return {};
   return {

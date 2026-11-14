@@ -29,7 +29,8 @@
  * has been reviewed. Both are only present when there is something to say.
  *
  * 2.4 added `identity.avatar`, the character's portrait as a data URL, already shrunk to fit.
- * 2.5 added `attack` on an action part: the attack roll resolved, where the action makes one.
+ * 2.5 added `attack` on an action part: the attack roll resolved, where the action makes one,
+ *     and `cost` on an innate cast that spends another pool.
  * Absent when the character has none or the picture could not be read or was too large.
  */
 
@@ -339,7 +340,8 @@ export const ExportInnateCast = Type.Object({
   ability: Type.Optional(Ability),
   dc: Type.Optional(Type.Integer()),
   attack: Type.Optional(Type.Integer()),
-  resource: Type.Optional(Type.String({ description: "The `key` of the resources[] entry holding its uses. Absent means at will." })),
+  resource: Type.Optional(Type.String({ description: "The `key` of the resources[] entry holding its uses. Absent means at will, or cast from another pool (see `cost`)." })),
+  cost: Type.Optional(Type.Array(ExportCost, { description: "What the cast spends from another pool, resolved as an action's cost is." })),
   text: Type.Optional(Type.String()),
   notes: Type.Optional(Type.String()),
 });

@@ -303,8 +303,15 @@ export interface ResolvedInnate {
   ability?: Ability;
   dc?: number;
   attack?: number;
-  /** Key of the uses pool; absent when the spell is cast at will. */
+  /** Key of the uses pool; absent when the spell is cast at will or from another pool. */
   resource?: string;
+  /** What casting spends from another pool, as authored. */
+  cost?: Cost;
+  /** The cost resolved to pool keys, exactly as an action's is. */
+  resolvedCost?: ResolvedCostLine[];
+  /** False when the cost can't be paid right now (live state only). */
+  available?: boolean;
+  unavailableReason?: string;
   text?: string;
   notes?: string;
 }

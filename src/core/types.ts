@@ -236,6 +236,12 @@ export interface InnateSpellDef {
   uses?: Expr;
   /** How the uses come back; empty or omitted means they do not. */
   recharge?: RechargeRule[];
+  /**
+   * Cast by spending another pool ("spend 2 ki points to cast Burning Hands"): the same
+   * shape and resolution as an action's `cost`. Exclusive with `uses`, which gives the
+   * spell a pool of its own; with `cost` no `innate-<spell>` resource is made.
+   */
+  cost?: Cost;
   text?: string;
   notes?: string;
   provenance?: PartProvenance;

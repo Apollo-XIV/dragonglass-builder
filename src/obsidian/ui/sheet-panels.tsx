@@ -415,7 +415,16 @@ function SpellRow({
         </button>
         {spell.alwaysPrepared ? <Pill tone="info">always prepared</Pill> : null}
         {spell.innate.length ? (
-          <Pill tone="info">{spell.innate.some((i) => !i.resource) ? "innate · at will" : "innate"}</Pill>
+          <Pill tone="info">
+            {spell.innate.some((i) => i.resolvedCost?.length)
+              ? `innate · ${spell.innate
+                  .flatMap((i) => i.resolvedCost ?? [])
+                  .map((c) => `${typeof c.amount === "number" ? c.amount : `${c.amount.min}–${c.amount.max}`} ${c.label}`)
+                  .join(", ")}`
+              : spell.innate.some((i) => !i.resource)
+                ? "innate · at will"
+                : "innate"}
+          </Pill>
         ) : null}
         {spell.concentration ? <Pill>conc.</Pill> : null}
         {spell.ritual ? <Pill>ritual</Pill> : null}

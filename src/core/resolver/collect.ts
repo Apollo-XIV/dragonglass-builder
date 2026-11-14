@@ -250,7 +250,8 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     for (const spell of spells) {
       const def: InnateSpell = { ...raw, spell, ability };
       result.innate.push({ def, from });
-      if (def.uses === undefined) continue;
+      // A spell cast from another pool has no pool of its own.
+      if (def.uses === undefined || def.cost !== undefined) continue;
       result.resources.push({
         def: {
           id: innatePoolId(def),

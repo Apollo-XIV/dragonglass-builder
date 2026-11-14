@@ -12,7 +12,7 @@ import { factsOf } from "../../../core/content/facts";
 import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
-import type { ResolvedAction, ResolvedCharacter, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
+import type { ResolvedAction, ResolvedCharacter, ResolvedInnate, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import { noteFor, unverifiedNotes } from "../../../core/content/provenance";
 import { withSpent } from "../../../core/state/use-action";
@@ -495,18 +495,43 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
             spell.range,
             spell.concentration ? "concentration" : undefined,
             spell.ritual ? "ritual" : undefined,
-            spell.innate.length ? (spell.innate.some((i) => !i.resource) ? "innate, at will" : "innate") : undefined,
+            spell.innate.length ? innateLabel(spell) : undefined,
           ]
             .filter(Boolean)
             .join(" · ")}
           text={spell.text}
           facts={factsOf(spell.element)}
           className={spell.prepared || spell.alwaysPrepared ? "is-prepared" : undefined}
-        />
+        >
+          {spell.innate
+            .filter((cast) => cast.resolvedCost?.length)
+            .map((cast) => (
+              <UseAction
+                key={cast.source}
+                action={{ name: spell.name, resolvedCost: cast.resolvedCost, available: cast.available ?? true }}
+                store={store}
+                label={`Cast for ${costLabel(cast)}`}
+              />
+            ))}
+        </ReadRow>
       ))}
       {spells.length === 0 ? <p className="dg-muted">No spells match this filter.</p> : null}
     </>
   );
+}
+
+/** "2 ki points", or "2–5 ki points" for a chosen amount. */
+function costLabel(cast: ResolvedInnate): string {
+  return (cast.resolvedCost ?? [])
+    .map((c) => `${typeof c.amount === "number" ? c.amount : `${c.amount.min}–${c.amount.max}`} ${c.label}`)
+    .join(", ");
+}
+
+/** How the spell is cast innately: at will, from its own pool, or from another's. */
+function innateLabel(spell: ResolvedSpell): string {
+  const costs = spell.innate.filter((i) => i.resolvedCost?.length).map(costLabel);
+  if (costs.length) return `innate, ${costs.join(" or ")}`;
+  return spell.innate.some((i) => !i.resource) ? "innate, at will" : "innate";
 }
 
 function matchesSpellFilter(spell: ResolvedSpell, filter: string): boolean {

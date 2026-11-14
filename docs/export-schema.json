@@ -1432,8 +1432,37 @@
                   "type": "integer"
                 },
                 "resource": {
-                  "description": "The `key` of the resources[] entry holding its uses. Absent means at will.",
+                  "description": "The `key` of the resources[] entry holding its uses. Absent means at will, or cast from another pool (see `cost`).",
                   "type": "string"
+                },
+                "cost": {
+                  "description": "What the cast spends from another pool, resolved as an action's cost is.",
+                  "type": "array",
+                  "items": {
+                    "description": "One pool an action spends. A cost with `amount` is fixed; one with `min` is chosen by the player when the action is used, and the amount chosen is `@spent` in the action's `damage`, `heal` and `duration`.",
+                    "type": "object",
+                    "required": [
+                      "pool"
+                    ],
+                    "properties": {
+                      "pool": {
+                        "description": "What is spent: the `key` of a `resources[]` entry, or `slots.<n>`, `pact` or `hitDice.<die>`.",
+                        "type": "string"
+                      },
+                      "amount": {
+                        "description": "A fixed cost. Absent when the player chooses the amount.",
+                        "type": "number"
+                      },
+                      "min": {
+                        "description": "A chosen amount: the least that can be spent.",
+                        "type": "number"
+                      },
+                      "max": {
+                        "description": "A chosen amount: a cap on what can be spent. Absent means no cap, so the most is whatever the pool has left. The pool's remainder is never applied here.",
+                        "type": "number"
+                      }
+                    }
+                  }
                 },
                 "text": {
                   "type": "string"

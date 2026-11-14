@@ -10,13 +10,16 @@ import { event } from "./fold";
 
 type ChosenLine = ResolvedCostLine & { amount: { min: number; max: number } };
 
+/** What spending needs to know: an action, or an innate cast that costs another pool. */
+export type Spender = Pick<ResolvedAction, "name" | "resolvedCost" | "available"> & Partial<Pick<ResolvedAction, "applies" | "source" | "healResolved" | "damageResolved">>;
+
 /** The costs of an action whose amount the player chooses. */
-export function chosenCosts(action: ResolvedAction): ChosenLine[] {
+export function chosenCosts(action: Spender): ChosenLine[] {
   return (action.resolvedCost ?? []).filter((c): c is ChosenLine => typeof c.amount !== "number");
 }
 
 /** What the picker offers first: the least, which is always payable if anything is. */
-export function defaultAmounts(action: ResolvedAction): Record<string, number> {
+export function defaultAmounts(action: Spender): Record<string, number> {
   return Object.fromEntries(chosenCosts(action).map((c) => [c.key, c.amount.min]));
 }
 
@@ -32,7 +35,7 @@ export function amountProblem(line: ChosenLine, amount: number): string | undefi
 }
 
 /** True when every chosen amount can be paid, and the action can be used at all. */
-export function canUse(action: ResolvedAction, chosen: Record<string, number>): boolean {
+export function canUse(action: Spender, chosen: Record<string, number>): boolean {
   if (!action.available) return false;
   return chosenCosts(action).every((c) => amountProblem(c, chosen[c.key] ?? c.amount.min) === undefined);
 }
@@ -42,7 +45,7 @@ export function canUse(action: ResolvedAction, chosen: Record<string, number>): 
  * what was chosen. Returns nothing when a chosen amount is out of range: the sheet never
  * gets to spend more than a pool has left by a stale picker.
  */
-export function useActionEvents(action: ResolvedAction, chosen: Record<string, number> = {}): StateEvent[] {
+export function useActionEvents(action: Spender, chosen: Record<string, number> = {}): StateEvent[] {
   if (!canUse(action, chosen)) return [];
   const events: StateEvent[] = [];
   for (const cost of action.resolvedCost ?? []) {
@@ -54,7 +57,7 @@ export function useActionEvents(action: ResolvedAction, chosen: Record<string, n
 }
 
 /** The amount `@spent` stands for: the first chosen cost's. */
-export function spentOf(action: ResolvedAction, chosen: Record<string, number>): number | undefined {
+export function spentOf(action: Spender, chosen: Record<string, number>): number | undefined {
   const first = chosenCosts(action)[0];
   return first ? (chosen[first.key] ?? first.amount.min) : undefined;
 }

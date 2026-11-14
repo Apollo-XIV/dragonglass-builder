@@ -187,30 +187,11 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
   if (typeof act.activation !== "string" || !act.activation)
     out.push(err("invalid-element", "action needs an activation", subject, path));
   if (act.cost !== undefined) {
-    if (!act.cost || typeof act.cost !== "object" || Array.isArray(act.cost)) {
-      out.push(err("invalid-element", "cost must be a map of pool to amount", subject, `${path}.cost`));
-    } else {
-      let chosen = false;
-      for (const [key, amount] of Object.entries(act.cost as Record<string, unknown>)) {
-        if (typeof amount === "number") continue;
-        const range = amount as Record<string, unknown> | null;
-        const isExpr = (v: unknown): boolean => typeof v === "number" || typeof v === "string";
-        if (!range || typeof range !== "object" || Array.isArray(range) || !isExpr(range.min) || (range.max !== undefined && !isExpr(range.max))) {
-          out.push(err("invalid-element", `cost "${key}" must be a number or { min, max? } of expressions`, subject, `${path}.cost`));
-          continue;
-        }
-        chosen = true;
-        for (const bound of ["min", "max"] as const) {
-          if (range[bound] === undefined) continue;
-          const e = checkExpression(range[bound] as string | number);
-          if (e) out.push(warn("expression-error", e, subject, `${path}.cost.${key}.${bound}`));
-        }
-      }
-      if (!chosen)
-        for (const field of ["damage", "heal", "duration"])
-          if (mentionsSpent(act[field] as string | undefined))
-            out.push(warn("expression-error", `${field} uses @spent, but no cost of this action is a chosen amount`, subject, `${path}.${field}`));
-    }
+    const chosen = validateCost(act.cost, subject, `${path}.cost`, out);
+    if (chosen === false)
+      for (const field of ["damage", "heal", "duration"])
+        if (mentionsSpent(act[field] as string | undefined))
+          out.push(warn("expression-error", `${field} uses @spent, but no cost of this action is a chosen amount`, subject, `${path}.${field}`));
   }
   if (act.save !== undefined) {
     const s = act.save as Record<string, unknown>;
@@ -222,6 +203,34 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
     }
   }
   if (act.attack !== undefined) validateAttack(act.attack, subject, `${path}.attack`, out);
+}
+
+/**
+ * A cost: a map of pool key to a fixed amount or a chosen `{ min, max? }` range. Returns
+ * whether any amount is chosen, or undefined when the cost was not a map at all.
+ */
+function validateCost(cost: unknown, subject: string | undefined, path: string, out: Diagnostic[]): boolean | undefined {
+  if (!cost || typeof cost !== "object" || Array.isArray(cost)) {
+    out.push(err("invalid-element", "cost must be a map of pool to amount", subject, path));
+    return undefined;
+  }
+  let chosen = false;
+  for (const [key, amount] of Object.entries(cost as Record<string, unknown>)) {
+    if (typeof amount === "number") continue;
+    const range = amount as Record<string, unknown> | null;
+    const isExpr = (v: unknown): boolean => typeof v === "number" || typeof v === "string";
+    if (!range || typeof range !== "object" || Array.isArray(range) || !isExpr(range.min) || (range.max !== undefined && !isExpr(range.max))) {
+      out.push(err("invalid-element", `cost "${key}" must be a number or { min, max? } of expressions`, subject, path));
+      continue;
+    }
+    chosen = true;
+    for (const bound of ["min", "max"] as const) {
+      if (range[bound] === undefined) continue;
+      const e = checkExpression(range[bound] as string | number);
+      if (e) out.push(warn("expression-error", e, subject, `${path}.${key}.${bound}`));
+    }
+  }
+  return chosen;
 }
 
 /** An action's attack roll: the type picks the bonus, so it has to be one the resolver knows. */
@@ -336,6 +345,11 @@ function validateInnate(
     else spell.recharge.forEach((rule, i) => validateRecharge(rule, subject, `${path}.recharge[${i}]`, out));
     if (spell.uses === undefined)
       out.push(warn("invalid-element", "recharge on an at-will spell has nothing to recharge", subject, `${path}.recharge`));
+  }
+  if (spell.cost !== undefined) {
+    validateCost(spell.cost, subject, `${path}.cost`, out);
+    if (spell.uses !== undefined)
+      out.push(err("invalid-element", "an innate spell is cast from its own pool (uses) or another's (cost), not both", subject, `${path}.cost`));
   }
 }
 

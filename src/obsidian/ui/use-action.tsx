@@ -5,8 +5,8 @@
  */
 
 import { useState, type ReactNode } from "react";
-import type { ResolvedAction } from "../../core/resolver/resolved";
 import {
+  type Spender,
   amountProblem,
   canUse,
   chosenCosts,
@@ -25,7 +25,7 @@ export function UseAction({
   label = "Use",
   startOpen = false,
 }: {
-  action: ResolvedAction;
+  action: Spender;
   store: CharacterStore;
   className?: string;
   label?: string;

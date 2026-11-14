@@ -22,6 +22,8 @@ import {
   type ActionDef,
   type BuildFile,
   type ClassElement,
+  type Cost,
+  type CostAmount,
   type Diagnostic,
   type EffectDef,
   type Expr,
@@ -265,7 +267,9 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
 
   // --- actions, effects, spells, inventory ----------------------------------
   const spellcasting = resolveSpellcasting(plan, collected, engine, content, spells, live, diagnostics);
-  const actions = resolveActions(collected, engine, resources, spellcasting, live, content, diagnostics);
+  const hitDicePools = resolveHitDice(collected, live?.spent.hitDice ?? {});
+  if (spellcasting) resolveInnateCosts(spellcasting, collected, engine, resources, hitDicePools, live, diagnostics);
+  const actions = resolveActions(collected, engine, resources, spellcasting, hitDicePools, live, content, diagnostics);
   const effects = resolveEffects(effectDefs, live);
   const items = resolveInventory(collected, inventory);
 
@@ -643,47 +647,17 @@ function resolveActions(
   engine: StatEngine,
   resources: ResolvedResource[],
   spellcasting: ResolvedSpellcasting | undefined,
+  hitDicePools: ResolvedCharacter["hp"]["hitDice"],
   live: LiveState | undefined,
   content: ContentIndex,
   diagnostics: Diagnostic[],
 ): ResolvedAction[] {
   const out: ResolvedAction[] = [];
-  const hitDicePools = resolveHitDice(collected, live?.spent.hitDice ?? {});
   for (const { def, from } of collected.actions) {
     const key = def.id.includes(":") ? def.id : `${from.element.id}:${def.id}`;
-    const resolvedCost: ResolvedAction["resolvedCost"] = [];
-    let available = true;
-    let unavailableReason: string | undefined;
-
-    const deferred = new Set<string>();
-    for (const [costKey, amount] of Object.entries(def.cost ?? {})) {
-      const pool = resolvePoolKey(costKey, from, resources, spellcasting, hitDicePools);
-      if (!pool) {
-        diagnostics.push({
-          severity: "warning",
-          code: "unresolved-reference",
-          message: `action "${def.name ?? def.id}" costs "${costKey}", which is not a pool this character has`,
-          subject: from.element.id,
-        });
-        continue;
-      }
-      const counted = pool.remaining !== undefined && Number.isFinite(pool.remaining);
-      const range = typeof amount === "number" ? undefined : chosenRange(amount, pool.remaining, engine, def, from, diagnostics);
-      const line: ResolvedCostLine = {
-        key: pool.key,
-        amount: range ? { min: range.min, max: range.max } : (amount as number),
-        label: pool.label,
-        ...(range && counted ? { remaining: pool.remaining } : {}),
-        ...(range?.cap !== undefined ? { cap: range.cap } : {}),
-      };
-      if (typeof amount !== "number") deferred.add(SPENT_REF);
-      resolvedCost.push(line);
-      const need = typeof line.amount === "number" ? line.amount : line.amount.min;
-      if (live && pool.remaining !== undefined && pool.remaining < need) {
-        available = false;
-        unavailableReason = `Not enough ${pool.label}`;
-      }
-    }
+    const { resolvedCost, available, unavailableReason, deferred } = resolveCostLines(
+      def.cost, def.name ?? def.id, from, engine, resources, spellcasting, hitDicePools, live, diagnostics,
+    );
 
     const dice = (notation: string | undefined, what: string): { text: string } | undefined => {
       if (!notation) return undefined;
@@ -726,7 +700,7 @@ function resolveActions(
       name: def.name ?? from.element.name,
       activation: def.activation,
       cost: def.cost,
-      resolvedCost: resolvedCost.length ? resolvedCost : undefined,
+      resolvedCost,
       applies: def.applies,
       range: def.range,
       target: def.target,
@@ -784,6 +758,85 @@ function withoutBarePoolButtons(actions: ResolvedAction[], resources: ResolvedRe
 }
 
 /**
+ * An innate cast that spends another pool ("2 ki points to cast Burning Hands") resolves
+ * its cost once the pools exist, exactly as an action does, so the sheet's cast button
+ * spends through the same path.
+ */
+function resolveInnateCosts(
+  spellcasting: ResolvedSpellcasting,
+  collected: CollectResult,
+  engine: StatEngine,
+  resources: ResolvedResource[],
+  hitDicePools: ResolvedCharacter["hp"]["hitDice"],
+  live: LiveState | undefined,
+  diagnostics: Diagnostic[],
+): void {
+  for (const spell of spellcasting.spells)
+    for (const cast of spell.innate) {
+      if (!cast.cost) continue;
+      const from = collected.innate.find((i) => i.from.element.id === cast.source && i.def.spell === spell.id)?.from;
+      if (!from) continue;
+      const { resolvedCost, available, unavailableReason } = resolveCostLines(
+        cast.cost, spell.name, from, engine, resources, spellcasting, hitDicePools, live, diagnostics,
+      );
+      cast.resolvedCost = resolvedCost;
+      cast.available = available;
+      if (unavailableReason) cast.unavailableReason = unavailableReason;
+    }
+}
+
+/**
+ * A cost resolved to pool keys: what an action or an innate cast spends, each line with the
+ * pool's label and, for a chosen amount, its range. Unknown pools are a diagnostic and are
+ * left out; with live state, a pool that cannot cover the line makes the thing unavailable.
+ */
+function resolveCostLines(
+  cost: Cost | undefined,
+  label: string,
+  from: PartSource,
+  engine: StatEngine,
+  resources: ResolvedResource[],
+  spellcasting: ResolvedSpellcasting | undefined,
+  hitDicePools: ResolvedCharacter["hp"]["hitDice"],
+  live: LiveState | undefined,
+  diagnostics: Diagnostic[],
+): { resolvedCost?: ResolvedCostLine[]; available: boolean; unavailableReason?: string; deferred: Set<string> } {
+  const resolvedCost: ResolvedCostLine[] = [];
+  let available = true;
+  let unavailableReason: string | undefined;
+  const deferred = new Set<string>();
+  for (const [costKey, amount] of Object.entries(cost ?? {})) {
+    const pool = resolvePoolKey(costKey, from, resources, spellcasting, hitDicePools);
+    if (!pool) {
+      diagnostics.push({
+        severity: "warning",
+        code: "unresolved-reference",
+        message: `"${label}" costs "${costKey}", which is not a pool this character has`,
+        subject: from.element.id,
+      });
+      continue;
+    }
+    const counted = pool.remaining !== undefined && Number.isFinite(pool.remaining);
+    const range = typeof amount === "number" ? undefined : chosenRange(amount as Exclude<CostAmount, number>, pool.remaining, engine, label, from, diagnostics);
+    const line: ResolvedCostLine = {
+      key: pool.key,
+      amount: range ? { min: range.min, max: range.max } : (amount as number),
+      label: pool.label,
+      ...(range && counted ? { remaining: pool.remaining } : {}),
+      ...(range?.cap !== undefined ? { cap: range.cap } : {}),
+    };
+    if (typeof amount !== "number") deferred.add(SPENT_REF);
+    resolvedCost.push(line);
+    const need = typeof line.amount === "number" ? line.amount : line.amount.min;
+    if (live && pool.remaining !== undefined && pool.remaining < need) {
+      available = false;
+      unavailableReason = `Not enough ${pool.label}`;
+    }
+  }
+  return { resolvedCost: resolvedCost.length ? resolvedCost : undefined, available, unavailableReason, deferred };
+}
+
+/**
  * A chosen amount's range: `min`, up to the lesser of the content's cap and what the pool
  * has left. With no cap the pool's remainder is the whole limit, and an uncounted pool
  * (unlimited, or one the character cannot see) with no cap offers `min` alone.
@@ -792,7 +845,7 @@ function chosenRange(
   amount: { min: Expr; max?: Expr },
   remaining: number | undefined,
   engine: StatEngine,
-  def: ActionDef,
+  label: string,
   from: PartSource,
   diagnostics: Diagnostic[],
 ): { min: number; max: number; cap?: number } {
@@ -802,7 +855,7 @@ function chosenRange(
       diagnostics.push({
         severity: "warning",
         code: "expression-error",
-        message: `action "${def.name ?? def.id}" cost ${what}: ${out.error}`,
+        message: `"${label}" cost ${what}: ${out.error}`,
         subject: from.element.id,
       });
     return Math.max(0, Math.floor(out.value));
@@ -1276,7 +1329,9 @@ function resolveSpellcasting(
       });
       continue;
     }
-    push(element, { id: element.id }, false, from.class, true);
+    // An innate cast belongs to no class's list, so a feature of a class that does not
+    // cast (a monk's elemental discipline) still puts the spell on the sheet.
+    push(element, { id: element.id }, false, from.class && classIds.has(from.class) ? from.class : undefined, true);
     const spell = [...spells, ...orphaned].find((s) => s.id === element.id);
     if (!spell) continue;
     const owner = classes.find((c) => c.class === from.class);
@@ -1289,7 +1344,10 @@ function resolveSpellcasting(
       dc: attack === undefined ? undefined : 8 + attack,
       attack,
       resource:
-        def.uses === undefined ? undefined : resourceKey({ id: innatePoolId(def), name: "", max: 0, recharge: [] }, from),
+        def.uses === undefined || def.cost !== undefined
+          ? undefined
+          : resourceKey({ id: innatePoolId(def), name: "", max: 0, recharge: [] }, from),
+      ...(def.cost ? { cost: def.cost } : {}),
       text: def.text,
       notes: def.notes,
     });
