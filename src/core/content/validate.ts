@@ -368,7 +368,7 @@ function validateListAddition(a: unknown, subject: string | undefined, path: str
   ids("spells");
   ids("fromClasses");
   if (add.class !== undefined && (typeof add.class !== "string" || !add.class))
-    out.push(err("invalid-element", "class must be a class id", subject, `${path}.class`));
+    out.push(err("invalid-element", 'class must be a class id, or "any" for every class the character casts with', subject, `${path}.class`));
   if (add.spells === undefined && add.fromClasses === undefined)
     out.push(warn("invalid-element", "adds nothing: give spells or fromClasses", subject, path));
 }

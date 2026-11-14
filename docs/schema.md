@@ -489,12 +489,15 @@ that class's pickers, and a spell picked from them is not a `spell-mismatch`, no
 
 | Field | Meaning |
 | --- | --- |
-| `class` | The class whose list grows. Defaults to the class that owns the part (a subclass's `levels` belong to its class). Required on a part no class owns, such as a feat; without it the part does nothing and says so. |
+| `class` | The class whose list grows. Defaults to the class that owns the part (a subclass's `levels` belong to its class). Required on a part no class owns, such as a feat; without it the part does nothing and says so. `"any"` is every class the character casts with. |
 | `spells` | Spell element ids, added one by one. An unknown id is an `unresolved-reference` warning. |
 | `fromClasses` | Class element ids whose entire spell list (their `spellcasting.list` tag) is added. |
 
 A part waits for its level like any other, and for the target class to be one the character
-casts with. The resolver reads the result as
+casts with. `"class": "any"` is for a part no class owns that says "added to the spell list of
+your spellcasting class" (a dragonmark): the spells join the list of **every** class the character
+casts with, the same set `spellcasting.all.dc` fans out over, and a character who casts with none
+gets nothing and no diagnostic. The resolver reads the result as
 `spellcasting.classes[].listAdditions: { spells, lists }`. This covers 2014 expanded lists
 (Fiend's, as `spells` on a level-1 entry) and 2024 Bard Magical Secrets (`fromClasses`, on the
 level that gives it). Granting the same spell for free is `grants`, a different thing.
@@ -927,7 +930,8 @@ type Grant =
       counts?: boolean };            // with "learned": fills a slot in the limits; default true
 
 interface SpellListAddition {
-  class?: string;                    // default: the class that owns the part
+  class?: string;                    // default: the class that owns the part; "any" = every
+                                     // class the character casts with
   spells?: string[];                 // spell element ids
   fromClasses?: string[];            // class element ids; their whole list is added
 }

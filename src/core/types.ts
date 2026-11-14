@@ -206,7 +206,11 @@ export interface ChoiceRef {
  * Magical Secrets are this.
  */
 export interface SpellListAddition {
-  /** The class whose list grows. Defaults to the class that owns the part. */
+  /**
+   * The class whose list grows. Defaults to the class that owns the part. `"any"` grows
+   * the list of every class the character casts with (a dragonmark's spells), and nothing
+   * for a character who casts with none.
+   */
   class?: string;
   /** Spell element ids added one by one. */
   spells?: string[];

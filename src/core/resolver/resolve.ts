@@ -1470,8 +1470,8 @@ function readListAdditions(
     if (!list.includes(item)) list.push(item);
   };
   for (const { def, from } of collected.listAdditions) {
-    const target = def.class ?? from.class;
-    if (!target) {
+    const named = def.class ?? from.class;
+    if (!named) {
       diagnostics.push({
         severity: "warning",
         code: "unknown-part",
@@ -1480,30 +1480,33 @@ function readListAdditions(
       });
       continue;
     }
-    // A class the character does not cast with has no list to grow; the part waits.
-    if (!casting.includes(target)) continue;
-    const entry = out.get(target) ?? { spells: [], lists: [] };
-    out.set(target, entry);
-    for (const id of def.spells ?? []) {
-      if (content.get(id)?.kind === "spell") add(entry.spells, id);
-      else
-        diagnostics.push({
-          severity: "warning",
-          code: "unresolved-reference",
-          message: `"${id}" is not a spell in any loaded source (added to a list by ${from.element.name})`,
-          subject: from.element.id,
-        });
-    }
-    for (const id of def.fromClasses ?? []) {
-      const tag = (content.get(id) as { spellcasting?: { list?: string } } | undefined)?.spellcasting?.list;
-      if (tag) add(entry.lists, tag);
-      else
-        diagnostics.push({
-          severity: "warning",
-          code: "unresolved-reference",
-          message: `"${id}" is not a class with a spell list in any loaded source (added to a list by ${from.element.name})`,
-          subject: from.element.id,
-        });
+    // "any" is every class the character casts with, the set `spellcasting.all.dc` fans out
+    // over; a class the character does not cast with has no list to grow, and the part waits.
+    const targets = named === "any" ? casting : casting.includes(named) ? [named] : [];
+    for (const target of targets) {
+      const entry = out.get(target) ?? { spells: [], lists: [] };
+      out.set(target, entry);
+      for (const id of def.spells ?? []) {
+        if (content.get(id)?.kind === "spell") add(entry.spells, id);
+        else
+          diagnostics.push({
+            severity: "warning",
+            code: "unresolved-reference",
+            message: `"${id}" is not a spell in any loaded source (added to a list by ${from.element.name})`,
+            subject: from.element.id,
+          });
+      }
+      for (const id of def.fromClasses ?? []) {
+        const tag = (content.get(id) as { spellcasting?: { list?: string } } | undefined)?.spellcasting?.list;
+        if (tag) add(entry.lists, tag);
+        else
+          diagnostics.push({
+            severity: "warning",
+            code: "unresolved-reference",
+            message: `"${id}" is not a class with a spell list in any loaded source (added to a list by ${from.element.name})`,
+            subject: from.element.id,
+          });
+      }
     }
   }
   return out;
