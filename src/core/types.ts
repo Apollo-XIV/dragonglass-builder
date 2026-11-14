@@ -53,6 +53,13 @@ export interface Filter {
   ids?: string[];
   /** Ids to exclude from whatever the rest of the filter matched. */
   exclude?: string[];
+  /**
+   * Alternatives: an element matches if it matches any one of these filters. A filter
+   * with `anyOf` carries nothing else. "A gaming set or thieves' tools" is
+   * `{ anyOf: [{ kind: "tool", tags: ["gaming-set"] }, { ids: ["srd:tool:thieves-tools"] }] }`,
+   * open to a homebrew gaming set where a list of ids would not be.
+   */
+  anyOf?: Filter[];
 }
 
 export interface ChoiceDef {

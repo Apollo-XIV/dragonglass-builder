@@ -85,6 +85,28 @@ function validateModifier(m: unknown, subject: string | undefined, path: string,
   }
 }
 
+/** A filter says what it matches, or lists alternatives that each do; never both. */
+function validateFilter(f: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!f || typeof f !== "object" || Array.isArray(f)) {
+    out.push(err("invalid-element", "a filter must be an object", subject, path));
+    return;
+  }
+  const filter = f as Record<string, unknown>;
+  if (filter.anyOf !== undefined) {
+    if (!Array.isArray(filter.anyOf) || filter.anyOf.length === 0) {
+      out.push(err("invalid-element", "anyOf must be a non-empty array of filters", subject, `${path}.anyOf`));
+      return;
+    }
+    const others = Object.keys(filter).filter((k) => k !== "anyOf" && !k.startsWith("x-"));
+    if (others.length)
+      out.push(err("invalid-element", `a filter with anyOf carries nothing else (found ${others.join(", ")})`, subject, path));
+    filter.anyOf.forEach((alternative, i) => validateFilter(alternative, subject, `${path}.anyOf[${i}]`, out));
+    return;
+  }
+  if (filter.kind === undefined && filter.tags === undefined && filter.ids === undefined && filter.allTags === undefined)
+    out.push(err("invalid-element", "a filter needs at least one of kind, tags, allTags, ids, or anyOf", subject, path));
+}
+
 function validateChoice(c: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
   if (!c || typeof c !== "object" || Array.isArray(c)) {
     out.push(err("invalid-element", "choice must be an object", subject, path));
@@ -97,13 +119,7 @@ function validateChoice(c: unknown, subject: string | undefined, path: string, o
     out.push(err("invalid-element", "choice needs a count of at least 1", subject, path));
   if (!ch.from || typeof ch.from !== "object")
     out.push(err("invalid-element", "choice needs a `from` filter", subject, path));
-  else {
-    const f = ch.from as Record<string, unknown>;
-    if (f.kind === undefined && f.tags === undefined && f.ids === undefined && f.allTags === undefined)
-      out.push(
-        err("invalid-element", "`from` needs at least one of kind, tags, allTags, ids", subject, path),
-      );
-  }
+  else validateFilter(ch.from, subject, `${path}.from`, out);
   if (ch.repeatable !== undefined && typeof ch.repeatable !== "boolean")
     out.push(err("invalid-element", "choice `repeatable` must be a boolean", subject, path));
   if (ch.repeatable === true && typeof ch.count === "number" && ch.count < 2)

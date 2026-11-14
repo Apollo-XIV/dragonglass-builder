@@ -359,9 +359,15 @@ export class ContentIndex {
    *
    * Criteria are conjunctive: `{ kind: "skill", ids: [...six] }` means "these six
    * skills", not "every skill plus these six". An author who wants to widen a
-   * choice beyond one kind omits `kind` and lists ids alone.
+   * choice beyond one kind omits `kind` and lists ids alone, or writes the
+   * alternatives out as `anyOf`, which is the one place a filter unions.
    */
   query(filter: Filter): Element[] {
+    if (filter.anyOf) {
+      const out = new Map<string, Element>();
+      for (const alternative of filter.anyOf) for (const el of this.query(alternative)) out.set(el.id, el);
+      return [...out.values()].sort((a, b) => a.name.localeCompare(b.name));
+    }
     const kinds =
       filter.kind === undefined ? undefined : Array.isArray(filter.kind) ? filter.kind : [filter.kind];
     const ids = filter.ids?.length ? filter.ids : undefined;
@@ -402,6 +408,7 @@ export class ContentIndex {
 
   /** Ids in a filter that do not resolve, for validation. */
   unresolvedIn(filter: Filter): string[] {
+    if (filter.anyOf) return filter.anyOf.flatMap((alternative) => this.unresolvedIn(alternative));
     return [...(filter.ids ?? []), ...(filter.exclude ?? [])].filter((id) => !this.elements.has(id));
   }
 }

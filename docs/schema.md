@@ -266,7 +266,7 @@ produce one — a tap with no room left clears that option instead.
 { "kind": "feat" | ["feat", "feature"],  // kind is in this list
   "tags": ["a", "b"],                     // carries at least one of these
   "allTags": ["a", "b"],                  // carries all of these
-  "ids": ["srd:x"],                       // always eligible, unioned in
+  "ids": ["srd:x"],                       // is one of these, ANDed like everything else
   "exclude": ["srd:y"] }                  // removed from whatever matched
 ```
 
@@ -274,10 +274,22 @@ produce one — a tap with no room left clears that option instead.
 Naming ids does not exempt them from the other criteria — `{ kind: "feat", ids: [...] }`
 matches only those ids that are *also* feats, so a list of ids plus the wrong `kind`
 matches nothing. To offer exactly a named set, give `ids` alone. `exclude` is applied last.
-A filter must carry at least one of `kind`, `tags`, `allTags` or `ids`.
+A filter must carry at least one of `kind`, `tags`, `allTags` or `ids`, or be an `anyOf`.
 
 Restricting a choice to part of a set is therefore `ids` on its own, which is how a 2024
 background offers the three ability scores it names rather than all six.
+
+**Alternatives are `anyOf`.** The one place a filter unions is a list of filters, each an
+ordinary filter in its own right, and an element matches if it matches any of them:
+
+```json
+{ "anyOf": [{ "kind": "tool", "tags": ["gaming-set"] }, { "ids": ["srd:tool:thieves-tools"] }] }
+```
+
+is "a gaming set or thieves' tools", open to a homebrew gaming set where a list of ids would
+close it. A filter with `anyOf` carries nothing else; that is a validator error. It changes what
+a *filter* may say, not what an *option* is: the options are still elements and an answer is
+still an element id.
 
 ## Requirements
 
