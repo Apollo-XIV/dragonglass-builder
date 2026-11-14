@@ -1,4 +1,5 @@
 import type { LayoutFile, NarrowPrefs, SourceRef } from "../core/types";
+import { normalizeDir } from "../core/source-dir";
 
 export type CacheTier = "none" | "smart" | "all";
 
@@ -180,14 +181,19 @@ export function withDefaults(stored: Partial<DragonglassSettings> | null | undef
   };
 }
 
+function dirSuffix(ref: Pick<SourceRef, "dir">): string {
+  const dir = normalizeDir(ref.dir).dir ?? ref.dir?.trim();
+  return dir ? `/${dir}` : "";
+}
+
 export function describeSource(ref: SourceRef): string {
   switch (ref.type) {
     case "github":
-      return `GitHub${ref.auth ? " (private)" : ""} ${ref.location}${ref.pin ? `@${ref.pin}` : " (unpinned)"}`;
+      return `GitHub${ref.auth ? " (private)" : ""} ${ref.location}${dirSuffix(ref)}${ref.pin ? `@${ref.pin}` : " (unpinned)"}`;
     case "vault":
-      return `Vault folder ${ref.location}`;
+      return `Vault folder ${ref.location}${dirSuffix(ref)}`;
     case "path":
-      return `Local path ${ref.location}`;
+      return `Local path ${ref.location}${dirSuffix(ref)}`;
     case "url":
       return ref.location;
   }
@@ -202,10 +208,13 @@ export function parseSourceInput(input: string): Omit<SourceRef, "id"> | undefin
   if (!trimmed) return undefined;
 
   const githubUrl = trimmed.match(
-    /^https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/tree\/([^/]+))?\/?$/,
+    /^https?:\/\/github\.com\/([^/]+)\/([^/]+?)(?:\.git)?(?:\/tree\/([^/]+)(?:\/(.+?))?)?\/?$/,
   );
-  if (githubUrl)
-    return { type: "github", location: `${githubUrl[1]}/${githubUrl[2]}`, pin: githubUrl[3], enabled: true };
+  if (githubUrl) {
+    // The first segment after tree/ is always the pin; a branch with a `/` in it can't be read from a URL.
+    const dir = githubUrl[4] ? (normalizeDir(githubUrl[4]).dir ?? githubUrl[4]) : undefined;
+    return { type: "github", location: `${githubUrl[1]}/${githubUrl[2]}`, pin: githubUrl[3], ...(dir ? { dir } : {}), enabled: true };
+  }
 
   if (/^[\w.-]+\/[\w.-]+$/.test(trimmed) && !trimmed.includes(".json"))
     return { type: "github", location: trimmed, enabled: true };
@@ -219,6 +228,6 @@ export function parseSourceInput(input: string): Omit<SourceRef, "id"> | undefin
 
 /** A stable id for a newly added source, derived from its location. */
 export function suggestSourceId(ref: Omit<SourceRef, "id">): string {
-  const tail = ref.location.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "source";
+  const tail = `${ref.location}/${ref.dir ?? ""}`.replace(/\\/g, "/").split("/").filter(Boolean).pop() ?? "source";
   return tail.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-|-$/g, "") || "source";
 }

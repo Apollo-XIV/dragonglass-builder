@@ -20,8 +20,8 @@ export interface ExportFromDiskOptions {
   coreDir: string;
   exportedAt: string;
   pluginVersion: string;
-  /** Source id to a git pin, for sources that have one. Others are hashed. */
-  pins?: Record<string, string>;
+  /** Source id to a git pin, for sources that have one, with the folder of the repository it lives in when it is not the root. Others are hashed. */
+  pins?: Record<string, string | { ref: string; dir?: string }>;
   /** Note text by name, for resolving `![[embeds]]` in details. */
   notes?: Record<string, string>;
 }
@@ -63,7 +63,7 @@ export async function exportFromDisk(opts: ExportFromDiskOptions): Promise<Expor
     pluginVersion: opts.pluginVersion,
     sourceRef: async (id) => {
       const pin = opts.pins?.[id];
-      if (pin) return { ref: pin, refType: "git" };
+      if (pin) return typeof pin === "string" ? { ref: pin, refType: "git" } : { ...pin, refType: "git" };
       const dir = bundles.get(id);
       return dir ? { ref: await contentHash(readSourceBundle(dir).files), refType: "hash" } : undefined;
     },

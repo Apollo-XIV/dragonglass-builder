@@ -25,6 +25,8 @@ import {
 export interface SourceRefInfo {
   ref: string;
   refType: "git" | "hash";
+  /** The folder of the repository the source lives in, when it is not at the root. */
+  dir?: string;
 }
 
 export interface BuildExportInput {
@@ -470,6 +472,7 @@ async function sourcesUsed(
       ...(version ? { version } : {}),
       ref: pin.ref,
       refType: pin.refType,
+      ...(pin.dir ? { dir: pin.dir } : {}),
       sourcebooks: books.map((b) => b.id),
     });
   }

@@ -395,6 +395,10 @@ my-source/
     classes/…
 ```
 
+A repository may hold several sources, one directory each (`srd/`, `srd24/`), every one with its
+own `source.json` and `content/`. The user adds each as its own source with the **folder in the
+repository** set to that directory (`dir` on its source entry); the repository, pin and token are the same.
+
 Every `.json` file under `content/` is loaded. A file holds one element or an array of
 them. Group however you like; the loader does not care.
 

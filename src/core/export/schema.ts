@@ -33,11 +33,13 @@
  *     and `cost` on an innate cast that spends another pool. Recharge rules may carry `text`,
  *     and `on` may be `midnight` or `special`.
  * Absent when the character has none or the picture could not be read or was too large.
+ * 2.6 added `envelope.sources[].dir`, the folder of the repository the source lives in, present
+ *     only when it is not at the root.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.5";
+export const EXPORT_SCHEMA_VERSION = "2.6";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -68,6 +70,13 @@ export const ExportSource = Type.Object(
     refType: Type.Union([Type.Literal("git"), Type.Literal("hash")], {
       description: "`git` when ref is a pin on a GitHub source, `hash` when it is a content hash.",
     }),
+    dir: Type.Optional(
+      Type.String({
+        minLength: 1,
+        description:
+          "The folder of the repository that holds the source, relative with `/` separators. Present when the source is not at the root, because a git pin names a whole repo and one commit can hold several sources.",
+      }),
+    ),
     sourcebooks: Type.Array(Type.String(), {
       description: "Ids of the sourcebooks this source provides. An element's `source` names one of these.",
     }),

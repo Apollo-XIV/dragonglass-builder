@@ -14,11 +14,23 @@ import { ContentIndex, type LoadedSource } from "../core/content";
 import { contentHash } from "../core/export/hash";
 import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile } from "../core/content/source-bundle";
 import { CORE_ELEMENTS, CORE_SOURCE_ID, CORE_SOURCE_NAME } from "../generated/core-content";
+import { joinRoot, normalizeDir } from "../core/source-dir";
 import type { CacheTier } from "./settings";
 
 /** vault and path sources are local files the plugin can write back to; github and url are fetched. */
 export function isWritableSource(ref: Pick<SourceRef, "type">): boolean {
   return ref.type === "vault" || ref.type === "path";
+}
+
+/** Where a source's own files are read and written: `location` joined with `dir`. Throws on a rejected `dir`. */
+export function sourceRoot(ref: Pick<SourceRef, "type" | "location" | "dir">): string {
+  // A url source is one file; it has no tree to look inside.
+  return ref.type === "url" ? ref.location : joinRoot(ref.location, ref.dir);
+}
+
+/** Source id, pin and folder, so changing either is a cache miss rather than a silent reuse. */
+function cacheKey(ref: Pick<SourceRef, "id" | "pin" | "dir">): string {
+  return `${ref.id}@${ref.pin ?? ""}#${normalizeDir(ref.dir).dir ?? ""}`;
 }
 
 export interface SourceStatus {
@@ -38,7 +50,7 @@ export interface SourceStatus {
 }
 
 interface CacheEntry {
-  /** Source id plus pin, so changing a pin is a cache miss rather than a silent reuse. */
+  /** `cacheKey` of the ref it was fetched for. Entries from before `dir` have no `#`, which reads as no `dir`. */
   key: string;
   fetchedAt: string;
   manifest: SourceBundle["manifest"];
@@ -53,6 +65,20 @@ interface CacheEntry {
 
 const CACHE_FILE = "source-cache.json";
 
+interface GithubTree {
+  tree: { path: string; type: string }[];
+  truncated?: boolean;
+}
+
+class HttpError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+  }
+}
+
 function error(subject: string, message: string): Diagnostic {
   return { severity: "error", code: "invalid-element", message, subject, source: subject };
 }
@@ -64,6 +90,8 @@ export function coreSource(): LoadedSource {
 
 export class SourceManager {
   private cache = new Map<string, CacheEntry>();
+  /** Tree listings fetched during the current build, so refs sharing a repo, pin and folder ask once. */
+  private trees = new Map<string, Promise<GithubTree>>();
   private loaded = new Map<string, LoadedSource>();
   private statuses = new Map<string, SourceStatus>();
   private cacheLoaded = false;
@@ -123,7 +151,10 @@ export class SourceManager {
     try {
       if (!(await this.adapter.exists(this.cachePath()))) return;
       const raw = JSON.parse(await this.adapter.read(this.cachePath())) as CacheEntry[];
-      for (const entry of raw) this.cache.set(entry.key.split("@")[0], entry);
+      for (const entry of raw) {
+        if (!entry.key.includes("#")) entry.key += "#";
+        this.cache.set(entry.key.split("@")[0], entry);
+      }
     } catch {
       // A corrupt cache is never fatal: refetch instead.
       this.cache.clear();
@@ -151,6 +182,8 @@ export class SourceManager {
     disabled: string[] = [],
   ): Promise<ContentIndex> {
     await this.loadCache();
+    // Not kept across builds: a moved branch would be served stale.
+    this.trees.clear();
     const off = new Set(disabled);
     const seen = new Set<string>();
     const ordered: SourceRef[] = [];
@@ -191,20 +224,23 @@ export class SourceManager {
    * What pins a loaded source in an export: the git pin of a GitHub source,
    * otherwise a hash of its files read now. Never a location.
    */
-  async exportRef(sourceId: string): Promise<{ ref: string; refType: "git" | "hash" } | undefined> {
+  async exportRef(sourceId: string): Promise<{ ref: string; refType: "git" | "hash"; dir?: string } | undefined> {
     const loaded = [...this.loaded.values()].find((l) => l.id === sourceId);
     const ref = loaded?.ref;
     if (!loaded || !ref) return undefined;
-    if (ref.type === "github" && ref.pin) return { ref: ref.pin, refType: "git" };
+    // A commit names a whole repo, so a source in a folder of it is only identified with the folder.
+    const dir = ref.type === "url" ? undefined : normalizeDir(ref.dir).dir;
+    const folder = dir ? { dir } : {};
+    if (ref.type === "github" && ref.pin) return { ref: ref.pin, refType: "git", ...folder };
     let files: SourceFile[];
     try {
       files = (await this.readBundle(ref)).bundle.files;
     } catch {
-      const cached = this.cache.get(ref.id);
+      const cached = this.cachedFor(ref);
       if (!cached) return undefined;
       files = cached.files;
     }
-    return { ref: await contentHash(files), refType: "hash" };
+    return { ref: await contentHash(files), refType: "hash", ...folder };
   }
 
   private async load(ref: SourceRef): Promise<LoadedSource> {
@@ -218,18 +254,21 @@ export class SourceManager {
     // A source fetched with the session login is read from its cached copy; GitHub is asked
     // only when there is none for this pin, or the user asked for an update.
     const isPrivate = ref.auth?.type === "oauth";
-    const copy = this.cache.get(ref.id);
-    if (isPrivate && copy?.private && copy.key === `${ref.id}@${ref.pin ?? ""}` && !this.refreshing.has(ref.id))
+    const copy = this.cachedFor(ref);
+    if (isPrivate && copy?.private && !this.refreshing.has(ref.id))
       return this.fromCache(ref, copy, [], "loaded", `cached ${copy.fetchedAt}; ${savedLoginExists(this.app) ? "enter password" : "sign in"} to check for updates`);
 
-    try {
-      ({ bundle, origin } = await this.readBundle(ref));
-    } catch (e) {
-      diagnostics = [error(ref.id, e instanceof Error ? e.message : String(e))];
-    }
+    const badDir = ref.type === "url" ? undefined : normalizeDir(ref.dir).error;
+    if (!badDir) {
+      try {
+        ({ bundle, origin } = await this.readBundle(ref));
+      } catch (e) {
+        diagnostics = [error(ref.id, e instanceof Error ? e.message : String(e))];
+      }
+    } else diagnostics = [error(ref.id, badDir)];
 
     if (!bundle) {
-      const fallback = this.cache.get(ref.id);
+      const fallback = badDir ? undefined : this.cachedFor(ref);
       if (fallback) return this.fromCache(ref, fallback, diagnostics, "cached", `cache from ${fallback.fetchedAt}`);
       const empty: LoadedSource = { id: ref.id, name: ref.name, elements: [], diagnostics };
       this.statuses.set(ref.id, { ref, state: "error", elementCount: 0, diagnostics, origin, sourceId: ref.id });
@@ -256,7 +295,7 @@ export class SourceManager {
     });
     if (this.tier !== "none" || isPrivate) {
       this.cache.set(ref.id, {
-        key: `${ref.id}@${ref.pin ?? ""}`,
+        key: cacheKey(ref),
         fetchedAt: new Date().toISOString(),
         manifest: bundle.manifest,
         files: bundle.files,
@@ -265,6 +304,12 @@ export class SourceManager {
       void this.saveCache();
     }
     return loaded;
+  }
+
+  /** The cached copy for this ref's id, only if it was fetched for the same pin and folder. */
+  private cachedFor(ref: SourceRef): CacheEntry | undefined {
+    const entry = this.cache.get(ref.id);
+    return entry?.key === cacheKey(ref) ? entry : undefined;
   }
 
   /** Builds a source from a cached copy, with whatever `diagnostics` explain why it isn't a fresh fetch. */
@@ -297,7 +342,7 @@ export class SourceManager {
   /** Every content JSON file in a source, as paths relative to the source root. */
   async listFiles(ref: SourceRef): Promise<string[]> {
     if (ref.type === "vault") {
-      const root = normalizePath(ref.location);
+      const root = normalizePath(sourceRoot(ref));
       const out: string[] = [];
       const walk = async (dir: string): Promise<void> => {
         if (!(await this.adapter.exists(dir))) return;
@@ -313,7 +358,7 @@ export class SourceManager {
       if (!Platform.isDesktopApp) return [];
       const fs: typeof import("node:fs") = require("node:fs");
       const path: typeof import("node:path") = require("node:path");
-      const root = ref.location;
+      const root = sourceRoot(ref);
       const out: string[] = [];
       const walk = (dir: string): void => {
         if (!fs.existsSync(dir)) return;
@@ -331,22 +376,22 @@ export class SourceManager {
 
   /** Whether a file exists, by path relative to the source root. */
   async fileExists(ref: SourceRef, relPath: string): Promise<boolean> {
-    if (ref.type === "vault") return this.adapter.exists(normalizePath(`${ref.location}/${relPath}`));
+    if (ref.type === "vault") return this.adapter.exists(normalizePath(`${sourceRoot(ref)}/${relPath}`));
     if (ref.type === "path") {
       const fs: typeof import("node:fs") = require("node:fs");
       const path: typeof import("node:path") = require("node:path");
-      return fs.existsSync(path.join(ref.location, relPath));
+      return fs.existsSync(path.join(sourceRoot(ref), relPath));
     }
     return false;
   }
 
   /** Reads one file's raw text, by path relative to the source root. */
   async readFile(ref: SourceRef, relPath: string): Promise<string> {
-    if (ref.type === "vault") return this.adapter.read(normalizePath(`${ref.location}/${relPath}`));
+    if (ref.type === "vault") return this.adapter.read(normalizePath(`${sourceRoot(ref)}/${relPath}`));
     if (ref.type === "path") {
       const fs: typeof import("node:fs") = require("node:fs");
       const path: typeof import("node:path") = require("node:path");
-      return fs.readFileSync(path.join(ref.location, relPath), "utf8");
+      return fs.readFileSync(path.join(sourceRoot(ref), relPath), "utf8");
     }
     throw new Error(`"${ref.id}" is read-only`);
   }
@@ -354,7 +399,7 @@ export class SourceManager {
   /** Writes one file's raw text, creating parent folders as needed. */
   async writeFile(ref: SourceRef, relPath: string, text: string): Promise<void> {
     if (ref.type === "vault") {
-      const full = normalizePath(`${ref.location}/${relPath}`);
+      const full = normalizePath(`${sourceRoot(ref)}/${relPath}`);
       await this.ensureVaultFolder(full.slice(0, full.lastIndexOf("/")));
       await this.adapter.write(full, text);
       return;
@@ -362,7 +407,7 @@ export class SourceManager {
     if (ref.type === "path") {
       const fs: typeof import("node:fs") = require("node:fs");
       const path: typeof import("node:path") = require("node:path");
-      const full = path.join(ref.location, relPath);
+      const full = path.join(sourceRoot(ref), relPath);
       fs.mkdirSync(path.dirname(full), { recursive: true });
       fs.writeFileSync(full, text, "utf8");
       return;
@@ -389,25 +434,26 @@ export class SourceManager {
     if (ref.type === "path" && !Platform.isDesktopApp)
       throw new Error("paths outside the vault need the desktop app; use a vault folder instead");
 
+    const root = sourceRoot(ref);
     if (ref.type === "vault") {
-      const root = normalizePath(ref.location);
-      if (await this.adapter.exists(root)) throw new Error(`"${ref.location}" already exists`);
-      await this.ensureVaultFolder(root);
-      await this.ensureVaultFolder(normalizePath(`${root}/content`));
-      await this.adapter.write(normalizePath(`${root}/source.json`), `${JSON.stringify(manifest, null, 2)}\n`);
+      const vaultRoot = normalizePath(root);
+      if (await this.adapter.exists(vaultRoot)) throw new Error(`"${root}" already exists`);
+      await this.ensureVaultFolder(vaultRoot);
+      await this.ensureVaultFolder(normalizePath(`${vaultRoot}/content`));
+      await this.adapter.write(normalizePath(`${vaultRoot}/source.json`), `${JSON.stringify(manifest, null, 2)}\n`);
     } else {
       const fs: typeof import("node:fs") = require("node:fs");
       const path: typeof import("node:path") = require("node:path");
-      if (fs.existsSync(ref.location)) throw new Error(`"${ref.location}" already exists`);
-      fs.mkdirSync(path.join(ref.location, "content"), { recursive: true });
-      fs.writeFileSync(path.join(ref.location, "source.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
+      if (fs.existsSync(root)) throw new Error(`"${root}" already exists`);
+      fs.mkdirSync(path.join(root, "content"), { recursive: true });
+      fs.writeFileSync(path.join(root, "source.json"), `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
     }
   }
 
   // -- readers ---------------------------------------------------------------
 
   private async readVaultFolder(ref: SourceRef): Promise<SourceBundle> {
-    const root = normalizePath(ref.location);
+    const root = normalizePath(sourceRoot(ref));
     const manifestPath = normalizePath(`${root}/source.json`);
     const manifestText = (await this.adapter.exists(manifestPath))
       ? await this.adapter.read(manifestPath)
@@ -426,7 +472,7 @@ export class SourceManager {
     const contentRoot = normalizePath(`${root}/content`);
     if (await this.adapter.exists(contentRoot)) await walk(contentRoot);
     else if (await this.adapter.exists(root)) await walk(root);
-    else throw new Error(`vault folder "${ref.location}" does not exist`);
+    else throw new Error(ref.dir ? this.noFolder(ref, `vault folder "${ref.location}"`) : `vault folder "${ref.location}" does not exist`);
 
     return { manifest: { ...manifest, id: manifest.id || ref.id }, files };
   }
@@ -438,8 +484,8 @@ export class SourceManager {
     const fs: typeof import("node:fs") = require("node:fs");
     const path: typeof import("node:path") = require("node:path");
 
-    const root = ref.location;
-    if (!fs.existsSync(root)) throw new Error(`"${root}" does not exist`);
+    const root = sourceRoot(ref);
+    if (!fs.existsSync(root)) throw new Error(ref.dir ? this.noFolder(ref, `"${ref.location}"`) : `"${root}" does not exist`);
     const manifestPath = path.join(root, "source.json");
     const { manifest } = parseManifest(
       fs.existsSync(manifestPath) ? fs.readFileSync(manifestPath, "utf8") : "{}",
@@ -464,6 +510,8 @@ export class SourceManager {
   private async readGithub(ref: SourceRef): Promise<{ bundle: SourceBundle; origin: string }> {
     const [owner, repo] = ref.location.split("/");
     if (!owner || !repo) throw new Error(`"${ref.location}" is not an owner/repo pair`);
+    const { dir, error: badDir } = normalizeDir(ref.dir);
+    if (badDir) throw new Error(badDir);
     // Resolved up front so a missing token fails with its own message, not a 404.
     const token = ref.auth ? readGithubToken(this.app, ref.auth) : undefined;
     const pin = ref.pin ?? (await this.defaultBranch(owner, repo, token));
@@ -486,22 +534,22 @@ export class SourceManager {
       });
     }
 
-    const tree = await this.json<{ tree: { path: string; type: string }[]; truncated?: boolean }>(
-      `https://api.github.com/repos/${owner}/${repo}/git/trees/${encodeURIComponent(pin)}?recursive=1`,
-      token,
-    );
-    if (tree.truncated)
-      throw new Error(`"${ref.location}" is too large to list in one request; split the source`);
+    const tree = await this.githubTree(ref, owner, repo, pin, dir, token);
+    const where = `${ref.location}${dir ? `/${dir}` : ""}`;
+    if (tree.truncated) throw new Error(`"${where}" is too large to list in one request; split the source`);
 
     // raw.githubusercontent.com doesn't take a token header reliably, so a private
-    // repo's files come through the contents API, which does.
-    const fetchFile = (file: string): Promise<string> =>
-      token
+    // repo's files come through the contents API, which does. Tree paths are relative to the
+    // source, so a fetch puts the folder back.
+    const fetchFile = (file: string): Promise<string> => {
+      const full = dir ? `${dir}/${file}` : file;
+      return token
         ? this.text(
-            `https://api.github.com/repos/${owner}/${repo}/contents/${file.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(pin)}`,
+            `https://api.github.com/repos/${owner}/${repo}/contents/${full.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(pin)}`,
             token,
           )
-        : this.text(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(pin)}/${file}`);
+        : this.text(`https://raw.githubusercontent.com/${owner}/${repo}/${encodeURIComponent(pin)}/${full}`);
+    };
 
     const manifestEntry = tree.tree.find((e) => e.path === "source.json");
     const { manifest } = parseManifest(
@@ -517,8 +565,35 @@ export class SourceManager {
 
     return {
       bundle: { manifest: { ...manifest, id: manifest.id || ref.id }, files },
-      origin: `github.com/${ref.location}@${pin}`,
+      origin: `github.com/${where}@${pin}`,
     };
+  }
+
+  /**
+   * The files of a repo at a pin, or of one folder of it when `dir` is set: GitHub lists just
+   * that subtree for `<pin>:<dir>`, so a big repo with a small source in it doesn't truncate, and
+   * its paths come back relative to the folder, as a root source's do.
+   */
+  private githubTree(ref: SourceRef, owner: string, repo: string, pin: string, dir: string | undefined, token?: string): Promise<GithubTree> {
+    const key = `${owner}/${repo}@${pin}:${dir ?? ""}`;
+    const memo = this.trees.get(key);
+    if (memo) return memo;
+    const base = `https://api.github.com/repos/${owner}/${repo}/git/trees/`;
+    const subtree = dir ? `:${dir.split("/").map(encodeURIComponent).join("/")}` : "";
+    const fetched = this.json<GithubTree>(`${base}${encodeURIComponent(pin)}${subtree}?recursive=1`, token).catch(async (e: unknown) => {
+      // A 404 is the folder or the pin; the pin alone says which.
+      if (dir && e instanceof HttpError && e.status === 404) {
+        await this.json<GithubTree>(`${base}${encodeURIComponent(pin)}`, token);
+        throw new Error(this.noFolder(ref, `"${ref.location}@${pin}"`));
+      }
+      throw e;
+    });
+    this.trees.set(key, fetched);
+    return fetched;
+  }
+
+  private noFolder(ref: SourceRef, where: string): string {
+    return `"${ref.dir}" is not a folder in ${where}`;
   }
 
   private async readUrl(ref: SourceRef): Promise<SourceBundle> {
@@ -549,7 +624,7 @@ export class SourceManager {
     const headers: Record<string, string> = { Accept: "application/vnd.github+json" };
     if (token) headers.Authorization = `Bearer ${token}`;
     const response = await requestUrl({ url, throw: false, headers });
-    if (response.status >= 400) throw new Error(this.failure(response.status, url, token));
+    if (response.status >= 400) throw new HttpError(response.status, this.failure(response.status, url, token));
     return response.json as T;
   }
 

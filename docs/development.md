@@ -29,6 +29,9 @@ npm run build                               # typecheck + production bundle
 npm run validate -- content/srd --strict    # validate a content source
 ```
 
+A source that lives in a subdirectory of a repository (`dir` on its `SourceRef`) is validated by
+pointing the CLI at that directory: `npm run validate -- ../repo/srd24 --strict`.
+
 ## The test vault
 
 `npm run dev` builds the plugin into `vault/.obsidian/plugins/dragonglass-builder/`, so

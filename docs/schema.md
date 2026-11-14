@@ -889,6 +889,12 @@ pool's remainder is never applied, because the export is not a play session. The
 still exported as written, `@spent` and all. `provenance` is `{ source, review }` as authored (see **Part
 provenance**), lifted off the definition. Nothing existing changed meaning.
 
+**Export 2.6** is additive. `envelope.sources[].dir` is the folder of the repository the source lives in
+(`srd24`), written when its `SourceRef` had one. A git pin names a whole repo, so with several sources in
+one repository the pin alone no longer identifies the source. Absent for a source at the root, and a
+reader that does not know it reads the root, as before. A `hash` pin is unchanged: it covers the files
+read, which exclude the folder.
+
 **Export 2.5** is additive. An action part whose definition carries `attack` gains `attack`:
 the type, ability, whether proficiency applied, the bonus and its parts, resolved as a weapon
 row's are. An innate cast that spends another pool carries `cost`, in the same shape as an

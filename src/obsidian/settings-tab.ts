@@ -13,6 +13,7 @@ import {
 import { GithubLoginModal, PasswordModal, ensureLogin, updateFromGithub } from "./github-login-modal";
 import { fetchGithubUser } from "./github-user";
 import type { SourceRef } from "../core/types";
+import { normalizeDir } from "../core/source-dir";
 import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
 import { HOLD } from "./ui/narrow/constants";
 
@@ -363,6 +364,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
 
   private renderSourceAdder(containerEl: HTMLElement): void {
     let input = "";
+    let dirInput = "";
     let token = "";
     let useLogin = false;
     new Setting(containerEl)
@@ -386,6 +388,12 @@ export class DragonglassSettingTab extends PluginSettingTab {
               new Notice("Enter a repo, URL or folder.");
               return;
             }
+            const typedDir = normalizeDir(dirInput);
+            if (typedDir.error) {
+              new Notice(typedDir.error);
+              return;
+            }
+            if (typedDir.dir) parsed.dir = typedDir.dir;
             let auth: SourceRef["auth"];
             if (useLogin) {
               if (parsed.type !== "github") {
@@ -409,6 +417,14 @@ export class DragonglassSettingTab extends PluginSettingTab {
             new Notice(`Added ${describeSource(parsed as SourceRef)}`);
             this.display();
           }),
+      );
+    new Setting(containerEl)
+      .setName("Folder in the repository")
+      .setDesc("Optional. For a repository that holds several sources, the folder with this one's source.json, such as srd24.")
+      .addText((text) =>
+        text.setPlaceholder("srd24").onChange((value) => {
+          dirInput = value;
+        }),
       );
     if (sessionLoginToken())
       new Setting(containerEl)

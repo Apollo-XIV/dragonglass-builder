@@ -24,6 +24,11 @@ import {
 import { WrongPasswordError } from "../src/obsidian/login-crypto";
 import { SourceManager } from "../src/obsidian/sources";
 import type { SourceRef } from "../src/core/types";
+import { normalizeDir } from "../src/core/source-dir";
+import { describeSource, parseSourceInput, suggestSourceId } from "../src/obsidian/settings";
+import { mkdtempSync, readFileSync, existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 class MemoryAdapter {
   files = new Map<string, string>();
@@ -283,6 +288,199 @@ describe("private GitHub sources", () => {
     expect(saveGithubToken(app, "me/private", "ghp", { type: "oauth" })).toEqual({
       type: "token",
       secret: secretIdFor("me/private"),
+    });
+  });
+});
+
+describe("a source in a subdirectory of its location", () => {
+  const feat = (prefix: string) =>
+    JSON.stringify([{ id: `${prefix}:feat:lucky`, kind: "feat", name: `Lucky ${prefix}`, source: `${prefix}:book` }]);
+
+  /** What GitHub's tree API answers: `<pin>` is the whole repo, `<pin>:<dir>` is that folder, paths relative to it. */
+  const REPO: Record<string, string> = {
+    "srd/source.json": JSON.stringify({ id: "srd" }),
+    "srd/content/feats.json": feat("srd"),
+    "srd24/source.json": JSON.stringify({ id: "srd24" }),
+    "srd24/content/feats.json": feat("srd24"),
+    "srd24/content/more/spells.json": JSON.stringify([{ id: "srd24:feat:more", kind: "feat", name: "More", source: "srd24:book" }]),
+  };
+  const calls: string[] = [];
+
+  beforeEach(() => {
+    calls.length = 0;
+    vi.spyOn(obsidian as { requestUrl: unknown }, "requestUrl" as never).mockImplementation((async (req: { url: string }) => {
+      calls.push(req.url);
+      const trees = req.url.match(/\/git\/trees\/([^?]+)/);
+      if (trees) {
+        const [pin, dir] = decodeURIComponent(trees[1]).split(":");
+        if (pin !== "v1") return { status: 404, json: {}, text: "" };
+        const prefix = dir ? `${dir}/` : "";
+        const tree = Object.keys(REPO)
+          .filter((f) => f.startsWith(prefix))
+          .map((f) => ({ path: f.slice(prefix.length), type: "blob" }));
+        if (dir && !tree.length) return { status: 404, json: {}, text: "" };
+        return { status: 200, json: { tree }, text: "" };
+      }
+      const raw = req.url.match(/raw\.githubusercontent\.com\/me\/repo\/v1\/(.+)$/);
+      return { status: raw && REPO[raw[1]] ? 200 : 404, json: {}, text: raw ? (REPO[raw[1]] ?? "") : "" };
+    }) as never);
+  });
+
+  const gh = (id: string, dir?: string): SourceRef => ({ id, type: "github", location: "me/repo", pin: "v1", enabled: true, ...(dir !== undefined ? { dir } : {}) });
+  const treeCalls = () => calls.filter((c) => c.includes("/git/trees/"));
+
+  it("loads only the folder's elements, with its own manifest id and paths relative to the source", async () => {
+    const { manager } = makeManager();
+    const index = await manager.buildIndex([gh("a", "srd24")]);
+    expect(manager.statusFor("a")).toMatchObject({ state: "loaded", sourceId: "srd24", elementCount: 2 });
+    expect(index.get("srd24:feat:lucky")).toBeDefined();
+    expect(index.get("srd:feat:lucky")).toBeUndefined();
+    expect(treeCalls()[0]).toContain("/git/trees/v1:srd24?recursive=1");
+    expect(manager.statusFor("a")?.origin).toBe("github.com/me/repo/srd24@v1");
+  });
+
+  it("loads two folders of one repo and pin as two sources", async () => {
+    const { manager } = makeManager();
+    const index = await manager.buildIndex([gh("a", "srd"), gh("b", "srd24")]);
+    expect(manager.statusFor("a")).toMatchObject({ state: "loaded", sourceId: "srd", elementCount: 1 });
+    expect(manager.statusFor("b")).toMatchObject({ state: "loaded", sourceId: "srd24", elementCount: 2 });
+    expect(index.get("srd:feat:lucky")).toBeDefined();
+    // One listing per folder: a subtree is its own request, and the same folder is asked for once.
+    expect(treeCalls()).toHaveLength(2);
+    // The same folder under two ids is listed once in a build.
+    calls.length = 0;
+    await makeManager().manager.buildIndex([gh("a", "srd"), gh("c", "srd")]);
+    expect(treeCalls()).toHaveLength(1);
+  });
+
+  it("names a folder that is not in the tree, and says a bad pin is a bad pin", async () => {
+    const { manager } = makeManager();
+    await manager.buildIndex([gh("a", "nope")]);
+    expect(manager.statusFor("a")).toMatchObject({ state: "error" });
+    expect(manager.statusFor("a")?.diagnostics[0].message).toBe('"nope" is not a folder in "me/repo@v1"');
+    await manager.buildIndex([{ ...gh("b", "srd24"), pin: "v9" }]);
+    expect(manager.statusFor("b")?.diagnostics[0].message).toContain("404");
+  });
+
+  it("rejects an absolute dir or one with . or .. before any request", async () => {
+    const { manager } = makeManager();
+    for (const dir of ["../x", "a/../b", "./a", "/etc", "C:\\x"]) {
+      calls.length = 0;
+      manager.invalidate();
+      await manager.buildIndex([gh("a", dir)]);
+      expect(manager.statusFor("a")?.state).toBe("error");
+      expect(calls).toEqual([]);
+    }
+  });
+
+  it("normalises backslashes and stray slashes", () => {
+    expect(normalizeDir("srd24")).toEqual({ dir: "srd24" });
+    expect(normalizeDir("srd24/")).toEqual({ dir: "srd24" });
+    expect(normalizeDir("a\\b//c\\")).toEqual({ dir: "a/b/c" });
+    expect(normalizeDir("")).toEqual({});
+    expect(normalizeDir("/a").error).toBeDefined();
+  });
+
+  describe("vault and path sources", () => {
+    it("reads, lists, reads a file, writes and creates inside the folder (vault)", async () => {
+      const { manager, adapter } = makeManager();
+      adapter.files.set("Repo/srd24/source.json", JSON.stringify({ id: "srd24" }));
+      adapter.files.set("Repo/srd24/content/feats.json", feat("srd24"));
+      adapter.files.set("Repo/srd/content/feats.json", feat("srd"));
+      const ref: SourceRef = { id: "v", type: "vault", location: "Repo", dir: "srd24/", enabled: true };
+      await manager.buildIndex([ref]);
+      expect(manager.statusFor("v")).toMatchObject({ state: "loaded", sourceId: "srd24", elementCount: 1 });
+      expect(await manager.listFiles(ref)).toEqual(["content/feats.json"]);
+      expect(await manager.fileExists(ref, "source.json")).toBe(true);
+      expect(JSON.parse(await manager.readFile(ref, "content/feats.json"))[0].id).toBe("srd24:feat:lucky");
+      await manager.writeFile(ref, "content/new.json", "[]");
+      expect(adapter.files.has("Repo/srd24/content/new.json")).toBe(true);
+      const made: SourceRef = { id: "m", type: "vault", location: "Repo", dir: "mine", enabled: true };
+      await manager.createSource(made, { id: "m" });
+      expect(adapter.files.has("Repo/mine/source.json")).toBe(true);
+      await expect(manager.createSource(made, { id: "m" })).rejects.toThrow("already exists");
+    });
+
+    it("does the same for a path outside the vault", async () => {
+      const { manager } = makeManager();
+      const root = mkdtempSync(join(tmpdir(), "dg-dir-"));
+      const ref: SourceRef = { id: "p", type: "path", location: root, dir: "srd24", enabled: true };
+      await manager.createSource(ref, { id: "srd24" });
+      expect(existsSync(join(root, "srd24", "content"))).toBe(true);
+      await manager.writeFile(ref, "content/feats.json", feat("srd24"));
+      expect(readFileSync(join(root, "srd24", "content", "feats.json"), "utf8")).toBe(feat("srd24"));
+      await manager.buildIndex([ref]);
+      expect(manager.statusFor("p")).toMatchObject({ state: "loaded", sourceId: "srd24", elementCount: 1 });
+      expect(await manager.listFiles(ref)).toEqual([join("content", "feats.json")]);
+      expect(await manager.fileExists(ref, "source.json")).toBe(true);
+      manager.invalidate("p");
+      await manager.buildIndex([{ ...ref, dir: "missing" }]);
+      expect(manager.statusFor("p")?.diagnostics[0].message).toContain('"missing" is not a folder');
+    });
+  });
+
+  describe("the cache", () => {
+    const seed = (adapter: MemoryAdapter, key: string) =>
+      adapter.files.set(
+        ".obsidian/plugins/dragonglass/source-cache.json",
+        JSON.stringify([{ key, fetchedAt: "then", manifest: { id: "cached" }, files: [{ path: "content/c.json", text: feat("cached") }] }]),
+      );
+    const failing = () =>
+      vi.spyOn(obsidian as { requestUrl: unknown }, "requestUrl" as never).mockImplementation((async () => ({ status: 500, json: {}, text: "" })) as never);
+
+    it("serves an entry from before `dir` to a ref with none, and misses for a ref with one", async () => {
+      const first = makeManager();
+      seed(first.adapter, "a@v1");
+      failing();
+      await first.manager.buildIndex([gh("a")]);
+      expect(first.manager.statusFor("a")).toMatchObject({ state: "cached", elementCount: 1 });
+
+      const second = makeManager();
+      seed(second.adapter, "a@v1");
+      await second.manager.buildIndex([gh("a", "srd24")]);
+      expect(second.manager.statusFor("a")?.state).toBe("error");
+    });
+
+    it("keys on the dir when it writes", async () => {
+      const { adapter } = makeManager();
+      const tiered = new SourceManager({ vault: { adapter } } as unknown as import("obsidian").App, ".obsidian/plugins/dragonglass", "all");
+      await tiered.buildIndex([gh("a", "srd24")]);
+      await new Promise((r) => setTimeout(r, 0));
+      const saved = JSON.parse(adapter.files.get(".obsidian/plugins/dragonglass/source-cache.json") ?? "[]");
+      expect(saved[0].key).toBe("a@v1#srd24");
+    });
+  });
+
+  describe("settings", () => {
+    it("reads a tree URL as a pin and a folder, and describes and names the source", () => {
+      expect(parseSourceInput("https://github.com/o/r/tree/v1/srd24")).toMatchObject({ location: "o/r", pin: "v1", dir: "srd24" });
+      expect(parseSourceInput("https://github.com/o/r/tree/v1/a/b/")).toMatchObject({ pin: "v1", dir: "a/b" });
+      const main = parseSourceInput("https://github.com/o/r/tree/main");
+      expect(main).toMatchObject({ location: "o/r", pin: "main" });
+      expect(main).not.toHaveProperty("dir");
+      expect(describeSource({ id: "x", type: "github", location: "me/repo", dir: "srd24", pin: "v1" })).toBe("GitHub me/repo/srd24@v1");
+      expect(suggestSourceId({ type: "github", location: "me/repo", dir: "srd24" })).toBe("srd24");
+      expect(suggestSourceId({ type: "github", location: "me/repo" })).toBe("repo");
+    });
+
+    it("keeps `dir` when a pin is updated the way the sources panel does it", () => {
+      const ref = gh("a", "srd24");
+      expect({ ...ref, pin: "v2" }.dir).toBe("srd24");
+    });
+  });
+
+  describe("export", () => {
+    it("carries the folder when the source had one and validates either way", async () => {
+      const { manager } = makeManager();
+      await manager.buildIndex([gh("a", "srd24")]);
+      expect(await manager.exportRef("srd24")).toEqual({ ref: "v1", refType: "git", dir: "srd24" });
+      const plain = makeManager();
+      await plain.manager.buildIndex([gh("a", "srd")]);
+      expect(await plain.manager.exportRef("srd")).toEqual({ ref: "v1", refType: "git", dir: "srd" });
+      const root = makeManager();
+      root.adapter.files.set("Repo/content/f.json", feat("r"));
+      await root.manager.buildIndex([{ id: "r", type: "vault", location: "Repo", enabled: true }]);
+      expect(await root.manager.exportRef("r")).not.toHaveProperty("dir");
     });
   });
 });

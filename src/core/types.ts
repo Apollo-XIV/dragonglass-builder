@@ -845,6 +845,8 @@ export interface SourceRef {
   location: string;
   /** Tag or commit SHA. Required for github sources so content can't drift. */
   pin?: string;
+  /** A folder inside `location` that holds the source (`source.json` and `content/`), relative, with `/` separators. Absent means the root. */
+  dir?: string;
   /** Credentials for a private GitHub repo. Absent for a public one. */
   auth?: SourceAuth;
   enabled?: boolean;

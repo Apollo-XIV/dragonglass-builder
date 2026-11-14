@@ -21,7 +21,7 @@ const FIXTURES = join(__dirname, "fixtures");
 const AT = "2026-01-01T00:00:00.000Z";
 const NOTES = { "Hall description": "A low hall of **black stone**, warmed by one forge.\n\n![[Hall description]]" };
 
-const run = (character: string, pins?: Record<string, string>): Promise<ExportDocument> =>
+const run = (character: string, pins?: Record<string, string | { ref: string; dir?: string }>): Promise<ExportDocument> =>
   exportFromDisk({
     characterDir: join(FIXTURES, "characters", character),
     sourceDirs: [join(CONTENT_ROOT, "srd")],
@@ -86,6 +86,15 @@ describe("what the export contains", () => {
   it("uses a pin as the ref when the source has one", async () => {
     const { envelope } = await run("paladin-3", { srd: "v1.2.0" });
     expect(envelope.sources[0]).toMatchObject({ ref: "v1.2.0", refType: "git" });
+  });
+
+  it("carries the folder of a source that lives in one, and nothing for one at the root", async () => {
+    const inDir = await run("paladin-3", { srd: { ref: "v1.2.0", dir: "srd24" } });
+    expect(inDir.envelope.sources[0]).toMatchObject({ ref: "v1.2.0", refType: "git", dir: "srd24" });
+    expect(validateExport(clone(inDir)).ok).toBe(true);
+    const atRoot = await run("paladin-3", { srd: "v1.2.0" });
+    expect(atRoot.envelope.sources[0]).not.toHaveProperty("dir");
+    expect(validateExport(clone(atRoot)).ok).toBe(true);
   });
 
   it("uses the sheet's id, not the folder name", async () => {
