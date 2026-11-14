@@ -776,6 +776,13 @@ resolver reads those from the item and nothing in content declares them.
 - `bonus` is an expression added flat: a +1 wand's `1`.
 - `damage` on the action is the damage on a hit. An attack with no damage (a net) is fine.
 
+**A save DC that is not a spell's.** `save` is `{ "ability", "dc"? }`; without `dc` the DC is the
+owning class's spell save DC (or an innate grant's), and a class that does not cast gets
+`8 + proficiency`. A feature with a DC of its own writes it as an expression:
+`{ "ability": "con", "dc": "8 + @prof + @abilities.wis.mod" }` is a ki save, and resolves with the
+character's numbers. There is no stat path for a feature's DC; a class that wants one DC shared by
+many actions writes the same expression on each.
+
 The sheet shows the bonus as a roll beside the damage, with the same breakdown a weapon row
 has; the export carries it on the part as `attack` (2.5).
 
