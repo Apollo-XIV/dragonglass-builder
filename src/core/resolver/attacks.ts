@@ -7,11 +7,16 @@
  */
 
 import type { Ability } from "../types";
+import { isDiceNotation } from "../expr/evaluate";
+import type { ExplainNote } from "./explain";
 import type { NumericStat, ResolvedCharacter, ResolvedItem } from "./resolved";
 
 export interface AttackPart {
   label: string;
+  /** 0 on a dice part: numbers sum, dice concatenate. */
   amount: number;
+  /** A damage rider's dice ("1d6"), appended to the damage string in source order. */
+  dice?: string;
 }
 
 /** Where a stat's value is read from: the resolved character's table, or the engine mid-resolve. */
@@ -59,6 +64,8 @@ export interface WeaponAttack {
   damageParts: AttackPart[];
   /** The dice before the modifier: "1d8". */
   damageDice: string;
+  /** Situational damage modifiers, as the breakdown shows them: "+2 against undead". */
+  damageNotes: ExplainNote[];
   damageType?: string;
   range?: string;
   properties: string[];
@@ -100,12 +107,13 @@ function attackFor(character: ResolvedCharacter, item: ResolvedItem, weapon: Wea
   // ("attacks.ranged", "attacks.srd:item:longbow"); all of them apply here.
   const attackParts = attackRollParts({ ability, mod, proficient, proficiencyBonus: bonus, ranged, extraPaths: [`attacks.${item.element.id}`], stat });
 
+  const damagePaths = ["damage.all", `damage.${ranged ? "ranged" : "melee"}`, `damage.${item.element.id}`];
   const damageParts: AttackPart[] = [{ label: `${ability.toUpperCase()} modifier`, amount: mod }];
-  for (const part of statBonuses(stat, ["damage.all", `damage.${ranged ? "ranged" : "melee"}`, `damage.${item.element.id}`]))
-    damageParts.push(part);
+  for (const part of statBonuses(stat, damagePaths)) damageParts.push(part);
 
   const attackBonus = sumParts(attackParts);
   const damageBonus = sumParts(damageParts);
+  const riders = damageParts.filter((p) => p.dice).map((p) => p.dice!);
 
   return {
     key: `${item.element.id}:${item.index}`,
@@ -116,8 +124,9 @@ function attackFor(character: ResolvedCharacter, item: ResolvedItem, weapon: Wea
     attackBonus,
     attackParts,
     damageDice: weapon.damage,
-    damage: damageBonus === 0 ? weapon.damage : `${weapon.damage} ${damageBonus > 0 ? "+" : "-"} ${Math.abs(damageBonus)}`,
+    damage: [damageBonus === 0 ? weapon.damage : `${weapon.damage} ${damageBonus > 0 ? "+" : "-"} ${Math.abs(damageBonus)}`, ...riders].join(" + "),
     damageParts,
+    damageNotes: damageNotes(stat, damagePaths),
     damageType: weapon.damageType,
     range: weapon.range,
     properties,
@@ -175,11 +184,27 @@ function statBonuses(lookup: StatLookup, paths: string[]): AttackPart[] {
   const parts: AttackPart[] = [];
   for (const path of paths) {
     const stat = lookup(path);
-    if (!stat || stat.value === 0) continue;
-    // The stat's own breakdown names the feature responsible, which is more use
-    // in a roll sheet than the path would be.
-    const label = stat.breakdown.find((row) => row.applied && row.op !== "base")?.sourceName ?? "Bonus";
-    parts.push({ label, amount: stat.value });
+    if (!stat) continue;
+    if (stat.value !== 0) {
+      // The stat's own breakdown names the feature responsible, which is more use
+      // in a roll sheet than the path would be.
+      const label = stat.breakdown.find((row) => row.applied && row.op !== "base" && typeof row.value === "number")?.sourceName ?? "Bonus";
+      parts.push({ label, amount: stat.value });
+    }
+    // Dice riders sit in the breakdown as their own rows, never in the value.
+    for (const row of stat.breakdown)
+      if (row.applied && row.op === "add" && isDiceNotation(row.value)) parts.push({ label: row.sourceName, amount: 0, dice: row.value });
   }
   return parts;
+}
+
+/** What applies only sometimes, worded as the breakdown words it: "+2 against undead", "1d6 against the marked target". */
+function damageNotes(lookup: StatLookup, paths: string[]): ExplainNote[] {
+  const notes: ExplainNote[] = [];
+  for (const path of paths)
+    for (const a of lookup(path)?.annotations ?? []) {
+      const amount = typeof a.value === "number" ? `${a.value >= 0 ? "+" : ""}${a.value}` : Array.isArray(a.value) ? a.value.join(", ") : String(a.value ?? a.op);
+      notes.push({ kind: "conditional", text: `${amount} ${a.when.text}`, source: a.sourceName });
+    }
+  return notes;
 }

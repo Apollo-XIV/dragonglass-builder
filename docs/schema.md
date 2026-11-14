@@ -622,6 +622,16 @@ nothing knows until an attack is assembled, so `resolver/attacks.ts` reads `atta
 `attacks.melee` / `attacks.ranged` and `attacks.<item id>` itself when it builds one. The
 same goes for `damage.*`.
 
+**Dice riders on damage.** A modifier whose target is in the `damage.*` family and whose op is
+`add` may carry **dice** as its value, in the same notation an action's `damage` uses:
+`{ "target": "damage.melee", "op": "add", "value": "1d6" }` is "an extra 1d6 on a hit". The dice
+never fold into the number: the weapon row appends them to the damage string in source order
+(`"1d8 + 3 + 1d6"`), as a part of their own in the breakdown. With `when` the rider is situational
+like any other modifier and shows as a note under the roll ("1d6 against the marked target"), which
+is where "once per turn" belongs too. Inside an effect it applies while the effect is on. Dice on any
+other target or op are a validator warning and are ignored. Rerolls and minimum dice are not
+modelled: the sheet does not roll.
+
 Operations: `add`, `multiply`, `set`, `min` (a floor), `max` (a ceiling), `advantage`,
 `disadvantage`, `include` (add to a set), `proficiency` (`none` | `half` | `proficient` |
 `expertise`), and `base` (a competing formula).
@@ -847,6 +857,9 @@ interface Resource {
 
 type CostAmount = number | { min: Expr; max?: Expr };  // object = chosen when used; max is a cap
 type Cost = Record<string, CostAmount>;                 // pool key -> amount
+
+// Modifier.value may be dice ("1d6") only with op "add" on a "damage.*" target: see
+// "Dice riders on damage". Everywhere else it is a number or an expression.
 
 interface PartProvenance { source: string; review: string }   // see "Part provenance"
 // `provenance?: PartProvenance` is optional on Modifier, Resource, Action, Effect, InnateSpell,

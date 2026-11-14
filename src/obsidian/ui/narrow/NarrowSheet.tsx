@@ -341,7 +341,8 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
                 label: `${attack.name} damage`,
                 kind: "damage",
                 notation: attack.damage,
-                parts: [{ label: attack.damageDice, amount: 0 }, ...attack.damageParts],
+                parts: [{ label: attack.damageDice, amount: 0 }, ...attack.damageParts.map((p) => (p.dice ? { label: `${p.label} (${p.dice})`, amount: 0 } : p))],
+                notes: attack.damageNotes,
               })
             }
           />

@@ -108,6 +108,24 @@ export function checkExpression(expr: Expr): string | undefined {
   }
 }
 
+/** Whether a string is dice notation rather than an expression: it has an NdM term in it. */
+export const isDiceNotation = (text: unknown): text is string => typeof text === "string" && /\b\d*d\d+\b/i.test(text);
+
+/**
+ * Checks dice notation with embedded expressions ("1d6 + @abilities.wis.mod"): every
+ * reference must parse, and what is left must be dice terms and numbers joined by + or -.
+ */
+export function checkDice(notation: string): string | undefined {
+  let error: string | undefined;
+  const rest = notation.replace(DICE_REF, (match) => {
+    error ??= checkExpression(match);
+    return "1";
+  });
+  if (error) return error;
+  if (!/^\s*[+-]?\s*(\d*d\d+|\d+)(\s*[+-]\s*(\d*d\d+|\d+))*\s*$/i.test(rest)) return `"${notation}" is not dice notation`;
+  return undefined;
+}
+
 const DICE_REF = /@[A-Za-z_][A-Za-z0-9_.]*(?:-[A-Za-z][A-Za-z0-9_.]*)*(?:\(\s*[A-Za-z0-9_-]+\s*(?:,\s*[A-Za-z0-9_-]+\s*)?\))?/g;
 
 /**

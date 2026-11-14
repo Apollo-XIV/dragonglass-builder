@@ -12,7 +12,7 @@
 
 import { ABILITIES, type Ability, type Diagnostic, type Modifier, type ProficiencyLevel } from "../types";
 import type { ContentIndex } from "../content";
-import { evaluate, type ExprContext } from "../expr/evaluate";
+import { evaluate, isDiceNotation, resolveDice, type ExprContext } from "../expr/evaluate";
 import type { PartSource } from "./collect";
 import type { Annotation, Contribution, NumericStat, SetStat } from "./resolved";
 
@@ -311,7 +311,11 @@ export class StatEngine {
         annotations.push({
           when: mod.when,
           op: mod.op,
-          value: numericish(mod.value) ? this.tryValue(mod.value) : (mod.value as string | string[]),
+          value: isDiceNotation(mod.value)
+            ? resolveDice(mod.value, this.ctx).text
+            : numericish(mod.value)
+              ? this.tryValue(mod.value)
+              : (mod.value as string | string[]),
           source: from.element.id,
           sourceName: from.element.name,
         });
@@ -346,6 +350,12 @@ export class StatEngine {
         case "multiply":
         case "min":
         case "max": {
+          // A dice rider on damage ("an extra 1d6 on a hit") is no part of the number; it
+          // is kept as its own row for the attack assembly to append to the damage string.
+          if (mod.op === "add" && path.startsWith("damage.") && isDiceNotation(mod.value)) {
+            breakdown.push({ ...meta, value: resolveDice(mod.value, this.ctx).text, applied: true, stackKey: mod.stackKey });
+            break;
+          }
           const { value, row } = this.evaluateFor(mod.value as string | number, { ...meta, op: mod.op }, mod.stackKey);
           const bucket: { value: number; row: Contribution; stackKey?: string }[] =
             mod.op === "base"

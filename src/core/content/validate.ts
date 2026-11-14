@@ -18,7 +18,7 @@ import {
   type Requirement,
   type ResourceDef,
 } from "../types";
-import { checkExpression, mentionsSpent } from "../expr/evaluate";
+import { checkDice, checkExpression, isDiceNotation, mentionsSpent } from "../expr/evaluate";
 
 const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"] as const;
 
@@ -55,6 +55,13 @@ function validateModifier(m: unknown, subject: string | undefined, path: string,
   if (typeof mod.op === "string" && numericOps.includes(mod.op)) {
     if (mod.value === undefined) {
       out.push(err("invalid-element", `op "${mod.op}" needs a value`, subject, path));
+    } else if (isDiceNotation(mod.value)) {
+      // Dice are a damage rider ("an extra 1d6"), which only an `add` to damage can carry.
+      const e =
+        mod.op === "add" && typeof mod.target === "string" && mod.target.startsWith("damage.")
+          ? checkDice(mod.value)
+          : `dice are only allowed as "add" on a "damage.*" target, not "${mod.op}" on "${String(mod.target)}"`;
+      if (e) out.push(warn("expression-error", e, subject, `${path}.value`));
     } else if (typeof mod.value === "number" || typeof mod.value === "string") {
       const e = checkExpression(mod.value);
       if (e) out.push(warn("expression-error", e, subject, `${path}.value`));
