@@ -136,6 +136,18 @@ which itself offers the six +1 elements" is. The schema's answer to parametrised
 is **nesting**, not a new option source. See `docs/plans/2024.md` for where that stops
 being sufficient.
 
+### Options that are bundles
+
+"Choose one of the following lists: Evil, Good, Neutral", each a list of spells with a grant
+rule; "choose two rows from the House Tool Proficiencies table", each row several grants. The
+thing picked is not an existing element, so the source **mints one per option**: an element of
+a kind it declares (`option`, say) carrying that row's grants, innate spells or spell list
+additions, offered by `ids`. This is nesting as above, not a new option source; the id comes
+from the row's own word, and the picker's option card lists what the bundle gives (its grants,
+its innate spells with how they are cast, the spells it adds to a list) by name, so an option
+with no rules text of its own still reads as something. A filter that is an alternative between
+categories is `anyOf` (see **Filters**), which is a different thing.
+
 ### Nesting
 
 A chosen element is collected exactly like a granted one: its modifiers apply, its

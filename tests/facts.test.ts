@@ -53,3 +53,31 @@ describe("factsOf items", () => {
     expect(facts.map((f) => f.value)).toEqual(["11 + Dex", "Light", "Disadvantage", "5 gp"]);
   });
 });
+
+describe("factsOf says what a bundle gives", () => {
+  const nameOf = (id: string) => ({ "t:spell:bless": "Bless", "t:spell:alarm": "Alarm", "t:feature:x": "Feature X" })[id];
+
+  it("lists grants, innate spells with how they are cast, and spell list additions, by name", () => {
+    const bundle = {
+      id: "t:option:good", kind: "option", name: "Good", source: "t",
+      grants: ["t:feature:x", { id: "t:unknown:thing" }],
+      innateSpells: [
+        { spell: "t:spell:bless", uses: 1, recharge: [{ on: "long-rest", amount: "all" }] },
+        { spell: "t:spell:alarm", cost: { "t:monk:ki-points": 2 } },
+        { spell: { choice: "pick" } },
+      ],
+      spellListAdditions: [{ class: "any", spells: ["t:spell:alarm", "t:spell:bless"] }],
+    } as unknown as Element;
+    expect(factsOf(bundle, nameOf).map((f) => [f.label, f.value])).toEqual([
+      ["Grants", "Feature X, thing"],
+      ["Innate spells", "Bless (1/long rest), Alarm (2 ki points)"],
+      ["Spell list", "Alarm, Bless"],
+    ]);
+  });
+
+  it("an at-will innate spell is just its name, and a spell's own facts come first", () => {
+    const facts = factsOf({ ...spell({ range: "Touch" }), innateSpells: [{ spell: "t:spell:bless" }] } as Element, nameOf);
+    expect(facts.map((f) => f.label)).toEqual(["Level", "Range", "Innate spells"]);
+    expect(facts.at(-1)?.value).toBe("Bless");
+  });
+});

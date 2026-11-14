@@ -53,13 +53,13 @@ export function multiclassNote(cls: Element): string[] | undefined {
   return requires ? [describeRequirement(requires)] : undefined;
 }
 
-export function optionsFor(choice: PendingChoice): PickerOption[] {
+export function optionsFor(choice: PendingChoice, nameOf: (id: string) => string | undefined = () => undefined): PickerOption[] {
   return choice.options.map((option) => ({
     id: option.id,
     name: option.name,
     text: option.text,
     fluff: option.fluff,
-    facts: factsOf(option.element),
+    facts: factsOf(option.element, nameOf),
     tag: option.abbreviation,
     warnings: option.warnings,
     allowed: option.allowed,

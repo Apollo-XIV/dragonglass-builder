@@ -1,4 +1,5 @@
-import type { Element, ItemElement, SpellElement } from "../types";
+import type { Element, InnateSpellDef, ItemElement, SpellElement, SpellListAddition } from "../types";
+import { grantId } from "../resolver/collect";
 
 /** One labelled line of an element's reference data: a spell's range, say. */
 export interface Fact {
@@ -46,15 +47,50 @@ function itemFacts(item: ItemElement): Fact[] {
   return facts;
 }
 
+/** The last segment of an id, for when no name is known: "srd:spell:alarm" → "alarm". */
+const tail = (id: string): string => id.slice(id.lastIndexOf(":") + 1).replace(/-/g, " ");
+
+/** How an innate cast is paid for, in a word or two. */
+function castOf(def: InnateSpellDef): string | undefined {
+  if (def.cost) return Object.entries(def.cost).map(([pool, amount]) => `${typeof amount === "number" ? amount : `${amount.min}+`} ${tail(pool)}`).join(", ");
+  if (def.uses !== undefined) {
+    const rest = def.recharge?.find((r) => r.on === "long-rest" || r.on === "short-rest" || r.on === "dawn" || r.on === "dusk" || r.on === "midnight");
+    return rest ? `${def.uses}/${rest.on === "short-rest" ? "short rest" : "long rest"}` : `${def.uses} uses`;
+  }
+  return undefined;
+}
+
+/**
+ * What an element gives, for an option that is a bundle of other things: a list of
+ * spells with a grant rule, a row of proficiencies. Shown in the option card, where the
+ * text alone would say nothing about what picking it does.
+ */
+function givesFacts(element: Element, nameOf: (id: string) => string | undefined): Fact[] {
+  const name = (id: string): string => nameOf(id) ?? tail(id);
+  const facts: Fact[] = [];
+  const grants = (element.grants ?? []).map(grantId);
+  if (grants.length) facts.push({ label: "Grants", value: grants.map(name).join(", ") });
+  const innate = (element.innateSpells ?? []).filter((s): s is InnateSpellDef & { spell: string } => typeof s.spell === "string");
+  if (innate.length)
+    facts.push({
+      label: "Innate spells",
+      value: innate.map((s) => (castOf(s) ? `${name(s.spell)} (${castOf(s)})` : name(s.spell))).join(", "),
+    });
+  const additions = (element.spellListAdditions ?? []) as SpellListAddition[];
+  const added = additions.flatMap((a) => a.spells ?? []);
+  if (added.length) facts.push({ label: "Spell list", value: added.map(name).join(", ") });
+  return facts;
+}
+
 /**
  * The reference data an element carries beside its text: a spell's range and
- * components, an item's damage, cost and weight. Other kinds return an empty list,
- * so callers can pass any element.
+ * components, an item's damage, cost and weight. Any element that grants, casts or
+ * adds spells says so after. `nameOf` turns the ids it names into names.
  */
-export function factsOf(element: Element | undefined): Fact[] {
+export function factsOf(element: Element | undefined, nameOf: (id: string) => string | undefined = () => undefined): Fact[] {
   if (!element) return [];
-  if (element.kind === "item") return itemFacts(element as ItemElement);
-  if (element.kind !== "spell") return [];
+  if (element.kind === "item") return [...itemFacts(element as ItemElement), ...givesFacts(element, nameOf)];
+  if (element.kind !== "spell") return givesFacts(element, nameOf);
   const spell = element as SpellElement;
   const facts: Fact[] = [];
   const level = typeof spell.spellLevel === "number" ? spell.spellLevel : undefined;
@@ -80,5 +116,5 @@ export function factsOf(element: Element | undefined): Fact[] {
     facts.push({ label: "Duration", value: concentrating ? `Concentration, ${spell.duration}` : spell.duration });
   }
   if (spell.higherLevels) facts.push({ label: "At higher levels", value: spell.higherLevels });
-  return facts;
+  return [...facts, ...givesFacts(element, nameOf)];
 }

@@ -107,7 +107,7 @@ export function PendingChoiceRow({
         picker({
           title: choice.name,
           subtitle: `${choice.sourceName}${choice.count > 1 ? ` · choose ${choice.count}` : ""}`,
-          options: optionsFor(choice),
+          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id))),
           selected: choice.chosen,
           count: choice.count,
           repeatable: choice.definition.repeatable,

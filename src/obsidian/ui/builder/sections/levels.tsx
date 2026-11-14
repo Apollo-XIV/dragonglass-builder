@@ -169,7 +169,7 @@ export function LevelCard({
       {!shown ? null : automatic.length ? (
         <div className="dg-level-features">
           {automatic.map((feature) => (
-            <FeatureChip key={feature.id} feature={feature} />
+            <FeatureChip key={feature.id} feature={feature} nameOf={nameOf} />
           ))}
         </div>
       ) : null}
@@ -177,7 +177,7 @@ export function LevelCard({
       {shown && staged.length ? (
         <div className="dg-level-features is-staged">
           {staged.map((feature) => (
-            <FeatureChip key={feature.id} feature={feature} />
+            <FeatureChip key={feature.id} feature={feature} nameOf={nameOf} />
           ))}
         </div>
       ) : null}
@@ -204,14 +204,14 @@ export function LevelCard({
 }
 
 /** An automatic feature: holdable for its text, no decision attached. */
-function FeatureChip({ feature }: { feature: ResolvedElement }): ReactNode {
+function FeatureChip({ feature, nameOf }: { feature: ResolvedElement; nameOf: (id: string) => string }): ReactNode {
   return (
     <InfoRow
       title={feature.name}
       subtitle={feature.kind.replace(/-/g, " ")}
       text={feature.text}
       fluff={feature.fluff}
-      facts={factsOf(feature.element)}
+      facts={factsOf(feature.element, (id) => (nameOf(id) === id ? undefined : nameOf(id)))}
       className="dg-level-feature"
     />
   );
