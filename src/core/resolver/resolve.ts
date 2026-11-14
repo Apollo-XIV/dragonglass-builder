@@ -558,6 +558,7 @@ function resolveResources(
       .map((rule) => ({
         on: rule.on,
         amount: rule.amount === "all" ? "all" : Math.max(0, Math.floor(tryEvaluate(rule.amount, engine.ctx, max).value)),
+        ...(typeof rule.text === "string" ? { text: rule.text } : {}),
       }));
     const existing = byKey.get(key);
     if (existing && existing.max >= max) continue;

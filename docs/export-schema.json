@@ -1286,7 +1286,7 @@
               ],
               "properties": {
                 "on": {
-                  "description": "short-rest, long-rest, dawn, dusk, turn or round.",
+                  "description": "short-rest, long-rest, dawn, dusk, midnight, turn, round or special. A long rest applies dawn, dusk and midnight; special is applied by no rest.",
                   "type": "string"
                 },
                 "amount": {
@@ -1300,6 +1300,10 @@
                       "type": "number"
                     }
                   ]
+                },
+                "text": {
+                  "description": "The rule in the book's words. The whole description of a special rule.",
+                  "type": "string"
                 }
               }
             }

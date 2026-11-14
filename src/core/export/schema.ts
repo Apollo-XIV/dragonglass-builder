@@ -30,7 +30,8 @@
  *
  * 2.4 added `identity.avatar`, the character's portrait as a data URL, already shrunk to fit.
  * 2.5 added `attack` on an action part: the attack roll resolved, where the action makes one,
- *     and `cost` on an innate cast that spends another pool.
+ *     and `cost` on an innate cast that spends another pool. Recharge rules may carry `text`,
+ *     and `on` may be `midnight` or `special`.
  * Absent when the character has none or the picture could not be read or was too large.
  */
 
@@ -263,10 +264,11 @@ export const ExportFeature = Type.Object({
 });
 
 export const ExportRecharge = Type.Object({
-  on: Type.String({ description: "short-rest, long-rest, dawn, dusk, turn or round." }),
+  on: Type.String({ description: "short-rest, long-rest, dawn, dusk, midnight, turn, round or special. A long rest applies dawn, dusk and midnight; special is applied by no rest." }),
   amount: Type.Union([Type.Literal("all"), Type.Number()], {
     description: '"all" restores the whole pool; a number restores that many uses (evaluated at the character\'s level).',
   }),
+  text: Type.Optional(Type.String({ description: "The rule in the book's words. The whole description of a special rule." })),
 });
 
 export const ExportResource = Type.Object({

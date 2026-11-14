@@ -175,7 +175,7 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       name: x.name,
       max: x.unlimited ? 0 : x.max,
       unlimited: x.unlimited,
-      recharge: x.recharge.map((r) => ({ on: r.on, amount: r.amount })),
+      recharge: x.recharge.map((r) => ({ on: r.on, amount: r.amount, ...(r.text ? { text: r.text } : {}) })),
       ...(x.unit ? { unit: x.unit } : {}),
       ...(x.die ? { die: x.die } : {}),
       owner: x.source,

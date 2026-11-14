@@ -684,9 +684,15 @@ A resource's `recharge` is a **list** of rules, each `{ "on": <trigger>, "amount
 ]
 ```
 
-- `on` is `short-rest`, `long-rest`, `dawn`, `dusk`, `turn` or `round`. The sheet's rest buttons
-  apply the rules that match: a short rest matches `short-rest`; a long rest matches
-  `short-rest`, `long-rest`, `dawn` and `dusk`. `turn` and `round` are descriptive only.
+- `on` is `short-rest`, `long-rest`, `dawn`, `dusk`, `midnight`, `turn`, `round` or `special`.
+  The sheet's rest buttons apply the rules that match: a short rest matches `short-rest`; a long
+  rest matches `short-rest`, `long-rest`, `dawn`, `dusk` and `midnight`. `turn` and `round` are
+  descriptive only.
+- `special` is a trigger no rest applies ("when you take a short rest in the Feywild", "when you
+  roll a 20"): `{ "on": "special", "amount": "all", "text": "when you take a short rest in the Feywild" }`.
+  The sheet shows the text with the pool, which is restored by the manual control every resource
+  has. A `special` rule with no `text` is a validator warning.
+- Any rule may carry `text`, the rule in the book's words, shown with the pool.
 - `amount` is `"all"` (the whole pool) or an expression for a number of uses, read at the
   character's level. `"all"` is reserved.
 - When more than one rule matches a rest, the **largest amount** is restored. They are
@@ -860,8 +866,8 @@ spell list additions and unlimited tables, for anything that mirrors `src/core/t
 `src/types.ts` among them):
 
 ```ts
-type RechargeOn = "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round";
-interface RechargeRule { on: RechargeOn; amount: "all" | Expr }
+type RechargeOn = "short-rest" | "long-rest" | "dawn" | "dusk" | "midnight" | "turn" | "round" | "special";
+interface RechargeRule { on: RechargeOn; amount: "all" | Expr; text?: string }  // text expected on "special"
 
 interface Resource {
   id: string; name: string; max: Expr;

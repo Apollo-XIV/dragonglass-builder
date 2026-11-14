@@ -158,8 +158,13 @@ export const RECHARGES = [
 ] as const;
 export type Recharge = (typeof RECHARGES)[number];
 
-/** What a resource can recharge on. Rests are applied by the sheet's rest buttons. */
-export const RECHARGE_TRIGGERS = ["short-rest", "long-rest", "dawn", "dusk", "turn", "round"] as const;
+/**
+ * What a resource can recharge on. Rests are applied by the sheet's rest buttons: a long
+ * rest also matches `dawn`, `dusk` and `midnight`. `special` is a trigger no rest applies
+ * ("when you take a short rest in the Feywild"), described by the rule's `text` and
+ * restored by hand.
+ */
+export const RECHARGE_TRIGGERS = ["short-rest", "long-rest", "dawn", "dusk", "midnight", "turn", "round", "special"] as const;
 export type RechargeOn = (typeof RECHARGE_TRIGGERS)[number];
 
 /**
@@ -171,6 +176,8 @@ export interface RechargeRule {
   on: RechargeOn;
   /** "all" restores the whole pool; an expression restores that many uses. */
   amount: "all" | Expr;
+  /** The rule in the book's words, shown with the pool. Expected on `special`, which has no other description. */
+  text?: string;
 }
 
 export interface ResourceDef {

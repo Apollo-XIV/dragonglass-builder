@@ -174,6 +174,10 @@ function validateRecharge(r: unknown, subject: string | undefined, path: string,
     const e = checkExpression(rule.amount as string | number);
     if (e) out.push(warn("expression-error", e, subject, `${path}.amount`));
   }
+  if (rule.text !== undefined && typeof rule.text !== "string")
+    out.push(warn("invalid-element", "recharge text must be a string; ignored", subject, `${path}.text`));
+  if (rule.on === "special" && typeof rule.text !== "string")
+    out.push(warn("invalid-element", 'a "special" recharge has no description without text', subject, `${path}.text`));
 }
 
 function validateAction(a: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {

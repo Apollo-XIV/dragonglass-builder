@@ -11,14 +11,19 @@ import type { RechargeOn } from "../types";
 export interface ResolvedRecharge {
   on: RechargeOn;
   amount: number | "all";
+  /** The rule in the book's words, where the content gave them. */
+  text?: string;
 }
 
 export type Rest = "short" | "long";
 
-/** A long rest includes everything a short rest does; dawn and dusk ride along with it. */
+/**
+ * A long rest includes everything a short rest does; dawn, dusk and midnight ride along
+ * with it. `special` is applied by no rest: the pool is restored by hand.
+ */
 function triggersOn(on: RechargeOn, rest: Rest): boolean {
   if (rest === "short") return on === "short-rest";
-  return on === "short-rest" || on === "long-rest" || on === "dawn" || on === "dusk";
+  return on === "short-rest" || on === "long-rest" || on === "dawn" || on === "dusk" || on === "midnight";
 }
 
 /** How many uses this rest restores: the largest matching rule, 0 when none match. */
@@ -46,9 +51,12 @@ export function describeUses(remaining: number, max: number): string {
 
 const words = (on: RechargeOn): string => on.replace("-", " ");
 
+/** A special rule is described by its text; anything else by its trigger. */
+const describeRule = (r: ResolvedRecharge): string => (r.on === "special" ? r.text ?? "special" : words(r.on));
+
 /** "long rest", "3 on a long rest", "1 on a short rest, all on a long rest", "manual". */
 export function describeRecharge(rules: readonly ResolvedRecharge[]): string {
   if (!rules.length) return "manual";
-  if (rules.length === 1 && rules[0].amount === "all") return words(rules[0].on);
-  return rules.map((r) => `${r.amount} on a ${words(r.on)}`).join(", ");
+  if (rules.length === 1 && rules[0].amount === "all") return describeRule(rules[0]);
+  return rules.map((r) => (r.on === "special" ? `${r.amount} ${describeRule(r)}` : `${r.amount} on a ${words(r.on)}`)).join(", ");
 }
