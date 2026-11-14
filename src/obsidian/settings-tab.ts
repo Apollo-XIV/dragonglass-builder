@@ -377,8 +377,36 @@ export class DragonglassSettingTab extends PluginSettingTab {
         text.setPlaceholder("owner/repo, Sources/my-homebrew, or /home/me/dnd/my-homebrew").onChange((value) => {
           input = value;
         }),
+      );
+    new Setting(containerEl)
+      .setName("Folder in the repository")
+      .setDesc("Optional. For a repository that holds several sources, the folder with this one's source.json, such as srd24.")
+      .addText((text) =>
+        text.setPlaceholder("srd24").onChange((value) => {
+          dirInput = value;
+        }),
+      );
+    if (sessionLoginToken())
+      new Setting(containerEl)
+        .setName("Use my GitHub login")
+        .setDesc("For a private repo your account can read. It is fetched now and cached in the vault. Overrides the token below.")
+        .addToggle((toggle) => toggle.onChange((value) => (useLogin = value)));
+    const tokenSetting = new Setting(containerEl)
+      .setName("Access token (private repos)")
+      .setDesc(
+        secretStorageAvailable(this.app)
+          ? "Optional. A fine-grained personal access token with read-only access to the repo's Contents. Stored in Obsidian's secret storage, not in the vault."
+          : SECRET_STORAGE_UPDATE_MESSAGE,
       )
-      .addButton((button) =>
+      .addText((text) => {
+        text.inputEl.type = "password";
+        text.inputEl.autocomplete = "off";
+        text.onChange((value) => {
+          token = value;
+        });
+      });
+    if (!secretStorageAvailable(this.app)) tokenSetting.setDisabled(true);
+    new Setting(containerEl).addButton((button) =>
         button
           .setButtonText("Add")
           .setCta()
@@ -418,34 +446,6 @@ export class DragonglassSettingTab extends PluginSettingTab {
             this.display();
           }),
       );
-    new Setting(containerEl)
-      .setName("Folder in the repository")
-      .setDesc("Optional. For a repository that holds several sources, the folder with this one's source.json, such as srd24.")
-      .addText((text) =>
-        text.setPlaceholder("srd24").onChange((value) => {
-          dirInput = value;
-        }),
-      );
-    if (sessionLoginToken())
-      new Setting(containerEl)
-        .setName("Use my GitHub login")
-        .setDesc("For a private repo your account can read. It is fetched now and cached in the vault. Overrides the token below.")
-        .addToggle((toggle) => toggle.onChange((value) => (useLogin = value)));
-    const tokenSetting = new Setting(containerEl)
-      .setName("Access token (private repos)")
-      .setDesc(
-        secretStorageAvailable(this.app)
-          ? "Optional. A fine-grained personal access token with read-only access to the repo's Contents. Stored in Obsidian's secret storage, not in the vault."
-          : SECRET_STORAGE_UPDATE_MESSAGE,
-      )
-      .addText((text) => {
-        text.inputEl.type = "password";
-        text.inputEl.autocomplete = "off";
-        text.onChange((value) => {
-          token = value;
-        });
-      });
-    if (!secretStorageAvailable(this.app)) tokenSetting.setDisabled(true);
   }
 
   private renderSourceList(containerEl: HTMLElement): void {
@@ -476,11 +476,25 @@ export class DragonglassSettingTab extends PluginSettingTab {
           .setPlaceholder("pin")
           .setValue(ref.pin ?? "")
           .onChange(async (value) => {
-            this.plugin.settings.sources[i] = { ...ref, pin: value.trim() || undefined };
+            this.plugin.settings.sources[i] = { ...this.plugin.settings.sources[i], pin: value.trim() || undefined };
             this.plugin.sources.invalidate(ref.id);
             await this.plugin.saveSettings();
           }),
       );
+
+      if (ref.type !== "url")
+        setting.addText((text) =>
+          text
+            .setPlaceholder("folder")
+            .setValue(ref.dir ?? "")
+            .onChange(async (value) => {
+              const { dir, error } = normalizeDir(value);
+              // A rejected folder is kept as typed, so the source reports it instead of reading the root.
+              this.plugin.settings.sources[i] = { ...this.plugin.settings.sources[i], dir: dir ?? (error ? value.trim() : undefined) };
+              this.plugin.sources.invalidate(ref.id);
+              await this.plugin.saveSettings();
+            }),
+        );
 
       if (ref.auth?.type === "oauth")
         setting.addExtraButton((button) =>
