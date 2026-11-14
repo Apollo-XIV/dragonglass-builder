@@ -353,6 +353,13 @@ export type Predicate =
   | { type: "level"; min: number }
   | { type: "ability"; ability: Ability; min: number }
   | { type: "has"; id: string }
+  /**
+   * The character has at least one element carrying `tag`, optionally of `kind`:
+   * "a Dragonmark feat". The element being judged as an option never counts, so a feat
+   * may say `not: [{ type: "has-tag", tag: "dragonmark-feat" }]` and still carry the tag.
+   * `text` is how the predicate reads ("a Dragonmark feat"); without it the tag is named.
+   */
+  | { type: "has-tag"; tag: string; kind?: string; text?: string }
   | { type: "proficiency"; proficiency: string; of?: string }
   | { type: "spellcaster" }
   | Requirement;

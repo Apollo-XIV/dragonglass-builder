@@ -13,6 +13,13 @@ export interface RequirementContext {
   abilityScore(ability: Ability): number;
   /** Does the character already have this element? */
   has(id: string): boolean;
+  /** Does the character have an element carrying this tag (of this kind), other than `except`? */
+  hasTag(tag: string, kind?: string, except?: string): boolean;
+  /**
+   * The element being judged as an option, when one is. A `has-tag` predicate skips it, so
+   * a feat that forbids "another" feat of its category is not blocked by itself.
+   */
+  candidate?: string;
   /** Proficiency values the character holds, e.g. "srd:tool:smiths-tools", "stealth". */
   hasProficiency(proficiency: string, of?: string): boolean;
   isSpellcaster: boolean;
@@ -58,6 +65,10 @@ function checkPredicate(p: Predicate, ctx: RequirementContext): RequirementResul
       return ctx.has(p.id)
         ? { met: true, reasons: [] }
         : { met: false, reasons: [`requires ${label(ctx, p.id)}`] };
+    case "has-tag":
+      return ctx.hasTag(p.tag, p.kind, ctx.candidate)
+        ? { met: true, reasons: [] }
+        : { met: false, reasons: [`requires ${describePredicate(p, ctx)}`] };
     case "proficiency":
       return ctx.hasProficiency(p.proficiency, p.of)
         ? { met: true, reasons: [] }
@@ -67,7 +78,9 @@ function checkPredicate(p: Predicate, ctx: RequirementContext): RequirementResul
         ? { met: true, reasons: [] }
         : { met: false, reasons: ["the ability to cast at least one spell"] };
     default:
-      // Unknown predicate types never block: degradation beats a false negative.
+      // Unknown predicate types never block: degradation beats a false negative, and a
+      // source written for a newer plugin loads here with a validator warning rather
+      // than hidden options.
       return { met: true, reasons: [] };
   }
 }
@@ -108,6 +121,8 @@ export function describePredicate(p: Predicate, ctx?: RequirementContext): strin
       return `${p.ability.toUpperCase()} ${p.min}`;
     case "has":
       return name(p.id);
+    case "has-tag":
+      return p.text ?? (p.kind ? `a ${p.kind} tagged "${p.tag}"` : `something tagged "${p.tag}"`);
     case "proficiency":
       return `proficiency with ${name(p.proficiency)}`;
     case "spellcaster":

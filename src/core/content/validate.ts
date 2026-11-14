@@ -419,6 +419,12 @@ function validatePredicate(p: unknown, subject: string | undefined, path: string
       if (typeof pred.id !== "string")
         out.push(err("invalid-element", "has needs an id", subject, path));
       break;
+    case "has-tag":
+      if (typeof pred.tag !== "string" || !pred.tag)
+        out.push(err("invalid-element", "has-tag needs a tag", subject, path));
+      if (pred.kind !== undefined && typeof pred.kind !== "string")
+        out.push(err("invalid-element", "has-tag kind must be a kind key", subject, path));
+      break;
     case "proficiency":
       if (typeof pred.proficiency !== "string")
         out.push(err("invalid-element", "proficiency needs a proficiency", subject, path));

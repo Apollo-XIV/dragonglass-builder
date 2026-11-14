@@ -1007,6 +1007,10 @@ function makeRequirementContext(
     classLevel: classLevelOf,
     abilityScore: (ability) => engine.get(`abilities.${ability}.score`).value,
     has: (id) => collected.byId.has(id),
+    hasTag: (tag, kind, except) =>
+      [...collected.byId.values()].some(
+        (c) => c.element.id !== except && (kind === undefined || c.element.kind === kind) && (c.element.tags ?? []).includes(tag),
+      ),
     hasProficiency: (proficiency) => proficiencies.has(proficiency),
     isSpellcaster: anySpellcasting,
     nameOf: (id) => content.get(id)?.name,
@@ -1033,7 +1037,7 @@ function resolveChoices(
       });
 
     const optionList: ChoiceOption[] = matches.map((element) => {
-      const check = checkRequirement(element.requires, requirements);
+      const check = checkRequirement(element.requires, { ...requirements, candidate: element.id });
       return {
         id: element.id,
         name: element.name,

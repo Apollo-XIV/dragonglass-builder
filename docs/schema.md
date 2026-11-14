@@ -285,8 +285,17 @@ background offers the three ability scores it names rather than all six.
 carry `text` to override the generated description.
 
 Predicates: `{ type: "class-level", class, min }`, `{ type: "level", min }`,
-`{ type: "ability", ability, min }`, `{ type: "has", id }`,
+`{ type: "ability", ability, min }`, `{ type: "has", id }`, `{ type: "has-tag", tag, kind?, text? }`,
 `{ type: "proficiency", proficiency, of? }`, `{ type: "spellcaster" }`.
+
+**`has-tag`** is true when the character has, by grant or pick, at least one element carrying
+`tag`, optionally of `kind`. "Prerequisite: a Dragonmark feat" is
+`{ "any": [{ "type": "has-tag", "tag": "dragonmark-feat", "text": "a Dragonmark feat" }] }` and
+"you can't take another Dragonmark feat" is the same predicate under `not`. The element being
+judged as an option **never counts**, so a feat may forbid its own category and carry the tag;
+`has` by id has no such rule, since nothing requires itself. `text` is how the predicate reads;
+without it the tag is named. An unknown predicate type never blocks, so content written for a
+newer plugin loads with a validator warning rather than hidden options.
 
 Enforcement is a builder toggle. **With enforcement off, an unmet requirement is a warning
 on the option, not a hidden option** — the player is told and allowed to proceed.

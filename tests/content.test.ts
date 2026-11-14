@@ -277,6 +277,7 @@ describe("requirements", () => {
     classLevel: (c) => ({ paladin: 5, "srd:class:paladin": 5 })[c] ?? 0,
     abilityScore: (a) => ({ str: 16, dex: 10, con: 14, int: 8, wis: 12, cha: 13 })[a],
     has: (id) => id === "srd:paladin:rage",
+    hasTag: () => false,
     hasProficiency: (p) => p === "stealth",
     isSpellcaster: true,
     nameOf: (id) => (id === "srd:paladin:rage" ? "Rage" : undefined),
