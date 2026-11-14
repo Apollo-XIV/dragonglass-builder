@@ -51,6 +51,7 @@ import {
   type PoolRule,
 } from "../state/fold";
 import { hitPointLevels } from "./hit-points";
+import { attackRollParts, sumParts } from "./attacks";
 import { onClassList } from "./spell-list";
 import { collect, innatePoolId, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
@@ -71,6 +72,7 @@ import type {
   NumericStat,
   PendingChoice,
   ResolvedAction,
+  ResolvedAttack,
   ResolvedCostLine,
   ResolvedCharacter,
   ResolvedClass,
@@ -716,6 +718,7 @@ function resolveActions(
           : defaultSaveDc(from, engine, content, spellcasting);
       save = { ability: def.save.ability, dc };
     }
+    const attack = def.attack ? resolveAttack(def, from, engine, content, spellcasting, diagnostics) : undefined;
 
     out.push({
       key,
@@ -734,6 +737,7 @@ function resolveActions(
       healResolved: heal?.text,
       durationResolved: duration?.text,
       save,
+      attack,
       text: def.text,
       notes: def.notes,
       source: from.element.id,
@@ -766,7 +770,7 @@ function withoutBarePoolButtons(actions: ResolvedAction[], resources: ResolvedRe
   const bare = (a: ResolvedAction): boolean => {
     const d = a.definition;
     if (a.resolvedCost?.length !== 1 || typeof a.resolvedCost[0].amount !== "number") return false;
-    if (d.applies || d.damage || d.heal || d.save || d.duration || d.range || d.target || d.text) return false;
+    if (d.applies || d.damage || d.heal || d.save || d.attack || d.duration || d.range || d.target || d.text) return false;
     const pool = resources.find((r) => r.key === a.resolvedCost![0].key);
     // The pool is its own feature's and the action is named for the feature rather than
     // for something it does, so it is that feature's button for the pool.
@@ -808,6 +812,65 @@ function chosenRange(
   const left = remaining !== undefined && Number.isFinite(remaining) ? remaining : undefined;
   const max = cap !== undefined && left !== undefined ? Math.min(cap, left) : cap ?? left ?? min;
   return { min, max, ...(cap !== undefined ? { cap } : {}) };
+}
+
+/**
+ * An action's own attack roll, assembled as a weapon's is. A weapon type takes Strength
+ * or Dexterity unless the content says otherwise; a spell type takes the casting ability
+ * the action's save would use, and the class's `spellcasting.<key>.attack` bonuses too.
+ */
+function resolveAttack(
+  def: ActionDef,
+  from: PartSource,
+  engine: StatEngine,
+  content: ContentIndex,
+  spellcasting: ResolvedSpellcasting | undefined,
+  diagnostics: Diagnostic[],
+): ResolvedAttack {
+  const type = def.attack!.type;
+  const ranged = type.startsWith("ranged");
+  const spell = type.endsWith("spell");
+  const owner = spell ? castingClassOf(from, content, spellcasting) : undefined;
+  const ability = def.attack!.ability ?? (spell ? owner?.ability : ranged ? "dex" : "str");
+  const proficient = def.attack!.proficient ?? true;
+  const extraPaths = [`attacks.${from.element.id}`];
+  if (owner?.key) extraPaths.push(`spellcasting.${owner.key}.attack`);
+  const stat = (path: string) => {
+    const s = engine.get(path);
+    // The class's spell attack stat has the modifier and proficiency as its base; only
+    // what content adds on top is a part of its own here.
+    return path.startsWith("spellcasting.") ? { ...s, value: s.value - s.base } : s;
+  };
+  const parts = ability
+    ? attackRollParts({ ability, mod: engine.abilityMod(ability), proficient, proficiencyBonus: engine.get("proficiencyBonus").value, ranged, extraPaths, stat })
+    : attackRollParts({ ability: "str", mod: 0, proficient, proficiencyBonus: engine.get("proficiencyBonus").value, ranged, extraPaths, stat }).slice(1);
+  if (def.attack!.bonus !== undefined) {
+    const out = tryEvaluate(def.attack!.bonus, engine.ctx, 0);
+    if (out.error)
+      diagnostics.push({
+        severity: "warning",
+        code: "expression-error",
+        message: `action "${def.name ?? def.id}" attack bonus: ${out.error}`,
+        subject: from.element.id,
+      });
+    if (out.value !== 0) parts.push({ label: "Bonus", amount: out.value });
+  }
+  return { type, ...(ability ? { ability } : {}), proficient, attackBonus: sumParts(parts), attackParts: parts };
+}
+
+/** The casting ability behind a part: its class's, or the ability an innate grant chose. */
+function castingClassOf(
+  from: PartSource,
+  content: ContentIndex,
+  spellcasting?: ResolvedSpellcasting,
+): { ability: Ability; key?: string } | undefined {
+  if (!from.class) {
+    const innate = spellcasting?.spells.find((s) => s.id === from.element.id)?.innate.find((i) => i.ability !== undefined);
+    return innate?.ability ? { ability: innate.ability } : undefined;
+  }
+  const cls = content.get(from.class);
+  const sc = (cls as ClassElement | undefined)?.spellcasting;
+  return cls && sc ? { ability: sc.ability, key: shortKey(cls) } : undefined;
 }
 
 /** The spell save DC of the class the action's element came from, when there is one. */

@@ -96,7 +96,7 @@ tab for them with no plugin change.
 | `choices` | A player decision. See **The choice model**. |
 | `modifiers` | Passive changes to stat paths, optionally situational. |
 | `resources` | A pool with an expression `max` and a `recharge` list of rules. See **Recharge rules**. |
-| `actions` | Something the player activates: `activation`, optional `cost`, optional `applies` naming an effect, plus `range`, `target`, `damage`, `damageType`, `save`, `recharge`. |
+| `actions` | Something the player activates: `activation`, optional `cost`, optional `applies` naming an effect, plus `range`, `target`, `damage`, `damageType`, `save`, `attack`, `recharge`. See **Attack rolls on actions**. |
 | `innateSpells` | A spell cast without preparing it or spending a slot, at will or on a pool of its own. See **Granted and innate spells**. |
 | `effects` | A named, toggleable overlay of modifiers with a `duration` and optional `concentration`. Active effects live in `state.5e`. |
 
@@ -699,6 +699,35 @@ action:
   on `@spent` as `X` until an amount is chosen, and does not roll it. It does not apply healing for
   you: Lay on Hands usually heals someone else.
 
+## Attack rolls on actions
+
+An action that makes an attack roll says so with `attack`, and the resolver assembles the bonus
+exactly as it does for a weapon in hand: the ability modifier, proficiency, then whatever content
+adds to `attacks.all`, `attacks.melee` or `attacks.ranged`, and the flat `bonus`. A thrown flask, a
+wand's ray and a feature's own spell attack are this; a weapon in the inventory is not, because the
+resolver reads those from the item and nothing in content declares them.
+
+```json
+"actions": [{
+  "id": "throw", "activation": "action",
+  "attack": { "type": "ranged-weapon", "proficient": false },
+  "damage": "2d6", "damageType": "acid", "range": "20 ft."
+}]
+```
+
+- `type` is `melee-weapon`, `ranged-weapon`, `melee-spell` or `ranged-spell`, and picks which
+  `attacks.*` modifiers apply.
+- `ability` defaults to `str` for `melee-weapon`, `dex` for `ranged-weapon`, and for the spell types
+  to the casting ability `save.dc` would use: the owning class's, or the ability an innate grant
+  chose. A spell type also carries the class's `spellcasting.<key>.attack` bonuses.
+- `proficient` defaults to true: a feature's own attack always is. An improvised weapon, which a
+  thrown flask is, says `false`.
+- `bonus` is an expression added flat: a +1 wand's `1`.
+- `damage` on the action is the damage on a hit. An attack with no damage (a net) is fine.
+
+The sheet shows the bonus as a roll beside the damage, with the same breakdown a weapon row
+has; the export carries it on the part as `attack` (2.5).
+
 ## Part provenance
 
 Any part (a modifier, resource, action, effect, innate spell, spell list addition or choice, on an
@@ -790,6 +819,10 @@ pool's remainder is never applied, because the export is not a play session. The
 still exported as written, `@spent` and all. `provenance` is `{ source, review }` as authored (see **Part
 provenance**), lifted off the definition. Nothing existing changed meaning.
 
+**Export 2.5** is additive. An action part whose definition carries `attack` gains `attack`:
+the type, ability, whether proficiency applied, the bonus and its parts, resolved as a weapon
+row's are.
+
 **Export 2.4** is additive. `identity.avatar` is the character's portrait as a base64 data URL
 (`data:image/webp;base64,...`), taken from the `avatar` path in `details.5e`. The plugin shrinks it to fit 512px
 and 512 KB; a picture that is missing, unreadable or still too large is left out, and the export carries on. It is
@@ -827,6 +860,10 @@ interface ExportCost { pool: string; amount?: number; min?: number; max?: number
 interface Action {
   /* ... */
   cost?: Cost;
+  attack?: {                         // see "Attack rolls on actions"
+    type: "melee-weapon" | "ranged-weapon" | "melee-spell" | "ranged-spell";
+    ability?: Ability; proficient?: boolean; bonus?: Expr;
+  };
   heal?: string;                     // dice notation; may use @spent
   duration?: string;                 // free text; may use @spent
   recharge?: "short-rest" | "long-rest" | "dawn" | "dusk" | "turn" | "round" | "never" | "manual";

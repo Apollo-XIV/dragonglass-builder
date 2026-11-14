@@ -366,6 +366,20 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           text={action.text}
           className={action.available ? undefined : "is-unavailable"}
         >
+          {action.attack ? (
+            <RollBox
+              kind="d20"
+              label={`${action.name} attack`}
+              explanation={() =>
+                explainParts({
+                  label: `${action.name} attack`,
+                  kind: "d20",
+                  notation: `1d20 ${signed(action.attack!.attackBonus)}`,
+                  parts: action.attack!.attackParts,
+                })
+              }
+            />
+          ) : null}
           {action.damageResolved && !variableDamage(action) ? (
             <RollBox
               kind="damage"

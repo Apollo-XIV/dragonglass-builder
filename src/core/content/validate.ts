@@ -7,6 +7,7 @@
 import {
   ABILITIES,
   ACTIVATIONS,
+  ATTACK_TYPES,
   MODIFIER_OPS,
   PROFICIENCY_LEVELS,
   RECHARGE_TRIGGERS,
@@ -212,6 +213,26 @@ function validateAction(a: unknown, subject: string | undefined, path: string, o
       const e = checkExpression(s.dc as string | number);
       if (e) out.push(warn("expression-error", e, subject, `${path}.save.dc`));
     }
+  }
+  if (act.attack !== undefined) validateAttack(act.attack, subject, `${path}.attack`, out);
+}
+
+/** An action's attack roll: the type picks the bonus, so it has to be one the resolver knows. */
+function validateAttack(a: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!a || typeof a !== "object" || Array.isArray(a)) {
+    out.push(err("invalid-element", "attack must be an object with a type", subject, path));
+    return;
+  }
+  const attack = a as Record<string, unknown>;
+  if (!(ATTACK_TYPES as readonly unknown[]).includes(attack.type))
+    out.push(err("invalid-element", `attack.type must be one of ${ATTACK_TYPES.join(", ")}`, subject, `${path}.type`));
+  if (attack.ability !== undefined && !(ABILITIES as readonly unknown[]).includes(attack.ability))
+    out.push(err("invalid-element", `attack.ability must be one of ${ABILITIES.join(", ")}`, subject, `${path}.ability`));
+  if (attack.proficient !== undefined && typeof attack.proficient !== "boolean")
+    out.push(warn("invalid-element", "attack.proficient must be true or false; treated as true", subject, `${path}.proficient`));
+  if (attack.bonus !== undefined) {
+    const e = typeof attack.bonus === "number" || typeof attack.bonus === "string" ? checkExpression(attack.bonus) : "must be an expression";
+    if (e) out.push(warn("expression-error", e, subject, `${path}.bonus`));
   }
 }
 

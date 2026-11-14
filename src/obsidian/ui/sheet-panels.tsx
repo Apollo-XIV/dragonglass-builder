@@ -86,6 +86,11 @@ export function ActionsPanel({
               <li key={action.key} className={action.available ? "" : "is-unavailable"}>
                 <div className="dg-action-head">
                   <strong>{action.name}</strong>
+                  {action.attack ? (
+                    <span title={action.attack.attackParts.map((p) => `${p.label} ${signed(p.amount)}`).join("\n")}>
+                      <Pill>{signed(action.attack.attackBonus)} to hit</Pill>
+                    </span>
+                  ) : null}
                   {action.damageResolved ? <Pill>{action.damageResolved} {action.damageType ?? ""}</Pill> : null}
                   {action.save ? <Pill>DC {action.save.dc} {action.save.ability.toUpperCase()}</Pill> : null}
                   {action.range ? <span className="dg-muted">{action.range}</span> : null}

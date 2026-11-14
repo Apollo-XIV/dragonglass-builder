@@ -29,12 +29,13 @@
  * has been reviewed. Both are only present when there is something to say.
  *
  * 2.4 added `identity.avatar`, the character's portrait as a data URL, already shrunk to fit.
+ * 2.5 added `attack` on an action part: the attack roll resolved, where the action makes one.
  * Absent when the character has none or the picture could not be read or was too large.
  */
 
 import { Type, type Static } from "@sinclair/typebox";
 
-export const EXPORT_SCHEMA_VERSION = "2.4";
+export const EXPORT_SCHEMA_VERSION = "2.5";
 
 const Id = Type.String({ minLength: 1, description: "An element id, e.g. srd:barbarian:rage." });
 const Obj = Type.Record(Type.String(), Type.Unknown());
@@ -209,6 +210,22 @@ export const ExportPartProvenance = Type.Object(
   { description: "Where a part came from and whether anyone has reviewed it. A note; it never changes what the part does." },
 );
 
+export const ExportAttackPart = Type.Object({
+  label: Type.String({ description: "What the amount is: an ability modifier, proficiency, or the feature that adds it." }),
+  amount: Type.Number(),
+});
+
+export const ExportAttack = Type.Object(
+  {
+    type: Type.String({ description: "melee-weapon, ranged-weapon, melee-spell or ranged-spell." }),
+    ability: Type.Optional(Ability),
+    proficient: Type.Boolean(),
+    bonus: Type.Number({ description: "The attack bonus: the sum of `parts`." }),
+    parts: Type.Array(ExportAttackPart),
+  },
+  { description: "An action's attack roll, resolved as a weapon's is." },
+);
+
 export const ExportPart = Type.Object(
   {
     kind: Type.Union(
@@ -223,6 +240,7 @@ export const ExportPart = Type.Object(
     }),
     definition: Obj,
     cost: Type.Optional(Type.Array(ExportCost, { description: "On an action or toggle: what it spends, resolved. Absent when it spends nothing." })),
+    attack: Type.Optional(ExportAttack),
     provenance: Type.Optional(ExportPartProvenance),
   },
   { description: "One part of a feature, as authored (see docs/schema.md), with a derived kind." },

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "x-schemaVersion": "2.4",
+  "x-schemaVersion": "2.5",
   "$id": "https://dragonglass.local/schema/character-export.json",
   "title": "Dragonglass character export",
   "description": "A resolved, versioned description of one character: active picks only, no planned levels, no live state.",
@@ -1145,6 +1145,76 @@
                       "max": {
                         "description": "A chosen amount: a cap on what can be spent. Absent means no cap, so the most is whatever the pool has left. The pool's remainder is never applied here.",
                         "type": "number"
+                      }
+                    }
+                  }
+                },
+                "attack": {
+                  "description": "An action's attack roll, resolved as a weapon's is.",
+                  "type": "object",
+                  "required": [
+                    "type",
+                    "proficient",
+                    "bonus",
+                    "parts"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "melee-weapon, ranged-weapon, melee-spell or ranged-spell.",
+                      "type": "string"
+                    },
+                    "ability": {
+                      "anyOf": [
+                        {
+                          "const": "str",
+                          "type": "string"
+                        },
+                        {
+                          "const": "dex",
+                          "type": "string"
+                        },
+                        {
+                          "const": "con",
+                          "type": "string"
+                        },
+                        {
+                          "const": "int",
+                          "type": "string"
+                        },
+                        {
+                          "const": "wis",
+                          "type": "string"
+                        },
+                        {
+                          "const": "cha",
+                          "type": "string"
+                        }
+                      ]
+                    },
+                    "proficient": {
+                      "type": "boolean"
+                    },
+                    "bonus": {
+                      "description": "The attack bonus: the sum of `parts`.",
+                      "type": "number"
+                    },
+                    "parts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "label",
+                          "amount"
+                        ],
+                        "properties": {
+                          "label": {
+                            "description": "What the amount is: an ability modifier, proficiency, or the feature that adds it.",
+                            "type": "string"
+                          },
+                          "amount": {
+                            "type": "number"
+                          }
+                        }
                       }
                     }
                   }

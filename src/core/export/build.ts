@@ -346,6 +346,21 @@ function costOf(action: ResolvedAction | undefined): Pick<ExportPart, "cost"> {
   };
 }
 
+/** An action's attack roll, resolved, where it makes one. */
+function attackOf(action: ResolvedAction | undefined): Pick<ExportPart, "attack"> {
+  const a = action?.attack;
+  if (!a) return {};
+  return {
+    attack: {
+      type: a.type,
+      ...(a.ability ? { ability: a.ability } : {}),
+      proficient: a.proficient,
+      bonus: a.attackBonus,
+      parts: a.attackParts.map((p) => ({ label: p.label, amount: p.amount })),
+    },
+  };
+}
+
 /**
  * Reads an element's parts and gives each a kind the reader can switch on. With the
  * character's resolved actions, an action's cost comes with its pool and amounts resolved.
@@ -358,14 +373,17 @@ export function partsOf(el: Element, actions: readonly ResolvedAction[] = []): E
   };
   add("resources", "resource", el.resources);
   add("effects", "toggle", el.effects);
-  for (const a of Array.isArray(el.actions) ? el.actions : [])
+  for (const a of Array.isArray(el.actions) ? el.actions : []) {
+    const resolved = actions.find((x) => x.source === el.id && x.id === (a as { id?: unknown }).id);
     out.push({
       kind: (a as { applies?: unknown }).applies ? "toggle" : "action",
       from: "actions",
       definition: a as unknown as Record<string, unknown>,
-      ...costOf(actions.find((x) => x.source === el.id && x.id === (a as { id?: unknown }).id)),
+      ...costOf(resolved),
+      ...attackOf(resolved),
       ...provenanceOf(a),
     });
+  }
   add("modifiers", "passive", el.modifiers);
   add("innateSpells", "innate-spell", el.innateSpells);
   add("spellListAdditions", "spell-list", el.spellListAdditions);

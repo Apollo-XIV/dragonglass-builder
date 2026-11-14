@@ -7,12 +7,43 @@
  */
 
 import type { Ability } from "../types";
-import type { ResolvedCharacter, ResolvedItem } from "./resolved";
+import type { NumericStat, ResolvedCharacter, ResolvedItem } from "./resolved";
 
 export interface AttackPart {
   label: string;
   amount: number;
 }
+
+/** Where a stat's value is read from: the resolved character's table, or the engine mid-resolve. */
+export type StatLookup = (path: string) => NumericStat | undefined;
+
+export interface AttackRollInput {
+  ability: Ability;
+  /** The ability's modifier. */
+  mod: number;
+  proficient: boolean;
+  proficiencyBonus: number;
+  ranged: boolean;
+  /** Stat paths read after the broad ones: `attacks.<item id>`, `spellcasting.<class>.attack`. */
+  extraPaths?: string[];
+  stat: StatLookup;
+}
+
+/**
+ * The parts of an attack roll: the ability modifier, proficiency when it applies, then
+ * whatever content adds to attacks broadly (`attacks.all`), by reach (`attacks.melee`,
+ * `attacks.ranged`) or by the paths the caller names. One function, so a weapon in hand
+ * and an action's own attack never disagree about the arithmetic.
+ */
+export function attackRollParts(input: AttackRollInput): AttackPart[] {
+  const parts: AttackPart[] = [{ label: `${input.ability.toUpperCase()} modifier`, amount: input.mod }];
+  if (input.proficient) parts.push({ label: "Proficiency bonus", amount: input.proficiencyBonus });
+  for (const part of statBonuses(input.stat, ["attacks.all", `attacks.${input.ranged ? "ranged" : "melee"}`, ...(input.extraPaths ?? [])]))
+    parts.push(part);
+  return parts;
+}
+
+export const sumParts = (parts: readonly AttackPart[]): number => parts.reduce((sum, p) => sum + p.amount, 0);
 
 export interface WeaponAttack {
   key: string;
@@ -64,19 +95,17 @@ function attackFor(character: ResolvedCharacter, item: ResolvedItem, weapon: Wea
   const proficient = isProficient(character, item, weapon, tags);
   const bonus = character.proficiencyBonus.value;
 
-  const attackParts: AttackPart[] = [{ label: `${ability.toUpperCase()} modifier`, amount: mod }];
-  if (proficient) attackParts.push({ label: "Proficiency bonus", amount: bonus });
+  const stat: StatLookup = (path) => character.stats[path];
   // Content can add to attacks broadly ("attacks.all") or narrowly
   // ("attacks.ranged", "attacks.srd:item:longbow"); all of them apply here.
-  for (const part of statBonuses(character, ["attacks.all", `attacks.${ranged ? "ranged" : "melee"}`, `attacks.${item.element.id}`]))
-    attackParts.push(part);
+  const attackParts = attackRollParts({ ability, mod, proficient, proficiencyBonus: bonus, ranged, extraPaths: [`attacks.${item.element.id}`], stat });
 
   const damageParts: AttackPart[] = [{ label: `${ability.toUpperCase()} modifier`, amount: mod }];
-  for (const part of statBonuses(character, ["damage.all", `damage.${ranged ? "ranged" : "melee"}`, `damage.${item.element.id}`]))
+  for (const part of statBonuses(stat, ["damage.all", `damage.${ranged ? "ranged" : "melee"}`, `damage.${item.element.id}`]))
     damageParts.push(part);
 
-  const attackBonus = attackParts.reduce((sum, p) => sum + p.amount, 0);
-  const damageBonus = damageParts.reduce((sum, p) => sum + p.amount, 0);
+  const attackBonus = sumParts(attackParts);
+  const damageBonus = sumParts(damageParts);
 
   return {
     key: `${item.element.id}:${item.index}`,
@@ -142,10 +171,10 @@ function isProficient(
   return false;
 }
 
-function statBonuses(character: ResolvedCharacter, paths: string[]): AttackPart[] {
+function statBonuses(lookup: StatLookup, paths: string[]): AttackPart[] {
   const parts: AttackPart[] = [];
   for (const path of paths) {
-    const stat = character.stats[path];
+    const stat = lookup(path);
     if (!stat || stat.value === 0) continue;
     // The stat's own breakdown names the feature responsible, which is more use
     // in a roll sheet than the path would be.

@@ -5,6 +5,7 @@ import type {
   Ability,
   ActionDef,
   Activation,
+  AttackType,
   ChoiceDef,
   Cost,
   Diagnostic,
@@ -23,6 +24,7 @@ import type {
 } from "../types";
 import type { ResolvedRecharge } from "../state/recharge";
 import type { HpLevel } from "./hit-points";
+import type { AttackPart } from "./attacks";
 
 export type { HpLevel } from "./hit-points";
 
@@ -166,6 +168,15 @@ export interface ResolvedCostLine {
   cap?: number;
 }
 
+export interface ResolvedAttack {
+  type: AttackType;
+  /** Absent only for a spell attack with no class or ability behind it. */
+  ability?: Ability;
+  proficient: boolean;
+  attackBonus: number;
+  attackParts: AttackPart[];
+}
+
 export interface ResolvedAction {
   key: string;
   id: string;
@@ -187,6 +198,8 @@ export interface ResolvedAction {
   /** `duration` with expressions substituted; `@spent` stays for the sheet to fill. */
   durationResolved?: string;
   save?: { ability: Ability; dc: number };
+  /** The attack roll, assembled as a weapon's is, when the action makes one. */
+  attack?: ResolvedAttack;
   text?: string;
   notes?: string;
   source: string;

@@ -284,10 +284,35 @@ export interface ActionDef {
   duration?: string;
   /** "dex" plus the spell save DC, or an explicit expression. */
   save?: { ability: Ability; dc?: Expr };
+  /** The attack roll this action makes, where it makes one. See `ActionAttack`. */
+  attack?: ActionAttack;
   recharge?: Recharge;
   text?: string;
   notes?: string;
   provenance?: PartProvenance;
+}
+
+/** Which bonus an action's attack roll uses. */
+export const ATTACK_TYPES = ["melee-weapon", "ranged-weapon", "melee-spell", "ranged-spell"] as const;
+export type AttackType = (typeof ATTACK_TYPES)[number];
+
+/**
+ * What the attack roll is, where an action makes one: a thrown flask, a wand's ray, a
+ * feature's own spell attack. Weapons in hand are not this; the resolver assembles those
+ * from the inventory. The damage on the action is the damage on a hit.
+ */
+export interface ActionAttack {
+  type: AttackType;
+  /**
+   * The ability the attack and damage use. Defaults: `str` for melee-weapon, `dex` for
+   * ranged-weapon, the owning class's casting ability for the spell types (the same rule
+   * `save.dc` follows), with `attacks.*` modifiers applied as for a weapon.
+   */
+  ability?: Ability;
+  /** Proficient by default: a feature's own attack always is. `false` for an improvised weapon. */
+  proficient?: boolean;
+  /** A flat bonus on top, an expression: a +1 weapon's "+1". */
+  bonus?: Expr;
 }
 
 export interface EffectDef {
