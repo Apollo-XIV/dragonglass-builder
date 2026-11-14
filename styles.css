@@ -2398,7 +2398,8 @@
  * so their tiles and save pills are the desktop's own rather than a second copy. */
 .dg-desk,
 .dg-n-ability-block,
-.dg-n-stat-cluster {
+.dg-n-stat-cluster,
+.dg-n-chips {
   /* One spacing scale. Every gap and padding in the layout is one of these. */
   --d-gap: var(--size-4-3);
   --d-gap-tight: var(--size-4-2);
@@ -2700,6 +2701,10 @@
   flex-wrap: wrap;
   gap: var(--d-gap-tight);
   align-items: center;
+}
+
+.dg-n-chips {
+  margin-bottom: var(--d-gap);
 }
 
 .dg-d-chip,

@@ -168,7 +168,7 @@ function RestMenu({ store, character }: { store: CharacterStore; character: Reso
 // Status chips
 // ---------------------------------------------------------------------------
 
-function StatusChips({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function StatusChips({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const groups: { icon: string; label: string; set: string }[] = [
     { icon: "shield-half", label: "Res.", set: "resistances" },
     { icon: "shield", label: "Imm.", set: "immunities" },

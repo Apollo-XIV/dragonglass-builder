@@ -31,6 +31,7 @@ import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-
 import { ChipRow } from "../builder/chips";
 import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
 import { UseAction } from "../use-action";
+import { StatusChips } from "../desktop/header";
 
 /** Section ids are stable; the order comes from the settings (spec 4.4). */
 const SHEET_ICONS: Record<string, string> = {
@@ -162,6 +163,9 @@ export function featureList(character: ResolvedCharacter): ResolvedCharacter["fe
 export function OverviewSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   return (
     <>
+      <div className="dg-n-chips">
+        <StatusChips store={store} character={character} />
+      </div>
       <RestRow store={store} character={character} />
       <div className="dg-d-cluster dg-n-stat-cluster">
         <SpeedTile character={character} Read={HoldReadTarget} />
