@@ -14,7 +14,7 @@ import { createSource } from "../../../content-editor";
 import { nativeDialogAvailable, pickFolder } from "../../../native-dialog";
 import { SECRET_STORAGE_UPDATE_MESSAGE, saveGithubToken, savedLoginExists, secretStorageAvailable, sessionLoginToken } from "../../../github-auth";
 import { updateFromGithub } from "../../../github-login-modal";
-import { describeSource, parseSourceInput, suggestSourceId } from "../../../settings";
+import { describeSource, parseSourceInput, RULESETS, suggestSourceId } from "../../../settings";
 import { isWritableSource } from "../../../sources";
 import { usePlugin } from "../../context";
 import { Diagnostics, Empty, Markdown, Pill, Section } from "../../components";
@@ -226,6 +226,7 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
                 <strong>{book.name}</strong> <Pill>{book.abbreviation}</Pill>
                 {book.version ? <span className="dg-muted"> v{book.version}</span> : null}
                 {book.license ? <Pill tone="info">{book.license}</Pill> : null}
+                {book.ruleset ? null : <RulesetSelect book={book} />}
                 {book.attribution ? <Markdown source={book.attribution} /> : null}
               </li>
             ))}
@@ -239,6 +240,32 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
         <SourceDiagnostics store={store} />
       </Section>
     </>
+  );
+}
+
+/** For a book that does not say which ruleset it is from: the player does. Plugin-wide. */
+function RulesetSelect({ book }: { book: { id: string; name: string } }): ReactNode {
+  const { plugin } = usePlugin();
+  const [value, setValue] = useState(plugin.settings.rulesets[book.id] ?? "");
+  return (
+    <label className="dg-ruleset-select">
+      <span className="dg-muted">Ruleset </span>
+      <select
+        value={value}
+        onChange={(e) => {
+          const next = e.currentTarget.value;
+          setValue(next);
+          void plugin.setRuleset(book.id, next || undefined);
+        }}
+      >
+        <option value="">Not specified</option>
+        {RULESETS.map((r) => (
+          <option key={r} value={r}>
+            {r}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 

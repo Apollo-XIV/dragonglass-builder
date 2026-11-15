@@ -14,7 +14,7 @@ import { GithubLoginModal, PasswordModal, ensureLogin, updateFromGithub } from "
 import { fetchGithubUser } from "./github-user";
 import type { SourceRef } from "../core/types";
 import { normalizeDir } from "../core/source-dir";
-import { describeSource, parseSourceInput, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
+import { describeSource, parseSourceInput, RULESETS, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
 import { HOLD } from "./ui/narrow/constants";
 
 export class DragonglassSettingTab extends PluginSettingTab {
@@ -40,6 +40,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
     this.renderGithubAccount(containerEl);
     this.renderSourceAdder(containerEl);
     this.renderSourceList(containerEl);
+    void this.renderRulesets(containerEl.createDiv());
 
     containerEl.createEl("h2", { text: "Content" });
 
@@ -446,6 +447,29 @@ export class DragonglassSettingTab extends PluginSettingTab {
             this.display();
           }),
       );
+  }
+
+  /**
+   * Books that don't say which ruleset they are from, so the player can. Picker filters
+   * group by ruleset; a book with none is shown whatever the filter says.
+   */
+  private async renderRulesets(host: HTMLElement): Promise<void> {
+    const index = await this.plugin.indexFor();
+    if (!host.isConnected) return;
+    const undeclared = index.allSourcebooks().filter((book) => !book.ruleset);
+    if (!undeclared.length) return;
+    new Setting(host).setName("Rulesets").setHeading();
+    for (const book of undeclared)
+      new Setting(host)
+        .setName(book.name)
+        .setDesc("This book doesn't say which ruleset it is from.")
+        .addDropdown((dropdown) =>
+          dropdown
+            .addOption("", "Not specified")
+            .addOptions(Object.fromEntries(RULESETS.map((r) => [r, r])))
+            .setValue(this.plugin.settings.rulesets[book.id] ?? "")
+            .onChange((value) => this.plugin.setRuleset(book.id, value || undefined)),
+        );
   }
 
   private renderSourceList(containerEl: HTMLElement): void {

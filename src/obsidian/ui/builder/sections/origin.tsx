@@ -20,6 +20,8 @@ import {
   optionsFor,
   POINT_BUY_BUDGET,
   pointsSpent,
+  inheritedFilterOf,
+  sourceRefOf,
   STANDARD_ARRAY,
 } from "../model";
 import { usePicker, usePickerSlot } from "../picker";
@@ -107,13 +109,15 @@ export function PendingChoiceRow({
         picker({
           title: choice.name,
           subtitle: `${choice.sourceName}${choice.count > 1 ? ` · choose ${choice.count}` : ""}`,
-          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id))),
+          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id)), (id) => (store.index ? sourceRefOf(store.index, id) : undefined)),
+          defaultFilter: store.index ? inheritedFilterOf(store.index, choice.source) : undefined,
           selected: choice.chosen,
           count: choice.count,
           repeatable: choice.definition.repeatable,
           maxPer: choice.definition.maxPer,
           enforce: plugin.settings.enforceRequirements,
           onCommit: write,
+          live: true,
           extra: choice.chosen.length
             ? { label: "Clear", onClick: () => write([]) }
             : undefined,
@@ -154,6 +158,7 @@ export function OriginSection({
         text: typeof element.text === "string" ? element.text : undefined,
         fluff: typeof element.fluff === "string" ? element.fluff : undefined,
         tag: index.abbreviation(element.source),
+        source: sourceRefOf(index, element.source),
       })),
       selected: current ? [current] : [],
       count: 1,

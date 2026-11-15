@@ -79,6 +79,11 @@ export interface DragonglassSettings {
   /** Vault-wide sources, highest priority first. */
   sources: SourceRef[];
   caching: CacheTier;
+  /**
+   * The ruleset to treat a sourcebook as being from, by sourcebook id, for books that
+   * don't declare one. A book's own `ruleset` always wins.
+   */
+  rulesets: Record<string, string>;
   /** Hide options whose prerequisites aren't met, instead of warning on them. */
   enforceRequirements: boolean;
   /** Where "New character" creates folders. */
@@ -92,6 +97,9 @@ export interface DragonglassSettings {
   /** Milliseconds to wait before writing after a state change. */
   writeDebounceMs: number;
 }
+
+/** The rulesets a book can be assigned by hand. */
+export const RULESETS = ["2014", "2024"] as const;
 
 /**
  * The sources a fresh install starts with: the two converted SRDs. Pinned to a commit,
@@ -119,6 +127,7 @@ export const DEFAULT_SOURCES: readonly SourceRef[] = [
 export const DEFAULT_SETTINGS: DragonglassSettings = {
   sources: DEFAULT_SOURCES.map((ref) => ({ ...ref })),
   caching: "smart",
+  rulesets: {},
   enforceRequirements: false,
   charactersFolder: "Characters",
   exportFolder: "Exports",

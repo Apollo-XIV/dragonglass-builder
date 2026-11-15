@@ -17,6 +17,7 @@ import { addInventoryItem, isStackable, removeInventoryEntry } from "../../../..
 import { useSheet } from "../../narrow/sheet";
 import { InfoRow } from "../detail";
 import { useBuilderFeatures } from "../features";
+import { inheritedFilterOf, sourceRefOf } from "../model";
 import { usePicker, usePickerSlot, type PickerOption } from "../picker";
 import { CustomItemForm, XpHint } from "./extras";
 
@@ -90,6 +91,7 @@ export function SpellsSection({
       text: typeof spell.text === "string" ? spell.text : undefined,
       facts: factsOf(spell),
       tag: index.abbreviation(spell.source),
+      source: sourceRefOf(index, spell.source),
       group: level > 0 ? `Level ${level}` : "Cantrip",
       bucket: level > 0 ? "leveled" : "cantrips",
       allowed: !tooHigh,
@@ -110,6 +112,7 @@ export function SpellsSection({
         cantrips: { label: "cantrips", ...limits.cantrips },
         leveled: limits.leveled,
       },
+      defaultFilter: inheritedFilterOf(index, cls.class),
       selected: [],
       count: Infinity,
       search: features.pickerSearch,
@@ -143,6 +146,7 @@ export function SpellsSection({
       options: (anyClass ? index.query({ kind: "spell" }) : classSpellList(index, cls))
         .filter((spell) => !known.has(spell.id))
         .map((spell) => ({ ...optionOf(spell, limits, ceiling), bucket: undefined })),
+      defaultFilter: inheritedFilterOf(index, cls.class),
       selected: [],
       count: Infinity,
       search: features.pickerSearch,
@@ -245,6 +249,7 @@ export function EquipmentSection({
         text: typeof item.text === "string" ? item.text : undefined,
         facts: factsOf(item),
         tag: index.abbreviation(item.source),
+        source: sourceRefOf(index, item.source),
         group: item.tags?.[0],
       })),
       selected: [],

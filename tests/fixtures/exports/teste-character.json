@@ -9,7 +9,7 @@
         "id": "srd",
         "name": "SRD 5.1 (test slice)",
         "version": "5.1",
-        "ref": "sha256:cfbb52005fe0fb48b11c7c1938987989f6f80d9b3505f62b170c9447e170556d",
+        "ref": "sha256:49c8b3ee24bd738c2d22b41fd5e936ff51b51a776d4f8618ad3931031717d549",
         "refType": "hash",
         "sourcebooks": [
           "srd"

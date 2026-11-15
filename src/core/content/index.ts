@@ -68,6 +68,9 @@ export class ContentIndex {
   private readonly skillAbilities = new Map<string, Ability>();
   private readonly skillElements = new Map<string, SkillElement>();
 
+  /** Rulesets the user assigned to books that do not declare one, by sourcebook id. */
+  private rulesetOverrides: Record<string, string> = {};
+
   readonly diagnostics: Diagnostic[] = [];
   readonly overrides: OverrideRecord[] = [];
   readonly sources: { id: string; name?: string; priority: number }[] = [];
@@ -305,6 +308,15 @@ export class ContentIndex {
 
   allSourcebooks(): SourcebookElement[] {
     return [...this.sourcebooks.values()];
+  }
+
+  /** The book's own ruleset, or failing that the one the user gave it. */
+  ruleset(sourceId: string): string | undefined {
+    return this.sourcebooks.get(sourceId)?.ruleset?.trim() || this.rulesetOverrides[sourceId]?.trim() || undefined;
+  }
+
+  setRulesetOverrides(overrides: Record<string, string>): void {
+    this.rulesetOverrides = overrides;
   }
 
   abbreviation(sourceId: string): string | undefined {

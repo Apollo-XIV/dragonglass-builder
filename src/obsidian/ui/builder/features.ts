@@ -42,6 +42,11 @@ export interface BuilderFeatures {
    * care which, so putting it on a phone is this flag and nothing else.
    */
   foldOnDrag: boolean;
+  /**
+   * Picking in a multi-pick choice commits at once, rather than when Done is pressed. Only
+   * pickers that replace a choice's answer (`PickerSpec.live`) are affected.
+   */
+  liveCommit: boolean;
   /** The planned half of the Progression list starts open, rather than behind its divider. */
   plannedOpen: boolean;
 }
@@ -59,6 +64,7 @@ export const NO_FEATURES: BuilderFeatures = {
   browse: false,
   sources: false,
   foldOnDrag: false,
+  liveCommit: false,
   plannedOpen: false,
 };
 

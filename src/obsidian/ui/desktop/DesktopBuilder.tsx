@@ -49,6 +49,7 @@ export const DESKTOP_FEATURES: BuilderFeatures = {
   browse: true,
   sources: true,
   foldOnDrag: true,
+  liveCommit: true,
   plannedOpen: true,
 };
 

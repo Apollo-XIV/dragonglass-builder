@@ -21,7 +21,7 @@ import { useSheet } from "../../narrow/sheet";
 import { InactivePickRow, useBuildChange } from "../changes";
 import { InfoRow } from "../detail";
 import { useBuilderStop } from "../nav";
-import { defaultHpFor, multiclassNote } from "../model";
+import { defaultHpFor, multiclassNote, sourceRefOf } from "../model";
 import { useBuilderFeatures } from "../features";
 import { usePicker, usePickerSlot } from "../picker";
 import { useCardShown } from "../reorder/fold";
@@ -257,6 +257,7 @@ export function LevelButtons({
           text: typeof cls.text === "string" ? cls.text : undefined,
           fluff: typeof cls.fluff === "string" ? cls.fluff : undefined,
           tag: index.abbreviation(cls.source),
+          source: sourceRefOf(index, cls.source),
           // Shown whether or not enforcement is on: a player multiclassing into
           // a class they don't qualify for should at least be told.
           warnings: multiclassNote(cls),

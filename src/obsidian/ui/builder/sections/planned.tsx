@@ -6,7 +6,7 @@ import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { Element } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
 import { InfoRow } from "../detail";
-import { upcomingStaged, type LevelEntryShape } from "../model";
+import { inheritedFilterOf, sourceRefOf, upcomingStaged, type LevelEntryShape } from "../model";
 import { useCardShown } from "../reorder/fold";
 import { usePicker } from "../picker";
 import { ChoiceRow } from "./origin";
@@ -165,9 +165,12 @@ function PlannedEntry({
                   name: option.name,
                   text: typeof option.text === "string" ? option.text : undefined,
                   tag: index.abbreviation(option.source),
+                  source: sourceRefOf(index, option.source),
                 })),
+                defaultFilter: inheritedFilterOf(index, classId),
                 selected: chosen,
                 count: choice.count ?? 1,
+                live: true,
                 onCommit: (ids) =>
                   store.mutateBuild((b) => setPlannedChoice(b, classId, classLevel, choice.id, ids)),
                 extra: chosen.length

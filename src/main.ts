@@ -250,10 +250,25 @@ export default class DragonglassPlugin extends Plugin {
     const disabled = characterSources?.disabled ?? [];
     const key = JSON.stringify([this.settings.sources, own, disabled]);
     const cached = this.indexCache.get(key);
-    if (cached) return cached;
+    if (cached) {
+      cached.setRulesetOverrides(this.settings.rulesets);
+      return cached;
+    }
     const index = await this.sources.buildIndex(this.settings.sources, own, disabled);
+    index.setRulesetOverrides(this.settings.rulesets);
     this.indexCache.set(key, index);
     return index;
+  }
+
+  /**
+   * Says what ruleset a sourcebook that declares none belongs to. The indexes already
+   * built are told too: pickers read the ruleset when they open, so nothing reloads.
+   */
+  async setRuleset(sourcebookId: string, ruleset: string | undefined): Promise<void> {
+    const { [sourcebookId]: _gone, ...rest } = this.settings.rulesets;
+    this.settings.rulesets = ruleset ? { ...rest, [sourcebookId]: ruleset } : rest;
+    for (const index of this.indexCache.values()) index.setRulesetOverrides(this.settings.rulesets);
+    await this.saveSettings();
   }
 
   // -- stores ----------------------------------------------------------------

@@ -442,6 +442,8 @@ export interface MasteryPropertyElement extends Element {
 export interface SourcebookElement extends Element {
   kind: "sourcebook";
   abbreviation: string;
+  /** Which edition of the rules this book belongs to: "2014", "2024". Picker filters group by it. */
+  ruleset?: string;
   version?: string;
   license?: string;
   attribution?: string;

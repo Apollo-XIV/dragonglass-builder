@@ -670,6 +670,8 @@ export function validateElement(raw: unknown): ValidationResult {
     );
   if (el.kind === "sourcebook" && typeof el.abbreviation !== "string")
     out.push(err("invalid-element", "sourcebook needs an abbreviation", subject, "abbreviation"));
+  if (el.kind === "sourcebook" && el.ruleset !== undefined && typeof el.ruleset !== "string")
+    out.push(err("invalid-element", "sourcebook ruleset must be a string", subject, "ruleset"));
 
   return { usable: usable && !out.some((d) => d.severity === "error"), diagnostics: out };
 }

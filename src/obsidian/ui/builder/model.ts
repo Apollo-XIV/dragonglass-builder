@@ -11,6 +11,7 @@ import type { PendingChoice } from "../../../core/resolver/resolved";
 import type { ChoiceDef, Element, Grant, Requirement } from "../../../core/types";
 import type { ContentIndex } from "../../../core/content";
 import type { PickerOption } from "./picker";
+import { inheritedFilter, type SourceFilter, type SourceRef } from "./source-filter";
 
 export const POINT_BUY_COST: Record<number, number> = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
 export const POINT_BUY_BUDGET = 27;
@@ -53,7 +54,23 @@ export function multiclassNote(cls: Element): string[] | undefined {
   return requires ? [describeRequirement(requires)] : undefined;
 }
 
-export function optionsFor(choice: PendingChoice, nameOf: (id: string) => string | undefined = () => undefined): PickerOption[] {
+/** What the picker's source filter needs to know about the book an element came from. */
+export function sourceRefOf(index: ContentIndex, sourceId: string): SourceRef | undefined {
+  const book = index.sourcebook(sourceId);
+  return book ? { id: book.id, label: book.abbreviation, name: book.name, ruleset: index.ruleset(sourceId) } : undefined;
+}
+
+/** The starting filter for options that belong to an element: its own book's ruleset. */
+export function inheritedFilterOf(index: ContentIndex, elementId: string): SourceFilter {
+  const element = index.get(elementId);
+  return inheritedFilter(element ? sourceRefOf(index, element.source) : undefined);
+}
+
+export function optionsFor(
+  choice: PendingChoice,
+  nameOf: (id: string) => string | undefined = () => undefined,
+  sourceOf: (sourceId: string) => SourceRef | undefined = () => undefined,
+): PickerOption[] {
   return choice.options.map((option) => ({
     id: option.id,
     name: option.name,
@@ -61,6 +78,7 @@ export function optionsFor(choice: PendingChoice, nameOf: (id: string) => string
     fluff: option.fluff,
     facts: factsOf(option.element, nameOf),
     tag: option.abbreviation,
+    source: sourceOf(option.source),
     warnings: option.warnings,
     allowed: option.allowed,
   }));

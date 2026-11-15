@@ -18,8 +18,17 @@ import {
 } from "react";
 import { Markdown } from "../components";
 import type { Fact } from "../../../core/content/facts";
-import { Facts } from "../components";
+import { Facts, Icon } from "../components";
 import { ChipRow } from "./chips";
+import {
+  activeCount,
+  cycleFilter,
+  facetsOf,
+  matchesFilter,
+  usableFilter,
+  type SourceFilter,
+  type SourceRef,
+} from "./source-filter";
 import { useDetail, type DetailSpec } from "./detail";
 import { useBuilderFeatures } from "./features";
 import { useHold } from "../narrow/hold";
@@ -33,6 +42,8 @@ export interface PickerOption {
   facts?: Fact[];
   /** Source abbreviation: SRD, PHB. */
   tag?: string;
+  /** The book it comes from, for the ruleset and sourcebook filter. */
+  source?: SourceRef;
   /** Unmet prerequisites. Shown as an amber note; only enforced if asked. */
   warnings?: string[];
   /** A small tag beside the name: "queued", for a class that has planned levels waiting. */
@@ -69,6 +80,16 @@ export interface PickerSpec {
    */
   buckets?: Record<string, { label: string; used: number; cap?: number }>;
   onCommit: (ids: string[]) => void;
+  /**
+   * `onCommit` replaces the whole answer, so it may be called on every pick (where the
+   * layout's `liveCommit` is on). Not for pickers that add to what is already held.
+   */
+  live?: boolean;
+  /**
+   * The ruleset or books the picker starts narrowed to, normally the parent's ruleset
+   * (`inheritedFilter`). It is only a starting point: the player can change or clear it.
+   */
+  defaultFilter?: SourceFilter;
   /** Extra button, for "clear" or a destructive action. */
   extra?: { label: string; onClick: () => void; destructive?: boolean };
 }
@@ -157,10 +178,16 @@ export function PickerBody({
   onRead?: (spec: DetailSpec | undefined) => void;
 }): ReactNode {
   const [selected, setSelected] = useState<string[]>(spec.selected);
+  const live = useBuilderFeatures().liveCommit && spec.live === true;
   // An option that unmounts under the pointer never says it left.
   useEffect(() => () => onRead?.(undefined), []); // eslint-disable-line react-hooks/exhaustive-deps
   const [query, setQuery] = useState("");
   const [group, setGroup] = useState("all");
+  const facets = facetsOf(spec.options.map((o) => o.source));
+  const [sourceFilter, setSourceFilter] = useState<SourceFilter>(() =>
+    usableFilter(spec.defaultFilter ?? {}, facets),
+  );
+  const [filterOpen, setFilterOpen] = useState(false);
   const groups = spec.search
     ? [
         ...new Set(
@@ -177,6 +204,7 @@ export function PickerBody({
   const shown = spec.options.filter(
     (o) =>
       (group === "all" || o.group === group) &&
+      matchesFilter(sourceFilter, o.source) &&
       (!query || o.name.toLowerCase().includes(query.toLowerCase())),
   );
   const multiple = spec.count > 1;
@@ -201,17 +229,18 @@ export function PickerBody({
       close();
       return;
     }
-    setSelected((current) => {
-      if (stepping) return cycle(current, id, spec.count, spec.maxPer);
-      if (current.includes(id)) return current.filter((x) => x !== id);
+    let next: string[];
+    if (stepping) next = cycle(selected, id, spec.count, spec.maxPer);
+    else if (selected.includes(id)) next = selected.filter((x) => x !== id);
+    else {
       // Choosing one too many drops the oldest rather than refusing the tap: the
       // player has already said what they want, and which one to give up is
       // usually obvious to them, not to us.
-      const next = [...current, id];
-      return next.length > spec.count
-        ? next.slice(next.length - spec.count)
-        : next;
-    });
+      next = [...selected, id];
+      if (next.length > spec.count) next = next.slice(next.length - spec.count);
+    }
+    setSelected(next);
+    if (live) spec.onCommit(next);
   };
 
   return (
@@ -244,14 +273,43 @@ export function PickerBody({
             value={query}
             onChange={(e) => setQuery(e.currentTarget.value)}
           />
-          {groups.length > 1 ? (
-            <ChipRow
-              chips={[
-                { id: "all", label: "All" },
-                ...groups.map((g) => ({ id: g, label: g })),
-              ]}
-              active={group}
-              onPick={setGroup}
+          <div className="dg-picker-chiprow">
+            {facets.sources.length > 0 ? (
+              <button
+                className={
+                  activeCount(sourceFilter) > 0
+                    ? "dg-filter-pip is-active"
+                    : "dg-filter-pip"
+                }
+                aria-expanded={filterOpen}
+                onClick={() => setFilterOpen(!filterOpen)}
+              >
+                <Icon name="filter" />
+                <span className="dg-sr-only">Filter by ruleset and source</span>
+                {activeCount(sourceFilter) > 0 ? (
+                  <span className="dg-filter-pip-count">
+                    {activeCount(sourceFilter)}
+                  </span>
+                ) : null}
+              </button>
+            ) : null}
+            {groups.length > 1 ? (
+              <ChipRow
+                chips={[
+                  { id: "all", label: "All" },
+                  ...groups.map((g) => ({ id: g, label: g })),
+                ]}
+                active={group}
+                onPick={setGroup}
+              />
+            ) : null}
+          </div>
+          {filterOpen ? (
+            <SourceFilterPanel
+              facets={facets}
+              filter={sourceFilter}
+              onToggle={(key) => setSourceFilter(cycleFilter(sourceFilter, key))}
+              onClear={() => setSourceFilter({})}
             />
           ) : null}
         </div>
@@ -309,7 +367,7 @@ export function PickerBody({
           <button
             className="dg-sheet-button is-primary"
             onClick={() => {
-              spec.onCommit(selected);
+              if (!live) spec.onCommit(selected);
               close();
             }}
           >
@@ -318,6 +376,65 @@ export function PickerBody({
         ) : null}
       </div>
     </>
+  );
+}
+
+/**
+ * The ruleset and sourcebook filters. A click on a chip cycles it: off, include
+ * (accent), exclude (struck through), off.
+ */
+function SourceFilterPanel({
+  facets,
+  filter,
+  onToggle,
+  onClear,
+}: {
+  facets: ReturnType<typeof facetsOf>;
+  filter: SourceFilter;
+  onToggle: (key: string) => void;
+  onClear: () => void;
+}): ReactNode {
+  const row = (label: string, items: typeof facets.sources): ReactNode =>
+    items.length === 0 ? null : (
+      <div className="dg-filter-group">
+        <span className="dg-filter-group-label">{label}</span>
+        <div className="dg-filter-chips">
+          {items.map((item) => {
+            const mode = filter[item.key];
+            return (
+              <button
+                key={item.key}
+                className={
+                  mode ? `dg-n-chip is-${mode}` : "dg-n-chip"
+                }
+                aria-pressed={mode === "include" ? true : mode === "exclude" ? "mixed" : false}
+                title={item.title}
+                onClick={() => onToggle(item.key)}
+              >
+                {item.label}
+                {mode ? <span className="dg-sr-only"> ({mode === "include" ? "included" : "excluded"})</span> : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    );
+  return (
+    <div className="dg-filter-panel">
+      {row("Ruleset", facets.rulesets)}
+      {row("Source", facets.sources)}
+      <p className="dg-muted">
+        Click to include, again to exclude, again to clear.
+        {activeCount(filter) > 0 ? (
+          <>
+            {" "}
+            <button className="dg-filter-clear" onClick={onClear}>
+              Clear all
+            </button>
+          </>
+        ) : null}
+      </p>
+    </div>
   );
 }
 
