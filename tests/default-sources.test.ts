@@ -7,7 +7,8 @@ describe("default sources", () => {
     expect(sources.map((s) => s.id)).toEqual(["srd", "srd24"]);
     for (const ref of sources) {
       expect(ref.type).toBe("github");
-      expect(ref.pin).toMatch(/^[0-9a-f]{40}$/);
+      // A release tag or a full commit SHA, never a branch.
+      expect(ref.pin).toMatch(/^([0-9a-f]{40}|\d+\.\d+\.\d+)$/);
     }
   });
 
