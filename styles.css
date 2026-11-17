@@ -4869,3 +4869,24 @@
   text-align: center;
   user-select: all;
 }
+
+/* Settings: a source's pin and folder get a row under its name, whatever the pane's width. */
+.dg-source-setting {
+  flex-wrap: wrap;
+}
+
+.dg-source-setting .setting-item-info {
+  min-width: 12rem;
+}
+
+.dg-source-fields {
+  display: flex;
+  flex: 1 1 100%;
+  gap: var(--size-4-2);
+  order: 3;
+}
+
+.dg-source-fields input {
+  flex: 1 1 0;
+  min-width: 0;
+}

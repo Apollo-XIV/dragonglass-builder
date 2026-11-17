@@ -1,4 +1,4 @@
-import { Modal, Notice, PluginSettingTab, Setting, type App } from "obsidian";
+import { Modal, Notice, PluginSettingTab, Setting, TextComponent, type App } from "obsidian";
 import type DragonglassPlugin from "../main";
 import {
   SECRET_STORAGE_UPDATE_MESSAGE,
@@ -456,7 +456,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
   private async renderRulesets(host: HTMLElement): Promise<void> {
     const index = await this.plugin.indexFor();
     if (!host.isConnected) return;
-    const undeclared = index.allSourcebooks().filter((book) => !book.ruleset);
+    const undeclared = index.allSourcebooks().filter((book) => !book.ruleset && book.id !== "core");
     if (!undeclared.length) return;
     new Setting(host).setName("Rulesets").setHeading();
     for (const book of undeclared)
@@ -494,21 +494,21 @@ export class DragonglassSettingTab extends PluginSettingTab {
         .join(" · ");
 
       const setting = new Setting(containerEl).setName(ref.name ?? ref.id).setDesc(detail);
+      setting.settingEl.addClass("dg-source-setting");
+      // The pin and folder sit on a row of their own under the name, so a narrow pane never squeezes the name into a column.
+      const fields = setting.settingEl.createDiv({ cls: "dg-source-fields" });
 
-      setting.addText((text) =>
-        text
+      new TextComponent(fields)
           .setPlaceholder("pin")
           .setValue(ref.pin ?? "")
           .onChange(async (value) => {
             this.plugin.settings.sources[i] = { ...this.plugin.settings.sources[i], pin: value.trim() || undefined };
             this.plugin.sources.invalidate(ref.id);
             await this.plugin.saveSettings();
-          }),
-      );
+          });
 
       if (ref.type !== "url")
-        setting.addText((text) =>
-          text
+        new TextComponent(fields)
             .setPlaceholder("folder")
             .setValue(ref.dir ?? "")
             .onChange(async (value) => {
@@ -517,8 +517,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
               this.plugin.settings.sources[i] = { ...this.plugin.settings.sources[i], dir: dir ?? (error ? value.trim() : undefined) };
               this.plugin.sources.invalidate(ref.id);
               await this.plugin.saveSettings();
-            }),
-        );
+            });
 
       if (ref.auth?.type === "oauth")
         setting.addExtraButton((button) =>
