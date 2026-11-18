@@ -123,6 +123,13 @@ describe("languages already held", () => {
     });
   });
 
+  it("matches a language name without regard to case", () => {
+    const lower: Element = { ...inline, id: "test:species:lower", modifiers: [{ target: "languages", op: "include", value: ["common"] }] };
+    const r = resolve({ content: testIndex([TEST_BOOK, common, dwarvish, lower]), build: build({ species: lower.id }) });
+    const options = r.pendingChoices.find((c) => c.id === "in:language")!.options;
+    expect(options.find((o) => o.name === "Common")?.heldBy).toBe("Inline");
+  });
+
   it("marks what another picker was answered with, naming what offered it", () => {
     const marks = held(species.id, "bg:language", {
       background: background.id,

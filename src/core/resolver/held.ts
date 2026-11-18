@@ -32,7 +32,9 @@ function claimsOf(modifiers: readonly Modifier[]): Claim[] {
   for (const m of modifiers) {
     if (m.when) continue;
     if (m.op === "include" && (m.target === "languages" || m.target.startsWith("proficiencies."))) {
-      for (const v of Array.isArray(m.value) ? m.value : []) out.push({ key: `${m.target}=${v}`, rank: 1 });
+      // Language names are written by hand, so they match without regard to case.
+      const fold = (v: unknown): string => (m.target === "languages" ? String(v).toLowerCase() : String(v));
+      for (const v of Array.isArray(m.value) ? m.value : []) out.push({ key: `${m.target}=${fold(v)}`, rank: 1 });
     } else if (m.op === "proficiency" && m.target.startsWith("skills.") && typeof m.value === "string") {
       const rank = RANK[m.value as ProficiencyLevel];
       if (rank !== undefined) out.push({ key: m.target, rank });
@@ -44,7 +46,9 @@ function claimsOf(modifiers: readonly Modifier[]): Claim[] {
 /** What an option gives. A language the content gives no modifier for is itself. */
 function optionClaims(option: Element): Claim[] {
   const claims = claimsOf(option.modifiers ?? []);
-  if (!claims.length && option.kind === "language") return [{ key: `languages=${option.name}`, rank: 1 }];
+  if (!claims.length && option.kind === "language") {
+    return [{ key: `languages=${option.name.toLowerCase()}`, rank: 1 }];
+  }
   return claims;
 }
 

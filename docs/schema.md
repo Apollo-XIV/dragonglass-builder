@@ -206,7 +206,9 @@ the base build: the species, background, class and every *other* choice's answer
 inventory, and not a modifier carrying a `when`. The choice's own picks are not held against
 it, and a duplicate already in a file stays selectable and valid, so it can be taken back out.
 Named after what the character was built from (the top of the chain), not the element that
-carries the modifier.
+carries the modifier. Matching is exact on what the modifier names (a language's name is
+compared without regard to case), so a category grant such as "one artisan's tool" does not
+mark the specific tools under it.
 
 **The one limit worth knowing.** An answer is addressed by choice id, scope and level, not
 by occurrence — so two occurrences of the same element *in the same place* share one
