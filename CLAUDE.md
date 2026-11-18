@@ -61,7 +61,8 @@ src/obsidian/        the plugin
 src/cli/validate.ts  the validation CLI
 src/node/            filesystem source loading, for the CLI and tests only
 content/core/        kinds and stat paths, bundled into the plugin at build time
-content/srd/         the converted SRD test slice
+content/srd/         a small hand-converted SRD slice for tests and the CLI; not a default source
+                     (the plugin loads the full SRD repos, see DEFAULT_SOURCES in settings.ts)
 vault/               local test vault, git-ignored (see docs/development.md)
 docs/specs/          the three specs named above
 ```
