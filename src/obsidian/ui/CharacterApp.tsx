@@ -70,7 +70,7 @@ export function CharacterApp({
 
 function Viewer({ store, kind, path }: { store: CharacterStore; kind: FileKind; path: string }): ReactNode {
   const { plugin } = usePlugin();
-  if (store.loading) return <p className="dg-loading">Loading {path}…</p>;
+  if (store.loading) return <LoadingSources path={path} />;
 
   const character = store.resolved;
 
@@ -145,5 +145,50 @@ function SheetWithBuilder({
       settings={plugin.settings}
       onSheet={() => setMode("sheet")}
     />
+  );
+}
+
+/**
+ * What the view shows while the content index is built. The first open downloads the
+ * default sources from GitHub, which takes long enough that a line of muted text reads as
+ * a blank pane, so it says what it is waiting on.
+ */
+function LoadingSources({ path }: { path: string }): ReactNode {
+  const { plugin } = usePlugin();
+  const [, tick] = useState(0);
+  useEffect(() => plugin.sources?.onProgress(() => tick((n) => n + 1)), [plugin]);
+  const sources = (plugin.sources?.statusList() ?? []).filter((s) => s.state !== "disabled");
+
+  return (
+    <div className="dg-loading" role="status">
+      <div className="dg-loading-spinner" aria-hidden="true" />
+      <p className="dg-loading-title">Loading {path}…</p>
+      {sources.length > 0 && (
+        <>
+          <ul className="dg-loading-sources">
+            {sources.map(({ ref, state, progress }) => (
+              <li key={ref.id} className={state === "loading" ? "is-loading" : undefined}>
+                <span className="dg-loading-name">{ref.name ?? ref.id}</span>
+                <span className="dg-loading-detail">
+                  {state === "loading"
+                    ? progress
+                      ? `${progress.done} / ${progress.total} files`
+                      : "connecting…"
+                    : state === "error"
+                      ? "failed"
+                      : "ready"}
+                </span>
+                {state === "loading" && progress && (
+                  <div className="dg-loading-bar">
+                    <div style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }} />
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+          <p className="dg-loading-note">The first time, sources are downloaded from GitHub. After that they load from a saved copy.</p>
+        </>
+      )}
+    </div>
   );
 }

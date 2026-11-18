@@ -47,7 +47,12 @@ export interface SourceStatus {
    * has to filter by this one, not `ref.id`.
    */
   sourceId: string;
+  /** Files fetched so far, while a GitHub source is `loading`. */
+  progress?: { done: number; total: number };
 }
+
+/** How many requests are in flight at once, across every source being loaded. */
+const MAX_CONCURRENT_REQUESTS = 8;
 
 interface CacheEntry {
   /** `cacheKey` of the ref it was fetched for. Entries from before `dir` have no `#`, which reads as no `dir`. */
@@ -97,6 +102,9 @@ export class SourceManager {
   private cacheLoaded = false;
   /** Sources whose next load asks GitHub again even though a private copy is cached. */
   private refreshing = new Set<string>();
+  private progressListeners = new Set<() => void>();
+  private inFlight = 0;
+  private waiting: (() => void)[] = [];
 
   constructor(
     private readonly app: App,
@@ -106,6 +114,28 @@ export class SourceManager {
 
   setTier(tier: CacheTier): void {
     this.tier = tier;
+  }
+
+  /** Called whenever a source starts loading or makes progress, so a view can say what it is waiting on. */
+  onProgress(listener: () => void): () => void {
+    this.progressListeners.add(listener);
+    return () => this.progressListeners.delete(listener);
+  }
+
+  private reportProgress(): void {
+    for (const listener of this.progressListeners) listener();
+  }
+
+  /** Holds a request until fewer than `MAX_CONCURRENT_REQUESTS` are in flight. */
+  private async limited<T>(run: () => Promise<T>): Promise<T> {
+    if (this.inFlight >= MAX_CONCURRENT_REQUESTS) await new Promise<void>((resolve) => this.waiting.push(resolve));
+    this.inFlight++;
+    try {
+      return await run();
+    } finally {
+      this.inFlight--;
+      this.waiting.shift()?.();
+    }
   }
 
   statusList(): SourceStatus[] {
@@ -200,8 +230,8 @@ export class SourceManager {
       ordered.push(ref);
     }
 
-    const sources: LoadedSource[] = [];
-    for (const ref of ordered) sources.push(await this.load(ref));
+    // Concurrently: the sources are independent, and `limited` keeps the requests polite.
+    const sources = await Promise.all(ordered.map((ref) => this.load(ref)));
     // Core sits at the bottom so any source can replace a kind definition.
     sources.push(coreSource());
     return ContentIndex.build(sources);
@@ -244,6 +274,14 @@ export class SourceManager {
   }
 
   private async load(ref: SourceRef): Promise<LoadedSource> {
+    try {
+      return await this.loadUncounted(ref);
+    } finally {
+      this.reportProgress();
+    }
+  }
+
+  private async loadUncounted(ref: SourceRef): Promise<LoadedSource> {
     const cached = this.loaded.get(ref.id);
     if (cached) return cached;
 
@@ -260,6 +298,8 @@ export class SourceManager {
 
     const badDir = ref.type === "url" ? undefined : normalizeDir(ref.dir).error;
     if (!badDir) {
+      this.statuses.set(ref.id, { ref, state: "loading", elementCount: 0, diagnostics: [], sourceId: ref.id });
+      this.reportProgress();
       try {
         ({ bundle, origin } = await this.readBundle(ref));
       } catch (e) {
@@ -560,8 +600,30 @@ export class SourceManager {
     const contentFiles = tree.tree.filter(
       (e) => e.type === "blob" && e.path.startsWith("content/") && e.path.endsWith(".json"),
     );
-    const files: SourceFile[] = [];
-    for (const entry of contentFiles) files.push({ path: entry.path, text: await fetchFile(entry.path) });
+    const status = this.statuses.get(ref.id);
+    let done = 0;
+    let failed = false;
+    const progress = (): void => {
+      const current = this.statuses.get(ref.id);
+      if (current?.state === "loading") this.statuses.set(ref.id, { ...current, progress: { done, total: contentFiles.length } });
+      this.reportProgress();
+    };
+    if (status) progress();
+    // In order, so the bundle is the same whatever finishes first. After one failure the rest stop asking.
+    const files: SourceFile[] = await Promise.all(
+      contentFiles.map(async (entry) => {
+        const text = await this.limited(() => {
+          if (failed) return Promise.resolve("");
+          return fetchFile(entry.path).catch((e: unknown) => {
+            failed = true;
+            throw e;
+          });
+        });
+        done++;
+        progress();
+        return { path: entry.path, text };
+      }),
+    );
 
     return {
       bundle: { manifest: { ...manifest, id: manifest.id || ref.id }, files },

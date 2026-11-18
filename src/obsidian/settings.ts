@@ -112,14 +112,14 @@ export const DEFAULT_SOURCES: readonly SourceRef[] = [
     id: "srd",
     type: "github",
     location: "Apollo-XIV/dragonglass-source-5e-srd-5.1",
-    pin: "0.1.2",
+    pin: "0.1.3",
     name: "System Reference Document 5.1",
   },
   {
     id: "srd24",
     type: "github",
     location: "Apollo-XIV/dragonglass-source-5e-srd-5.2",
-    pin: "0.1.2",
+    pin: "0.1.3",
     name: "System Reference Document 5.2",
   },
 ];

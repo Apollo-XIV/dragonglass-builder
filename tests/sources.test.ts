@@ -484,3 +484,60 @@ describe("a source in a subdirectory of its location", () => {
     });
   });
 });
+
+describe("fetching a GitHub source", () => {
+  const FILES = Array.from({ length: 30 }, (_, i) => `content/f${i}.json`);
+  let inFlight = 0;
+  let peak = 0;
+  let failOn: string | undefined;
+
+  beforeEach(() => {
+    inFlight = 0;
+    peak = 0;
+    failOn = undefined;
+    vi.spyOn(obsidian as { requestUrl: unknown }, "requestUrl" as never).mockImplementation((async (req: { url: string }) => {
+      if (req.url.includes("/git/trees/"))
+        return { status: 200, json: { tree: FILES.map((path) => ({ path, type: "blob" })) }, text: "" };
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((resolve) => setTimeout(resolve, 2));
+      inFlight--;
+      const file = req.url.split("/v1/")[1];
+      if (file === failOn) return { status: 500, json: {}, text: "" };
+      const n = file?.match(/f(\d+)/)?.[1];
+      return { status: 200, json: {}, text: n ? JSON.stringify([{ id: `s:feat:f${n}`, kind: "feat", name: `F${n}`, source: "s:book" }]) : "{}" };
+    }) as never);
+  });
+
+  const ref = (id: string): SourceRef => ({ id, type: "github", location: "me/repo", pin: "v1", enabled: true });
+
+  it("fetches files in parallel, but never more than the limit at once, across sources", async () => {
+    const { manager } = makeManager();
+    const index = await manager.buildIndex([ref("a"), ref("b")]);
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(8);
+    expect(manager.statusFor("a")).toMatchObject({ state: "loaded", elementCount: 30 });
+    expect(index.get("s:feat:f29")).toBeDefined();
+  });
+
+  it("reports progress while loading, ending with every source loaded", async () => {
+    const { manager } = makeManager();
+    const seen: string[] = [];
+    manager.onProgress(() => {
+      const s = manager.statusFor("a");
+      if (s) seen.push(s.state === "loading" ? `${s.progress?.done ?? "-"}/${s.progress?.total ?? "-"}` : s.state);
+    });
+    await manager.buildIndex([ref("a")]);
+    expect(seen).toContain("-/-");
+    expect(seen).toContain("30/30");
+    expect(seen.at(-1)).toBe("loaded");
+  });
+
+  it("marks the source as failed when one file fails", async () => {
+    failOn = "content/f7.json";
+    const { manager } = makeManager();
+    await manager.buildIndex([ref("a")]);
+    expect(manager.statusFor("a")?.state).toBe("error");
+    expect(manager.statusFor("a")?.diagnostics[0].message).toContain("500");
+  });
+});
