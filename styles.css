@@ -2276,6 +2276,16 @@
   min-width: 0;
 }
 
+.dg-layout .dg-option.is-held:not(.is-selected) {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dg-layout .dg-option-held {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
 .dg-layout .dg-option-warning {
   color: var(--text-warning);
   font-size: 12px;

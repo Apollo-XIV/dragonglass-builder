@@ -197,6 +197,17 @@ An occurrence is created per pick, per choice instance. Concretely:
 A choice that is not `repeatable` must not record the same id twice; the builder will not
 offer it.
 
+**Options already held are shown, not offered.** A choice over `language`, `skill` or `tool`
+elements marks any option that would add nothing the character does not already have, and
+says where it is from ("Already from Dwarf"). The option stays listed and cannot be taken.
+"Already have" is read from modifiers, not elements: a set `include` (a language, a tool) or a
+skill's `proficiency` level, where expertise covers proficiency and not the reverse. It counts
+the base build: the species, background, class and every *other* choice's answer, but not
+inventory, and not a modifier carrying a `when`. The choice's own picks are not held against
+it, and a duplicate already in a file stays selectable and valid, so it can be taken back out.
+Named after what the character was built from (the top of the chain), not the element that
+carries the modifier.
+
 **The one limit worth knowing.** An answer is addressed by choice id, scope and level, not
 by occurrence — so two occurrences of the same element *in the same place* share one
 answer to any choice they declare. Picking the same element twice in one repeatable choice

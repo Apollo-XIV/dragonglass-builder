@@ -49,6 +49,12 @@ export interface PickerOption {
   /** A small tag beside the name: "queued", for a class that has planned levels waiting. */
   badge?: string;
   allowed?: boolean;
+  /**
+   * Where the character already has all this would give (a species, a background).
+   * The option is shown but cannot be taken, unless it is already selected, so a
+   * duplicate can still be put right.
+   */
+  heldBy?: string;
   /** Which of the spec's `buckets` this option counts against. */
   bucket?: string;
   /** What the filter chips narrow by: a spell's level, an item's first tag. */
@@ -222,6 +228,7 @@ export function PickerBody({
   };
 
   const toggle = (id: string): void => {
+    if (spec.options.find((o) => o.id === id)?.heldBy && !selected.includes(id)) return;
     const bucket = bucketOf(id);
     if (spec.enforce && bucket && !selected.includes(id) && full(bucket, selected)) return;
     if (!multiple) {
@@ -480,6 +487,10 @@ function OptionRow({
   onRead?: (on: boolean) => void;
 }): ReactNode {
   const sheet = useSheet();
+  const held = option.heldBy !== undefined && !selected;
+  const className = ["dg-option", selected ? "is-selected" : "", option.heldBy ? "is-held" : ""]
+    .filter(Boolean)
+    .join(" ");
   const { handlers } = useHold({
     onTap: onPick,
     // Reading an option replaces the sheet's contents rather than stacking a
@@ -499,17 +510,13 @@ function OptionRow({
             <p className="dg-muted">No rules text.</p>
           ),
       }),
-    className: selected ? "dg-option is-selected" : "dg-option",
+    className,
   });
 
   return (
     <button
-      {...(onRead
-        ? {
-            className: selected ? "dg-option is-selected" : "dg-option",
-            onClick: onPick,
-          }
-        : handlers)}
+      {...(onRead ? { className, onClick: onPick } : handlers)}
+      aria-disabled={held || undefined}
       onPointerEnter={onRead ? () => onRead(true) : undefined}
       onPointerLeave={onRead ? () => onRead(false) : undefined}
       onFocus={onRead ? () => onRead(true) : undefined}
@@ -521,6 +528,7 @@ function OptionRow({
       <span className="dg-option-main">
         <span className="dg-option-name">{option.name}</span>
         {option.badge ? <span className="dg-option-badge">{option.badge}</span> : null}
+        {option.heldBy ? <span className="dg-option-held">Already from {option.heldBy}</span> : null}
         {option.warnings?.length ? (
           <span className="dg-option-warning">
             {option.warnings.join("; ")}
