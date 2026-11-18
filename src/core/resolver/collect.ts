@@ -39,6 +39,13 @@ export interface PartSource {
   class?: string;
   /** Inventory entry index, when the part came from an item. */
   itemIndex?: number;
+  /**
+   * The pick this part arrived through (`occurrenceFor`), absent for anything reached
+   * directly from the build. Lets a choice tell what it supplied from what it did not.
+   */
+  occurrence?: string;
+  /** The elements it was reached through, outermost first. Absent on an inventory entry. */
+  origin?: string[];
 }
 
 export interface CollectedElement extends PartSource {
@@ -94,6 +101,11 @@ export function innatePoolId(def: InnateSpell): string {
 
 export function grantId(grant: Grant): string {
   return typeof grant === "string" ? grant : grant.id;
+}
+
+/** The prefix every occurrence key of one choice's picks shares. */
+export function occurrencePrefix(choiceId: string, scope: "build" | "level", levelIndex?: number): string {
+  return `${choiceId}@${scope}:${levelIndex ?? "build"}#`;
 }
 
 /** Reads a choice's answer, preferring the level it was declared at. */
@@ -180,7 +192,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
 
   /** One pick's occurrence key: which choice, answered where, and which pick. */
   function occurrenceFor(def: ChoiceDef, ctx: Ctx, pick: number): string {
-    return `${def.id}@${ctx.scope}:${ctx.levelIndex ?? "build"}#${pick}`;
+    return occurrencePrefix(def.id, ctx.scope, ctx.levelIndex) + pick;
   }
 
   function missing(id: string, where: string): void {
@@ -304,6 +316,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       level: ctx.level,
       class: ctx.class,
       spellGrant: ctx.spellGrant,
+      occurrence: ctx.occurrence,
     };
     result.elements.push(collected);
     result.byId.set(id, collected);

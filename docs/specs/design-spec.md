@@ -343,7 +343,7 @@ Any modifier can take an optional `when`. Modifiers without `when` fold into the
 
 ## Sources
 
-Content comes from **sources**, which are either GitHub repos (where the converted SRD repo will be hosted) or local/network paths. Vault-wide sources and their load order live in plugin settings, and a character can override them through `sources.5e` or whatever its manifest points to. More specific always wins.
+Content comes from **sources**, which are either GitHub repos (the converted SRDs, `dragonglass-source-5e-srd-5.1` and `-5.2`, are the default sources) or local/network paths. Vault-wide sources and their load order live in plugin settings, and a character can override them through `sources.5e` or whatever its manifest points to. More specific always wins.
 
 A source is a location. A **sourcebook** is the book an element comes from. One source can contain several sourcebooks.
 

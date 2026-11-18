@@ -81,6 +81,7 @@ export function optionsFor(
     source: sourceOf(option.source),
     warnings: option.warnings,
     allowed: option.allowed,
+    heldBy: option.heldBy,
   }));
 }
 

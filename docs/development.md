@@ -41,7 +41,7 @@ it is your own scratch space and Obsidian writes its state there.
 To set one up, create `vault/`, open it in Obsidian, enable community plugins, run
 `npm run dev`, and reload. A fresh install loads the two public SRD repos
 (`DEFAULT_SOURCES` in `src/obsidian/settings.ts`) from GitHub, so a new vault needs no
-setup; to work on the hand-written slice instead, remove them in settings and add
+setup; to work on the small test slice instead, remove them in settings and add
 `content/srd/` as a vault source (for example as `vault/Sources/srd`). Then create a
 character from the plugin's commands. No test reads from `vault/`; test characters live in `tests/fixtures/`.
 

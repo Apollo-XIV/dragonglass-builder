@@ -23,6 +23,7 @@ import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
 import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
 import { DetailsSection } from "../src/obsidian/ui/builder/sections/collections";
 import { upcomingStaged } from "../src/obsidian/ui/builder/model";
+import { PickerBody } from "../src/obsidian/ui/builder/picker";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 import { SourceBrowser } from "../src/obsidian/ui/content-browser";
 import { ContentWizard } from "../src/obsidian/ui/content-wizard";
@@ -782,5 +783,31 @@ describe("the source browser and entry wizard", () => {
     );
     expect(html).toContain("Edit Dwarf");
     expect(html).toContain("Validates cleanly");
+  });
+});
+
+describe("a picker over options the character already has", () => {
+  const spec = {
+    title: "Language",
+    options: [
+      { id: "a", name: "Common", heldBy: "Dwarf" },
+      { id: "b", name: "Elvish" },
+    ],
+    selected: [],
+    count: 2,
+    onCommit: () => undefined,
+  };
+
+  it("greys out a held option and says where it is from", () => {
+    const html = renderToStaticMarkup(createElement(PickerBody, { spec, close: () => undefined }));
+    expect(html).toContain("Already from Dwarf");
+    expect(html.match(/aria-disabled="true"/g)).toHaveLength(1);
+  });
+
+  it("leaves a held option that is already selected takeable", () => {
+    const html = renderToStaticMarkup(
+      createElement(PickerBody, { spec: { ...spec, selected: ["a"] }, close: () => undefined }),
+    );
+    expect(html).not.toContain("aria-disabled");
   });
 });

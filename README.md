@@ -22,7 +22,8 @@ interactive, standalone view.
 
 ## Content and licence
 
-MIT for the code (see [LICENSE](LICENSE)). The SRD content in `content/srd/` is CC-BY-4.0; its attribution is in
+MIT for the code (see [LICENSE](LICENSE)). The SRD content is CC-BY-4.0. The full conversions are the `dragonglass-source-5e-srd-5.1` and
+`-5.2` repos the plugin loads by default; the small test slice in `content/srd/` carries its attribution in
 `content/srd/content/sourcebook.json` and the plugin shows it for every loaded
 sourcebook.
 

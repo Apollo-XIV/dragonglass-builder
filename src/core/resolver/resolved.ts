@@ -238,6 +238,12 @@ export interface ChoiceOption {
   /** False when `requires` isn't met. With enforcement off this is a warning only. */
   allowed: boolean;
   warnings: string[];
+  /**
+   * Where the character already has everything this option would give, for a language,
+   * skill or tool: the species or background it is from. The option stays listed, so the
+   * picker can show it and say why it cannot be taken.
+   */
+  heldBy?: string;
   element: Element;
 }
 

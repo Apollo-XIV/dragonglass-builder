@@ -55,6 +55,7 @@ import {
 import { hitPointLevels } from "./hit-points";
 import { attackRollParts, sumParts } from "./attacks";
 import { onClassList } from "./spell-list";
+import { heldElsewhere } from "./held";
 import { collect, innatePoolId, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
   casterLevel,
@@ -1036,6 +1037,7 @@ function resolveChoices(
         subject: owner.id,
       });
 
+    const heldBy = heldElsewhere(collected, content, declared);
     const optionList: ChoiceOption[] = matches.map((element) => {
       const check = checkRequirement(element.requires, { ...requirements, candidate: element.id });
       return {
@@ -1050,6 +1052,7 @@ function resolveChoices(
         tags: element.tags ?? [],
         allowed: check.met,
         warnings: check.reasons,
+        heldBy: heldBy(element),
         element,
       };
     });
