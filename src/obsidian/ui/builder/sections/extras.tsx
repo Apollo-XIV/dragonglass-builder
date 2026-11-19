@@ -19,6 +19,16 @@ export function LevelHp({ store, index, classId }: { store: CharacterStore; inde
   const die = String((store.index?.get(classId) as { hitDie?: string } | undefined)?.hitDie ?? "d8");
   const set = (hp: HpChoice): void => store.mutateBuild((b) => setLevelHp(b, index, hp));
 
+  // The character's first level is always the die's maximum, so there is nothing to choose.
+  if (index === 0) {
+    return (
+      <div className="dg-hp-choice">
+        <span>HP</span> <span>Maximum ({maxForDie(die)})</span>
+        <span className="dg-muted"> · first level of the character</span>
+      </div>
+    );
+  }
+
   return (
     <div className="dg-hp-choice">
       <label>

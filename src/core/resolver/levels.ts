@@ -191,6 +191,11 @@ export function reorderProgression(
     return { class: ref.class, classLevel: byClass.get(ref.class)![n] };
   });
 
+  // The character's first level is always max hit points (see hit-points.ts), whatever
+  // it stores. One that stops being first drops to average until the player fills it in.
+  const firstRef = activeRefs(build)[0];
+  const firstKey = firstRef ? progressionKey(firstRef) : undefined;
+
   const levels: BuildLevel[] = [];
   const planned: PlannedLevel[] = [];
   sequence.forEach((ref, i) => {
@@ -198,7 +203,8 @@ export function reorderProgression(
     const was = levelOf.get(key);
     const waiting = queued.get(key);
     const choices = { ...(was?.choices ?? waiting?.choices ?? {}) };
-    const hit = was?.hp ?? waiting?.hp;
+    let hit = was?.hp ?? waiting?.hp;
+    if (i > 0 && key === firstKey && hit === "max") hit = "average";
     if (i < active) levels.push({ class: ref.class, hp: hit ?? hp(ref.class), choices });
     else planned.push({ class: ref.class, classLevel: ref.classLevel, choices, ...(hit !== undefined ? { hp: hit } : {}), queued: true });
   });

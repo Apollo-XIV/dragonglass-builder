@@ -116,6 +116,19 @@ describe("a reorder", () => {
     ]);
   });
 
+  it("drops a first level that is no longer first from max to average, keeping a number", () => {
+    const two: BuildFile = { ...make(["p", "w"]), levels: [
+      { class: "p", hp: "max", choices: {} },
+      { class: "w", hp: "average", choices: {} },
+    ] };
+    const swapped = reorderProgression(two, [ref("w", 1), ref("p", 1)], 2, () => "average");
+    expect(swapped.levels.map((l) => l.hp)).toEqual(["average", "average"]);
+
+    const rolled: BuildFile = { ...two, levels: [{ ...two.levels[0], hp: 7 }, two.levels[1]] };
+    const kept = reorderProgression(rolled, [ref("w", 1), ref("p", 1)], 2, () => "average");
+    expect(kept.levels.map((l) => l.hp)).toEqual(["average", 7]);
+  });
+
   it("brings them back from the queue with nothing lost", () => {
     const down = reorderProgression(build, [ref("p", 1), ref("p", 2), ref("w", 1), ref("w", 2)], 2, () => "average");
     const up = reorderProgression(down, [ref("p", 1), ref("w", 1), ref("w", 2), ref("p", 2)], 4, () => "average");
