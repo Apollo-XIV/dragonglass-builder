@@ -79,6 +79,8 @@ export interface DragonglassSettings {
   /** Vault-wide sources, highest priority first. */
   sources: SourceRef[];
   caching: CacheTier;
+  /** Look for newer releases of pinned GitHub sources now and then. Updating is still a click. */
+  autoCheckUpdates: boolean;
   /**
    * The ruleset to treat a sourcebook as being from, by sourcebook id, for books that
    * don't declare one. A book's own `ruleset` always wins.
@@ -127,6 +129,7 @@ export const DEFAULT_SOURCES: readonly SourceRef[] = [
 export const DEFAULT_SETTINGS: DragonglassSettings = {
   sources: DEFAULT_SOURCES.map((ref) => ({ ...ref })),
   caching: "smart",
+  autoCheckUpdates: true,
   rulesets: {},
   enforceRequirements: false,
   charactersFolder: "Characters",

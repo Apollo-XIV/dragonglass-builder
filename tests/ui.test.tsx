@@ -153,6 +153,9 @@ const plugin = {
   sources: { statusFor: () => undefined, statusList: () => [], invalidate: () => undefined },
   saveSettings: async () => undefined,
   reloadSources: async () => undefined,
+  updateOffers: [],
+  updateProblems: new Map(),
+  onUpdates: () => () => undefined,
 } as never;
 
 const app = {

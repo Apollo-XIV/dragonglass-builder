@@ -5,7 +5,7 @@
  * entries, plus scaffolding a brand-new source from nothing.
  */
 
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Notice } from "obsidian";
 import type { Diagnostic, SourceRef } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
@@ -182,9 +182,12 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
       <Section
         title="Vault-wide sources"
         action={
-          <button className="dg-button is-quiet" onClick={() => void plugin.reloadSources()}>
-            Reload
-          </button>
+          <>
+            <UpdateButtons />
+            <button className="dg-button is-quiet" onClick={() => void plugin.reloadSources()}>
+              Reload
+            </button>
+          </>
         }
       >
         {plugin.settings.sources.length === 0 ? (
@@ -239,6 +242,34 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
       <Section title="Validation">
         <SourceDiagnostics store={store} />
       </Section>
+    </>
+  );
+}
+
+/** "Scan for Updates", and once a scan has found something, "{x} to Update", which asks before changing a pin. */
+function UpdateButtons(): ReactNode {
+  const { plugin } = usePlugin();
+  const [, redraw] = useState(0);
+  const [scanning, setScanning] = useState(false);
+  useEffect(() => plugin.onUpdates(() => redraw((n) => n + 1)), [plugin]);
+  const count = plugin.updateOffers.length;
+  return (
+    <>
+      {count ? (
+        <button className="dg-button is-cta" onClick={() => plugin.confirmUpdates()}>
+          {count} to Update
+        </button>
+      ) : null}
+      <button
+        className="dg-button is-quiet"
+        disabled={scanning}
+        onClick={() => {
+          setScanning(true);
+          void plugin.checkForUpdates(true).finally(() => setScanning(false));
+        }}
+      >
+        {scanning ? "Scanning…" : "Scan for Updates"}
+      </button>
     </>
   );
 }
@@ -496,6 +527,9 @@ function SourceRow({
   const [editingToken, setEditingToken] = useState(false);
   const [token, setToken] = useState("");
   const errors = status?.diagnostics.filter((d) => d.severity === "error").length ?? 0;
+  const [, redraw] = useState(0);
+  useEffect(() => plugin.onUpdates(() => redraw((n) => n + 1)), [plugin]);
+  const updateProblem = plugin.updateProblems.get(ref_.id);
   return (
     <li className="dg-source">
       <div className="dg-source-head">
@@ -515,6 +549,7 @@ function SourceRow({
           <Pill tone="info">not loaded yet</Pill>
         )}
         {errors ? <Pill tone="error">{errors} errors</Pill> : null}
+        {updateProblem ? <Pill tone="warn">can't check for updates: {updateProblem}</Pill> : null}
         {onBrowse ? (
           <button className="dg-button is-quiet" onClick={onBrowse}>
             Browse

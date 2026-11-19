@@ -25,6 +25,13 @@ export class DragonglassSettingTab extends PluginSettingTab {
     super(app, plugin);
   }
 
+  private stopWatching?: () => void;
+
+  hide(): void {
+    this.stopWatching?.();
+    this.stopWatching = undefined;
+  }
+
   display(): void {
     const { containerEl } = this;
     containerEl.empty();
@@ -39,6 +46,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
 
     this.renderGithubAccount(containerEl);
     this.renderSourceAdder(containerEl);
+    this.renderUpdates(containerEl.createDiv());
     this.renderSourceList(containerEl);
     void this.renderRulesets(containerEl.createDiv());
 
@@ -363,6 +371,41 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
   }
 
+  /** Redraws itself when a scan finishes or an update lands, so the "to Update" button goes as soon as it has been used. */
+  private renderUpdates(host: HTMLElement): void {
+    this.stopWatching?.();
+    const draw = (): void => {
+      host.empty();
+      const setting = new Setting(host)
+        .setName("Source updates")
+        .setDesc(
+          "Looks for newer releases of GitHub sources pinned to a version. Nothing changes until you confirm. " +
+            "Checked every few hours while Obsidian is open.",
+        );
+      const offers = this.plugin.updateOffers;
+      if (offers.length)
+        setting.addButton((button) =>
+          button.setButtonText(`${offers.length} to Update`).setCta().onClick(() => this.plugin.confirmUpdates()),
+        );
+      setting.addButton((button) =>
+        button.setButtonText("Scan for Updates").onClick(async () => {
+          button.setDisabled(true);
+          await this.plugin.checkForUpdates(true);
+          // The source list below shows any "can't check" warnings the scan found.
+          this.display();
+        }),
+      );
+      new Setting(host).setName("Scan automatically").addToggle((toggle) =>
+        toggle.setValue(this.plugin.settings.autoCheckUpdates).onChange(async (value) => {
+          this.plugin.settings.autoCheckUpdates = value;
+          await this.plugin.saveSettings();
+        }),
+      );
+    };
+    draw();
+    this.stopWatching = this.plugin.onUpdates(() => (host.isConnected ? draw() : undefined));
+  }
+
   private renderSourceAdder(containerEl: HTMLElement): void {
     let input = "";
     let dirInput = "";
@@ -489,6 +532,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
         describeSource(ref),
         status ? `${status.state}${status.elementCount ? `, ${status.elementCount} elements` : ""}` : "not loaded yet",
         errors ? `${errors} errors` : "",
+        this.plugin.updateProblems.has(ref.id) ? `⚠ can't check for updates: ${this.plugin.updateProblems.get(ref.id)}` : "",
       ]
         .filter(Boolean)
         .join(" · ");

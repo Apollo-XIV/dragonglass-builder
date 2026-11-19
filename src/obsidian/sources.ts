@@ -9,12 +9,13 @@
 
 import { Platform, requestUrl, normalizePath, type App, type DataAdapter } from "obsidian";
 import type { Diagnostic, SourceRef } from "../core/types";
-import { readGithubToken, savedLoginExists } from "./github-auth";
+import { LOCKED, NOT_SIGNED_IN, readGithubToken, savedLoginExists } from "./github-auth";
 import { ContentIndex, type LoadedSource } from "../core/content";
 import { contentHash } from "../core/export/hash";
 import { bundleToLoadedSource, parseManifest, type SourceBundle, type SourceFile } from "../core/content/source-bundle";
 import { CORE_ELEMENTS, CORE_SOURCE_ID, CORE_SOURCE_NAME } from "../generated/core-content";
 import { joinRoot, normalizeDir } from "../core/source-dir";
+import { isVersionTag, newerTag } from "../core/source-version";
 import type { CacheTier } from "./settings";
 
 /** vault and path sources are local files the plugin can write back to; github and url are fetched. */
@@ -91,6 +92,22 @@ function error(subject: string, message: string): Diagnostic {
 /** The built-in core source: kind definitions and stat paths. Always highest priority. */
 export function coreSource(): LoadedSource {
   return { id: CORE_SOURCE_ID, name: CORE_SOURCE_NAME, elements: CORE_ELEMENTS };
+}
+
+/** Why a check for updates failed, in a few words for a pill rather than the full request failure. */
+function shortReason(e: unknown): string {
+  if (e instanceof HttpError)
+    return e.status === 401
+      ? "GitHub rejected the login or token"
+      : e.status === 403
+        ? "GitHub rate limit reached"
+        : e.status === 404
+          ? "repo not found, or no access"
+          : `GitHub answered ${e.status}`;
+  const message = e instanceof Error ? e.message : "";
+  if (message === LOCKED || message === NOT_SIGNED_IN) return message === LOCKED ? "GitHub login is locked" : "not signed in to GitHub";
+  if (message.includes("secret") || message.includes("token")) return "no token stored on this device";
+  return "couldn't reach GitHub";
 }
 
 export class SourceManager {
@@ -665,6 +682,32 @@ export class SourceManager {
       manifest: { id: ref.id, name: ref.name },
       files: [{ path: ref.location.split("/").pop() ?? "content.json", text }],
     };
+  }
+
+  /**
+   * The newest release tag of a pinned GitHub source that is above its pin, or undefined when it is
+   * current or not pinned to a version (a SHA or branch has no order, so that is not a failure).
+   * Throws an `Error` whose message is a short reason when GitHub can't be asked. `tags` memoises
+   * by repo within one scan.
+   */
+  async latestTag(ref: SourceRef, tags: Map<string, Promise<string[]>> = new Map()): Promise<string | undefined> {
+    if (ref.type !== "github" || !isVersionTag(ref.pin)) return undefined;
+    const [owner, repo] = ref.location.split("/");
+    if (!owner || !repo) return undefined;
+    try {
+      const token = ref.auth ? readGithubToken(this.app, ref.auth) : undefined;
+      const key = `${ref.location}|${token ? "auth" : ""}`;
+      let listed = tags.get(key);
+      if (!listed) {
+        listed = this.json<{ name: string }[]>(`https://api.github.com/repos/${owner}/${repo}/tags?per_page=100`, token).then((list) =>
+          list.map((t) => t.name),
+        );
+        tags.set(key, listed);
+      }
+      return newerTag(ref.pin, await listed);
+    } catch (e) {
+      throw new Error(shortReason(e));
+    }
   }
 
   private async defaultBranch(owner: string, repo: string, token?: string): Promise<string> {

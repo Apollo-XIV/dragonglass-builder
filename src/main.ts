@@ -29,6 +29,7 @@ import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
 import { DEFAULT_SETTINGS, withDefaults, type DragonglassSettings } from "./obsidian/settings";
 import { SourceManager } from "./obsidian/sources";
+import { UPDATE_CHECK_MS, UpdatesModal, applyUpdates, scanForUpdates, type UpdateOffer } from "./obsidian/source-updates";
 import { DRAGONGLASS_VIEW, DragonglassFileView } from "./obsidian/view";
 import type { Draft, DraftStore } from "./obsidian/ui/builder/drafts";
 import { NewCharacterModal } from "./obsidian/modals/new-character";
@@ -61,6 +62,12 @@ export default class DragonglassPlugin extends Plugin {
   /** One store per character folder, shared by every view showing that character. */
   private stores = new Map<string, { store: CharacterStore; refs: number }>();
   private indexCache = new Map<string, ContentIndex>();
+  /** Newer releases found by the last scan; empty until one has run. */
+  updateOffers: UpdateOffer[] = [];
+  /** Source id to why the last scan couldn't check it. */
+  updateProblems = new Map<string, string>();
+  private updateListeners = new Set<() => void>();
+  private scanning = false;
 
   async onload(): Promise<void> {
     await this.loadSettings();
@@ -89,6 +96,19 @@ export default class DragonglassPlugin extends Plugin {
       name: "New character",
       callback: newCharacter,
     });
+
+    this.addCommand({
+      id: "scan-source-updates",
+      name: "Scan sources for updates",
+      callback: () => void this.checkForUpdates(true),
+    });
+
+    // Quietly, a little after start so it never competes with the first load, then every few hours.
+    const scheduled = (): void => {
+      if (this.settings.autoCheckUpdates) void this.checkForUpdates(false);
+    };
+    this.registerInterval(window.setTimeout(scheduled, 30_000));
+    this.registerInterval(window.setInterval(scheduled, UPDATE_CHECK_MS));
 
     this.addCommand({
       id: "reload-sources",
@@ -236,6 +256,51 @@ export default class DragonglassPlugin extends Plugin {
     this.sources.invalidate();
     this.indexCache.clear();
     for (const { store } of this.stores.values()) await store.reloadContent();
+  }
+
+  // -- source updates --------------------------------------------------------
+
+  /** Called whenever a scan finishes or an update is applied, so a menu can redraw its button. */
+  onUpdates(listener: () => void): () => void {
+    this.updateListeners.add(listener);
+    return () => this.updateListeners.delete(listener);
+  }
+
+  private setOffers(offers: UpdateOffer[]): void {
+    this.updateOffers = offers;
+    for (const listener of this.updateListeners) listener();
+  }
+
+  /** Looks for newer releases of pinned sources. `manual` says so when there is nothing to report. */
+  async checkForUpdates(manual: boolean): Promise<void> {
+    if (this.scanning) return;
+    this.scanning = true;
+    try {
+      const { offers, problems } = await scanForUpdates(this, [...this.stores].map(([folder, { store }]) => [folder, store]));
+      this.updateProblems = problems;
+      this.setOffers(offers);
+      if (manual)
+        new Notice(
+          offers.length
+            ? `${offers.length} to update`
+            : problems.size
+              ? `Every source that could be checked is up to date; ${problems.size} couldn't be`
+              : "Every source is up to date",
+        );
+    } finally {
+      this.scanning = false;
+    }
+  }
+
+  /** Asks first; the pins only move on the click. */
+  confirmUpdates(): void {
+    if (!this.updateOffers.length) return;
+    const offers = this.updateOffers;
+    new UpdatesModal(this.app, offers, async () => {
+      await applyUpdates(this, offers, (folder) => this.stores.get(folder)?.store);
+      this.setOffers([]);
+      void this.checkForUpdates(false);
+    }).open();
   }
 
   // -- content ---------------------------------------------------------------
