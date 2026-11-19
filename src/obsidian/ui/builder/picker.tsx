@@ -272,14 +272,16 @@ export function PickerBody({
             .join(" · ")}
         </p>
       ) : null}
-      {spec.search ? (
+      {spec.search || activeCount(sourceFilter) > 0 || filterOpen ? (
         <div className="dg-picker-search">
-          <input
-            type="search"
-            placeholder="Search"
-            value={query}
-            onChange={(e) => setQuery(e.currentTarget.value)}
-          />
+          {spec.search ? (
+            <input
+              type="search"
+              placeholder="Search"
+              value={query}
+              onChange={(e) => setQuery(e.currentTarget.value)}
+            />
+          ) : null}
           <div className="dg-picker-chiprow">
             {facets.sources.length > 0 ? (
               <button
