@@ -54,6 +54,25 @@ export function multiclassNote(cls: Element): string[] | undefined {
   return requires ? [describeRequirement(requires)] : undefined;
 }
 
+/**
+ * Everything a multiclass pick asks of the character: the new class's own
+ * minimums, then those of each class they already have, which RAW also
+ * requires them to meet.
+ */
+export function multiclassNotes(
+  index: ContentIndex,
+  taken: readonly string[],
+  cls: Element,
+): string[] | undefined {
+  const notes = [...(multiclassNote(cls) ?? [])];
+  for (const id of taken) {
+    const held = index.get(id);
+    const own = held ? multiclassNote(held) : undefined;
+    if (held && own) notes.push(`${held.name}: ${own[0]}`);
+  }
+  return notes.length ? notes : undefined;
+}
+
 /** What the picker's source filter needs to know about the book an element came from. */
 export function sourceRefOf(index: ContentIndex, sourceId: string): SourceRef | undefined {
   const book = index.sourcebook(sourceId);

@@ -21,7 +21,7 @@ import { useSheet } from "../../narrow/sheet";
 import { InactivePickRow, useBuildChange } from "../changes";
 import { InfoRow } from "../detail";
 import { useBuilderStop } from "../nav";
-import { defaultHpFor, multiclassNote, sourceRefOf } from "../model";
+import { defaultHpFor, multiclassNotes, sourceRefOf } from "../model";
 import { useBuilderFeatures } from "../features";
 import { usePicker, usePickerSlot } from "../picker";
 import { useCardShown } from "../reorder/fold";
@@ -244,10 +244,13 @@ export function LevelButtons({
     change({ type: "add-level", class: classId, hp: hpFor(classId) });
   };
 
+  // The same picker serves the first class and every later one, but the
+  // ability minimums are a multiclassing rule: they only apply once the
+  // character already has a class.
   const multiclass = (): void =>
     picker({
-      title: "Multiclass",
-      subtitle: "A new class at level 1",
+      title: taken.length === 0 ? "First class" : "Multiclass",
+      subtitle: taken.length === 0 ? "Choose a class" : "A new class at level 1",
       options: index
         .byKind("class")
         .filter((cls) => !taken.includes(cls.id))
@@ -260,7 +263,7 @@ export function LevelButtons({
           source: sourceRefOf(index, cls.source),
           // Shown whether or not enforcement is on: a player multiclassing into
           // a class they don't qualify for should at least be told.
-          warnings: multiclassNote(cls),
+          warnings: taken.length === 0 ? undefined : multiclassNotes(index, taken, cls),
           // A pick that arrives with its choices already filled in should not be a surprise.
           badge: queued.has(cls.id) ? "queued" : undefined,
         })),

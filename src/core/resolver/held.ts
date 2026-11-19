@@ -16,7 +16,7 @@ import type { ContentIndex } from "../content";
 import { occurrencePrefix, type CollectResult, type DeclaredChoice } from "./collect";
 
 /** The kinds of option whose picks are about not having a thing twice. */
-const HELD_KINDS: ReadonlySet<string> = new Set(["language", "skill", "tool"]);
+const HELD_KINDS: ReadonlySet<string> = new Set(["language", "skill", "tool", "expertise"]);
 
 const RANK: Record<ProficiencyLevel, number> = { none: 0, half: 1, proficient: 2, expertise: 3 };
 

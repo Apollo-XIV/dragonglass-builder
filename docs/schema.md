@@ -210,6 +210,16 @@ carries the modifier. Matching is exact on what the modifier names (a language's
 compared without regard to case), so a category grant such as "one artisan's tool" does not
 mark the specific tools under it.
 
+**Expertise is a choice over `expertise` elements**, one per skill (a `skills.<x>`
+`proficiency: "expertise"` modifier) and one per tool (an `include` on
+`proficiencies.tool-expertise`), each with a `requires` on the proficiency it doubles. Three
+rules differ from the above. Options the character is not proficient in are *absent*, whatever
+`enforceRequirements` says, because the list is what can be doubled. Options doubled by
+something else (a feat, a species trait, another choice) are held and shown as above. And a
+pick counts only if it is proficient *without* the expertise picks, not already doubled by
+content, and not already doubled by an earlier choice; otherwise it stays in the file, inert,
+and applies again when the proficiency returns.
+
 **The one limit worth knowing.** An answer is addressed by choice id, scope and level, not
 by occurrence — so two occurrences of the same element *in the same place* share one
 answer to any choice they declare. Picking the same element twice in one repeatable choice
@@ -324,6 +334,11 @@ carry `text` to override the generated description.
 Predicates: `{ type: "class-level", class, min }`, `{ type: "level", min }`,
 `{ type: "ability", ability, min }`, `{ type: "has", id }`, `{ type: "has-tag", tag, kind?, text? }`,
 `{ type: "proficiency", proficiency, of? }`, `{ type: "spellcaster" }`.
+
+**`proficiency`** is true for a skill key the character is proficient in or has expertise in
+(half proficiency is not enough), or for any value held in a `proficiencies.*` set — a tool is
+named by its element id, as the tool element's own `include` stores it. It reads the whole
+build, so it is not a way to ask about expertise picks themselves (see *Expertise* below).
 
 **`has-tag`** is true when the character has, by grant or pick, at least one element carrying
 `tag`, optionally of `kind`. "Prerequisite: a Dragonmark feat" is

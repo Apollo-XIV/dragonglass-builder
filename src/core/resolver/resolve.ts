@@ -56,7 +56,8 @@ import { hitPointLevels } from "./hit-points";
 import { attackRollParts, sumParts } from "./attacks";
 import { onClassList } from "./spell-list";
 import { heldElsewhere } from "./held";
-import { collect, innatePoolId, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
+import { EXPERTISE_KIND, isProficient, settleExpertise } from "./expertise";
+import { collect, innatePoolId, occurrencePrefix, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
 import {
   casterLevel,
   maxForDie,
@@ -118,6 +119,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
   diagnostics.push(...collected.diagnostics);
 
   const totalLevel = Math.max(build.levels?.length ?? 0, 0) || build.level || 0;
+  const inertPicks = settleExpertise(content, collected, totalLevel);
   const classLevelOf = (ref: string): number => {
     const cls = content.classByRef(ref);
     const id = cls?.id ?? ref;
@@ -264,7 +266,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
 
   // --- choices --------------------------------------------------------------
   const requirementContext = makeRequirementContext(content, engine, collected, totalLevel, classLevelOf, sets);
-  const pendingChoices = resolveChoices(collected, content, requirementContext, options, diagnostics);
+  const pendingChoices = resolveChoices(collected, content, requirementContext, options, diagnostics, inertPicks);
 
   // --- actions, effects, spells, inventory ----------------------------------
   const spellcasting = resolveSpellcasting(plan, collected, engine, content, spells, live, diagnostics);
@@ -997,7 +999,7 @@ function makeRequirementContext(
   for (const [path, stat] of Object.entries(sets))
     if (path.startsWith("proficiencies")) for (const v of stat.values) proficiencies.add(v);
   for (const key of content.skillKeys())
-    if (engine.proficiencyFor(`skills.${key}`) !== "none") proficiencies.add(key);
+    if (isProficient(engine.proficiencyFor(`skills.${key}`))) proficiencies.add(key);
 
   const anySpellcasting = collected.classLevels.some(
     (c) => (c.element as ClassElement).spellcasting && (c.element as ClassElement).spellcasting!.progression !== "none",
@@ -1024,6 +1026,7 @@ function resolveChoices(
   requirements: RequirementContext,
   options: ResolveOptions | undefined,
   diagnostics: Diagnostic[],
+  inertPicks: ReadonlySet<string>,
 ): PendingChoice[] {
   const out: PendingChoice[] = [];
   for (const declared of collected.choices) {
@@ -1057,9 +1060,14 @@ function resolveChoices(
       };
     });
 
-    const visible = options?.enforceRequirements ? optionList.filter((o) => o.allowed) : optionList;
+    // Expertise is a list of what the character can double, so an option it cannot back is
+    // absent whatever the setting says. Options already doubled elsewhere stay, marked.
+    const visible = optionList.filter(
+      (o) => o.allowed || !(options?.enforceRequirements || o.kind === EXPERTISE_KIND),
+    );
     const valid = new Set(visible.map((o) => o.id));
-    const invalid = declared.chosen.filter((id) => !valid.has(id));
+    const prefix = occurrencePrefix(definition.id, declared.scope, declared.levelIndex);
+    const invalid = declared.chosen.filter((id, pick) => !valid.has(id) || inertPicks.has(prefix + pick));
     const gate = checkRequirement(definition.requires, requirements);
 
     for (const id of invalid)
