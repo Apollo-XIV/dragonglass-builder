@@ -1,4 +1,4 @@
-import { Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
+import { FileView, Notice, Platform, Plugin, TFile, TFolder, normalizePath } from "obsidian";
 import type { ContentIndex } from "./core/content";
 import type { FileKind, SourceRef, SourcesFile } from "./core/types";
 import { exportAvatar } from "./obsidian/avatar-actions";
@@ -12,6 +12,8 @@ import {
   blankSources,
   blankSpells,
   blankState,
+  characterSheetPath,
+  clickedExplorerFolder,
   folderOf,
   serialiseJson,
 } from "./obsidian/character-files";
@@ -148,6 +150,33 @@ export default class DragonglassPlugin extends Plugin {
         return true;
       },
     });
+
+    // A click on a character's folder opens its sheet instead of toggling the folder; the
+    // chevron still toggles. Capture phase, so it runs before the explorer's own handler.
+    // A middle click always opens a new tab, as it does for a file.
+    const onExplorerClick = (evt: MouseEvent, newTab: boolean): void => {
+      const target = evt.target instanceof Element ? evt.target : null;
+      const indicator = target
+        ?.closest(".nav-folder-title")
+        ?.querySelector(".nav-folder-collapse-indicator, .collapse-icon")
+        ?.getBoundingClientRect();
+      const chevron = indicator ? { x: evt.clientX, left: indicator.left, right: indicator.right } : undefined;
+      const folder = clickedExplorerFolder(target, evt, chevron);
+      if (folder === null) return;
+      if (!(this.app.vault.getAbstractFileByPath(characterSheetPath(folder)) instanceof TFile)) return;
+      evt.preventDefault();
+      evt.stopPropagation();
+      void this.openCharacter(folder, "sheet", newTab ? "tab" : "reuse");
+    };
+    this.registerDomEvent(document, "click", (evt) => onExplorerClick(evt, false), true);
+    this.registerDomEvent(
+      document,
+      "auxclick",
+      (evt) => {
+        if (evt.button === 1) onExplorerClick(evt, true);
+      },
+      true,
+    );
 
     this.registerEvent(
       this.app.vault.on("rename", (file, oldPath) => {
@@ -400,12 +429,27 @@ export default class DragonglassPlugin extends Plugin {
    * the sheet. Moving between the two afterwards happens in place, from the
    * view's own pane menu.
    */
-  async openCharacter(folder: string, kind: FileKind = "sheet"): Promise<void> {
+  /**
+   * `reuse` brings forward a pane already showing this character (its sheet or its
+   * builder, the sheet first) and only opens a tab if there is none.
+   */
+  async openCharacter(folder: string, kind: FileKind = "sheet", mode: "tab" | "reuse" = "tab"): Promise<void> {
     const path = normalizePath(`${folder}/${DEFAULT_FILE_NAMES[kind]}`);
     const file = this.app.vault.getAbstractFileByPath(path);
     if (!(file instanceof TFile)) {
       new Notice(`No ${DEFAULT_FILE_NAMES[kind]} in ${folder}`);
       return;
+    }
+    if (mode === "reuse") {
+      const open = this.app.workspace
+        .getLeavesOfType(DRAGONGLASS_VIEW)
+        .filter((leaf) => leaf.view instanceof FileView && leaf.view.file && folderOf(leaf.view.file.path) === folder);
+      const onSheet = open.find((leaf) => leaf.view instanceof FileView && leaf.view.file?.path === path);
+      const leaf = onSheet ?? open[0];
+      if (leaf) {
+        await this.app.workspace.revealLeaf(leaf);
+        return;
+      }
     }
     await this.app.workspace.getLeaf(true).openFile(file);
   }

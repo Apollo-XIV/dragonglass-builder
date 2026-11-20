@@ -89,6 +89,30 @@ export function resolvePaths(folder: string, manifest?: SheetFile): CharacterPat
   return { folder, byKind };
 }
 
+/** The sheet's path in a folder. The sheet's name is fixed; only the other files can be renamed. */
+export function characterSheetPath(folder: string): string {
+  return normalizePath(`${folder}/${DEFAULT_FILE_NAMES.sheet}`);
+}
+
+/** How far past the chevron's own edges still counts as the chevron: it is a small target. */
+export const CHEVRON_REACH = 4;
+
+/**
+ * The folder a plain click in the file explorer landed on, or null when the click
+ * should keep Obsidian's behaviour: not on a folder row, on its chevron (which
+ * still expands it, or just beside it, by `chevron`'s horizontal extent), or with a modifier held (multi-select and the like).
+ */
+export function clickedExplorerFolder(
+  target: { closest(selector: string): { getAttribute(name: string): string | null } | null } | null,
+  modifiers: { ctrlKey: boolean; metaKey: boolean; shiftKey: boolean; altKey: boolean },
+  chevron?: { x: number; left: number; right: number },
+): string | null {
+  if (!target || modifiers.ctrlKey || modifiers.metaKey || modifiers.shiftKey || modifiers.altKey) return null;
+  if (chevron && chevron.x >= chevron.left - CHEVRON_REACH && chevron.x <= chevron.right + CHEVRON_REACH) return null;
+  if (target.closest(".nav-folder-collapse-indicator, .collapse-icon, .tree-item-icon")) return null;
+  return target.closest(".nav-folder-title")?.getAttribute("data-path") ?? null;
+}
+
 export function folderOf(filePath: string): string {
   const i = filePath.lastIndexOf("/");
   return i < 0 ? "" : filePath.slice(0, i);
