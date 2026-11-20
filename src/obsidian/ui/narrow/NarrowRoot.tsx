@@ -19,7 +19,7 @@ import { NarrowSheet } from "./NarrowSheet";
 import { SheetHost } from "./sheet";
 
 /** What the narrow layout turns on: everything is off but per-level hit points. */
-const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true };
+const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true, liveCommit: true };
 import { useShell } from "./platform";
 import { BuilderSessionProvider, useBuilderSession } from "../builder/session";
 import { ReadRow } from "./targets";
