@@ -296,12 +296,12 @@ it just wrote, and reloads for anything else.
   invalidate-versus-remove rules; `tests/diff.test.ts` the save's change list;
   `tests/explain.test.ts` the breakdown wording and the dice.
 
-For a real end-to-end check, build into `vault/` (git-ignored, so it may need creating;
-see `docs/development.md`), open it in Obsidian, and open a character's `sheet.5e`. Obsidian can be driven over CDP
-(`obsidian --remote-debugging-port=9222`, then Node 22's global `WebSocket`) if you need
-to verify rendering without a person looking at it — but **restore
-`~/.config/obsidian/obsidian.json` afterwards**, since registering a vault changes which
-one the user's next launch opens.
+For a real end-to-end check, run the plugin in an actual Obsidian and screenshot it. This
+works on a headless machine: `docs/visual-testing.md` has the recipe (a private
+`kwin_wayland --virtual` display, Obsidian over CDP, and `scripts/obsidian-cdp.mjs` to drive
+it and capture PNGs). Use it whenever a change is about how something looks or which layout
+gets it. **Restore `~/.config/obsidian/obsidian.json` afterwards** (the doc says how),
+since registering a vault changes which one the user's next launch opens.
 
 ## Converting content
 

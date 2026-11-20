@@ -3,6 +3,7 @@
 | Path | What it holds |
 | --- | --- |
 | [development.md](development.md) | Building, testing, architecture and the local test vault |
+| [visual-testing.md](visual-testing.md) | Running the plugin in a headless Obsidian and taking screenshots |
 | [schema.md](schema.md) | The content format: elements, parts, choices, stat paths |
 | [conversion-guide.md](conversion-guide.md) | How rules text becomes content |
 | [backlog.md](backlog.md) | What is left to do |
