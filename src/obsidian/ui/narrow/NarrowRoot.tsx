@@ -19,7 +19,7 @@ import { NarrowSheet } from "./NarrowSheet";
 import { SheetHost } from "./sheet";
 
 /** What the narrow layout turns on: everything is off but per-level hit points. */
-const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true, liveCommit: true };
+export const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true, liveCommit: true };
 import { useShell } from "./platform";
 import { BuilderSessionProvider, useBuilderSession } from "../builder/session";
 import { ReadRow } from "./targets";
@@ -42,20 +42,20 @@ export function NarrowRoot({
   return (
     <NarrowSettingsContext.Provider value={settings}>
       <ToastHost>
-        <SheetHost>
-          <DetailContext.Provider value={NARROW_DETAIL}>
+        <DetailContext.Provider value={NARROW_DETAIL}>
           <FeaturesContext.Provider value={NARROW_FEATURES}>
-          <BuilderSessionProvider store={store} active={mode === "builder"}>
-            <Hud character={character} mode={mode} />
-            {mode === "sheet" ? (
-              <NarrowSheet store={store} character={character} />
-            ) : (
-              <NarrowBuilder store={store} character={character} />
-            )}
-          </BuilderSessionProvider>
+            <SheetHost>
+              <BuilderSessionProvider store={store} active={mode === "builder"}>
+                <Hud character={character} mode={mode} />
+                {mode === "sheet" ? (
+                  <NarrowSheet store={store} character={character} />
+                ) : (
+                  <NarrowBuilder store={store} character={character} />
+                )}
+              </BuilderSessionProvider>
+            </SheetHost>
           </FeaturesContext.Provider>
-          </DetailContext.Provider>
-        </SheetHost>
+        </DetailContext.Provider>
       </ToastHost>
     </NarrowSettingsContext.Provider>
   );

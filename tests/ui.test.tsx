@@ -20,7 +20,7 @@ import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
 import { DesktopBuilder } from "../src/obsidian/ui/desktop/DesktopBuilder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
-import { NarrowRoot } from "../src/obsidian/ui/narrow/NarrowRoot";
+import { NarrowRoot, NARROW_FEATURES } from "../src/obsidian/ui/narrow/NarrowRoot";
 import { DetailsSection } from "../src/obsidian/ui/builder/sections/collections";
 import { upcomingStaged } from "../src/obsidian/ui/builder/model";
 import { PickerBody } from "../src/obsidian/ui/builder/picker";
@@ -812,5 +812,23 @@ describe("a picker over options the character already has", () => {
       createElement(PickerBody, { spec: { ...spec, selected: ["a"] }, close: () => undefined }),
     );
     expect(html).not.toContain("aria-disabled");
+  });
+});
+
+describe("the narrow layout's providers", () => {
+  // A sheet's body is rendered by SheetHost, so whatever a picker reads from context has
+  // to be provided above it. Static markup can't open a sheet, so this checks the nesting.
+  it("wraps the sheet host in the features and detail contexts", async () => {
+    const { readFileSync } = await import("node:fs");
+    const source = readFileSync(join(__dirname, "../src/obsidian/ui/narrow/NarrowRoot.tsx"), "utf8");
+    const host = source.indexOf("<SheetHost>");
+    expect(host).toBeGreaterThan(-1);
+    expect(source.indexOf("<FeaturesContext.Provider")).toBeLessThan(host);
+    expect(source.indexOf("<DetailContext.Provider")).toBeLessThan(host);
+  });
+
+  it("keeps pickers in the sheet, not inline", () => {
+    expect(NARROW_FEATURES.inlinePicker).toBe(false);
+    expect(NARROW_FEATURES.liveCommit).toBe(true);
   });
 });
