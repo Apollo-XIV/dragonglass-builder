@@ -2489,7 +2489,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-desk,
 .dg-n-ability-block,
 .dg-n-stat-cluster,
-.dg-n-chips {
+.dg-n-chips,
+.dg-d-menu-portal {
   /* One spacing scale. Every gap and padding in the layout is one of these. */
   --d-gap: var(--size-4-3);
   --d-gap-tight: var(--size-4-2);
@@ -2946,12 +2947,11 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 }
 
 .dg-d-menu-row.is-exhaustion {
-  grid-column: 1 / 3;
   align-items: center;
 }
 
-.dg-d-menu-row.is-exhaustion input {
-  width: 4rem;
+.dg-d-menu-row small {
+  font-variant-numeric: tabular-nums;
 }
 
 /* -- Shared tile and target language ------------------------------------- */
@@ -4979,4 +4979,84 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-source-fields input {
   flex: 1 1 0;
   min-width: 0;
+}
+
+/* The conditions menu lives on the body, so it is not clipped by a scrolling chip row. */
+.dg-d-menu-portal {
+  display: contents;
+}
+
+.dg-d-menu-portal .dg-d-menu {
+  position: fixed;
+  right: auto;
+  z-index: 1000;
+  min-width: 0;
+}
+
+/* -- Status sheet (hold a condition, exhaustion or concentration) --------- */
+
+.dg-status-rules,
+.dg-status-levels {
+  margin: 0;
+  padding-left: var(--size-4-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+}
+
+.dg-status-levels {
+  padding-left: 0;
+  list-style: none;
+}
+
+.dg-status-levels li {
+  display: flex;
+  align-items: baseline;
+  gap: var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.dg-status-levels li.is-reached {
+  color: var(--text-normal);
+}
+
+.dg-status-level {
+  flex: 0 0 1.25rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--font-semibold);
+}
+
+.dg-status-note {
+  margin: var(--size-4-3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-status-stepper {
+  flex: 1;
+  justify-content: space-between;
+}
+
+.dg-status-edition {
+  display: flex;
+  margin-bottom: var(--size-4-3);
+  padding: 2px;
+  border-radius: var(--radius-m);
+  background: var(--background-modifier-hover);
+}
+
+.dg-layout .dg-status-edition button {
+  flex: 1;
+  height: 32px;
+  border: none;
+  border-radius: var(--radius-s);
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-muted);
+}
+
+.dg-layout .dg-status-edition button.is-on {
+  background: var(--background-primary);
+  color: var(--text-normal);
+  box-shadow: var(--shadow-s);
 }

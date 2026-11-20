@@ -28,11 +28,13 @@ import {
   type HpOutcome,
   type HpToken,
 } from "../../core/state/hp-calc";
+import { concentrationDc } from "../../core/state/conditions";
 import { hpRegister, type RegisterRow } from "../../core/state/register";
 import type { CharacterStore } from "../character-store";
 import { Icon } from "./components";
 import { useSheet } from "./narrow/sheet";
 import { TextBody } from "./narrow/targets";
+import { useToast } from "./narrow/toast";
 
 export function HpPanel({
   store,
@@ -47,6 +49,7 @@ export function HpPanel({
   const [text, setText] = useState("");
   const [editing, setEditing] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const toast = useToast();
 
   const snapshot = {
     baseMax: character.hp.max.value,
@@ -74,6 +77,16 @@ export function HpPanel({
     if (parsed.error || !parsed.tokens.length) return;
     const outcome = applyHpCalc(parsed.tokens, snapshot);
     store.appendEvents(...outcome.events);
+    // Taking damage while concentrating asks for a Constitution save; say so and
+    // say what to beat, because that is the arithmetic people stop to do.
+    if (outcome.taken > 0 && character.status.concentration) {
+      toast.show({
+        label: "Concentration check",
+        detail: `Constitution save · ${outcome.taken} damage`,
+        total: `DC ${concentrationDc(outcome.taken)}`,
+        tag: { text: "Concentrating", tone: "warn" },
+      });
+    }
     setText("");
     // The input keeps focus: the next entry usually follows the last one closely.
     input.current?.focus();

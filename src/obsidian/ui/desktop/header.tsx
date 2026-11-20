@@ -6,12 +6,21 @@
  * half, so the band stays one line tall while the row below it carries the state.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
+import { createPortal } from "react-dom";
 import type { ResolvedCharacter } from "../../../core/resolver/resolved";
+import { nextExhaustion } from "../../../core/state/conditions";
 import { event } from "../../../core/state/fold";
 import type { CharacterStore } from "../../character-store";
 import { Avatar } from "../avatar";
 import { Icon } from "../components";
+import { setConcentration, setCondition, setExhaustion, StatusButton } from "../status-sheet";
 import { useHoverCard } from "./targets";
 
 /**
@@ -45,12 +54,23 @@ export function DeskHeader({
   character: ResolvedCharacter;
   onBuilder?: () => void;
 }): ReactNode {
-  const classLine = character.classes.map((c) => `${c.name} ${c.level}`).join(" / ");
-  const subtitle = [character.species?.name, classLine || `Level ${character.level}`].filter(Boolean).join(" ");
+  const classLine = character.classes
+    .map((c) => `${c.name} ${c.level}`)
+    .join(" / ");
+  const subtitle = [
+    character.species?.name,
+    classLine || `Level ${character.level}`,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
     <header className="dg-d-header">
-      <Avatar className="dg-d-avatar" name={character.name} path={character.avatar} />
+      <Avatar
+        className="dg-d-avatar"
+        name={character.name}
+        path={character.avatar}
+      />
       <div className="dg-d-identity">
         <h2 className="dg-d-name">{character.name}</h2>
         <p className="dg-d-subline">{subtitle}</p>
@@ -65,9 +85,17 @@ export function DeskHeader({
         <RestMenu store={store} character={character} />
         <button
           type="button"
-          className={character.status.inspiration ? "dg-d-button is-inspired" : "dg-d-button"}
+          className={
+            character.status.inspiration
+              ? "dg-d-button is-inspired"
+              : "dg-d-button"
+          }
           aria-pressed={character.status.inspiration}
-          onClick={() => store.appendEvents(event("inspiration", { value: !character.status.inspiration }))}
+          onClick={() =>
+            store.appendEvents(
+              event("inspiration", { value: !character.status.inspiration }),
+            )
+          }
         >
           <Icon name="sparkles" />
           Inspiration
@@ -83,7 +111,13 @@ export function DeskHeader({
  * that it should take a deliberate second press, and a short rest needs somewhere
  * to spend hit dice from.
  */
-function RestMenu({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+function RestMenu({
+  store,
+  character,
+}: {
+  store: CharacterStore;
+  character: ResolvedCharacter;
+}): ReactNode {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
 
@@ -107,7 +141,12 @@ function RestMenu({ store, character }: { store: CharacterStore; character: Reso
 
   return (
     <div className="dg-d-menu-anchor" ref={box}>
-      <button type="button" className="dg-d-button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+      <button
+        type="button"
+        className="dg-d-button"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
         <Icon name="moon" />
         Rest
       </button>
@@ -136,7 +175,12 @@ function RestMenu({ store, character }: { store: CharacterStore; character: Reso
                   type="button"
                   className="dg-d-chip"
                   onClick={() =>
-                    store.appendEvents(event("spend", { target: `hitDice.${pool.die}`, amount: 1 }))
+                    store.appendEvents(
+                      event("spend", {
+                        target: `hitDice.${pool.die}`,
+                        amount: 1,
+                      }),
+                    )
                   }
                 >
                   {pool.die} <small>{pool.remaining} left</small>
@@ -168,7 +212,13 @@ function RestMenu({ store, character }: { store: CharacterStore; character: Reso
 // Status chips
 // ---------------------------------------------------------------------------
 
-export function StatusChips({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+export function StatusChips({
+  store,
+  character,
+}: {
+  store: CharacterStore;
+  character: ResolvedCharacter;
+}): ReactNode {
   const groups: { icon: string; label: string; set: string }[] = [
     { icon: "shield-half", label: "Res.", set: "resistances" },
     { icon: "shield", label: "Imm.", set: "immunities" },
@@ -180,50 +230,58 @@ export function StatusChips({ store, character }: { store: CharacterStore; chara
     <div className="dg-d-chips">
       {groups.map(({ icon, label, set }) =>
         (character.sets[set]?.values ?? []).map((value) => (
-          <DamageChip key={`${set}-${value}`} icon={icon} label={label} value={value} stat={set} character={character} />
+          <DamageChip
+            key={`${set}-${value}`}
+            icon={icon}
+            label={label}
+            value={value}
+            stat={set}
+            character={character}
+          />
         )),
       )}
 
       {concentration ? (
-        <button
-          type="button"
+        <StatusButton
+          store={store}
+          status={{ kind: "concentration" }}
           className="dg-d-chip is-concentration"
-          title={`Concentrating on ${concentration.name ?? concentration.on} — click to end`}
-          onClick={() => store.appendEvents(event("concentration.end", {}))}
+          title={`Concentrating${concentration.name ? ` on ${concentration.name}` : ""} — click to end, hold to read`}
+          onTap={() => setConcentration(store, false)}
         >
           <Icon name="brain-circuit" />
           Concentrating
           <Icon name="x" className="dg-d-chip-x" />
-        </button>
+        </StatusButton>
       ) : null}
 
       {character.status.exhaustion > 0 ? (
-        <button
-          type="button"
+        <StatusButton
+          store={store}
+          status={{ kind: "exhaustion" }}
           className="dg-d-chip is-condition"
-          title="Exhaustion — click to step down a level"
-          onClick={() =>
-            store.appendEvents(event("exhaustion", { level: Math.max(0, character.status.exhaustion - 1) }))
-          }
+          title="Exhaustion — click to step down a level, hold to read"
+          onTap={() => setExhaustion(store, character.status.exhaustion - 1)}
         >
           <Icon name="battery-low" />
           Exhaustion {character.status.exhaustion}
           <Icon name="x" className="dg-d-chip-x" />
-        </button>
+        </StatusButton>
       ) : null}
 
       {character.status.conditions.map((condition) => (
-        <button
+        <StatusButton
           key={condition}
-          type="button"
+          store={store}
+          status={{ kind: "condition", id: condition }}
           className="dg-d-chip is-condition"
-          title={`${condition} — click to remove`}
-          onClick={() => store.appendEvents(event("condition.remove", { condition }))}
+          title={`${condition} — click to remove, hold to read`}
+          onTap={() => setCondition(store, condition, false)}
         >
           <Icon name="alert-triangle" />
           {condition}
           <Icon name="x" className="dg-d-chip-x" />
-        </button>
+        </StatusButton>
       ))}
 
       <ConditionPicker store={store} character={character} />
@@ -246,7 +304,11 @@ function DamageChip({
   character: ResolvedCharacter;
 }): ReactNode {
   const sources = (character.sets[stat]?.breakdown ?? [])
-    .filter((row) => (Array.isArray(row.value) ? row.value.includes(value) : row.value === value))
+    .filter((row) =>
+      Array.isArray(row.value)
+        ? row.value.includes(value)
+        : row.value === value,
+    )
     .map((row) => row.sourceName);
   const { handlers, card } = useHoverCard(() => (
     <p className="dg-d-hovercard-formula">
@@ -265,20 +327,56 @@ function DamageChip({
   );
 }
 
-function ConditionPicker({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+function ConditionPicker({
+  store,
+  character,
+}: {
+  store: CharacterStore;
+  character: ResolvedCharacter;
+}): ReactNode {
   const [open, setOpen] = useState(false);
   const box = useRef<HTMLDivElement>(null);
+  const menu = useRef<HTMLDivElement>(null);
+  const [place, setPlace] = useState<CSSProperties>({});
   const active = new Set(character.status.conditions);
   const immune = new Set(character.sets["conditionImmunities"]?.values ?? []);
 
   useEffect(() => {
     if (!open) return;
     const away = (e: MouseEvent): void => {
-      if (!box.current?.contains(e.target as Node)) setOpen(false);
+      const target = e.target as Node;
+      if (!box.current?.contains(target) && !menu.current?.contains(target))
+        setOpen(false);
     };
     document.addEventListener("mousedown", away);
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
+
+  // The menu is portalled to the body: the narrow layout's chip row scrolls sideways,
+  // which clips anything absolutely positioned inside it down to the row's own height.
+  const toggle = (): void => {
+    if (!open && box.current) {
+      const rect = box.current.getBoundingClientRect();
+      const width = Math.min(288, window.innerWidth - 16);
+      const left = Math.min(
+        Math.max(8, rect.left),
+        window.innerWidth - width - 8,
+      );
+      const below = window.innerHeight - rect.bottom - 12;
+      const flip = below < 240 && rect.top > below;
+      setPlace(
+        flip
+          ? {
+              left,
+              width,
+              bottom: window.innerHeight - rect.top + 4,
+              maxHeight: rect.top - 12,
+            }
+          : { left, width, top: rect.bottom + 4, maxHeight: below },
+      );
+    }
+    setOpen((v) => !v);
+  };
 
   return (
     <div className="dg-d-menu-anchor" ref={box}>
@@ -286,49 +384,76 @@ function ConditionPicker({ store, character }: { store: CharacterStore; characte
         type="button"
         className="dg-d-chip is-add"
         aria-expanded={open}
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggle}
         title="Add a condition"
       >
         <Icon name="plus" />
         Cond
       </button>
-      {open ? (
-        <div className="dg-d-menu is-conditions" role="menu">
-          {CONDITIONS.map((condition) => (
-            <button
-              key={condition}
-              type="button"
-              className={
-                active.has(condition)
-                  ? "dg-d-menu-row is-on"
-                  : immune.has(condition)
-                    ? "dg-d-menu-row is-immune"
-                    : "dg-d-menu-row"
-              }
-              onClick={() =>
-                store.appendEvents(
-                  active.has(condition)
-                    ? event("condition.remove", { condition })
-                    : event("condition.add", { condition }),
-                )
-              }
-            >
-              {condition}
-              {immune.has(condition) ? <small>immune</small> : null}
-            </button>
-          ))}
-          <label className="dg-d-menu-row is-exhaustion">
-            Exhaustion
-            <input
-              type="number"
-              min={0}
-              max={6}
-              value={character.status.exhaustion}
-              onChange={(e) => store.appendEvents(event("exhaustion", { level: Number(e.currentTarget.value) }))}
-            />
-          </label>
-        </div>
-      ) : null}
+      {open
+        ? createPortal(
+            <div className="dg-layout dg-d-menu-portal">
+              <div
+                className="dg-d-menu is-conditions"
+                role="menu"
+                ref={menu}
+                style={place}
+              >
+                {CONDITIONS.map((condition) => (
+                  <StatusButton
+                    key={condition}
+                    store={store}
+                    status={{ kind: "condition", id: condition }}
+                    className={
+                      active.has(condition)
+                        ? "dg-d-menu-row is-on"
+                        : immune.has(condition)
+                          ? "dg-d-menu-row is-immune"
+                          : "dg-d-menu-row"
+                    }
+                    onTap={() => setCondition(store, condition, !active.has(condition))}
+                    onRead={() => setOpen(false)}
+                  >
+                    {condition}
+                    {immune.has(condition) ? <small>immune</small> : null}
+                  </StatusButton>
+                ))}
+                <StatusButton
+                  store={store}
+                  status={{ kind: "exhaustion" }}
+                  className={
+                    character.status.exhaustion > 0
+                      ? "dg-d-menu-row is-on is-exhaustion"
+                      : "dg-d-menu-row is-exhaustion"
+                  }
+                  onTap={() =>
+                    setExhaustion(store, nextExhaustion(character.status.exhaustion))
+                  }
+                  onRead={() => setOpen(false)}
+                >
+                  Exhaustion
+                  <small>{character.status.exhaustion}</small>
+                </StatusButton>
+                <StatusButton
+                  store={store}
+                  status={{ kind: "concentration" }}
+                  className={
+                    character.status.concentration
+                      ? "dg-d-menu-row is-on"
+                      : "dg-d-menu-row"
+                  }
+                  onTap={() =>
+                    setConcentration(store, !character.status.concentration)
+                  }
+                  onRead={() => setOpen(false)}
+                >
+                  Concentration
+                </StatusButton>
+              </div>
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

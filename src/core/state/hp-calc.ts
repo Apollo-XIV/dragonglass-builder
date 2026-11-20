@@ -107,6 +107,11 @@ export interface HpOutcome {
   effectiveMax: number;
   deltas: HpDelta[];
   events: StateEvent[];
+  /**
+   * Damage the entry dealt, counting what temp HP soaked up, which is still
+   * damage taken for a concentration save. Setting HP lower counts as the drop.
+   */
+  taken: number;
 }
 
 export function snapshotOf(snapshot: HpSnapshot): { current: number; effectiveMax: number; tempMax: number } {
@@ -133,9 +138,11 @@ export function applyHpCalc(tokens: HpToken[], snapshot: HpSnapshot, at = nowIso
     return { tempMax, effectiveMax, current: Math.max(0, effectiveMax - damage) };
   };
 
+  let taken = 0;
   for (const token of tokens) {
     switch (token.role) {
       case "damage": {
+        taken += token.amount;
         // Temp HP absorbs first, which is why the log keeps the hit rather than
         // the result, and why the row reads as a split.
         const soaked = Math.min(temp, token.amount);
@@ -163,6 +170,7 @@ export function applyHpCalc(tokens: HpToken[], snapshot: HpSnapshot, at = nowIso
         const target = Math.min(token.amount, effectiveMax);
         damage = effectiveMax - target;
         deltas.push({ role: "set", amount: target - current });
+        taken += Math.max(0, current - target);
         events.push({ t: at, type: "hp.set", damage, note: String(target) });
         break;
       }
@@ -197,7 +205,7 @@ export function applyHpCalc(tokens: HpToken[], snapshot: HpSnapshot, at = nowIso
   }
 
   const { tempMax, effectiveMax, current } = totals();
-  return { damage, temp, tempMax, current, effectiveMax, deltas, events };
+  return { damage, temp, tempMax, current, effectiveMax, deltas, events, taken };
 }
 
 /** "-t4 -3", the way the register prints a row's deltas. */
