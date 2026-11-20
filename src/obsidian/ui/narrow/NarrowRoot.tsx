@@ -12,11 +12,14 @@ import type { ResolvedCharacter } from "../../../core/resolver/resolved";
 import type { NarrowSettings } from "../../settings";
 import type { CharacterStore } from "../../character-store";
 import { DetailContext } from "../builder/detail";
-import { FeaturesContext, NO_FEATURES } from "../builder/features";
+import { FeaturesContext, NO_FEATURES, type BuilderFeatures } from "../builder/features";
 import { NarrowSettingsContext } from "./context";
 import { NarrowBuilder } from "./NarrowBuilder";
 import { NarrowSheet } from "./NarrowSheet";
 import { SheetHost } from "./sheet";
+
+/** What the narrow layout turns on: everything is off but per-level hit points. */
+const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true };
 import { useShell } from "./platform";
 import { BuilderSessionProvider, useBuilderSession } from "../builder/session";
 import { ReadRow } from "./targets";
@@ -41,7 +44,7 @@ export function NarrowRoot({
       <ToastHost>
         <SheetHost>
           <DetailContext.Provider value={NARROW_DETAIL}>
-          <FeaturesContext.Provider value={NO_FEATURES}>
+          <FeaturesContext.Provider value={NARROW_FEATURES}>
           <BuilderSessionProvider store={store} active={mode === "builder"}>
             <Hud character={character} mode={mode} />
             {mode === "sheet" ? (
