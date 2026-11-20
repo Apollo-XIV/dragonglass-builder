@@ -1623,6 +1623,15 @@
   transition: transform 160ms ease;
 }
 
+/* Obsidian's mobile toolbar is fixed chrome we can't move, and it is taller than
+ * the 44px above once the home-indicator inset is counted. Only a real mobile
+ * device has it — a narrow desktop pane keeps the shorter tail — so the extra
+ * is keyed off Obsidian's own body class, not the layout. Desktop-layout dialogs
+ * reset this below. */
+body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
+  padding-bottom: calc(var(--size-4-4) + 44px + env(safe-area-inset-bottom, 0px) + var(--size-4-4) + 16px);
+}
+
 .dg-sheet-grip {
   display: grid;
   place-items: center;
