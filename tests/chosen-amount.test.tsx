@@ -163,3 +163,20 @@ describe("the picker", () => {
     expect(out).toContain(">Use<");
   });
 });
+
+describe("the Use button", () => {
+  const render = (level: number, cost: unknown, spent = 0): string => {
+    const { c, action } = at(level, cost, spent);
+    return renderToStaticMarkup(createElement(UseAction, { action, store: { resolved: c } as CharacterStore }));
+  };
+
+  it("offers the resource menu of the pool it spends", () => {
+    expect(render(5, 5)).toContain('aria-haspopup="dialog"');
+  });
+
+  it("stays pressable when the pool is empty, so a use can be put back", () => {
+    const out = render(1, 5, 5);
+    expect(out).toContain('aria-disabled="true"');
+    expect(out).not.toContain("disabled=\"\"");
+  });
+});

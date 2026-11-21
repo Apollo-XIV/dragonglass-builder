@@ -1,6 +1,7 @@
 /** Levels: the card for a level taken, and the buttons that take the next. */
 
 import { type ReactNode } from "react";
+import { unverifiedNotes } from "../../../../core/content/provenance";
 import {
   changesStartingClass,
   classLevelAt,
@@ -212,6 +213,7 @@ function FeatureChip({ feature, nameOf }: { feature: ResolvedElement; nameOf: (i
       text={feature.text}
       fluff={feature.fluff}
       facts={factsOf(feature.element, (id) => (nameOf(id) === id ? undefined : nameOf(id)))}
+      unverified={unverifiedNotes(feature.element)}
       className="dg-level-feature"
     />
   );
@@ -264,6 +266,7 @@ export function LevelButtons({
           // Shown whether or not enforcement is on: a player multiclassing into
           // a class they don't qualify for should at least be told.
           warnings: taken.length === 0 ? undefined : multiclassNotes(index, taken, cls),
+          unverified: unverifiedNotes(cls),
           // A pick that arrives with its choices already filled in should not be a surprise.
           badge: queued.has(cls.id) ? "queued" : undefined,
         })),

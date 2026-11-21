@@ -100,12 +100,15 @@ export function useHold({
   const handlers: HoldHandlers = {
     onPointerDown: (event) => {
       if (disabled || !onHold) return;
+      const target = event.currentTarget as HTMLElement;
+      // A plain control inside the target (a row's Use button) owns its own press.
+      // Capturing the pointer below would send its click to us instead.
+      if (nestedControl(event.target, target)) return;
       // The innermost target under the finger wins: a roll box inside a feature
       // row shows its breakdown, not the row's text (spec 3.1.4).
       event.stopPropagation();
       // Keeps every later event for this pointer coming to us, so the move and
       // the release are ours even once a sheet has opened over the top.
-      const target = event.currentTarget as HTMLElement;
       try {
         target.setPointerCapture?.(event.pointerId);
       } catch {
@@ -167,6 +170,14 @@ export function useHold({
   };
 
   return { handlers, held };
+}
+
+const CONTROLS = "button, input, select, textarea, a[href], [role='button']";
+
+/** True when the press began on an interactive element inside `host`, not on `host` itself. */
+export function nestedControl(start: EventTarget | null, host: HTMLElement): boolean {
+  const control = (start as Element | null)?.closest?.(CONTROLS);
+  return !!control && control !== host && host.contains(control);
 }
 
 export function clampHoldTime(ms: number): number {

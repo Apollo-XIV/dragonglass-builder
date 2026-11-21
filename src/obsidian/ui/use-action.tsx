@@ -2,9 +2,15 @@
  * The Use button of an action. A fixed cost is spent on the click; an action with a
  * chosen-amount cost opens a small picker first, which shows what the pool has left and
  * will not spend more than that. Both layouts use it.
+ *
+ * Holding it (right-clicking, with a mouse) opens the resource menu for the pool it
+ * spends, so a use can be put back or a pool set by hand right where it was spent.
+ * An action that costs several pools opens the first.
  */
 
-import { useState, type ReactNode } from "react";
+import { useState, type MouseEvent, type ReactNode } from "react";
+import { poolOf } from "../../core/resolver/pins";
+import { describeRecharge } from "../../core/state/recharge";
 import {
   type Spender,
   amountProblem,
@@ -16,6 +22,8 @@ import {
   withSpent,
 } from "../../core/state/use-action";
 import type { CharacterStore } from "../character-store";
+import { useHold } from "./narrow/hold";
+import { usePoolControls, useResourceMenu } from "./narrow/targets";
 import { useToast } from "./narrow/toast";
 
 export function UseAction({
@@ -51,12 +59,35 @@ export function UseAction({
     setOpen(false);
   };
 
+  const use = (): void => {
+    if (!action.available) {
+      toast.show({ label: action.name, detail: action.unavailableReason ?? "Can't be used now" });
+      return;
+    }
+    if (lines.length) {
+      setChosen(defaultAmounts(action));
+      setOpen(true);
+    } else spend({});
+  };
+  const menu = usePoolMenu(store, action.resolvedCost?.[0]?.key);
+  const { handlers } = useHold({ onTap: use, onHold: menu, className });
+
   if (!open)
     return (
       <button
-        className={className}
-        disabled={!action.available}
-        onClick={() => (lines.length ? (setChosen(defaultAmounts(action)), setOpen(true)) : spend({}))}
+        type="button"
+        {...handlers}
+        style={handlers.style}
+        // Not `disabled`: a disabled button hears no pointer, and an action that can't
+        // be paid for is exactly when the player wants the menu to put a use back.
+        aria-disabled={!action.available || undefined}
+        aria-haspopup={menu ? "dialog" : undefined}
+        // Pointer events do the tapping, so a click only arrives from the keyboard.
+        onClick={(e: MouseEvent) => e.detail === 0 && use()}
+        onContextMenu={(e) => {
+          e.preventDefault();
+          if (e.button === 2) menu?.();
+        }}
       >
         {label}
       </button>
@@ -111,4 +142,27 @@ export function UseAction({
       </div>
     </div>
   );
+}
+
+/**
+ * The resource menu for the pool a cost names, read from the store on every render
+ * of the sheet so it follows the spending. Undefined for an action with no cost.
+ */
+function usePoolMenu(store: CharacterStore, key: string | undefined): (() => void) | undefined {
+  const pool = key && store.resolved ? poolOf(store.resolved, key) : undefined;
+  const target = pool?.target ?? key ?? "";
+  const read = (): { remaining: number; max: number } => {
+    const live = store.resolved ? poolOf(store.resolved, target) : undefined;
+    return { remaining: live?.remaining ?? pool?.remaining ?? 0, max: live?.max ?? pool?.max ?? 0 };
+  };
+  const { spend, set } = usePoolControls(store, target, () => read().remaining);
+  const { open } = useResourceMenu({
+    name: pool?.name ?? "",
+    subtitle: pool?.resource ? `${describeRecharge(pool.resource.recharge)} · ${pool.resource.sourceName}` : undefined,
+    text: pool?.resource?.notes,
+    read,
+    onSpend: spend,
+    onSet: set,
+  });
+  return pool ? open : undefined;
 }

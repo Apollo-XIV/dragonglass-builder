@@ -6,6 +6,7 @@
 
 import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { Facts, Markdown } from "../components";
+import { ProvenanceMark, UnverifiedNote } from "../provenance";
 import { DetailContext, type DetailSpec, type DetailStrategy, type InfoRowProps } from "../builder/detail";
 
 interface Sink {
@@ -16,9 +17,9 @@ interface Sink {
 const SinkContext = createContext<Sink>({ hover: () => {}, pin: () => {} });
 const CurrentContext = createContext<DetailSpec | undefined>(undefined);
 
-function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, className, children }: InfoRowProps): ReactNode {
+function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, unverified, className, children }: InfoRowProps): ReactNode {
   const sink = useContext(SinkContext);
-  const spec: DetailSpec = { title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy };
+  const spec: DetailSpec = { title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, unverified };
   return (
     <div
       className={["dg-read-row", "is-readable", className].filter(Boolean).join(" ")}
@@ -30,7 +31,10 @@ function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overrid
       onClick={() => sink.pin(spec)}
     >
       <span className="dg-read-main">
-        <span className="dg-read-title">{title}</span>
+        <span className="dg-read-title">
+          {title}
+          <ProvenanceMark notes={unverified} />
+        </span>
         {subtitle ? <span className="dg-read-subtitle">{subtitle}</span> : null}
       </span>
       {children}
@@ -69,6 +73,7 @@ export function DetailPane(): ReactNode {
             </p>
           ) : null}
           {spec.overriddenBy ? <p className="dg-warn">Overridden by {spec.overriddenBy}</p> : null}
+          <UnverifiedNote notes={spec.unverified} />
           {spec.fluff ? <Markdown source={spec.fluff} className="dg-fluff" /> : null}
           <Facts facts={spec.facts} />
           {spec.text ? <Markdown source={spec.text} /> : <p className="dg-muted">No rules text.</p>}

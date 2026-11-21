@@ -9,6 +9,7 @@
 
 import type { Fact } from "../../../core/content/facts";
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
+import { ProvenanceMark } from "../provenance";
 
 export interface DetailSpec {
   title: string;
@@ -25,6 +26,8 @@ export interface DetailSpec {
   tags?: string[];
   /** The source that replaces this element, when another one overrides it. */
   overriddenBy?: string;
+  /** Why its parts are unverified, one note each (`unverifiedNotes`); the marker is drawn only when there are some. */
+  unverified?: readonly string[];
 }
 
 export interface InfoRowProps extends DetailSpec {
@@ -47,11 +50,14 @@ export interface DetailStrategy {
   read?: (spec: DetailSpec | undefined) => void;
 }
 
-function PlainRow({ title, subtitle, className, children }: InfoRowProps): ReactNode {
+function PlainRow({ title, subtitle, unverified, className, children }: InfoRowProps): ReactNode {
   return (
     <div className={["dg-read-row", className].filter(Boolean).join(" ")}>
       <span className="dg-read-main">
-        <span className="dg-read-title">{title}</span>
+        <span className="dg-read-title">
+          {title}
+          <ProvenanceMark notes={unverified} />
+        </span>
         {subtitle ? <span className="dg-read-subtitle">{subtitle}</span> : null}
       </span>
       {children}

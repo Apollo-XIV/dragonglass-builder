@@ -14,7 +14,6 @@ import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
 import type { ResolvedAction, ResolvedCharacter, ResolvedInnate, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
-import { noteFor, unverifiedNotes } from "../../../core/content/provenance";
 import { withSpent } from "../../../core/state/use-action";
 import { mentionsSpent } from "../../../core/expr/evaluate";
 import type { CharacterStore } from "../../character-store";
@@ -29,7 +28,7 @@ import { NarrowScroller, type SectionSpec } from "./scroller";
 import { useSheet } from "./sheet";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
-import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody } from "./targets";
+import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
 import { UseAction } from "../use-action";
 import { StatusChips } from "../desktop/header";
 
@@ -238,36 +237,12 @@ function StatTile({
   );
 }
 
-/**
- * Changing a pool reads its current value from the store when the button is
- * pressed, not from the render that drew the row. The resource menu stays open
- * while you spend (spec 3.3.3), so by the second press the captured value would
- * be a step behind and the stepper would fight the player.
- */
-function usePoolControls(
-  store: CharacterStore,
-  target: string,
-  read: () => number,
-): { spend: () => void; set: (to: number) => void } {
-  return {
-    spend: () => store.appendEvents(event("spend", { target, amount: 1 })),
-    set: (to) => {
-      const delta = to - read();
-      if (delta === 0) return;
-      store.appendEvents(
-        delta > 0 ? event("regain", { target, amount: delta }) : event("spend", { target, amount: -delta }),
-      );
-    },
-  };
-}
-
 function ResourceRow({ resource, store }: { resource: ResolvedResource; store: CharacterStore }): ReactNode {
   return (
     <ReadRow
       title={resource.name}
       subtitle={`${describeRecharge(resource.recharge)} · ${resource.sourceName}`}
       text={resource.notes}
-      unverified={noteFor(resource.provenance)}
     >
       <ResourcePillFor resource={resource} store={store} />
     </ReadRow>
@@ -357,7 +332,6 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={action.key}
           title={action.name}
-          unverified={noteFor(action.definition.provenance)}
           subtitle={[
             action.activation.replace("-", " "),
             action.range,
@@ -411,7 +385,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           {character.effects
             .filter((e) => e.active)
             .map((effect) => (
-              <ReadRow key={effect.id} title={effect.name} subtitle={effect.duration ?? "active"} text={effect.text} unverified={noteFor(effect.definition.provenance)}>
+              <ReadRow key={effect.id} title={effect.name} subtitle={effect.duration ?? "active"} text={effect.text}>
                 <button
                   className="dg-n-chip is-action"
                   onClick={() => store.appendEvents(event("effect.end", { effect: effect.id }))}
@@ -657,7 +631,6 @@ export function FeaturesSection({ store, character }: { store: CharacterStore; c
               .filter(Boolean)
               .join(" · ")}
             text={feature.text}
-            unverified={unverifiedNotes(feature.element)}
           >
             {resource ? <ResourcePillFor resource={resource} store={store} /> : null}
           </ReadRow>

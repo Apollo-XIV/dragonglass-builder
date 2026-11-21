@@ -11,7 +11,7 @@ import { event } from "./fold";
 type ChosenLine = ResolvedCostLine & { amount: { min: number; max: number } };
 
 /** What spending needs to know: an action, or an innate cast that costs another pool. */
-export type Spender = Pick<ResolvedAction, "name" | "resolvedCost" | "available"> & Partial<Pick<ResolvedAction, "applies" | "source" | "healResolved" | "damageResolved">>;
+export type Spender = Pick<ResolvedAction, "name" | "resolvedCost" | "available"> & Partial<Pick<ResolvedAction, "applies" | "source" | "healResolved" | "damageResolved" | "unavailableReason">>;
 
 /** The costs of an action whose amount the player chooses. */
 export function chosenCosts(action: Spender): ChosenLine[] {

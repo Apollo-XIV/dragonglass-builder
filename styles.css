@@ -341,12 +341,18 @@
   padding: 0 var(--size-4-2);
 }
 
-.dg-button:hover:not(:disabled) {
+.dg-button:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--interactive-hover);
 }
 
 .dg-button:disabled {
   cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Dimmed but not refused: holding or right-clicking still opens the resource menu. */
+.dg-button[aria-disabled="true"],
+.dg-layout .dg-n-chip[aria-disabled="true"] {
   opacity: 0.5;
 }
 
@@ -4941,6 +4947,16 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   border: 1px dashed var(--text-muted);
   border-radius: 50%;
   opacity: 0.85;
+}
+
+/* The marker's meaning, where a builder row is read. */
+.dg-unverified-note {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.dg-unverified-note .dg-unverified {
+  margin: 0 0.4rem 0 0;
 }
 
 /* An open picker takes the whole row, rather than squeezing the title beside it. */

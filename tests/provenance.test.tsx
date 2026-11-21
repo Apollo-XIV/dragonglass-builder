@@ -14,6 +14,10 @@ import { CharacterStore, type StoreHost } from "../src/obsidian/character-store"
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { ActionsSection, FeaturesSection } from "../src/obsidian/ui/narrow/NarrowSheet";
+import { InfoRow } from "../src/obsidian/ui/builder/detail";
+import { optionsFor } from "../src/obsidian/ui/builder/model";
+import { UnverifiedNote } from "../src/obsidian/ui/provenance";
+import type { PendingChoice } from "../src/core/resolver/resolved";
 import { build, TEST_BOOK, testIndex } from "./helpers";
 
 const pack: PartProvenance = { source: "pack:release-5.3.3", review: "auto" };
@@ -110,33 +114,45 @@ function renderWith(body: (store: CharacterStore) => ReactNode, el: Element, hid
   );
 }
 
-describe("the marker on the sheet", () => {
-  const actions = (el: Element, hide = false) => renderWith((s) => createElement(ActionsSection, { store: s, character: s.resolved! }), el, hide);
-  const features = (el: Element, hide = false) => renderWith((s) => createElement(FeaturesSection, { store: s, character: s.resolved! }), el, hide);
+describe("the sheet", () => {
+  const actions = (el: Element) => renderWith((s) => createElement(ActionsSection, { store: s, character: s.resolved! }), el);
+  const features = (el: Element) => renderWith((s) => createElement(FeaturesSection, { store: s, character: s.resolved! }), el);
 
-  it("marks an action whose provenance is not reviewed, with a tooltip naming the source", () => {
-    const out = actions(feature(pack));
+  it("shows no marker: at the table it is a question the player can't answer", () => {
+    expect(actions(feature(pack))).not.toContain("dg-unverified");
+    expect(features(feature(pack, prose))).not.toContain("dg-unverified");
+  });
+});
+
+describe("the marker in the builder", () => {
+  const row = (unverified: readonly string[] | undefined, hide = false) =>
+    renderWith(() => createElement(InfoRow, { title: "Rage", unverified }), feature(), hide);
+
+  it("marks a feature row, with a tooltip naming the source", () => {
+    const out = row(unverifiedNotes(feature(pack)));
     expect(out).toContain("dg-unverified");
     expect(out).toContain("From Foundry&#x27;s dnd5e data, not yet reviewed");
   });
 
-  it("says where prose came from", () => {
-    expect(actions(feature(prose))).toContain("Read from the feature&#x27;s text, not yet reviewed");
+  it("leaves a reviewed element and one without provenance unmarked", () => {
+    expect(row(unverifiedNotes(feature(reviewed)))).not.toContain("dg-unverified");
+    expect(row(unverifiedNotes(feature()))).not.toContain("dg-unverified");
   });
 
-  it("leaves a reviewed part and one without provenance unmarked", () => {
-    expect(actions(feature(reviewed))).not.toContain("dg-unverified");
-    expect(actions(feature())).not.toContain("dg-unverified");
+  it("carries the notes onto a choice's options", () => {
+    const choice = { options: [{ id: "test:feature:rage", name: "Rage", element: feature(pack, prose) }] } as unknown as PendingChoice;
+    expect(optionsFor(choice)[0].unverified).toEqual(["Read from the feature's text, not yet reviewed", "From Foundry's dnd5e data, not yet reviewed"]);
   });
 
-  it("marks the feature row too", () => {
-    expect(features(feature(pack))).toContain("dg-unverified");
+  it("spells the notes out where the row is read", () => {
+    const out = renderWith(() => createElement(UnverifiedNote, { notes: unverifiedNotes(feature(pack, prose)) }), feature());
+    expect(out).toContain("Not yet checked against the book: read from the feature&#x27;s text; from Foundry&#x27;s dnd5e data.");
   });
 
   it("hides the markers on request and leaves the rest of the row alone", () => {
-    const shown = actions(feature(pack));
-    const hidden = actions(feature(pack), true);
+    const notes = unverifiedNotes(feature(pack));
+    const hidden = row(notes, true);
     expect(hidden).not.toContain("dg-unverified");
-    expect(hidden).toBe(shown.replace(/<span class="dg-unverified"[^>]*>.*?<\/span><\/span>/, ""));
+    expect(hidden).toBe(row(notes).replace(/<span class="dg-unverified"[^>]*>.*?<\/span><\/span>/, ""));
   });
 });

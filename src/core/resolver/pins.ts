@@ -121,6 +121,23 @@ export function choosePins(
   return slots;
 }
 
+/**
+ * Any pool by the key an action's cost or the event log names it: a resource key
+ * (bare or as `resources.<key>`), `slots.<n>`, `pact` or `hitDice.<die>`. The
+ * sheet reads it live when a menu lets the player set a pool by hand.
+ */
+export function poolOf(character: ResolvedCharacter, key: string): Omit<PinnedSlot, "reason"> | undefined {
+  const bare = key.startsWith("resources.") ? key.slice("resources.".length) : key;
+  const resource = character.resources.find((r) => r.key === bare);
+  if (resource)
+    return { target: `resources.${resource.key}`, name: resource.name, remaining: resource.remaining, max: resource.max, die: resource.die, resource };
+  if (key.startsWith("hitDice.")) {
+    const pool = character.hp.hitDice.find((h) => `hitDice.${h.die}` === key);
+    return pool ? { target: key, name: `${pool.die} hit dice`, remaining: pool.remaining, max: pool.max, die: pool.die } : undefined;
+  }
+  return poolFor(character, key);
+}
+
 function poolFor(character: ResolvedCharacter, pin: string): Omit<PinnedSlot, "reason"> | undefined {
   const casting = character.spellcasting;
   if (!casting) return undefined;

@@ -5,6 +5,7 @@
  */
 
 import { factsOf } from "../../../core/content/facts";
+import { unverifiedNotes } from "../../../core/content/provenance";
 import { averageForDie } from "../../../core/resolver/spellslots";
 import { describeRequirement } from "../../../core/content/requirements";
 import type { PendingChoice } from "../../../core/resolver/resolved";
@@ -99,6 +100,7 @@ export function optionsFor(
     tag: option.abbreviation,
     source: sourceOf(option.source),
     warnings: option.warnings,
+    unverified: unverifiedNotes(option.element),
     allowed: option.allowed,
     heldBy: option.heldBy,
   }));

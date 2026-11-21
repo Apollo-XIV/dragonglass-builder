@@ -160,7 +160,7 @@ export class DragonglassSettingTab extends PluginSettingTab {
     new Setting(containerEl)
       .setName("Hide unverified markers")
       .setDesc(
-        "Parts the converter derived from Foundry's data or read from a feature's text carry a small marker until someone reviews them. " +
+        "In the builder, content the converter derived from Foundry's data or read from a feature's text carries a small marker until someone reviews it. " +
           "The marker is only a note; hiding it changes nothing else.",
       )
       .addToggle((toggle) =>

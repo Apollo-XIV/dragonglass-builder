@@ -1,7 +1,7 @@
 /** Which resources take the sheet's two pinned slots, and in what order. */
 
 import { describe, expect, it } from "vitest";
-import { choosePins } from "../src/core/resolver/pins";
+import { choosePins, poolOf } from "../src/core/resolver/pins";
 import type { ResolvedCharacter, ResolvedResource } from "../src/core/resolver/resolved";
 
 function resource(over: Partial<ResolvedResource>): ResolvedResource {
@@ -76,5 +76,30 @@ describe("choosing pinned resources", () => {
   it("never pins the same pool twice", () => {
     const slots = choosePins(character([rage]), { character: ["rage"], plugin: ["resources.rage"] });
     expect(slots).toHaveLength(1);
+  });
+});
+
+describe("reading a pool by the key a cost names it", () => {
+  const loh = resource({ key: "srd:paladin:lay-on-hands", id: "lay-on-hands", name: "Lay on Hands", max: 25, remaining: 20 });
+  const who = {
+    resources: [loh],
+    hp: { hitDice: [{ die: "d10", max: 5, spent: 2, remaining: 3 }] },
+    spellcasting: { slots: [{ level: 1, max: 4, spent: 1, remaining: 3 }], pact: { level: 2, max: 2, spent: 0, remaining: 2 } },
+  } as unknown as ResolvedCharacter;
+
+  it("finds a resource by its bare key or as a pool target", () => {
+    expect(poolOf(who, "srd:paladin:lay-on-hands")).toMatchObject({ target: "resources.srd:paladin:lay-on-hands", remaining: 20, max: 25, resource: loh });
+    expect(poolOf(who, "resources.srd:paladin:lay-on-hands")?.remaining).toBe(20);
+  });
+
+  it("finds slots, pact magic and hit dice", () => {
+    expect(poolOf(who, "slots.1")).toMatchObject({ target: "slots.1", remaining: 3, max: 4 });
+    expect(poolOf(who, "pact")).toMatchObject({ target: "pact", remaining: 2 });
+    expect(poolOf(who, "hitDice.d10")).toMatchObject({ target: "hitDice.d10", name: "d10 hit dice", remaining: 3, max: 5 });
+  });
+
+  it("finds nothing for a pool the character lacks", () => {
+    expect(poolOf(who, "slots.9")).toBeUndefined();
+    expect(poolOf(who, "srd:monk:ki")).toBeUndefined();
   });
 });

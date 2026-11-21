@@ -1,6 +1,7 @@
 /** Planned: the cards for levels still to come, which sit under the PLANNED divider. */
 
 import { type ReactNode } from "react";
+import { unverifiedNotes } from "../../../../core/content/provenance";
 import { plannedFor, setPlannedChoice } from "../../../../core/resolver/levels";
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { Element } from "../../../../core/types";
@@ -102,6 +103,7 @@ export function PlannedStaged({
                 title={element?.name ?? id}
                 subtitle="look ahead"
                 text={typeof element?.text === "string" ? element.text : undefined}
+                unverified={element ? unverifiedNotes(element) : undefined}
                 className="dg-level-feature"
               />
             );
@@ -142,6 +144,7 @@ function PlannedEntry({
             title={element?.name ?? id}
             subtitle="look ahead"
             text={typeof element?.text === "string" ? element.text : undefined}
+            unverified={element ? unverifiedNotes(element) : undefined}
             className="dg-level-feature"
           />
         );
@@ -166,6 +169,7 @@ function PlannedEntry({
                   text: typeof option.text === "string" ? option.text : undefined,
                   tag: index.abbreviation(option.source),
                   source: sourceRefOf(index, option.source),
+                  unverified: unverifiedNotes(option),
                 })),
                 defaultFilter: inheritedFilterOf(index, classId),
                 selected: chosen,

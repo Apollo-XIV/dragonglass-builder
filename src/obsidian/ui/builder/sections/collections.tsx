@@ -1,6 +1,7 @@
 /** Spells, equipment and details: the lists a character carries and the facts about it. */
 
 import { useRef, type ReactNode } from "react";
+import { unverifiedNotes } from "../../../../core/content/provenance";
 import type {
   ResolvedCharacter,
   ResolvedSpellcastingClass,
@@ -95,6 +96,7 @@ export function SpellsSection({
       group: level > 0 ? `Level ${level}` : "Cantrip",
       bucket: level > 0 ? "leveled" : "cantrips",
       allowed: !tooHigh,
+      unverified: unverifiedNotes(spell),
       warnings: tooHigh
         ? [`Level ${level}; ${limits.name} can learn up to level ${ceiling}`]
         : undefined,
@@ -251,6 +253,7 @@ export function EquipmentSection({
         tag: index.abbreviation(item.source),
         source: sourceRefOf(index, item.source),
         group: item.tags?.[0],
+        unverified: unverifiedNotes(item),
       })),
       selected: [],
       count: 99,

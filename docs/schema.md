@@ -844,9 +844,11 @@ whether anyone has checked it:
   (a tool derived it and no one has read it). Anything but `reviewed` counts as unverified.
 - **It never changes behaviour.** A part with provenance resolves, spends and exports exactly as
   one without. A malformed value is a validator warning and is ignored.
-- The sheet puts a small dashed marker on an action, resource, effect or feature row that has an
+- The builder puts a small dashed marker on a feature row or a picker option whose element has an
   unverified part, with a tooltip: "From Foundry's dnd5e data, not yet reviewed", "Read from the
-  feature's text, not yet reviewed", and so on. The setting **Hide unverified markers** hides them.
+  feature's text, not yet reviewed", and so on. Reading the row (the hold sheet, or the desktop
+  sidebar) spells it out. The sheet shows none: at the table it is a question the player can't
+  answer. The setting **Hide unverified markers** hides them.
 - Not to be confused with a feature's export `provenance` (`class`, `classLevel`, `via`), which says
   where the *feature* came from in the character's build.
 

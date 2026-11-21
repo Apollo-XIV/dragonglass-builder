@@ -12,9 +12,11 @@ import { useRef, type ReactNode } from "react";
 import { describeRoll, rollNotation, type RollOptions } from "../../../core/dice";
 import type { Explanation, ExplainRow } from "../../../core/resolver/explain";
 import { describeUses } from "../../../core/state/recharge";
+import { event } from "../../../core/state/fold";
+import type { CharacterStore } from "../../character-store";
 import type { Fact } from "../../../core/content/facts";
 import { Facts, Icon, Markdown } from "../components";
-import { ProvenanceMark } from "../provenance";
+import { ProvenanceMark, UnverifiedNote } from "../provenance";
 import { UI } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHold } from "./hold";
@@ -70,16 +72,19 @@ export function TextBody({
   facts,
   formula,
   sourcePath,
+  unverified,
 }: {
   text?: string;
   fluff?: string;
   facts?: Fact[];
   formula?: string;
   sourcePath?: string;
+  unverified?: readonly string[];
 }): ReactNode {
   return (
     <>
       {formula ? <p className="dg-sheet-formula">{formula}</p> : null}
+      <UnverifiedNote notes={unverified} />
       {fluff ? <Markdown source={fluff} sourcePath={sourcePath} className="dg-fluff" /> : null}
       <Facts facts={facts} />
       {text ? <Markdown source={text} sourcePath={sourcePath} /> : <p className="dg-muted">No rules text.</p>}
@@ -355,7 +360,7 @@ export function ReadRow({
     sheet.open({
       title,
       subtitle,
-      body: () => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} />,
+      body: () => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} unverified={unverified} />,
     });
 
   const { handlers } = useHold({
@@ -369,7 +374,7 @@ export function ReadRow({
       <span className="dg-read-main">
         <span className="dg-read-title">
           {title}
-          {unverified?.length ? <ProvenanceMark notes={unverified} /> : null}
+          <ProvenanceMark notes={unverified} />
         </span>
         {subtitle ? <span className="dg-read-subtitle">{subtitle}</span> : null}
       </span>
@@ -429,10 +434,43 @@ export function ResourcePill({
   onSpend: () => void;
   onSet: (remaining: number) => void;
 }): ReactNode {
+  const { open: menu, spend } = useResourceMenu({ name, subtitle, text, read, onSpend, onSet });
+
+  const { handlers } = useHold({ onTap: spend, onHold: menu, className: "dg-resource-pill" });
+
+  return (
+    <button {...handlers} style={handlers.style} aria-label={Number.isFinite(max) ? `${name}, ${remaining} of ${max} left` : `${name}, unlimited`}>
+      <Pips total={max} filled={remaining} />
+    </button>
+  );
+}
+
+/**
+ * The resource menu (spec 3.3.3): the pool's text, a stepper for its uses, and Use
+ * one and Restore all. It re-reads its numbers on every render of the host, so
+ * spending from inside it updates the pips under it without closing. A resource
+ * pill opens it, and so does holding the Use button of an action that spends one.
+ */
+export function useResourceMenu({
+  name,
+  subtitle,
+  text,
+  read,
+  onSpend,
+  onSet,
+}: {
+  name: string;
+  subtitle?: string;
+  text?: string;
+  read: () => { remaining: number; max: number };
+  onSpend: () => void;
+  onSet: (remaining: number) => void;
+}): { open: () => void; spend: () => void } {
   const sheet = useSheet();
   const toast = useToast();
   const haptics = useHaptics();
 
+  /** Spends one from a tap or the menu's Use one, and says what is left. */
   const spend = (): void => {
     const now = read();
     if (now.remaining <= 0) {
@@ -444,9 +482,7 @@ export function ResourcePill({
     toast.show({ label: name, detail: Number.isFinite(now.max) ? `${now.remaining - 1} of ${now.max} left` : "Unlimited" });
   };
 
-  // The menu re-reads its numbers on every render of the host, so spending from
-  // inside it updates the pips here and there without closing.
-  const menu = (): void =>
+  const open = (): void =>
     sheet.open({
       title: name,
       subtitle,
@@ -498,13 +534,30 @@ export function ResourcePill({
       },
     });
 
-  const { handlers } = useHold({ onTap: spend, onHold: menu, className: "dg-resource-pill" });
+  return { open, spend };
+}
 
-  return (
-    <button {...handlers} style={handlers.style} aria-label={Number.isFinite(max) ? `${name}, ${remaining} of ${max} left` : `${name}, unlimited`}>
-      <Pips total={max} filled={remaining} />
-    </button>
-  );
+/**
+ * Changing a pool reads its current value from the store when the button is
+ * pressed, not from the render that drew the row. The resource menu stays open
+ * while you spend (spec 3.3.3), so by the second press the captured value would
+ * be a step behind and the stepper would fight the player.
+ */
+export function usePoolControls(
+  store: CharacterStore,
+  target: string,
+  read: () => number,
+): { spend: () => void; set: (to: number) => void } {
+  return {
+    spend: () => store.appendEvents(event("spend", { target, amount: 1 })),
+    set: (to) => {
+      const delta = to - read();
+      if (delta === 0) return;
+      store.appendEvents(
+        delta > 0 ? event("regain", { target, amount: delta }) : event("spend", { target, amount: -delta }),
+      );
+    },
+  };
 }
 
 /** Pips as plain marks: in the narrow layout the pill around them is the target. */

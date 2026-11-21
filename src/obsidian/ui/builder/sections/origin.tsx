@@ -1,6 +1,7 @@
 /** Origin: species, background, ability scores, and the choices they bring. */
 
 import { type ReactNode } from "react";
+import { unverifiedNotes } from "../../../../core/content/provenance";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type {
   PendingChoice,
@@ -159,6 +160,7 @@ export function OriginSection({
         fluff: typeof element.fluff === "string" ? element.fluff : undefined,
         tag: index.abbreviation(element.source),
         source: sourceRefOf(index, element.source),
+        unverified: unverifiedNotes(element),
       })),
       selected: current ? [current] : [],
       count: 1,

@@ -29,6 +29,7 @@ import {
   type SourceFilter,
   type SourceRef,
 } from "./source-filter";
+import { ProvenanceMark, UnverifiedNote } from "../provenance";
 import { useDetail, type DetailSpec } from "./detail";
 import { useBuilderFeatures } from "./features";
 import { useHold } from "../narrow/hold";
@@ -46,6 +47,8 @@ export interface PickerOption {
   source?: SourceRef;
   /** Unmet prerequisites. Shown as an amber note; only enforced if asked. */
   warnings?: string[];
+  /** Why its parts are unverified (`unverifiedNotes`), for the marker beside the name. */
+  unverified?: readonly string[];
   /** A small tag beside the name: "queued", for a class that has planned levels waiting. */
   badge?: string;
   allowed?: boolean;
@@ -355,6 +358,7 @@ export function PickerBody({
                             fluff: option.fluff,
                             facts: option.facts,
                             subtitle: option.warnings?.join("; "),
+                            unverified: option.unverified,
                           }
                         : undefined,
                     )
@@ -514,6 +518,7 @@ function OptionRow({
         body: () =>
           option.text || option.fluff || option.facts?.length ? (
             <>
+              <UnverifiedNote notes={option.unverified} />
               {option.fluff ? <Markdown source={option.fluff} className="dg-fluff" /> : null}
               <Facts facts={option.facts} />
               {option.text ? <Markdown source={option.text} /> : null}
@@ -538,7 +543,10 @@ function OptionRow({
       aria-label={taken > 1 ? `${option.name}, ${taken} taken` : undefined}
     >
       <span className="dg-option-main">
-        <span className="dg-option-name">{option.name}</span>
+        <span className="dg-option-name">
+          {option.name}
+          <ProvenanceMark notes={option.unverified} />
+        </span>
         {option.badge ? <span className="dg-option-badge">{option.badge}</span> : null}
         {option.heldBy ? <span className="dg-option-held">Already from {option.heldBy}</span> : null}
         {option.warnings?.length ? (
