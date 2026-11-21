@@ -9,7 +9,7 @@
 
 import { useState, type ReactNode } from "react";
 import { choosePins, type PinnedSlot } from "../../../core/resolver/pins";
-import type { ResolvedCharacter } from "../../../core/resolver/resolved";
+import { readingText, type ResolvedCharacter } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import { describeRecharge, describeUses } from "../../../core/state/recharge";
 import type { CharacterStore } from "../../character-store";
@@ -199,7 +199,7 @@ function PinnedResource({ slot, store }: { slot: PinnedSlot; store: CharacterSto
         const now = read();
         return (
           <>
-            <TextBody text={slot.resource?.notes} />
+            <TextBody text={slot.resource ? readingText(slot.resource) : undefined} />
             <div className="dg-uses">
               <span className="dg-uses-label">Uses left</span>
               <div className="dg-stepper">

@@ -12,7 +12,7 @@ import { factsOf } from "../../../core/content/facts";
 import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
 import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
-import type { ResolvedAction, ResolvedCharacter, ResolvedInnate, ResolvedResource, ResolvedSpell } from "../../../core/resolver/resolved";
+import { readingText, type ResolvedAction, type ResolvedCharacter, type ResolvedInnate, type ResolvedResource, type ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import { withSpent } from "../../../core/state/use-action";
 import { mentionsSpent } from "../../../core/expr/evaluate";
@@ -242,7 +242,7 @@ function ResourceRow({ resource, store }: { resource: ResolvedResource; store: C
     <ReadRow
       title={resource.name}
       subtitle={`${describeRecharge(resource.recharge)} · ${resource.sourceName}`}
-      text={resource.notes}
+      text={readingText(resource)}
     >
       <ResourcePillFor resource={resource} store={store} />
     </ReadRow>
@@ -260,7 +260,7 @@ function ResourcePillFor({ resource, store }: { resource: ResolvedResource; stor
       name={resource.name}
       remaining={resource.remaining}
       max={resource.max}
-      text={resource.notes}
+      text={readingText(resource)}
       subtitle={resource.sourceName}
       read={read}
       onSpend={spend}
@@ -342,7 +342,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           ]
             .filter(Boolean)
             .join(" · ")}
-          text={action.text}
+          text={readingText(action)}
           className={action.available ? undefined : "is-unavailable"}
         >
           {action.attack ? (

@@ -580,6 +580,7 @@ function resolveResources(
       source: from.element.id,
       sourceName: from.element.name,
       notes: def.notes,
+      rulesText: textOf(content, from.element),
       ...(def.provenance ? { provenance: def.provenance } : {}),
     });
   }
@@ -718,6 +719,7 @@ function resolveActions(
       attack,
       text: def.text,
       notes: def.notes,
+      rulesText: textOf(content, from.element),
       source: from.element.id,
       sourceName: from.element.name,
       available,

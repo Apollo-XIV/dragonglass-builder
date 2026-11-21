@@ -150,6 +150,8 @@ export interface ResolvedResource {
   source: string;
   sourceName: string;
   notes?: string;
+  /** The rules text of the element the pool belongs to, which its own `notes` only supplement. */
+  rulesText?: string;
   provenance?: PartProvenance;
 }
 
@@ -202,6 +204,8 @@ export interface ResolvedAction {
   attack?: ResolvedAttack;
   text?: string;
   notes?: string;
+  /** The rules text of the element the action belongs to, which its own `text` only supplements. */
+  rulesText?: string;
   source: string;
   sourceName: string;
   /** False when a cost can't be paid right now (live state only). */
@@ -447,4 +451,14 @@ export interface ResolvedCharacter {
   pendingChoices: PendingChoice[];
   status: LiveStatus;
   diagnostics: Diagnostic[];
+}
+
+/**
+ * What a sheet shows when a resource or an action is read: the part's own text and notes,
+ * which say what the parts don't mechanise, then the rules text of the element it came from.
+ * A part rarely carries text of its own, so without the last the reading would be empty.
+ */
+export function readingText(part: { text?: string; notes?: string; rulesText?: string }): string | undefined {
+  const parts = [part.text, part.notes, part.rulesText].filter((t): t is string => !!t && t.trim() !== "");
+  return parts.length ? [...new Set(parts)].join("\n\n") : undefined;
 }

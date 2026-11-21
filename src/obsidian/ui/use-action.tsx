@@ -10,6 +10,7 @@
 
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { poolOf } from "../../core/resolver/pins";
+import { readingText } from "../../core/resolver/resolved";
 import { describeRecharge } from "../../core/state/recharge";
 import {
   type Spender,
@@ -159,7 +160,7 @@ function usePoolMenu(store: CharacterStore, key: string | undefined): (() => voi
   const { open } = useResourceMenu({
     name: pool?.name ?? "",
     subtitle: pool?.resource ? `${describeRecharge(pool.resource.recharge)} · ${pool.resource.sourceName}` : undefined,
-    text: pool?.resource?.notes,
+    text: pool?.resource ? readingText(pool.resource) : undefined,
     read,
     onSpend: spend,
     onSet: set,
