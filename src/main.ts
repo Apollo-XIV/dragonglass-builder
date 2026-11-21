@@ -155,7 +155,8 @@ export default class DragonglassPlugin extends Plugin {
     // A click on a character's folder (marked with a d20, see explorer-badges.ts) opens its
     // sheet instead of toggling the folder; the chevron still toggles. Capture phase, so it
     // runs before the explorer's own handler. A middle click always opens a new tab, as it
-    // does for a file.
+    // does for a file. On a phone the explorer is a drawer over the page, and Obsidian closes
+    // it when a file is opened from it, so this does too.
     const onExplorerClick = (evt: MouseEvent, newTab: boolean): void => {
       const target = evt.target instanceof Element ? evt.target : null;
       const indicator = target
@@ -169,6 +170,7 @@ export default class DragonglassPlugin extends Plugin {
       evt.preventDefault();
       evt.stopPropagation();
       void this.openCharacter(folder, "sheet", newTab ? "tab" : "reuse");
+      if (Platform.isPhone) this.closeDrawerHolding(target);
     };
     this.registerDomEvent(document, "click", (evt) => onExplorerClick(evt, false), true);
     registerExplorerBadges(this, this.app);
@@ -436,6 +438,17 @@ export default class DragonglassPlugin extends Plugin {
    * `reuse` brings forward a pane already showing this character (its sheet or its
    * builder, the sheet first) and only opens a tab if there is none.
    */
+  /** Closes whichever sidebar drawer `el` sits in, if it sits in one. */
+  private closeDrawerHolding(el: Element | null): void {
+    const { leftSplit, rightSplit } = this.app.workspace;
+    const explorer = this.app.workspace
+      .getLeavesOfType("file-explorer")
+      .find((leaf) => el && leaf.view.containerEl.contains(el));
+    const root = explorer?.getRoot();
+    if (root === leftSplit) leftSplit.collapse();
+    else if (root === rightSplit) rightSplit.collapse();
+  }
+
   async openCharacter(folder: string, kind: FileKind = "sheet", mode: "tab" | "reuse" = "tab"): Promise<void> {
     const path = normalizePath(`${folder}/${DEFAULT_FILE_NAMES[kind]}`);
     const file = this.app.vault.getAbstractFileByPath(path);
