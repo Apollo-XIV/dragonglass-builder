@@ -1638,10 +1638,13 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   padding-bottom: calc(var(--size-4-4) + 44px + env(safe-area-inset-bottom, 0px) + var(--size-4-4) + 16px);
 }
 
+/* A whole thumb's worth: 44px tall, and out across the sheet's side padding to
+ * both edges, so the drag can start anywhere along the top. */
 .dg-sheet-grip {
   display: grid;
   place-items: center;
-  padding: var(--size-4-2) 0;
+  min-height: 44px;
+  margin: 0 calc(-1 * var(--size-4-4));
   touch-action: none;
   cursor: grab;
 }
