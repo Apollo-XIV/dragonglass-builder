@@ -87,7 +87,9 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
     <SheetContext.Provider value={controller}>
       {children}
       {spec ? (
-        <div className="dg-sheet-layer">
+        // `data-ignore-swipe`, as on the rail: swiping the sheet down to close it
+        // must not also pull down Obsidian's command palette.
+        <div className="dg-sheet-layer" data-ignore-swipe="true">
           <div className="dg-sheet-scrim" onPointerDown={close} />
           <div
             className="dg-bottom-sheet"
