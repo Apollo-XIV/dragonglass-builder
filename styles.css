@@ -5060,3 +5060,25 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--text-normal);
   box-shadow: var(--shadow-s);
 }
+
+/* --- file explorer -------------------------------------------------------- */
+
+/* The d20 at the end of a character folder's row (explorer-badges.ts). */
+.dg-character-folder-badge {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+  padding-inline-start: var(--size-4-2);
+  color: var(--text-faint);
+}
+
+.dg-character-folder-badge svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.dg-character-folder:hover .dg-character-folder-badge,
+.dg-character-folder.is-active .dg-character-folder-badge {
+  color: var(--text-muted);
+}

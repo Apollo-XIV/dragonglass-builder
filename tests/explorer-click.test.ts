@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { characterSheetPath, clickedExplorerFolder } from "../src/obsidian/character-files";
+import { characterFolders, characterSheetPath, clickedExplorerFolder } from "../src/obsidian/character-files";
 
 const none = { ctrlKey: false, metaKey: false, shiftKey: false, altKey: false };
 
@@ -43,5 +43,12 @@ describe("explorer folder clicks", () => {
   it("ignores clicks outside a folder row", () => {
     expect(clickedExplorerFolder(el({}), none)).toBeNull();
     expect(clickedExplorerFolder(null, none)).toBeNull();
+  });
+});
+
+describe("character folders", () => {
+  it("are the folders with a sheet directly inside", () => {
+    const folders = characterFolders(["Party/Mira/sheet.5e", "Party/Mira/build.5e", "Party/notes.md", "Old/sheet.5e.bak", "Solo/sheet.5e"]);
+    expect([...folders].sort()).toEqual(["Party/Mira", "Solo"]);
   });
 });

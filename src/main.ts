@@ -26,6 +26,7 @@ import {
   unsavedWarning,
   writeExport,
 } from "./obsidian/export-character";
+import { registerExplorerBadges } from "./obsidian/explorer-badges";
 import { EXPORT_VIEW, ExportFileView } from "./obsidian/export-view";
 import { registerGameIcons } from "./obsidian/icons";
 import { DragonglassSettingTab } from "./obsidian/settings-tab";
@@ -151,9 +152,10 @@ export default class DragonglassPlugin extends Plugin {
       },
     });
 
-    // A click on a character's folder opens its sheet instead of toggling the folder; the
-    // chevron still toggles. Capture phase, so it runs before the explorer's own handler.
-    // A middle click always opens a new tab, as it does for a file.
+    // A click on a character's folder (marked with a d20, see explorer-badges.ts) opens its
+    // sheet instead of toggling the folder; the chevron still toggles. Capture phase, so it
+    // runs before the explorer's own handler. A middle click always opens a new tab, as it
+    // does for a file.
     const onExplorerClick = (evt: MouseEvent, newTab: boolean): void => {
       const target = evt.target instanceof Element ? evt.target : null;
       const indicator = target
@@ -169,6 +171,7 @@ export default class DragonglassPlugin extends Plugin {
       void this.openCharacter(folder, "sheet", newTab ? "tab" : "reuse");
     };
     this.registerDomEvent(document, "click", (evt) => onExplorerClick(evt, false), true);
+    registerExplorerBadges(this, this.app);
     this.registerDomEvent(
       document,
       "auxclick",

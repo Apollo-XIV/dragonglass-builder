@@ -113,6 +113,13 @@ export function clickedExplorerFolder(
   return target.closest(".nav-folder-title")?.getAttribute("data-path") ?? null;
 }
 
+/** The folders holding a character: those with a sheet directly inside them. */
+export function characterFolders(filePaths: Iterable<string>): Set<string> {
+  const folders = new Set<string>();
+  for (const path of filePaths) if (fileName(path) === DEFAULT_FILE_NAMES.sheet) folders.add(folderOf(path));
+  return folders;
+}
+
 export function folderOf(filePath: string): string {
   const i = filePath.lastIndexOf("/");
   return i < 0 ? "" : filePath.slice(0, i);
