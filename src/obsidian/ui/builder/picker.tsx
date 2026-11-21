@@ -250,16 +250,42 @@ export function PickerBody({
     if (live) spec.onCommit(next);
   };
 
+  const searchRow = spec.search || activeCount(sourceFilter) > 0 || filterOpen;
+  // With a count line the pip sits at its right, rather than taking a row of its own.
+  const filterPip =
+    searchRow && facets.sources.length > 0 ? (
+      <button
+        className={
+          activeCount(sourceFilter) > 0
+            ? "dg-filter-pip is-active"
+            : "dg-filter-pip"
+        }
+        aria-expanded={filterOpen}
+        onClick={() => setFilterOpen(!filterOpen)}
+      >
+        <Icon name="filter" />
+        <span className="dg-sr-only">Filter by ruleset and source</span>
+        {activeCount(sourceFilter) > 0 ? (
+          <span className="dg-filter-pip-count">
+            {activeCount(sourceFilter)}
+          </span>
+        ) : null}
+      </button>
+    ) : null;
+
   return (
     <>
       {multiple ? (
-        <p className="dg-muted">
-          {Number.isFinite(spec.count) ? `${selected.length} of ${spec.count} chosen` : `${selected.length} chosen`}
-          {stepping ? " · tap again for another, or to clear it" : ""}
-          {stepping && spec.maxPer !== undefined && spec.maxPer < spec.count
-            ? ` · at most ${spec.maxPer} in any one`
-            : ""}
-        </p>
+        <div className="dg-picker-head">
+          <p className="dg-muted">
+            {Number.isFinite(spec.count) ? `${selected.length} of ${spec.count} chosen` : `${selected.length} chosen`}
+            {stepping ? " · tap again for another, or to clear it" : ""}
+            {stepping && spec.maxPer !== undefined && spec.maxPer < spec.count
+              ? ` · at most ${spec.maxPer} in any one`
+              : ""}
+          </p>
+          {filterPip}
+        </div>
       ) : null}
       {spec.buckets ? (
         <p className="dg-muted">
@@ -272,7 +298,7 @@ export function PickerBody({
             .join(" · ")}
         </p>
       ) : null}
-      {spec.search || activeCount(sourceFilter) > 0 || filterOpen ? (
+      {searchRow ? (
         <div className="dg-picker-search">
           {spec.search ? (
             <input
@@ -282,37 +308,21 @@ export function PickerBody({
               onChange={(e) => setQuery(e.currentTarget.value)}
             />
           ) : null}
-          <div className="dg-picker-chiprow">
-            {facets.sources.length > 0 ? (
-              <button
-                className={
-                  activeCount(sourceFilter) > 0
-                    ? "dg-filter-pip is-active"
-                    : "dg-filter-pip"
-                }
-                aria-expanded={filterOpen}
-                onClick={() => setFilterOpen(!filterOpen)}
-              >
-                <Icon name="filter" />
-                <span className="dg-sr-only">Filter by ruleset and source</span>
-                {activeCount(sourceFilter) > 0 ? (
-                  <span className="dg-filter-pip-count">
-                    {activeCount(sourceFilter)}
-                  </span>
-                ) : null}
-              </button>
-            ) : null}
-            {groups.length > 1 ? (
-              <ChipRow
-                chips={[
-                  { id: "all", label: "All" },
-                  ...groups.map((g) => ({ id: g, label: g })),
-                ]}
-                active={group}
-                onPick={setGroup}
-              />
-            ) : null}
-          </div>
+          {(!multiple && filterPip) || groups.length > 1 ? (
+            <div className="dg-picker-chiprow">
+              {multiple ? null : filterPip}
+              {groups.length > 1 ? (
+                <ChipRow
+                  chips={[
+                    { id: "all", label: "All" },
+                    ...groups.map((g) => ({ id: g, label: g })),
+                  ]}
+                  active={group}
+                  onPick={setGroup}
+                />
+              ) : null}
+            </div>
+          ) : null}
           {filterOpen ? (
             <SourceFilterPanel
               facets={facets}
