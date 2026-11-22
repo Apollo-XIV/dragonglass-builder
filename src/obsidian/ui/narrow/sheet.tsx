@@ -90,7 +90,10 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
         // `data-ignore-swipe`, as on the rail: swiping the sheet down to close it
         // must not also pull down Obsidian's command palette.
         <div className="dg-sheet-layer" data-ignore-swipe="true">
-          <div className="dg-sheet-scrim" onPointerDown={close} />
+          {/* Closes on the click, the tap's last event, not on the press: a scrim
+              gone at `pointerdown` leaves the release and the click to land on
+              whatever is under it, and a tap meant to dismiss opens something. */}
+          <div className="dg-sheet-scrim" onClick={close} />
           <div
             className="dg-bottom-sheet"
             role="dialog"
