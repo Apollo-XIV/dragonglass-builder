@@ -3982,65 +3982,60 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 /* -- Death saves ---------------------------------------------------------- */
 
+/* The six pips take the vial's place and its width, and share its height
+ * between them. An empty pip is a sunken well, like the vial's track; a lit
+ * one fills it. Neither has an edge, so the accent outline can arrive on hover. */
 .dg-hp-death {
   display: flex;
   flex: none;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--size-4-2);
-  width: 2.5rem;
-  border-radius: var(--d-radius, var(--radius-s));
-  background: var(--background-modifier-border);
-}
-
-.dg-hp-death-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: var(--text-muted);
-  font-size: var(--d-label, 0.6875rem);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.dg-hp-death.is-dead .dg-hp-death-label {
-  color: var(--d-hp, var(--color-red));
-}
-
-.dg-hp-death.is-stable .dg-hp-death-label {
-  color: var(--d-heal, var(--color-green));
-}
-
-.dg-hp-death-pips {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 0.25rem;
+  width: 2.75rem;
 }
 
 .dg-layout .dg-hp-pip {
-  width: 0.75rem;
-  height: 0.75rem;
+  flex: 1;
+  min-height: 0.75rem;
+  width: 100%;
   padding: 0;
-  border: 1px solid var(--text-faint);
-  border-radius: 50%;
-  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-surface-sunken, var(--background-primary));
   box-shadow: none;
+  cursor: pointer;
+}
+
+.dg-layout .dg-hp-pip:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
 }
 
 .dg-layout .dg-hp-pip.is-success.is-on {
-  border-color: var(--d-heal, var(--color-green));
+  border-color: transparent;
   background: var(--d-heal, var(--color-green));
 }
 
 .dg-layout .dg-hp-pip.is-failure.is-on {
-  border-color: var(--d-hp, var(--color-red));
+  border-color: transparent;
   background: var(--d-hp, var(--color-red));
 }
 
-.dg-hp-death-divider {
-  width: 0.9rem;
-  border-top: 1px solid var(--text-faint);
+.dg-hp-death-state {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0;
+  color: var(--text-muted);
+}
+
+.dg-hp-death-state svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.dg-hp-death.is-stable .dg-hp-death-state,
+.dg-hp-death.is-dead .dg-hp-death-state {
+  color: var(--text-normal);
 }
 
 /* -- The register --------------------------------------------------------- */

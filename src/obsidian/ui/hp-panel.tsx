@@ -197,9 +197,12 @@ function Vial({ character, preview }: { character: ResolvedCharacter; preview?: 
 
 /**
  * At 0 HP the vial has nothing to show, so it becomes the six pips instead:
- * three successes, a divider, three failures. Clicking a pip sets that side's
- * count to it; clicking the topmost lit one takes it back. Three failures is
- * death, three successes stable, and any healing resets both through the fold.
+ * three successes above, three failures below, and between them the state —
+ * scales while dying, a steady pulse once stable, a skull at death. Each side
+ * counts outwards from the middle, so the pip next to the icon is the first.
+ * Clicking a pip sets that side's count to it; clicking the outermost lit one
+ * takes it back. Three failures is death, three successes stable, and any
+ * healing resets both through the fold.
  */
 function DeathSaves({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const { successes, failures } = character.status.deathSaves;
@@ -226,33 +229,28 @@ function DeathSaves({ store, character }: { store: CharacterStore; character: Re
   };
 
   const state = failures >= 3 ? "dead" : successes >= 3 ? "stable" : "dying";
+  const label = state === "dead" ? "Dead" : state === "stable" ? "Stable" : "Dying";
+  const icon = state === "dead" ? "skull" : state === "stable" ? "activity" : "scale";
+
+  const pip = (result: "success" | "failure", n: number, count: number): ReactNode => (
+    <button
+      key={`${result}${n}`}
+      type="button"
+      className={n <= count ? `dg-hp-pip is-${result} is-on` : `dg-hp-pip is-${result}`}
+      aria-label={`Death save ${result} ${n}`}
+      aria-pressed={n <= count}
+      onClick={() => set(result, n)}
+    />
+  );
 
   return (
     <div className={`dg-hp-death is-${state}`}>
-      <span className="dg-hp-death-label">{state === "dead" ? "Dead" : state === "stable" ? "Stable" : "Dying"}</span>
-      <div className="dg-hp-death-pips">
-        {[1, 2, 3].map((n) => (
-          <button
-            key={`s${n}`}
-            type="button"
-            className={n <= successes ? "dg-hp-pip is-success is-on" : "dg-hp-pip is-success"}
-            aria-label={`Death save success ${n}`}
-            aria-pressed={n <= successes}
-            onClick={() => set("success", n)}
-          />
-        ))}
-        <span className="dg-hp-death-divider" />
-        {[1, 2, 3].map((n) => (
-          <button
-            key={`f${n}`}
-            type="button"
-            className={n <= failures ? "dg-hp-pip is-failure is-on" : "dg-hp-pip is-failure"}
-            aria-label={`Death save failure ${n}`}
-            aria-pressed={n <= failures}
-            onClick={() => set("failure", n)}
-          />
-        ))}
-      </div>
+      {[3, 2, 1].map((n) => pip("success", n, successes))}
+      <span className="dg-hp-death-state" title={label}>
+        <Icon name={icon} />
+        <span className="dg-sr-only">{label}</span>
+      </span>
+      {[1, 2, 3].map((n) => pip("failure", n, failures))}
     </div>
   );
 }

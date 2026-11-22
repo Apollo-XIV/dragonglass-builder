@@ -284,6 +284,8 @@ describe("the desktop sheet", () => {
     );
     expect(downedHtml).toContain("dg-hp-death");
     expect(downedHtml).toContain('aria-label="Death save failure 1"');
+    expect(downedHtml).toContain("dg-hp-death is-dying");
+    expect(downedHtml).toContain(">Dying</span>");
     expect(downedHtml).not.toContain("dg-hp-vial");
   });
 });
