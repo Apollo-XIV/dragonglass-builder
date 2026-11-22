@@ -10,7 +10,7 @@ import {
   unlockLogin,
 } from "./github-auth";
 import { WrongPasswordError } from "./login-crypto";
-import { pollForToken, requestDeviceCode, type DeviceCode, type PostForm } from "./github-oauth";
+import { pollForToken, requestDeviceCode, wakeableSleep, type DeviceCode, type PostForm } from "./github-oauth";
 
 export const postForm: PostForm = async (url, form) => {
   const response = await requestUrl({
@@ -26,6 +26,12 @@ export const postForm: PostForm = async (url, form) => {
 /** Walks through GitHub's device flow and stores the login. `onDone` runs once it is saved. */
 export class GithubLoginModal extends Modal {
   private cancelled = false;
+  private readonly waker = wakeableSleep();
+  private status: HTMLElement | undefined;
+  // Coming back from the browser polls at once, rather than after whatever is left of the interval.
+  private readonly onVisible = (): void => {
+    if (document.visibilityState === "visible") this.waker.wake();
+  };
 
   constructor(
     app: App,
@@ -37,6 +43,7 @@ export class GithubLoginModal extends Modal {
   onOpen(): void {
     this.setTitle("Sign in to GitHub");
     this.contentEl.createEl("p", { text: "Asking GitHub for a code…" });
+    document.addEventListener("visibilitychange", this.onVisible);
     void this.run();
   }
 
@@ -44,7 +51,12 @@ export class GithubLoginModal extends Modal {
     try {
       const code = await requestDeviceCode(postForm);
       this.showCode(code);
-      const token = await pollForToken(postForm, code, { cancelled: () => this.cancelled });
+      const token = await pollForToken(postForm, code, {
+        sleep: this.waker.sleep,
+        cancelled: () => this.cancelled,
+        onReachable: (reachable) =>
+          this.status?.setText(reachable ? "Waiting for you to approve…" : "Can't reach GitHub right now. Still trying…"),
+      });
       setSessionLogin(token);
       this.close();
       // Saving is offered, not forced: without it the login simply ends with the session.
@@ -73,13 +85,17 @@ export class GithubLoginModal extends Modal {
       text:
         "This lets Dragonglass read the private repos your GitHub account can, to fetch sources. GitHub offers " +
         "no read-only scope for them, so the login can also write wherever you can; Dragonglass only ever reads. " +
-        "Next you can protect it with a password and save it, so a later update only needs the password. " +
-        "Waiting for you to approve…",
+        "Next you can protect it with a password and save it, so a later update only needs the password.",
     });
+    this.status = el.createEl("p", { text: "Waiting for you to approve…" });
+    el.createEl("button", { text: "I've approved it, check now" }).addEventListener("click", () => this.waker.wake());
   }
 
   onClose(): void {
     this.cancelled = true;
+    document.removeEventListener("visibilitychange", this.onVisible);
+    // Ends the current wait, so the poll loop sees the cancel now rather than after the interval.
+    this.waker.wake();
     this.contentEl.empty();
   }
 }
@@ -111,8 +127,9 @@ export class PasswordModal extends Modal {
           : "Unlocks your saved GitHub login for this session, to check for updates.",
     });
     const error = el.createEl("p", { cls: "mod-warning" });
+    const fields = el.createDiv({ cls: "dg-password-fields" });
     const field = (placeholder: string, set: (v: string) => void) => {
-      const input = el.createEl("input", { type: "password", placeholder });
+      const input = fields.createEl("input", { type: "password", placeholder });
       input.autocomplete = "off";
       input.addEventListener("input", () => set(input.value));
       input.addEventListener("keydown", (e) => e.key === "Enter" && void go());
