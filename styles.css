@@ -4178,6 +4178,34 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   margin: 0 0 0.15rem;
 }
 
+/* The help reads top-down like any prose, so it starts at the top of the box
+ * instead of resting on its floor, and nothing above it is hidden to fade. */
+.dg-hp-register-rows.is-help {
+  justify-content: flex-start;
+  mask-image: none;
+}
+
+.dg-hp-help {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.45;
+}
+
+.dg-hp-help p {
+  margin: 0 0 0.4rem;
+}
+
+.dg-hp-help code {
+  padding: 0;
+  background: none;
+  font-family: var(--font-monospace);
+  font-weight: 600;
+}
+
+.dg-hp-help-dismiss {
+  color: var(--text-faint);
+}
+
 /* The colour roles, in the one place they all appear at once. */
 .dg-hp-delta.is-damage {
   color: var(--d-hp, var(--color-red));
@@ -4352,13 +4380,19 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   right: 0;
   z-index: 50;
   display: flex;
-  gap: 0.2rem;
+  flex-direction: column;
+  gap: 0.3rem;
   /* The extra bottom padding lifts the buttons clear of the keyboard's edge. The
    * strip itself is see-through and lets taps fall to what is behind it, so only
    * the buttons catch them. */
   padding: 0.3rem 0.3rem 0.525rem;
   background: transparent;
   pointer-events: none;
+}
+
+.dg-hp-symbols-row {
+  display: flex;
+  gap: 0.2rem;
 }
 
 .dg-layout .dg-hp-symbol {
@@ -4392,6 +4426,22 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 .dg-layout .dg-hp-symbol.is-tempMax {
   color: var(--d-tempmax, var(--color-purple));
+}
+
+/* Square, at the left, and smaller than the keys below it: the help is not part
+ * of an entry, so it shouldn't read as one more symbol. */
+.dg-layout .dg-hp-symbol.dg-hp-symbol-help {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.dg-layout .dg-hp-symbol.dg-hp-symbol-help.is-on {
+  border-color: var(--interactive-accent);
+  color: var(--text-accent);
 }
 
 /* -- Desktop builder ----------------------------------------------------- */

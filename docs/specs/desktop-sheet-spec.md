@@ -119,6 +119,10 @@ The diff stays visible if the input loses focus with text still in it, so a forg
 
 Enter commits, and the input stays focused afterwards, ready for the next entry. Enter on an empty input does nothing. Esc cancels and closes. Clicking away closes the input only when it's empty.
 
+### Help
+
+An empty register says "Click below to manage HP. Type '?' for help." ("Tap" where the symbol strip is shown.) A `?` anywhere in the calc input, at any time, swaps the register's rows for a short explanation: what the register is, the damage, heal and set entries, temp HP and temp max HP, chaining, and that settings can replace the register with a conventional HP tracker. Nothing is parsed or previewed while the help is up. Deleting the `?` or pressing Enter (which removes it, and commits nothing) brings the rows back; the log is never touched. A phone's number pad has no `?`, so the symbol strip carries a small square `?` key on a row of its own above the symbols, aligned left, which toggles the help.
+
 ### Temp max HP
 
 Temp max HP moves the vial's ceiling. When positive, a tinted band in the temp max colour sits above a dashed line at base max. When negative, the top of the vial is blocked off down to the reduced max, and current HP caps at the new effective max. Every change is logged as its own row.

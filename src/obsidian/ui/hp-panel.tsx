@@ -15,6 +15,10 @@
  * - A pending entry is visible. Losing focus with text still in the box leaves
  *   the ghosts up, because a forgotten entry that looks committed is worse than
  *   one that looks pending.
+ *
+ * A `?` anywhere in the box swaps the register's rows for the help until it is
+ * taken out again or Enter is pressed. It is a view, not an entry: nothing is
+ * parsed or previewed while it is up, and the log underneath is untouched.
  */
 
 import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
@@ -58,7 +62,10 @@ export function HpPanel({
     tempMaxEffects: character.status.tempMaxHpEffects.map((e) => ({ id: e.id, amount: e.amount })),
   };
 
-  const parse = useMemo(() => parseHpCalc(text), [text]);
+  const help = text.includes("?");
+  // While the help is up the text is a question, not an entry, so it is neither
+  // parsed (a `?` is an error) nor previewed.
+  const parse = useMemo(() => (help ? { tokens: [] } : parseHpCalc(text)), [help, text]);
   // The preview is the commit, run without committing: one code path, so what the
   // vial shows is what Enter does.
   const preview: HpOutcome | undefined =
@@ -72,6 +79,12 @@ export function HpPanel({
   );
 
   const commit = (): void => {
+    // Enter on the help dismisses it and leaves whatever else was typed.
+    if (help) {
+      setText(text.replace(/\?/g, "").trim());
+      input.current?.focus();
+      return;
+    }
     if (!text.trim()) return;
     const parsed = parseHpCalc(text);
     if (parsed.error || !parsed.tokens.length) return;
@@ -102,7 +115,7 @@ export function HpPanel({
         <Vial character={character} preview={preview} />
       )}
       <div className="dg-hp-right">
-        <Register character={character} rows={rows} />
+        <Register character={character} rows={rows} help={help} touch={symbolStrip} />
         <Readout
           character={character}
           preview={preview}
@@ -264,12 +277,24 @@ function DeathSaves({ store, character }: { store: CharacterStore; character: Re
  * newest at the bottom, scrolled to the end. The fade at the top is deliberate:
  * it says the older entries are still there rather than pretending they aren't.
  */
-function Register({ character, rows }: { character: ResolvedCharacter; rows: RegisterRow[] }): ReactNode {
+function Register({
+  character,
+  rows,
+  help,
+  touch,
+}: {
+  character: ResolvedCharacter;
+  rows: RegisterRow[];
+  help: boolean;
+  /** A phone is tapped, not clicked, and the prompt says so. */
+  touch: boolean;
+}): ReactNode {
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [rows.length]);
+    // The help reads from its top; the roll from its newest entry.
+    if (el) el.scrollTop = help ? 0 : el.scrollHeight;
+  }, [rows.length, help]);
 
   return (
     <div className="dg-hp-register">
@@ -282,9 +307,12 @@ function Register({ character, rows }: { character: ResolvedCharacter; rows: Reg
           </span>
         ) : null}
       </div>
-      <div className="dg-hp-register-rows" ref={scroller}>
-        {rows.length === 0 ? <p className="dg-hp-register-empty">No changes yet.</p> : null}
-        {rows.map((row, i) => (
+      <div className={help ? "dg-hp-register-rows is-help" : "dg-hp-register-rows"} ref={scroller}>
+        {help ? <RegisterHelp /> : null}
+        {!help && rows.length === 0 ? (
+          <p className="dg-hp-register-empty">{touch ? "Tap" : "Click"} below to manage HP. Type &lsquo;?&rsquo; for help.</p>
+        ) : null}
+        {(help ? [] : rows).map((row, i) => (
           <div className="dg-hp-register-row" key={`${row.t}-${i}`} title={row.label ?? formatTime(row.t)}>
             <div className="dg-hp-register-row-inner">
               <span className="dg-hp-register-balance">
@@ -304,6 +332,37 @@ function Register({ character, rows }: { character: ResolvedCharacter; rows: Reg
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** What the register is and how to drive it, shown in place of the rows. */
+function RegisterHelp(): ReactNode {
+  const code = (text: string, role: HpToken["role"]): ReactNode => (
+    <code className={`dg-hp-token is-${role}`}>{text}</code>
+  );
+  return (
+    <div className="dg-hp-help">
+      <p>
+        Every change to your hit points is written here as a row: the total it left on the left, what changed on the
+        right. Type an entry in the box below and press Enter.
+      </p>
+      <p>
+        {code("-7", "damage")} damage, taken from temp HP first · {code("+3", "heal")} heal · {code("35", "set")} or{" "}
+        {code("=35", "set")} set your HP
+      </p>
+      <p>
+        Temp HP: {code("+t5", "temp")} gain · {code("-t5", "temp")} lose · {code("=t5", "temp")} set
+      </p>
+      <p>
+        Max HP, temporarily: {code("+m5", "tempMax")} raise · {code("-m5", "tempMax")} lower ·{" "}
+        {code("=m5", "tempMax")} set
+      </p>
+      <p>
+        Entries chain: {code("-9", "damage")} {code("+t5", "temp")} is one row.
+      </p>
+      <p>Prefer a conventional HP tracker? There is an option in settings to use one instead of the register.</p>
+      <p className="dg-hp-help-dismiss">Delete the ? or press Enter to go back.</p>
     </div>
   );
 }
@@ -436,6 +495,7 @@ function Readout({
   symbolStrip?: boolean;
 }): ReactNode {
   const sheet = useSheet();
+  const help = text.includes("?");
   const current = preview?.current ?? character.hp.current;
   const temp = preview?.temp ?? character.hp.temp;
   const open = editing || Boolean(text);
@@ -501,23 +561,43 @@ function Readout({
           </div>
           {showStrip ? (
             <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
-              {SYMBOLS.map(({ symbol, role }) => (
+              {/* The number pad has no `?`, so the help gets a key of its own, on
+               * a row above the symbols where it can't be hit mid-entry. A second
+               * press takes it out again. */}
+              <div className="dg-hp-symbols-row">
                 <button
-                  key={symbol}
                   type="button"
-                  className={`dg-hp-symbol is-${role}`}
-                  // Pressing a button would take focus from the input, which closes
-                  // an empty one and drops the keyboard before the click lands.
+                  className={help ? "dg-hp-symbol dg-hp-symbol-help is-on" : "dg-hp-symbol dg-hp-symbol-help"}
+                  aria-pressed={help}
                   onPointerDown={(e) => e.preventDefault()}
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => {
-                    onText(text + (symbol === "−" ? "-" : symbol));
+                    onText(help ? text.replace(/\?/g, "") : text + "?");
                     inputRef.current?.focus();
                   }}
                 >
-                  {symbol}
+                  ?<span className="dg-sr-only"> Help</span>
                 </button>
-              ))}
+              </div>
+              <div className="dg-hp-symbols-row">
+                {SYMBOLS.map(({ symbol, role }) => (
+                  <button
+                    key={symbol}
+                    type="button"
+                    className={`dg-hp-symbol is-${role}`}
+                    // Pressing a button would take focus from the input, which closes
+                    // an empty one and drops the keyboard before the click lands.
+                    onPointerDown={(e) => e.preventDefault()}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => {
+                      onText(text + (symbol === "−" ? "-" : symbol));
+                      inputRef.current?.focus();
+                    }}
+                  >
+                    {symbol}
+                  </button>
+                ))}
+              </div>
             </div>
           ) : null}
           {error ? <p className="dg-hp-calc-error">{error}</p> : null}
