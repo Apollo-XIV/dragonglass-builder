@@ -5160,6 +5160,13 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   user-select: all;
 }
 
+/* The password and its confirmation sit side by side, or stack in a narrow modal; spaced either way. */
+.dg-password-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--size-4-2);
+}
+
 /* Settings: a source's pin and folder get a row under its name, whatever the pane's width. */
 .dg-source-setting {
   flex-wrap: wrap;
