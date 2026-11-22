@@ -4444,6 +4444,134 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--text-accent);
 }
 
+/* -- The conventional tracker ------------------------------------------- */
+
+/* Fields and buttons in the register's well, one line each: the figures, the
+ * change, the maximum. Controls are tiles on the well, so they carry a fill and
+ * no edge, and the accent outline is left for hover and focus. */
+.dg-hp-conventional .dg-hp-right {
+  justify-content: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2);
+}
+
+/* It has no till roll to give a height to, so it sizes to its three lines. */
+.dg-n-hp .dg-hp-panel.dg-hp-conventional {
+  height: auto;
+}
+
+.dg-hp-conv-figures,
+.dg-hp-conv-change,
+.dg-hp-conv-maxrow {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  min-width: 0;
+}
+
+.dg-hp-conv-figures,
+.dg-hp-conv-maxrow {
+  justify-content: space-between;
+}
+
+.dg-layout .dg-hp-conv-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  height: auto;
+  padding: 0 0.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  cursor: default;
+}
+
+.dg-hp-conv-max {
+  color: var(--text-muted);
+  font-size: var(--d-value-small, 1.0625rem);
+  font-weight: 600;
+}
+
+.dg-hp-conv-label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+}
+
+.dg-hp-conv-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dg-hp-conv-temp .dg-hp-conv-label {
+  color: var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-conv-tempmax .dg-hp-conv-input {
+  color: var(--d-tempmax, var(--color-purple));
+}
+
+.dg-layout input.dg-hp-conv-input {
+  width: 3.25rem;
+  min-width: 0;
+  height: 1.875rem;
+  padding: 0 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-tile, var(--background-secondary));
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.dg-layout input.dg-hp-conv-input:hover,
+.dg-layout input.dg-hp-conv-input:focus {
+  border-color: var(--d-accent, var(--interactive-accent));
+  box-shadow: none;
+}
+
+/* The amount takes what the two buttons leave. */
+.dg-hp-conv-change .dg-hp-conv-input {
+  flex: 1;
+}
+
+.dg-layout .dg-hp-conv-button,
+.dg-layout .dg-hp-conv-step {
+  height: 1.875rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-tile, var(--background-secondary));
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.dg-layout .dg-hp-conv-button {
+  flex: none;
+  padding: 0 0.75rem;
+}
+
+.dg-layout .dg-hp-conv-step {
+  width: 1.875rem;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.dg-layout .dg-hp-conv-button:hover,
+.dg-layout .dg-hp-conv-step:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
+}
+
+.dg-layout .dg-hp-conv-button.is-heal {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-layout .dg-hp-conv-button.is-damage {
+  color: var(--d-hp, var(--color-red));
+}
+
 /* -- Desktop builder ----------------------------------------------------- */
 
 /* The tabs panel is the sheet's own; the builder only changes what is in it. */

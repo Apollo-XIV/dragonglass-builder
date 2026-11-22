@@ -171,6 +171,23 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Hit point tracker")
+      .setDesc(
+        "The register keeps a running log of every change and takes typed entries (type ? in it for help). " +
+          "The conventional tracker is fields and buttons. Both record the same history, so you can switch at any time.",
+      )
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("register", "Register")
+          .addOption("conventional", "Conventional")
+          .setValue(this.plugin.settings.layout.hpTracker)
+          .onChange(async (value) => {
+            this.plugin.settings.layout.hpTracker = value === "conventional" ? "conventional" : "register";
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
       .setName("Start in play mode")
       .setDesc("Hides builder controls when a sheet opens. Useful at the table.")
       .addToggle((toggle) =>

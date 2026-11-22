@@ -123,6 +123,10 @@ Enter commits, and the input stays focused afterwards, ready for the next entry.
 
 An empty register says "Click below to manage HP. Type '?' for help." ("Tap" where the symbol strip is shown.) A `?` anywhere in the calc input, at any time, swaps the register's rows for a short explanation: what the register is, the damage, heal and set entries, temp HP and temp max HP, chaining, and that settings can replace the register with a conventional HP tracker. Nothing is parsed or previewed while the help is up. Deleting the `?` or pressing Enter (which removes it, and commits nothing) brings the rows back; the log is never touched. A phone's number pad has no `?`, so the symbol strip carries a small square `?` key on a row of its own above the symbols, aligned left, which toggles the help.
 
+### Conventional tracker
+
+A setting (Layout → Hit point tracker) replaces the register with a conventional tracker, for players who would rather not type entries. It is the same panel, in both layouts: current HP over effective max, a Temp field, an amount with Heal and Damage buttons, and the base max with an Adjust field (with − and + steppers, since a phone's number pad may have no minus) for temp max HP. There is no vial and no log on screen. Every control writes a calc entry, so damage still comes off temp HP first, taking damage while concentrating still raises the check, and the history is the register's, ready if the setting is switched back. Adjust writes the difference rather than `=m`, so it leaves temp max HP from other sources alone. At 0 HP the death saves take the left of the panel, as they take the vial's place in the register.
+
 ### Temp max HP
 
 Temp max HP moves the vial's ceiling. When positive, a tinted band in the temp max colour sits above a dashed line at base max. When negative, the top of the vial is blocked off down to the reduced max, and current HP caps at the new effective max. Every change is logged as its own row.

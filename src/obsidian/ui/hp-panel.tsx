@@ -19,9 +19,13 @@
  * A `?` anywhere in the box swaps the register's rows for the help until it is
  * taken out again or Enter is pressed. It is a view, not an entry: nothing is
  * parsed or previewed while it is up, and the log underneath is untouched.
+ *
+ * The settings can swap the whole register for a conventional tracker: fields and
+ * buttons instead of a calc. It writes through the same calc, so the two leave the
+ * same events in the log and a character can move between them freely.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import { useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { explainStat } from "../../core/resolver/explain";
 import type { ResolvedCharacter } from "../../core/resolver/resolved";
 import { event } from "../../core/state/fold";
@@ -30,37 +34,82 @@ import {
   formatDelta,
   parseHpCalc,
   type HpOutcome,
+  type HpSnapshot,
   type HpToken,
 } from "../../core/state/hp-calc";
 import { concentrationDc } from "../../core/state/conditions";
 import { hpRegister, type RegisterRow } from "../../core/state/register";
 import type { CharacterStore } from "../character-store";
 import { Icon } from "./components";
+import { PluginContext } from "./context";
 import { useSheet } from "./narrow/sheet";
 import { TextBody } from "./narrow/targets";
 import { useToast } from "./narrow/toast";
 
-export function HpPanel({
-  store,
-  character,
-  /** A phone has no keyboard worth typing `=m4` on, so it gets the symbol strip. */
-  symbolStrip = false,
-}: {
+interface HpPanelProps {
   store: CharacterStore;
   character: ResolvedCharacter;
+  /** A phone has no keyboard worth typing `=m4` on, so it gets the symbol strip. */
   symbolStrip?: boolean;
-}): ReactNode {
-  const [text, setText] = useState("");
-  const [editing, setEditing] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
-  const toast = useToast();
+}
 
-  const snapshot = {
+export function HpPanel(props: HpPanelProps): ReactNode {
+  const tracker = useContext(PluginContext)?.plugin.settings.layout.hpTracker;
+  return tracker === "conventional" ? <ConventionalHp {...props} /> : <RegisterHp {...props} />;
+}
+
+function snapshotFor(character: ResolvedCharacter): HpSnapshot {
+  return {
     baseMax: character.hp.max.value,
     damage: character.hp.damage,
     temp: character.hp.temp,
     tempMaxEffects: character.status.tempMaxHpEffects.map((e) => ({ id: e.id, amount: e.amount })),
   };
+}
+
+/**
+ * Commits one calc entry: the events, and the concentration check that taking
+ * damage asks for. Both trackers come through here. Returns false when the text
+ * isn't an entry, so nothing was written.
+ */
+function useHpCommit(store: CharacterStore, character: ResolvedCharacter): (text: string) => boolean {
+  const toast = useToast();
+  return (text) => {
+    if (!text.trim()) return false;
+    const parsed = parseHpCalc(text);
+    if (parsed.error || !parsed.tokens.length) return false;
+    const outcome = applyHpCalc(parsed.tokens, snapshotFor(character));
+    store.appendEvents(...outcome.events);
+    // Taking damage while concentrating asks for a Constitution save; say so and
+    // say what to beat, because that is the arithmetic people stop to do.
+    if (outcome.taken > 0 && character.status.concentration) {
+      toast.show({
+        label: "Concentration check",
+        detail: `Constitution save · ${outcome.taken} damage`,
+        total: `DC ${concentrationDc(outcome.taken)}`,
+        tag: { text: "Concentrating", tone: "warn" },
+      });
+    }
+    return true;
+  };
+}
+
+/** The hold or right-click sheet on the current hit points: where max HP comes from. */
+function openHpSheet(sheet: ReturnType<typeof useSheet>, character: ResolvedCharacter): void {
+  const explanation = explainStat(character.hp.max, { label: "Maximum hit points" });
+  sheet.open({
+    title: "Hit points",
+    subtitle: `${character.hp.current} of ${character.hp.max.value + character.hp.tempMax}`,
+    body: () => <TextBody formula={explanation.formula} text={CALC_HELP} />,
+  });
+}
+
+function RegisterHp({ store, character, symbolStrip = false }: HpPanelProps): ReactNode {
+  const [text, setText] = useState("");
+  const [editing, setEditing] = useState(false);
+  const input = useRef<HTMLInputElement>(null);
+  const commitText = useHpCommit(store, character);
+  const snapshot = snapshotFor(character);
 
   const help = text.includes("?");
   // While the help is up the text is a question, not an entry, so it is neither
@@ -85,21 +134,7 @@ export function HpPanel({
       input.current?.focus();
       return;
     }
-    if (!text.trim()) return;
-    const parsed = parseHpCalc(text);
-    if (parsed.error || !parsed.tokens.length) return;
-    const outcome = applyHpCalc(parsed.tokens, snapshot);
-    store.appendEvents(...outcome.events);
-    // Taking damage while concentrating asks for a Constitution save; say so and
-    // say what to beat, because that is the arithmetic people stop to do.
-    if (outcome.taken > 0 && character.status.concentration) {
-      toast.show({
-        label: "Concentration check",
-        detail: `Constitution save · ${outcome.taken} damage`,
-        total: `DC ${concentrationDc(outcome.taken)}`,
-        tag: { text: "Concentrating", tone: "warn" },
-      });
-    }
+    if (!commitText(text)) return;
     setText("");
     // The input keeps focus: the next entry usually follows the last one closely.
     input.current?.focus();
@@ -137,6 +172,180 @@ export function HpPanel({
           symbolStrip={symbolStrip}
         />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The conventional tracker
+// ---------------------------------------------------------------------------
+
+/**
+ * Hit points the way a paper sheet or most apps keep them: the figures, an amount
+ * with Heal and Damage, a temp HP field, and a field for a temporary change to the
+ * maximum. Every button and field writes a calc entry, so temp HP still soaks
+ * damage first and the log reads the same as the register's would.
+ *
+ * At 0 HP the death saves take the left of the panel, as they take the vial's
+ * place in the register.
+ */
+function ConventionalHp({ store, character, symbolStrip = false }: HpPanelProps): ReactNode {
+  const commit = useHpCommit(store, character);
+  const sheet = useSheet();
+  const [amount, setAmount] = useState("");
+  const effectiveMax = character.hp.max.value + character.hp.tempMax;
+  const dying = character.hp.current === 0;
+
+  const apply = (sign: "+" | "-"): void => {
+    const n = wholeNumber(amount);
+    if (n === undefined || n <= 0) return;
+    if (commit(`${sign}${n}`)) setAmount("");
+  };
+
+  return (
+    <div className="dg-hp-panel dg-hp-conventional">
+      {dying ? <DeathSaves store={store} character={character} /> : null}
+      <div className="dg-hp-right">
+        <div className="dg-hp-conv-figures">
+          <button
+            type="button"
+            className="dg-hp-conv-figure"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              openHpSheet(sheet, character);
+            }}
+          >
+            <span className="dg-hp-current">{character.hp.current}</span>
+            <span className="dg-hp-conv-max">/ {effectiveMax}</span>
+            <span className="dg-sr-only"> hit points</span>
+          </button>
+          <NumberField
+            className="dg-hp-conv-temp"
+            label="Temp"
+            value={character.hp.temp}
+            min={0}
+            touch={symbolStrip}
+            onCommit={(n) => commit(`=t${n}`)}
+          />
+        </div>
+
+        <div className="dg-hp-conv-change">
+          <input
+            className="dg-hp-conv-input"
+            value={amount}
+            placeholder="Amount"
+            aria-label="Amount"
+            inputMode="numeric"
+            onChange={(e) => setAmount(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setAmount("");
+            }}
+          />
+          <button type="button" className="dg-hp-conv-button is-heal" onClick={() => apply("+")}>
+            Heal
+          </button>
+          <button type="button" className="dg-hp-conv-button is-damage" onClick={() => apply("-")}>
+            Damage
+          </button>
+        </div>
+
+        <div className="dg-hp-conv-maxrow">
+          <span className="dg-hp-conv-label">Max HP {character.hp.max.value}</span>
+          <NumberField
+            className="dg-hp-conv-tempmax"
+            label="Adjust"
+            value={character.hp.tempMax}
+            signed
+            touch={symbolStrip}
+            // A delta rather than `=m`, which would also clear what a spell put there.
+            onCommit={(n) => {
+              const delta = n - character.hp.tempMax;
+              return delta === 0 || commit(delta > 0 ? `+m${delta}` : `-m${-delta}`);
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A whole number, or undefined for anything else; "+5" and "-5" are allowed. */
+function wholeNumber(text: string): number | undefined {
+  const trimmed = text.trim().replace("−", "-");
+  return /^[+-]?\d+$/.test(trimmed) ? Number(trimmed) : undefined;
+}
+
+/**
+ * A number that is the character's, edited in place: what you type is a draft
+ * until Enter or leaving the field, and the field goes back to the real value if
+ * the draft isn't a number. The steppers commit at once.
+ *
+ * A signed field gets steppers because a phone's number pad may have no minus.
+ */
+function NumberField({
+  className,
+  label,
+  value,
+  min,
+  signed = false,
+  touch,
+  onCommit,
+}: {
+  className: string;
+  label: string;
+  value: number;
+  min?: number;
+  signed?: boolean;
+  touch: boolean;
+  onCommit: (value: number) => boolean;
+}): ReactNode {
+  const [draft, setDraft] = useState<string | undefined>(undefined);
+  const shown = (n: number): string => (signed && n > 0 ? `+${n}` : String(n));
+  const commit = (): void => {
+    if (draft === undefined) return;
+    const n = wholeNumber(draft);
+    setDraft(undefined);
+    if (n === undefined || n === value) return;
+    onCommit(min === undefined ? n : Math.max(min, n));
+  };
+  const step = (by: number): void => {
+    setDraft(undefined);
+    onCommit(value + by);
+  };
+
+  return (
+    // Not a <label>: a label activates its first control, which here is a stepper.
+    <div className={`dg-hp-conv-field ${className}`}>
+      <span className="dg-hp-conv-label" aria-hidden="true">
+        {label}
+      </span>
+      {signed ? (
+        <button type="button" className="dg-hp-conv-step" onClick={() => step(-1)}>
+          −<span className="dg-sr-only"> Lower {label}</span>
+        </button>
+      ) : null}
+      <input
+        className="dg-hp-conv-input"
+        value={draft ?? shown(value)}
+        aria-label={label}
+        inputMode={touch && !signed ? "numeric" : "text"}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setDraft(e.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            setDraft(undefined);
+          }
+        }}
+      />
+      {signed ? (
+        <button type="button" className="dg-hp-conv-step" onClick={() => step(1)}>
+          +<span className="dg-sr-only"> Raise {label}</span>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -344,8 +553,8 @@ function RegisterHelp(): ReactNode {
   return (
     <div className="dg-hp-help">
       <p>
-        Every change to your hit points is written here as a row: the total it left on the left, what changed on the
-        right. Type an entry in the box below and press Enter.
+        Every change to your hit points is written here as a row, with your new total on the left and what changed on
+        the right. Type an entry in the box below and press Enter.
       </p>
       <p>
         {code("-7", "damage")} damage, taken from temp HP first · {code("+3", "heal")} heal · {code("35", "set")} or{" "}
@@ -512,12 +721,7 @@ function Readout({
         aria-label="Hit points"
         onContextMenu={(e) => {
           e.preventDefault();
-          const explanation = explainStat(character.hp.max, { label: "Maximum hit points" });
-          sheet.open({
-            title: "Hit points",
-            subtitle: `${character.hp.current} of ${character.hp.max.value + character.hp.tempMax}`,
-            body: () => <TextBody formula={explanation.formula} text={CALC_HELP} />,
-          });
+          openHpSheet(sheet, character);
         }}
       >
         <span className="dg-hp-current">{current}</span>

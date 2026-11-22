@@ -19,6 +19,11 @@ export interface LayoutSettings {
    * character's own `layout.5e` pins come first; content weights come last.
    */
   pins: string[];
+  /**
+   * How a sheet keeps hit points: the register (a calc and a running log) or a
+   * conventional tracker of fields and buttons. Both write the same events.
+   */
+  hpTracker: "register" | "conventional";
 }
 
 /** The rail sections a layout can offer, in the spec's default order (4.4). */
@@ -142,6 +147,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     playMode: false,
     hideUnverifiedMarkers: false,
     pins: [],
+    hpTracker: "register",
   },
   narrow: {
     layout: "auto",

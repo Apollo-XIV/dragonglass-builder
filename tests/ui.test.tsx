@@ -25,6 +25,7 @@ import { DetailsSection } from "../src/obsidian/ui/builder/sections/collections"
 import { upcomingStaged } from "../src/obsidian/ui/builder/model";
 import { PickerBody } from "../src/obsidian/ui/builder/picker";
 import { DEFAULT_SETTINGS } from "../src/obsidian/settings";
+import { HpPanel } from "../src/obsidian/ui/hp-panel";
 import { SourceBrowser } from "../src/obsidian/ui/content-browser";
 import { ContentWizard } from "../src/obsidian/ui/content-wizard";
 import { CONTENT_ROOT } from "./helpers";
@@ -287,6 +288,59 @@ describe("the desktop sheet", () => {
     expect(downedHtml).toContain("dg-hp-death is-dying");
     expect(downedHtml).toContain(">Dying</span>");
     expect(downedHtml).not.toContain("dg-hp-vial");
+  });
+});
+
+describe("the hit point tracker setting", () => {
+  const withTracker = (hpTracker: "register" | "conventional", store: CharacterStore, symbolStrip = false): string =>
+    renderToStaticMarkup(
+      createElement(
+        PluginContext.Provider,
+        {
+          value: {
+            plugin: { settings: { ...DEFAULT_SETTINGS, layout: { ...DEFAULT_SETTINGS.layout, hpTracker } } } as never,
+            app,
+            view: {} as never,
+          },
+        },
+        createElement(HpPanel, { store, character: store.resolved as ResolvedCharacter, symbolStrip }),
+      ),
+    );
+  const fresh = (events: StateFile["events"]): CharacterStore =>
+    makeStore({
+      state: {
+        kind: "state",
+        schemaVersion: 1,
+        checkpoint: { damage: 0, tempHp: 0, tempMaxHp: [], spent: {}, effects: [] },
+        events,
+      },
+    });
+
+  it("says how to start and how to get help in an empty register, in the platform's word", () => {
+    expect(withTracker("register", fresh([]))).toContain("Click below to manage HP. Type ‘?’ for help.");
+    expect(withTracker("register", fresh([]), true)).toContain("Tap below to manage HP.");
+  });
+
+  it("swaps the register for fields and buttons", () => {
+    const html = withTracker("conventional", fresh([{ t: "2026-10-27T19:42:00Z", type: "damage", amount: 12 }]));
+    expect(html).toContain("dg-hp-conventional");
+    expect(html).not.toContain("dg-hp-register");
+    expect(html).not.toContain("dg-hp-vial");
+    expect(html).toContain(">Heal<");
+    expect(html).toContain(">Damage<");
+    expect(html).toContain('aria-label="Temp"');
+    expect(html).toContain('aria-label="Adjust"');
+    // 49 maximum, 12 taken.
+    expect(html).toContain(">37<");
+    expect(html).toContain("/ 49");
+    // Death saves only at zero.
+    expect(html).not.toContain("dg-hp-death");
+  });
+
+  it("shows the death saves on the conventional tracker at zero hit points", () => {
+    const html = withTracker("conventional", fresh([{ t: "2026-10-27T19:42:00Z", type: "damage", amount: 99 }]));
+    expect(html).toContain("dg-hp-death is-dying");
+    expect(html).toContain(">Heal<");
   });
 });
 
