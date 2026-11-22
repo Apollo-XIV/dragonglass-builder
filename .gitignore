@@ -2,6 +2,7 @@ node_modules/
 main.js
 *.js.map
 .vitest/
+*.psd
 
 # The local test vault: `npm run dev` builds the plugin into it, and Obsidian writes
 # its own state there. Create it yourself; see docs/development.md.

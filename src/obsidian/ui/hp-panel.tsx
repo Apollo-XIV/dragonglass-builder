@@ -25,7 +25,17 @@
  * same events in the log and a character can move between them freely.
  */
 
-import { useContext, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { explainStat } from "../../core/resolver/explain";
 import type { ResolvedCharacter } from "../../core/resolver/resolved";
 import { event } from "../../core/state/fold";
@@ -106,7 +116,6 @@ function openHpSheet(sheet: ReturnType<typeof useSheet>, character: ResolvedChar
 
 function RegisterHp({ store, character, symbolStrip = false }: HpPanelProps): ReactNode {
   const [text, setText] = useState("");
-  const [editing, setEditing] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const commitText = useHpCommit(store, character);
   const snapshot = snapshotFor(character);
@@ -157,17 +166,12 @@ function RegisterHp({ store, character, symbolStrip = false }: HpPanelProps): Re
           text={text}
           tokens={parse.tokens}
           error={parse.error}
-          editing={editing}
           inputRef={input}
           onText={setText}
-          onOpen={() => {
-            setEditing(true);
-            window.setTimeout(() => input.current?.focus(), 0);
-          }}
           onCommit={commit}
           onCancel={() => {
             setText("");
-            setEditing(false);
+            input.current?.blur();
           }}
           symbolStrip={symbolStrip}
         />
@@ -682,10 +686,8 @@ function Readout({
   text,
   tokens,
   error,
-  editing,
   inputRef,
   onText,
-  onOpen,
   onCommit,
   onCancel,
   symbolStrip,
@@ -695,10 +697,8 @@ function Readout({
   text: string;
   tokens: HpToken[];
   error?: string;
-  editing: boolean;
   inputRef: RefObject<HTMLInputElement | null>;
   onText: (value: string) => void;
-  onOpen: () => void;
   onCommit: () => void;
   onCancel: () => void;
   symbolStrip?: boolean;
@@ -707,113 +707,126 @@ function Readout({
   const help = text.includes("?");
   const current = preview?.current ?? character.hp.current;
   const temp = preview?.temp ?? character.hp.temp;
-  const open = editing || Boolean(text);
   const [focused, setFocused] = useState(false);
-  const showStrip = symbolStrip === true && open && focused;
+  const showStrip = symbolStrip === true && focused;
   const keyboardInset = useKeyboardInset(symbolStrip === true, showStrip, () => inputRef.current?.blur());
+  const figure = useRef<HTMLSpanElement>(null);
+  const figureWidth = useWidth(figure);
 
   return (
     <div className="dg-hp-readout">
-      <button
-        type="button"
-        className={preview ? "dg-hp-figure is-pending" : "dg-hp-figure"}
-        onClick={onOpen}
-        aria-label="Hit points"
+      {/* The input covers the whole box and the figure shows through it, so a
+       * click anywhere in the box is a click in the input. The input's text is
+       * padded clear of the figure, so a long entry never runs underneath it. */}
+      <div
+        className="dg-hp-calc-field"
+        style={{ "--dg-hp-figure-w": `${figureWidth}px` } as CSSProperties}
         onContextMenu={(e) => {
+          // With text in the box the right-click is about the text.
+          if (text) return;
           e.preventDefault();
           openHpSheet(sheet, character);
         }}
       >
-        <span className="dg-hp-current">{current}</span>
-        {temp ? <span className="dg-hp-temp-text">+{temp}</span> : null}
-      </button>
-
-      {open ? (
-        <div className="dg-hp-calc">
-          <div className="dg-hp-calc-field">
-            {/* The coloured copy sits under a transparent input, so what you type
-             * is coloured by role without reimplementing a text editor. */}
-            <span className="dg-hp-calc-ink" aria-hidden="true">
-              {tokens.length ? inkOf(text, tokens) : <span className="dg-hp-token">{text}</span>}
-            </span>
-            <input
-              ref={inputRef}
-              className="dg-hp-calc-input"
-              value={text}
-              aria-label="Hit point entry"
-              // A phone gets the number pad; the symbol strip supplies what it lacks.
-              inputMode={symbolStrip ? "decimal" : "text"}
-              spellCheck={false}
-              onChange={(e) => onText(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  onCommit();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  onCancel();
-                }
+        <span ref={figure} className={preview ? "dg-hp-figure is-pending" : "dg-hp-figure"}>
+          <span className="dg-hp-current">{current}</span>
+          {temp ? <span className="dg-hp-temp-text">+{temp}</span> : null}
+        </span>
+        {!text && !focused ? (
+          <span className="dg-hp-calc-hint" aria-hidden="true">
+            <Icon name="plus-minus" />
+            <span>+/−</span>
+          </span>
+        ) : null}
+        {/* Over the box rather than under it, so an error coming and going
+         * never moves the register. It sits before the ink, so the entry is
+         * drawn over it if the two ever meet. */}
+        {error ? <span className="dg-hp-calc-error">{error}</span> : null}
+        {/* The coloured copy sits under a transparent input, so what you type
+         * is coloured by role without reimplementing a text editor. */}
+        <span className="dg-hp-calc-ink" aria-hidden="true">
+          <span>{tokens.length ? inkOf(text, tokens) : <span className="dg-hp-token">{text}</span>}</span>
+        </span>
+        <input
+          ref={inputRef}
+          className="dg-hp-calc-input"
+          value={text}
+          aria-label="Hit point entry"
+          // A phone gets the number pad; the symbol strip supplies what it lacks.
+          inputMode={symbolStrip ? "decimal" : "text"}
+          spellCheck={false}
+          onChange={(e) => onText(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onCommit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              onCancel();
+            }
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+      </div>
+      {showStrip ? (
+        <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
+          {/* The number pad has no `?`, so the help gets a key of its own, on
+           * a row above the symbols where it can't be hit mid-entry. A second
+           * press takes it out again. */}
+          <div className="dg-hp-symbols-row">
+            <button
+              type="button"
+              className={help ? "dg-hp-symbol dg-hp-symbol-help is-on" : "dg-hp-symbol dg-hp-symbol-help"}
+              aria-pressed={help}
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onText(help ? text.replace(/\?/g, "") : text + "?");
+                inputRef.current?.focus();
               }}
-              // Clicking away closes an empty box; one with text in it stays, so
-              // the pending diff stays on screen with it.
-              onFocus={() => setFocused(true)}
-              onBlur={() => {
-                setFocused(false);
-                if (!text.trim()) onCancel();
-              }}
-            />
+            >
+              ?<span className="dg-sr-only"> Help</span>
+            </button>
           </div>
-          {showStrip ? (
-            <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
-              {/* The number pad has no `?`, so the help gets a key of its own, on
-               * a row above the symbols where it can't be hit mid-entry. A second
-               * press takes it out again. */}
-              <div className="dg-hp-symbols-row">
-                <button
-                  type="button"
-                  className={help ? "dg-hp-symbol dg-hp-symbol-help is-on" : "dg-hp-symbol dg-hp-symbol-help"}
-                  aria-pressed={help}
-                  onPointerDown={(e) => e.preventDefault()}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    onText(help ? text.replace(/\?/g, "") : text + "?");
-                    inputRef.current?.focus();
-                  }}
-                >
-                  ?<span className="dg-sr-only"> Help</span>
-                </button>
-              </div>
-              <div className="dg-hp-symbols-row">
-                {SYMBOLS.map(({ symbol, role }) => (
-                  <button
-                    key={symbol}
-                    type="button"
-                    className={`dg-hp-symbol is-${role}`}
-                    // Pressing a button would take focus from the input, which closes
-                    // an empty one and drops the keyboard before the click lands.
-                    onPointerDown={(e) => e.preventDefault()}
-                    onMouseDown={(e) => e.preventDefault()}
-                    onClick={() => {
-                      onText(text + (symbol === "−" ? "-" : symbol));
-                      inputRef.current?.focus();
-                    }}
-                  >
-                    {symbol}
-                  </button>
-                ))}
-              </div>
-            </div>
-          ) : null}
-          {error ? <p className="dg-hp-calc-error">{error}</p> : null}
+          <div className="dg-hp-symbols-row">
+            {SYMBOLS.map(({ symbol, role }) => (
+              <button
+                key={symbol}
+                type="button"
+                className={`dg-hp-symbol is-${role}`}
+                // Pressing a button would take focus from the input, which
+                // drops the keyboard before the click lands.
+                onPointerDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onText(text + (symbol === "−" ? "-" : symbol));
+                  inputRef.current?.focus();
+                }}
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <button type="button" className="dg-hp-calc-open" onClick={onOpen} aria-label="Change hit points">
-          <Icon name="plus-minus" />
-          <span>+/−</span>
-        </button>
-      )}
+      ) : null}
     </div>
   );
+}
+
+/** An element's rendered width, kept current as it changes. */
+function useWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = (): void => setWidth(el.offsetWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
 }
 
 /**
