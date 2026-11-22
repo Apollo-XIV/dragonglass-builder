@@ -3982,65 +3982,60 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 /* -- Death saves ---------------------------------------------------------- */
 
+/* The six pips take the vial's place and its width, and share its height
+ * between them. An empty pip is a sunken well, like the vial's track; a lit
+ * one fills it. Neither has an edge, so the accent outline can arrive on hover. */
 .dg-hp-death {
   display: flex;
   flex: none;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--size-4-2);
-  width: 2.5rem;
-  border-radius: var(--d-radius, var(--radius-s));
-  background: var(--background-modifier-border);
-}
-
-.dg-hp-death-label {
-  writing-mode: vertical-rl;
-  transform: rotate(180deg);
-  color: var(--text-muted);
-  font-size: var(--d-label, 0.6875rem);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-}
-
-.dg-hp-death.is-dead .dg-hp-death-label {
-  color: var(--d-hp, var(--color-red));
-}
-
-.dg-hp-death.is-stable .dg-hp-death-label {
-  color: var(--d-heal, var(--color-green));
-}
-
-.dg-hp-death-pips {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 0.25rem;
+  width: 2.75rem;
 }
 
 .dg-layout .dg-hp-pip {
-  width: 0.75rem;
-  height: 0.75rem;
+  flex: 1;
+  min-height: 0.75rem;
+  width: 100%;
   padding: 0;
-  border: 1px solid var(--text-faint);
-  border-radius: 50%;
-  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-surface-sunken, var(--background-primary));
   box-shadow: none;
+  cursor: pointer;
+}
+
+.dg-layout .dg-hp-pip:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
 }
 
 .dg-layout .dg-hp-pip.is-success.is-on {
-  border-color: var(--d-heal, var(--color-green));
+  border-color: transparent;
   background: var(--d-heal, var(--color-green));
 }
 
 .dg-layout .dg-hp-pip.is-failure.is-on {
-  border-color: var(--d-hp, var(--color-red));
+  border-color: transparent;
   background: var(--d-hp, var(--color-red));
 }
 
-.dg-hp-death-divider {
-  width: 0.9rem;
-  border-top: 1px solid var(--text-faint);
+.dg-hp-death-state {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0.125rem 0;
+  color: var(--text-muted);
+}
+
+.dg-hp-death-state svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.dg-hp-death.is-stable .dg-hp-death-state,
+.dg-hp-death.is-dead .dg-hp-death-state {
+  color: var(--text-normal);
 }
 
 /* -- The register --------------------------------------------------------- */
@@ -4183,6 +4178,34 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   margin: 0 0 0.15rem;
 }
 
+/* The help reads top-down like any prose, so it starts at the top of the box
+ * instead of resting on its floor, and nothing above it is hidden to fade. */
+.dg-hp-register-rows.is-help {
+  justify-content: flex-start;
+  mask-image: none;
+}
+
+.dg-hp-help {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.45;
+}
+
+.dg-hp-help p {
+  margin: 0 0 0.4rem;
+}
+
+.dg-hp-help code {
+  padding: 0;
+  background: none;
+  font-family: var(--font-monospace);
+  font-weight: 600;
+}
+
+.dg-hp-help-dismiss {
+  color: var(--text-faint);
+}
+
 /* The colour roles, in the one place they all appear at once. */
 .dg-hp-delta.is-damage {
   color: var(--d-hp, var(--color-red));
@@ -4207,41 +4230,52 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* -- Readout and calc ------------------------------------------------------ */
 
 .dg-hp-readout {
-  display: flex;
-  flex-wrap: nowrap;
-  align-items: center;
-  gap: var(--size-4-2);
-  padding: var(--size-4-1) var(--size-4-2);
   border-top: 1px solid var(--d-border, var(--background-modifier-border));
 }
 
-.dg-layout .dg-hp-figure {
+/* The box is the input. The figure and the "+/−" are drawn in it and the input
+ * lies over the whole of it, edge to edge, so there is no smaller target inside
+ * a larger one: a click anywhere in the box puts the caret in it. */
+.dg-hp-calc-field {
+  position: relative;
   display: flex;
-  flex: 0 1 auto;
-  min-width: 0;
-  align-items: baseline;
-  gap: 0.25rem;
-  padding: 0 0.25rem;
-  border: 1px solid transparent;
-  border-radius: var(--d-radius, var(--radius-s));
-  background: transparent;
-  box-shadow: none;
-  color: var(--text-normal);
+  align-items: center;
+  gap: var(--size-4-2);
+  min-height: 2.5rem;
+  padding: var(--size-4-1) var(--size-4-2);
+  border-radius: 0 0 var(--d-radius, var(--radius-s)) var(--d-radius, var(--radius-s));
+  cursor: text;
 }
 
-.dg-layout .dg-hp-figure:hover {
-  border-color: var(--d-accent, var(--interactive-accent));
+/* An inset ring, not a border: the box's edges are the card's, and a border
+ * would move everything in it by a pixel when it arrived. */
+.dg-hp-calc-field:hover {
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.dg-hp-calc-field:focus-within {
+  box-shadow: inset 0 0 0 1px var(--d-accent, var(--interactive-accent));
+}
+
+.dg-hp-figure {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  align-items: baseline;
+  gap: 0.25rem;
+  color: var(--text-normal);
+  pointer-events: none;
 }
 
 /* A pending entry dims the readout: the number shown is what it would become. */
-.dg-layout .dg-hp-figure.is-pending {
+.dg-hp-figure.is-pending {
   opacity: 0.6;
 }
 
 .dg-hp-current {
   font-size: var(--d-value, 1.5rem);
   font-weight: 700;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .dg-hp-temp-text {
@@ -4249,78 +4283,65 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   font-size: var(--font-ui-smaller);
 }
 
-/* "+/−" is a figure on the same line as the current hit points, not a control
- * beside them, so it is set at their weight and carries no edge until you
- * reach for it.
- *
- * It takes the rest of the line rather than sitting at the end of it, because
- * it is the closed state of the calc box: clicking anywhere in that run of
- * space opens the input, and the input then occupies exactly the same ground. */
-.dg-layout .dg-hp-calc-open {
-  flex: 1;
-  min-width: 0;
+/* The closed state of the calc, set at the readout's weight and sitting where an
+ * entry will grow from. It goes as soon as the box is focused. */
+.dg-hp-calc-hint {
   display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
   gap: 0.2rem;
-  padding: 0 0.3rem;
-  border: 1px solid transparent;
-  border-radius: var(--d-radius, var(--radius-s));
-  background: transparent;
-  box-shadow: none;
+  margin-left: auto;
   color: var(--text-muted);
   font-size: var(--d-value-small, 1.0625rem);
   font-weight: 600;
-  line-height: 1.3;
+  line-height: 1;
+  pointer-events: none;
 }
 
-.dg-layout .dg-hp-calc-open:hover {
-  border-color: var(--d-accent, var(--interactive-accent));
+.dg-hp-calc-field:hover .dg-hp-calc-hint {
   color: var(--text-normal);
 }
 
-.dg-hp-calc {
-  margin-left: auto;
-  min-width: 0;
-  flex: 1;
-}
-
-/* The coloured copy of what was typed sits under a transparent input, so the
- * tokens take their role colours without reimplementing a text editor. */
-.dg-hp-calc-field {
-  position: relative;
-}
-
-/* Right-aligned, so an entry grows leftwards from where the "+/−" it replaced
- * was sitting instead of starting at the far side of the panel from it. */
+/* Right-aligned, so an entry grows leftwards from where the "+/−" was. The ink
+ * and the input share their padding, which clears the figure on the left, so
+ * the two stay character for character over each other. */
 .dg-hp-calc-ink,
-.dg-hp-calc-input {
+.dg-layout .dg-hp-calc-input {
+  position: absolute;
+  inset: 0;
   box-sizing: border-box;
   width: 100%;
-  padding: 0.1rem 0.35rem;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--d-radius, var(--radius-s));
+  height: 100%;
+  margin: 0;
+  padding: 0 var(--size-4-2) 0 calc(var(--size-4-2) * 2 + var(--dg-hp-figure-w, 0px));
+  border: none;
+  border-radius: inherit;
   font-family: var(--font-monospace);
   font-size: var(--font-ui-small);
-  line-height: 1.6;
   letter-spacing: 0;
   text-align: right;
 }
 
 .dg-hp-calc-ink {
-  position: absolute;
-  inset: 0;
-  border-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
   white-space: pre;
   overflow: hidden;
   pointer-events: none;
 }
 
-.dg-hp-calc-input {
-  position: relative;
+.dg-layout .dg-hp-calc-input {
   background: transparent;
+  box-shadow: none;
   color: transparent;
   caret-color: var(--text-normal);
+  cursor: text;
+}
+
+.dg-layout .dg-hp-calc-input:focus,
+.dg-layout .dg-hp-calc-input:focus-visible {
+  box-shadow: none;
+  outline: none;
 }
 
 .dg-hp-token.is-damage {
@@ -4343,10 +4364,20 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--d-set, var(--color-orange));
 }
 
+/* Laid over the box just right of the figure, where the input's own text never
+ * reaches until it runs long, so showing it reflows nothing. */
 .dg-hp-calc-error {
-  margin: 0.2rem 0 0;
+  position: absolute;
+  bottom: var(--size-4-1);
+  left: calc(var(--size-4-2) * 2 + var(--dg-hp-figure-w, 0px));
+  right: var(--size-4-2);
+  overflow: hidden;
   color: var(--text-error);
   font-size: var(--font-ui-smaller);
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 /* Docked to the top edge of the keyboard (`bottom` is set from the visual
@@ -4357,13 +4388,19 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   right: 0;
   z-index: 50;
   display: flex;
-  gap: 0.2rem;
+  flex-direction: column;
+  gap: 0.3rem;
   /* The extra bottom padding lifts the buttons clear of the keyboard's edge. The
    * strip itself is see-through and lets taps fall to what is behind it, so only
    * the buttons catch them. */
   padding: 0.3rem 0.3rem 0.525rem;
   background: transparent;
   pointer-events: none;
+}
+
+.dg-hp-symbols-row {
+  display: flex;
+  gap: 0.2rem;
 }
 
 .dg-layout .dg-hp-symbol {
@@ -4397,6 +4434,150 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 .dg-layout .dg-hp-symbol.is-tempMax {
   color: var(--d-tempmax, var(--color-purple));
+}
+
+/* Square, at the left, and smaller than the keys below it: the help is not part
+ * of an entry, so it shouldn't read as one more symbol. */
+.dg-layout .dg-hp-symbol.dg-hp-symbol-help {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.dg-layout .dg-hp-symbol.dg-hp-symbol-help.is-on {
+  border-color: var(--interactive-accent);
+  color: var(--text-accent);
+}
+
+/* -- The conventional tracker ------------------------------------------- */
+
+/* Fields and buttons in the register's well, one line each: the figures, the
+ * change, the maximum. Controls are tiles on the well, so they carry a fill and
+ * no edge, and the accent outline is left for hover and focus. */
+.dg-hp-conventional .dg-hp-right {
+  justify-content: center;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2);
+}
+
+/* It has no till roll to give a height to, so it sizes to its three lines. */
+.dg-n-hp .dg-hp-panel.dg-hp-conventional {
+  height: auto;
+}
+
+.dg-hp-conv-figures,
+.dg-hp-conv-change,
+.dg-hp-conv-maxrow {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  min-width: 0;
+}
+
+.dg-hp-conv-figures,
+.dg-hp-conv-maxrow {
+  justify-content: space-between;
+}
+
+.dg-layout .dg-hp-conv-figure {
+  display: flex;
+  align-items: baseline;
+  gap: 0.3rem;
+  height: auto;
+  padding: 0 0.25rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-normal);
+  cursor: default;
+}
+
+.dg-hp-conv-max {
+  color: var(--text-muted);
+  font-size: var(--d-value-small, 1.0625rem);
+  font-weight: 600;
+}
+
+.dg-hp-conv-label {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+}
+
+.dg-hp-conv-field {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.dg-hp-conv-temp .dg-hp-conv-label {
+  color: var(--d-temp, var(--color-blue));
+}
+
+.dg-hp-conv-tempmax .dg-hp-conv-input {
+  color: var(--d-tempmax, var(--color-purple));
+}
+
+.dg-layout input.dg-hp-conv-input {
+  width: 3.25rem;
+  min-width: 0;
+  height: 1.875rem;
+  padding: 0 0.4rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-tile, var(--background-secondary));
+  box-shadow: none;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.dg-layout input.dg-hp-conv-input:hover,
+.dg-layout input.dg-hp-conv-input:focus {
+  border-color: var(--d-accent, var(--interactive-accent));
+  box-shadow: none;
+}
+
+/* The amount takes what the two buttons leave. */
+.dg-hp-conv-change .dg-hp-conv-input {
+  flex: 1;
+}
+
+.dg-layout .dg-hp-conv-button,
+.dg-layout .dg-hp-conv-step {
+  height: 1.875rem;
+  border: 1px solid transparent;
+  border-radius: var(--d-radius, var(--radius-s));
+  background: var(--d-tile, var(--background-secondary));
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.dg-layout .dg-hp-conv-button {
+  flex: none;
+  padding: 0 0.75rem;
+}
+
+.dg-layout .dg-hp-conv-step {
+  width: 1.875rem;
+  padding: 0;
+  color: var(--text-muted);
+}
+
+.dg-layout .dg-hp-conv-button:hover,
+.dg-layout .dg-hp-conv-step:hover {
+  border-color: var(--d-accent, var(--interactive-accent));
+}
+
+.dg-layout .dg-hp-conv-button.is-heal {
+  color: var(--d-heal, var(--color-green));
+}
+
+.dg-layout .dg-hp-conv-button.is-damage {
+  color: var(--d-hp, var(--color-red));
 }
 
 /* -- Desktop builder ----------------------------------------------------- */

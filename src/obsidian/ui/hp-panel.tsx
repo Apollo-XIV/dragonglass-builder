@@ -15,9 +15,27 @@
  * - A pending entry is visible. Losing focus with text still in the box leaves
  *   the ghosts up, because a forgotten entry that looks committed is worse than
  *   one that looks pending.
+ *
+ * A `?` anywhere in the box swaps the register's rows for the help until it is
+ * taken out again or Enter is pressed. It is a view, not an entry: nothing is
+ * parsed or previewed while it is up, and the log underneath is untouched.
+ *
+ * The settings can swap the whole register for a conventional tracker: fields and
+ * buttons instead of a calc. It writes through the same calc, so the two leave the
+ * same events in the log and a character can move between them freely.
  */
 
-import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
+import {
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+  type RefObject,
+} from "react";
 import { explainStat } from "../../core/resolver/explain";
 import type { ResolvedCharacter } from "../../core/resolver/resolved";
 import { event } from "../../core/state/fold";
@@ -26,39 +44,86 @@ import {
   formatDelta,
   parseHpCalc,
   type HpOutcome,
+  type HpSnapshot,
   type HpToken,
 } from "../../core/state/hp-calc";
 import { concentrationDc } from "../../core/state/conditions";
 import { hpRegister, type RegisterRow } from "../../core/state/register";
 import type { CharacterStore } from "../character-store";
 import { Icon } from "./components";
+import { PluginContext } from "./context";
 import { useSheet } from "./narrow/sheet";
 import { TextBody } from "./narrow/targets";
 import { useToast } from "./narrow/toast";
 
-export function HpPanel({
-  store,
-  character,
-  /** A phone has no keyboard worth typing `=m4` on, so it gets the symbol strip. */
-  symbolStrip = false,
-}: {
+interface HpPanelProps {
   store: CharacterStore;
   character: ResolvedCharacter;
+  /** A phone has no keyboard worth typing `=m4` on, so it gets the symbol strip. */
   symbolStrip?: boolean;
-}): ReactNode {
-  const [text, setText] = useState("");
-  const [editing, setEditing] = useState(false);
-  const input = useRef<HTMLInputElement>(null);
-  const toast = useToast();
+}
 
-  const snapshot = {
+export function HpPanel(props: HpPanelProps): ReactNode {
+  const tracker = useContext(PluginContext)?.plugin.settings.layout.hpTracker;
+  return tracker === "conventional" ? <ConventionalHp {...props} /> : <RegisterHp {...props} />;
+}
+
+function snapshotFor(character: ResolvedCharacter): HpSnapshot {
+  return {
     baseMax: character.hp.max.value,
     damage: character.hp.damage,
     temp: character.hp.temp,
     tempMaxEffects: character.status.tempMaxHpEffects.map((e) => ({ id: e.id, amount: e.amount })),
   };
+}
 
-  const parse = useMemo(() => parseHpCalc(text), [text]);
+/**
+ * Commits one calc entry: the events, and the concentration check that taking
+ * damage asks for. Both trackers come through here. Returns false when the text
+ * isn't an entry, so nothing was written.
+ */
+function useHpCommit(store: CharacterStore, character: ResolvedCharacter): (text: string) => boolean {
+  const toast = useToast();
+  return (text) => {
+    if (!text.trim()) return false;
+    const parsed = parseHpCalc(text);
+    if (parsed.error || !parsed.tokens.length) return false;
+    const outcome = applyHpCalc(parsed.tokens, snapshotFor(character));
+    store.appendEvents(...outcome.events);
+    // Taking damage while concentrating asks for a Constitution save; say so and
+    // say what to beat, because that is the arithmetic people stop to do.
+    if (outcome.taken > 0 && character.status.concentration) {
+      toast.show({
+        label: "Concentration check",
+        detail: `Constitution save · ${outcome.taken} damage`,
+        total: `DC ${concentrationDc(outcome.taken)}`,
+        tag: { text: "Concentrating", tone: "warn" },
+      });
+    }
+    return true;
+  };
+}
+
+/** The hold or right-click sheet on the current hit points: where max HP comes from. */
+function openHpSheet(sheet: ReturnType<typeof useSheet>, character: ResolvedCharacter): void {
+  const explanation = explainStat(character.hp.max, { label: "Maximum hit points" });
+  sheet.open({
+    title: "Hit points",
+    subtitle: `${character.hp.current} of ${character.hp.max.value + character.hp.tempMax}`,
+    body: () => <TextBody formula={explanation.formula} text={CALC_HELP} />,
+  });
+}
+
+function RegisterHp({ store, character, symbolStrip = false }: HpPanelProps): ReactNode {
+  const [text, setText] = useState("");
+  const input = useRef<HTMLInputElement>(null);
+  const commitText = useHpCommit(store, character);
+  const snapshot = snapshotFor(character);
+
+  const help = text.includes("?");
+  // While the help is up the text is a question, not an entry, so it is neither
+  // parsed (a `?` is an error) nor previewed.
+  const parse = useMemo(() => (help ? { tokens: [] } : parseHpCalc(text)), [help, text]);
   // The preview is the commit, run without committing: one code path, so what the
   // vial shows is what Enter does.
   const preview: HpOutcome | undefined =
@@ -72,21 +137,13 @@ export function HpPanel({
   );
 
   const commit = (): void => {
-    if (!text.trim()) return;
-    const parsed = parseHpCalc(text);
-    if (parsed.error || !parsed.tokens.length) return;
-    const outcome = applyHpCalc(parsed.tokens, snapshot);
-    store.appendEvents(...outcome.events);
-    // Taking damage while concentrating asks for a Constitution save; say so and
-    // say what to beat, because that is the arithmetic people stop to do.
-    if (outcome.taken > 0 && character.status.concentration) {
-      toast.show({
-        label: "Concentration check",
-        detail: `Constitution save · ${outcome.taken} damage`,
-        total: `DC ${concentrationDc(outcome.taken)}`,
-        tag: { text: "Concentrating", tone: "warn" },
-      });
+    // Enter on the help dismisses it and leaves whatever else was typed.
+    if (help) {
+      setText(text.replace(/\?/g, "").trim());
+      input.current?.focus();
+      return;
     }
+    if (!commitText(text)) return;
     setText("");
     // The input keeps focus: the next entry usually follows the last one closely.
     input.current?.focus();
@@ -102,28 +159,197 @@ export function HpPanel({
         <Vial character={character} preview={preview} />
       )}
       <div className="dg-hp-right">
-        <Register character={character} rows={rows} />
+        <Register character={character} rows={rows} help={help} touch={symbolStrip} />
         <Readout
           character={character}
           preview={preview}
           text={text}
           tokens={parse.tokens}
           error={parse.error}
-          editing={editing}
           inputRef={input}
           onText={setText}
-          onOpen={() => {
-            setEditing(true);
-            window.setTimeout(() => input.current?.focus(), 0);
-          }}
           onCommit={commit}
           onCancel={() => {
             setText("");
-            setEditing(false);
+            input.current?.blur();
           }}
           symbolStrip={symbolStrip}
         />
       </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// The conventional tracker
+// ---------------------------------------------------------------------------
+
+/**
+ * Hit points the way a paper sheet or most apps keep them: the figures, an amount
+ * with Heal and Damage, a temp HP field, and a field for a temporary change to the
+ * maximum. Every button and field writes a calc entry, so temp HP still soaks
+ * damage first and the log reads the same as the register's would.
+ *
+ * At 0 HP the death saves take the left of the panel, as they take the vial's
+ * place in the register.
+ */
+function ConventionalHp({ store, character, symbolStrip = false }: HpPanelProps): ReactNode {
+  const commit = useHpCommit(store, character);
+  const sheet = useSheet();
+  const [amount, setAmount] = useState("");
+  const effectiveMax = character.hp.max.value + character.hp.tempMax;
+  const dying = character.hp.current === 0;
+
+  const apply = (sign: "+" | "-"): void => {
+    const n = wholeNumber(amount);
+    if (n === undefined || n <= 0) return;
+    if (commit(`${sign}${n}`)) setAmount("");
+  };
+
+  return (
+    <div className="dg-hp-panel dg-hp-conventional">
+      {dying ? <DeathSaves store={store} character={character} /> : null}
+      <div className="dg-hp-right">
+        <div className="dg-hp-conv-figures">
+          <button
+            type="button"
+            className="dg-hp-conv-figure"
+            onContextMenu={(e) => {
+              e.preventDefault();
+              openHpSheet(sheet, character);
+            }}
+          >
+            <span className="dg-hp-current">{character.hp.current}</span>
+            <span className="dg-hp-conv-max">/ {effectiveMax}</span>
+            <span className="dg-sr-only"> hit points</span>
+          </button>
+          <NumberField
+            className="dg-hp-conv-temp"
+            label="Temp"
+            value={character.hp.temp}
+            min={0}
+            touch={symbolStrip}
+            onCommit={(n) => commit(`=t${n}`)}
+          />
+        </div>
+
+        <div className="dg-hp-conv-change">
+          <input
+            className="dg-hp-conv-input"
+            value={amount}
+            placeholder="Amount"
+            aria-label="Amount"
+            inputMode="numeric"
+            onChange={(e) => setAmount(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Escape") setAmount("");
+            }}
+          />
+          <button type="button" className="dg-hp-conv-button is-heal" onClick={() => apply("+")}>
+            Heal
+          </button>
+          <button type="button" className="dg-hp-conv-button is-damage" onClick={() => apply("-")}>
+            Damage
+          </button>
+        </div>
+
+        <div className="dg-hp-conv-maxrow">
+          <span className="dg-hp-conv-label">Max HP {character.hp.max.value}</span>
+          <NumberField
+            className="dg-hp-conv-tempmax"
+            label="Adjust"
+            value={character.hp.tempMax}
+            signed
+            touch={symbolStrip}
+            // A delta rather than `=m`, which would also clear what a spell put there.
+            onCommit={(n) => {
+              const delta = n - character.hp.tempMax;
+              return delta === 0 || commit(delta > 0 ? `+m${delta}` : `-m${-delta}`);
+            }}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A whole number, or undefined for anything else; "+5" and "-5" are allowed. */
+function wholeNumber(text: string): number | undefined {
+  const trimmed = text.trim().replace("−", "-");
+  return /^[+-]?\d+$/.test(trimmed) ? Number(trimmed) : undefined;
+}
+
+/**
+ * A number that is the character's, edited in place: what you type is a draft
+ * until Enter or leaving the field, and the field goes back to the real value if
+ * the draft isn't a number. The steppers commit at once.
+ *
+ * A signed field gets steppers because a phone's number pad may have no minus.
+ */
+function NumberField({
+  className,
+  label,
+  value,
+  min,
+  signed = false,
+  touch,
+  onCommit,
+}: {
+  className: string;
+  label: string;
+  value: number;
+  min?: number;
+  signed?: boolean;
+  touch: boolean;
+  onCommit: (value: number) => boolean;
+}): ReactNode {
+  const [draft, setDraft] = useState<string | undefined>(undefined);
+  const shown = (n: number): string => (signed && n > 0 ? `+${n}` : String(n));
+  const commit = (): void => {
+    if (draft === undefined) return;
+    const n = wholeNumber(draft);
+    setDraft(undefined);
+    if (n === undefined || n === value) return;
+    onCommit(min === undefined ? n : Math.max(min, n));
+  };
+  const step = (by: number): void => {
+    setDraft(undefined);
+    onCommit(value + by);
+  };
+
+  return (
+    // Not a <label>: a label activates its first control, which here is a stepper.
+    <div className={`dg-hp-conv-field ${className}`}>
+      <span className="dg-hp-conv-label" aria-hidden="true">
+        {label}
+      </span>
+      {signed ? (
+        <button type="button" className="dg-hp-conv-step" onClick={() => step(-1)}>
+          −<span className="dg-sr-only"> Lower {label}</span>
+        </button>
+      ) : null}
+      <input
+        className="dg-hp-conv-input"
+        value={draft ?? shown(value)}
+        aria-label={label}
+        inputMode={touch && !signed ? "numeric" : "text"}
+        onFocus={(e) => e.currentTarget.select()}
+        onChange={(e) => setDraft(e.currentTarget.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            commit();
+          } else if (e.key === "Escape") {
+            setDraft(undefined);
+          }
+        }}
+      />
+      {signed ? (
+        <button type="button" className="dg-hp-conv-step" onClick={() => step(1)}>
+          +<span className="dg-sr-only"> Raise {label}</span>
+        </button>
+      ) : null}
     </div>
   );
 }
@@ -197,9 +423,12 @@ function Vial({ character, preview }: { character: ResolvedCharacter; preview?: 
 
 /**
  * At 0 HP the vial has nothing to show, so it becomes the six pips instead:
- * three successes, a divider, three failures. Clicking a pip sets that side's
- * count to it; clicking the topmost lit one takes it back. Three failures is
- * death, three successes stable, and any healing resets both through the fold.
+ * three successes above, three failures below, and between them the state —
+ * scales while dying, a steady pulse once stable, a skull at death. Each side
+ * counts outwards from the middle, so the pip next to the icon is the first.
+ * Clicking a pip sets that side's count to it; clicking the outermost lit one
+ * takes it back. Three failures is death, three successes stable, and any
+ * healing resets both through the fold.
  */
 function DeathSaves({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const { successes, failures } = character.status.deathSaves;
@@ -226,33 +455,28 @@ function DeathSaves({ store, character }: { store: CharacterStore; character: Re
   };
 
   const state = failures >= 3 ? "dead" : successes >= 3 ? "stable" : "dying";
+  const label = state === "dead" ? "Dead" : state === "stable" ? "Stable" : "Dying";
+  const icon = state === "dead" ? "skull" : state === "stable" ? "activity" : "scale";
+
+  const pip = (result: "success" | "failure", n: number, count: number): ReactNode => (
+    <button
+      key={`${result}${n}`}
+      type="button"
+      className={n <= count ? `dg-hp-pip is-${result} is-on` : `dg-hp-pip is-${result}`}
+      aria-label={`Death save ${result} ${n}`}
+      aria-pressed={n <= count}
+      onClick={() => set(result, n)}
+    />
+  );
 
   return (
     <div className={`dg-hp-death is-${state}`}>
-      <span className="dg-hp-death-label">{state === "dead" ? "Dead" : state === "stable" ? "Stable" : "Dying"}</span>
-      <div className="dg-hp-death-pips">
-        {[1, 2, 3].map((n) => (
-          <button
-            key={`s${n}`}
-            type="button"
-            className={n <= successes ? "dg-hp-pip is-success is-on" : "dg-hp-pip is-success"}
-            aria-label={`Death save success ${n}`}
-            aria-pressed={n <= successes}
-            onClick={() => set("success", n)}
-          />
-        ))}
-        <span className="dg-hp-death-divider" />
-        {[1, 2, 3].map((n) => (
-          <button
-            key={`f${n}`}
-            type="button"
-            className={n <= failures ? "dg-hp-pip is-failure is-on" : "dg-hp-pip is-failure"}
-            aria-label={`Death save failure ${n}`}
-            aria-pressed={n <= failures}
-            onClick={() => set("failure", n)}
-          />
-        ))}
-      </div>
+      {[3, 2, 1].map((n) => pip("success", n, successes))}
+      <span className="dg-hp-death-state" title={label}>
+        <Icon name={icon} />
+        <span className="dg-sr-only">{label}</span>
+      </span>
+      {[1, 2, 3].map((n) => pip("failure", n, failures))}
     </div>
   );
 }
@@ -266,12 +490,24 @@ function DeathSaves({ store, character }: { store: CharacterStore; character: Re
  * newest at the bottom, scrolled to the end. The fade at the top is deliberate:
  * it says the older entries are still there rather than pretending they aren't.
  */
-function Register({ character, rows }: { character: ResolvedCharacter; rows: RegisterRow[] }): ReactNode {
+function Register({
+  character,
+  rows,
+  help,
+  touch,
+}: {
+  character: ResolvedCharacter;
+  rows: RegisterRow[];
+  help: boolean;
+  /** A phone is tapped, not clicked, and the prompt says so. */
+  touch: boolean;
+}): ReactNode {
   const scroller = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = scroller.current;
-    if (el) el.scrollTop = el.scrollHeight;
-  }, [rows.length]);
+    // The help reads from its top; the roll from its newest entry.
+    if (el) el.scrollTop = help ? 0 : el.scrollHeight;
+  }, [rows.length, help]);
 
   return (
     <div className="dg-hp-register">
@@ -284,9 +520,12 @@ function Register({ character, rows }: { character: ResolvedCharacter; rows: Reg
           </span>
         ) : null}
       </div>
-      <div className="dg-hp-register-rows" ref={scroller}>
-        {rows.length === 0 ? <p className="dg-hp-register-empty">No changes yet.</p> : null}
-        {rows.map((row, i) => (
+      <div className={help ? "dg-hp-register-rows is-help" : "dg-hp-register-rows"} ref={scroller}>
+        {help ? <RegisterHelp /> : null}
+        {!help && rows.length === 0 ? (
+          <p className="dg-hp-register-empty">{touch ? "Tap" : "Click"} below to manage HP. Type &lsquo;?&rsquo; for help.</p>
+        ) : null}
+        {(help ? [] : rows).map((row, i) => (
           <div className="dg-hp-register-row" key={`${row.t}-${i}`} title={row.label ?? formatTime(row.t)}>
             <div className="dg-hp-register-row-inner">
               <span className="dg-hp-register-balance">
@@ -306,6 +545,37 @@ function Register({ character, rows }: { character: ResolvedCharacter; rows: Reg
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/** What the register is and how to drive it, shown in place of the rows. */
+function RegisterHelp(): ReactNode {
+  const code = (text: string, role: HpToken["role"]): ReactNode => (
+    <code className={`dg-hp-token is-${role}`}>{text}</code>
+  );
+  return (
+    <div className="dg-hp-help">
+      <p>
+        Every change to your hit points is written here as a row, with your new total on the left and what changed on
+        the right. Type an entry in the box below and press Enter.
+      </p>
+      <p>
+        {code("-7", "damage")} damage, taken from temp HP first · {code("+3", "heal")} heal · {code("35", "set")} or{" "}
+        {code("=35", "set")} set your HP
+      </p>
+      <p>
+        Temp HP: {code("+t5", "temp")} gain · {code("-t5", "temp")} lose · {code("=t5", "temp")} set
+      </p>
+      <p>
+        Max HP, temporarily: {code("+m5", "tempMax")} raise · {code("-m5", "tempMax")} lower ·{" "}
+        {code("=m5", "tempMax")} set
+      </p>
+      <p>
+        Entries chain: {code("-9", "damage")} {code("+t5", "temp")} is one row.
+      </p>
+      <p>Prefer a conventional HP tracker? There is an option in settings to use one instead of the register.</p>
+      <p className="dg-hp-help-dismiss">Delete the ? or press Enter to go back.</p>
     </div>
   );
 }
@@ -416,10 +686,8 @@ function Readout({
   text,
   tokens,
   error,
-  editing,
   inputRef,
   onText,
-  onOpen,
   onCommit,
   onCancel,
   symbolStrip,
@@ -429,109 +697,136 @@ function Readout({
   text: string;
   tokens: HpToken[];
   error?: string;
-  editing: boolean;
   inputRef: RefObject<HTMLInputElement | null>;
   onText: (value: string) => void;
-  onOpen: () => void;
   onCommit: () => void;
   onCancel: () => void;
   symbolStrip?: boolean;
 }): ReactNode {
   const sheet = useSheet();
+  const help = text.includes("?");
   const current = preview?.current ?? character.hp.current;
   const temp = preview?.temp ?? character.hp.temp;
-  const open = editing || Boolean(text);
   const [focused, setFocused] = useState(false);
-  const showStrip = symbolStrip === true && open && focused;
+  const showStrip = symbolStrip === true && focused;
   const keyboardInset = useKeyboardInset(symbolStrip === true, showStrip, () => inputRef.current?.blur());
+  const figure = useRef<HTMLSpanElement>(null);
+  const figureWidth = useWidth(figure);
 
   return (
     <div className="dg-hp-readout">
-      <button
-        type="button"
-        className={preview ? "dg-hp-figure is-pending" : "dg-hp-figure"}
-        onClick={onOpen}
-        aria-label="Hit points"
+      {/* The input covers the whole box and the figure shows through it, so a
+       * click anywhere in the box is a click in the input. The input's text is
+       * padded clear of the figure, so a long entry never runs underneath it. */}
+      <div
+        className="dg-hp-calc-field"
+        style={{ "--dg-hp-figure-w": `${figureWidth}px` } as CSSProperties}
         onContextMenu={(e) => {
+          // With text in the box the right-click is about the text.
+          if (text) return;
           e.preventDefault();
-          const explanation = explainStat(character.hp.max, { label: "Maximum hit points" });
-          sheet.open({
-            title: "Hit points",
-            subtitle: `${character.hp.current} of ${character.hp.max.value + character.hp.tempMax}`,
-            body: () => <TextBody formula={explanation.formula} text={CALC_HELP} />,
-          });
+          openHpSheet(sheet, character);
         }}
       >
-        <span className="dg-hp-current">{current}</span>
-        {temp ? <span className="dg-hp-temp-text">+{temp}</span> : null}
-      </button>
-
-      {open ? (
-        <div className="dg-hp-calc">
-          <div className="dg-hp-calc-field">
-            {/* The coloured copy sits under a transparent input, so what you type
-             * is coloured by role without reimplementing a text editor. */}
-            <span className="dg-hp-calc-ink" aria-hidden="true">
-              {tokens.length ? inkOf(text, tokens) : <span className="dg-hp-token">{text}</span>}
-            </span>
-            <input
-              ref={inputRef}
-              className="dg-hp-calc-input"
-              value={text}
-              aria-label="Hit point entry"
-              // A phone gets the number pad; the symbol strip supplies what it lacks.
-              inputMode={symbolStrip ? "decimal" : "text"}
-              spellCheck={false}
-              onChange={(e) => onText(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  onCommit();
-                } else if (e.key === "Escape") {
-                  e.preventDefault();
-                  onCancel();
-                }
+        <span ref={figure} className={preview ? "dg-hp-figure is-pending" : "dg-hp-figure"}>
+          <span className="dg-hp-current">{current}</span>
+          {temp ? <span className="dg-hp-temp-text">+{temp}</span> : null}
+        </span>
+        {!text && !focused ? (
+          <span className="dg-hp-calc-hint" aria-hidden="true">
+            <Icon name="plus-minus" />
+            <span>+/−</span>
+          </span>
+        ) : null}
+        {/* Over the box rather than under it, so an error coming and going
+         * never moves the register. It sits before the ink, so the entry is
+         * drawn over it if the two ever meet. */}
+        {error ? <span className="dg-hp-calc-error">{error}</span> : null}
+        {/* The coloured copy sits under a transparent input, so what you type
+         * is coloured by role without reimplementing a text editor. */}
+        <span className="dg-hp-calc-ink" aria-hidden="true">
+          <span>{tokens.length ? inkOf(text, tokens) : <span className="dg-hp-token">{text}</span>}</span>
+        </span>
+        <input
+          ref={inputRef}
+          className="dg-hp-calc-input"
+          value={text}
+          aria-label="Hit point entry"
+          // A phone gets the number pad; the symbol strip supplies what it lacks.
+          inputMode={symbolStrip ? "decimal" : "text"}
+          spellCheck={false}
+          onChange={(e) => onText(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              onCommit();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              onCancel();
+            }
+          }}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+        />
+      </div>
+      {showStrip ? (
+        <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
+          {/* The number pad has no `?`, so the help gets a key of its own, on
+           * a row above the symbols where it can't be hit mid-entry. A second
+           * press takes it out again. */}
+          <div className="dg-hp-symbols-row">
+            <button
+              type="button"
+              className={help ? "dg-hp-symbol dg-hp-symbol-help is-on" : "dg-hp-symbol dg-hp-symbol-help"}
+              aria-pressed={help}
+              onPointerDown={(e) => e.preventDefault()}
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={() => {
+                onText(help ? text.replace(/\?/g, "") : text + "?");
+                inputRef.current?.focus();
               }}
-              // Clicking away closes an empty box; one with text in it stays, so
-              // the pending diff stays on screen with it.
-              onFocus={() => setFocused(true)}
-              onBlur={() => {
-                setFocused(false);
-                if (!text.trim()) onCancel();
-              }}
-            />
+            >
+              ?<span className="dg-sr-only"> Help</span>
+            </button>
           </div>
-          {showStrip ? (
-            <div className="dg-hp-symbols" style={{ bottom: keyboardInset }}>
-              {SYMBOLS.map(({ symbol, role }) => (
-                <button
-                  key={symbol}
-                  type="button"
-                  className={`dg-hp-symbol is-${role}`}
-                  // Pressing a button would take focus from the input, which closes
-                  // an empty one and drops the keyboard before the click lands.
-                  onPointerDown={(e) => e.preventDefault()}
-                  onMouseDown={(e) => e.preventDefault()}
-                  onClick={() => {
-                    onText(text + (symbol === "−" ? "-" : symbol));
-                    inputRef.current?.focus();
-                  }}
-                >
-                  {symbol}
-                </button>
-              ))}
-            </div>
-          ) : null}
-          {error ? <p className="dg-hp-calc-error">{error}</p> : null}
+          <div className="dg-hp-symbols-row">
+            {SYMBOLS.map(({ symbol, role }) => (
+              <button
+                key={symbol}
+                type="button"
+                className={`dg-hp-symbol is-${role}`}
+                // Pressing a button would take focus from the input, which
+                // drops the keyboard before the click lands.
+                onPointerDown={(e) => e.preventDefault()}
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => {
+                  onText(text + (symbol === "−" ? "-" : symbol));
+                  inputRef.current?.focus();
+                }}
+              >
+                {symbol}
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <button type="button" className="dg-hp-calc-open" onClick={onOpen} aria-label="Change hit points">
-          <Icon name="plus-minus" />
-          <span>+/−</span>
-        </button>
-      )}
+      ) : null}
     </div>
   );
+}
+
+/** An element's rendered width, kept current as it changes. */
+function useWidth(ref: RefObject<HTMLElement | null>): number {
+  const [width, setWidth] = useState(0);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const measure = (): void => setWidth(el.offsetWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [ref]);
+  return width;
 }
 
 /**
