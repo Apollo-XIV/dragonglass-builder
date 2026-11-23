@@ -47,11 +47,14 @@ export function useNumerals(): Numerals {
   return useContext(PluginContext)?.plugin.settings.layout.numerals ?? "roman";
 }
 
-export function SpellLevel({ level, className }: { level: number; className?: string }): ReactNode {
+/** `tooltip` opens Obsidian's hover label with the level's name, "Level 4" for the numeral IV. */
+export function SpellLevel({ level, className, tooltip }: { level: number; className?: string; tooltip?: boolean }): ReactNode {
   const numerals = useNumerals();
   return (
     <span className={className ? `dg-spell-level ${className}` : "dg-spell-level"}>
-      <span aria-hidden="true">{spellLevelGlyph(level, numerals)}</span>
+      <span aria-hidden="true" aria-label={tooltip ? spellLevelName(level) : undefined}>
+        {spellLevelGlyph(level, numerals)}
+      </span>
       <span className="dg-sr-only">{spellLevelName(level)}</span>
     </span>
   );

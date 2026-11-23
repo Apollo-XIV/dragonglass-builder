@@ -8,7 +8,7 @@
  * swallowing the taps inside it.
  */
 
-import { useRef, type ReactNode } from "react";
+import { Fragment, useRef, type ReactNode } from "react";
 import { describeRoll, rollNotation, type RollOptions } from "../../../core/dice";
 import type { Explanation, ExplainRow } from "../../../core/resolver/explain";
 import { describeUses } from "../../../core/state/recharge";
@@ -16,6 +16,7 @@ import { event } from "../../../core/state/fold";
 import type { CharacterStore } from "../../character-store";
 import type { Fact } from "../../../core/content/facts";
 import { Facts, Icon, Markdown } from "../components";
+import { iconHint, type Lead } from "../range-lead";
 import { ProvenanceMark, UnverifiedNote } from "../provenance";
 import { DetailBody, type ReadableProps } from "../builder/detail";
 import { UI } from "./constants";
@@ -328,7 +329,9 @@ function HeldReadButton({
  */
 export function ReadRow({
   title,
+  titleSuffix,
   subtitle,
+  lead,
   text,
   fluff,
   facts,
@@ -339,10 +342,14 @@ export function ReadRow({
   unverified,
 }: {
   title: string;
+  /** Drawn after the title in the row, quieter than it; the sheet's title stays plain. */
+  titleSuffix?: ReactNode;
   /** Why the row's parts are unverified, one note each; the marker is only drawn when there are some. */
   unverified?: readonly string[];
   /** "Wizard 1 · Class feature". */
   subtitle?: string;
+  /** Icons that begin the subtitle in the row; the sheet reads their labels as text instead. */
+  lead?: readonly Lead[];
   text?: string;
   fluff?: string;
   facts?: Fact[];
@@ -360,7 +367,7 @@ export function ReadRow({
   const open = (): void =>
     sheet.open({
       title,
-      subtitle,
+      subtitle: [...(lead ?? []).map((l) => l.label), subtitle].filter(Boolean).join(" · ") || undefined,
       body: () => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} unverified={unverified} />,
     });
 
@@ -376,8 +383,30 @@ export function ReadRow({
         <span className="dg-read-title">
           {title}
           <ProvenanceMark notes={unverified} />
+          {titleSuffix ? <span className="dg-read-title-suffix">{titleSuffix}</span> : null}
         </span>
-        {subtitle ? <span className="dg-read-subtitle">{subtitle}</span> : null}
+        {subtitle || lead?.length ? (
+          <span className="dg-read-subtitle">
+            {(lead ?? []).map((l, i) => (
+              <Fragment key={l.label}>
+                {i > 0 ? <span aria-hidden="true"> · </span> : null}
+                <span className="dg-read-lead">
+                  {(typeof l.icon === "string" ? [l.icon] : l.icon).map((name) => (
+                    <Icon key={name} name={name} tooltip={iconHint(name, l)} />
+                  ))}
+                  {l.text ? (
+                    <span aria-hidden="true" aria-label={iconHint("", l)}>
+                      {l.text}
+                    </span>
+                  ) : null}
+                  <span className="dg-sr-only">{l.label}</span>
+                </span>
+              </Fragment>
+            ))}
+            {lead?.length && subtitle ? <span aria-hidden="true"> · </span> : null}
+            {subtitle}
+          </span>
+        ) : null}
       </span>
       {children}
       {settings.infoButtons ? <InfoButton onClick={open} /> : null}

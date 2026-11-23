@@ -20,7 +20,7 @@ import type { CharacterStore } from "../../character-store";
 import { Avatar } from "../avatar";
 import { AbilityBlock } from "../abilities";
 import { HpPanel } from "../hp-panel";
-import { Markdown, signed } from "../components";
+import { Icon, Markdown, signed } from "../components";
 import { prettyPath } from "../sheet-panels";
 import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
@@ -28,6 +28,9 @@ import { NarrowScroller, type SectionSpec } from "./scroller";
 import { useSheet } from "./sheet";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
+import { rangeLead, type Lead } from "../range-lead";
+import { componentsLead, spellFlagLeads } from "../spell-leads";
+import { SpellLevel } from "../spell-level";
 import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
 import { UseAction } from "../use-action";
 import { StatusChips } from "../desktop/header";
@@ -280,6 +283,28 @@ const ACTIVATION_CHIPS = [
   { id: "reaction", label: "Reaction" },
 ];
 
+/** The icon that stands for an activation in a row; anything else is still written out. */
+const ACTIVATION_LEADS: Record<string, Lead> = {
+  action: { icon: "dg-action", label: "Action" },
+  "bonus-action": { icon: "dg-bonus-action", label: "Bonus action" },
+  reaction: { icon: "dg-reaction", label: "Reaction" },
+};
+
+/**
+ * A spell's casting time is prose. "1 action", "1 bonus action" and "1 reaction, which you
+ * take when..." lead with an icon; anything else ("1 minute", "1 action or 8 hours") stays
+ * written out. The sheet and screen readers get the whole text, trigger included.
+ */
+function castingLead(castingTime: string | undefined): Lead | undefined {
+  const match = castingTime?.match(/^1 (action|bonus action|reaction)(,|$)/);
+  if (!castingTime || !match) return undefined;
+  return { icon: ACTIVATION_LEADS[match[1].replace(" ", "-")].icon, label: castingTime, hint: `Casting time: ${castingTime}` };
+}
+
+const schoolName = (school: string): string => `${school.charAt(0).toUpperCase()}${school.slice(1)}`;
+
+const leads = (...all: (Lead | undefined)[]): Lead[] => all.filter((l): l is Lead => !!l);
+
 /** Damage that depends on the amount spent can only be rolled once an amount is chosen. */
 const variableDamage = (action: ResolvedAction): boolean => mentionsSpent(action.damageResolved);
 
@@ -296,7 +321,10 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={attack.key}
           title={attack.name}
-          subtitle={[attack.ranged ? "Ranged" : "Melee", attack.damageType, attack.range].filter(Boolean).join(" · ")}
+          lead={leads(rangeLead(attack.range))}
+          subtitle={[attack.ranged ? "Ranged" : "Melee", attack.damageType, rangeLead(attack.range) ? undefined : attack.range]
+            .filter(Boolean)
+            .join(" · ")}
           text={typeof attack.item.element.text === "string" ? attack.item.element.text : undefined}
         >
           <RollBox
@@ -332,9 +360,10 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={action.key}
           title={action.name}
+          lead={leads(ACTIVATION_LEADS[action.activation], rangeLead(action.range))}
           subtitle={[
-            action.activation.replace("-", " "),
-            action.range,
+            ACTIVATION_LEADS[action.activation] ? undefined : action.activation.replace("-", " "),
+            rangeLead(action.range) ? undefined : action.range,
             action.save ? `DC ${action.save.dc} ${action.save.ability.toUpperCase()}` : undefined,
             action.healResolved ? `heals ${withSpent(action.healResolved, undefined)}` : undefined,
             action.durationResolved ? withSpent(action.durationResolved, undefined) : undefined,
@@ -467,12 +496,26 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
         <ReadRow
           key={spell.id}
           title={spell.name}
+          titleSuffix={
+            <>
+              {spell.school ? (
+                <>
+                  <Icon name={`dg-school-${spell.school}`} className="dg-read-school" tooltip={schoolName(spell.school)} />
+                  <span className="dg-sr-only">{`${schoolName(spell.school)}, `}</span>
+                </>
+              ) : null}
+              <SpellLevel level={spell.spellLevel} tooltip />
+            </>
+          }
+          lead={leads(
+            castingLead(spell.castingTime),
+            rangeLead(spell.range),
+            componentsLead(spell.components),
+            ...spellFlagLeads(spell),
+          )}
           subtitle={[
-            spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`,
-            spell.castingTime,
-            spell.range,
-            spell.concentration ? "concentration" : undefined,
-            spell.ritual ? "ritual" : undefined,
+            castingLead(spell.castingTime) ? undefined : spell.castingTime,
+            rangeLead(spell.range) ? undefined : spell.range,
             spell.innate.length ? innateLabel(spell) : undefined,
           ]
             .filter(Boolean)
