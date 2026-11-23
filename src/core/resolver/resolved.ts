@@ -339,6 +339,12 @@ export interface ResolvedSpell {
   ritual?: boolean;
   text?: string;
   higherLevels?: string;
+  /**
+   * What casting it rolls: the spell's own `actions`, resolved as the class it is cast as
+   * (or the ability an innate grant chose) would resolve them. Absent for a spell with
+   * nothing to roll. Not part of `ResolvedCharacter.actions`.
+   */
+  actions?: ResolvedAction[];
   prepared: boolean;
   alwaysPrepared: boolean;
   /** Learned outside the class's progression; counts toward no limit. */

@@ -44,6 +44,7 @@ import { textOf } from "../content/mastery";
 import type { ResolvedRecharge } from "../state/recharge";
 import { checkRequirement, describeRequirement, type RequirementContext } from "../content/requirements";
 import { mentionsSpent, resolveDice, SPENT_REF, tryEvaluate } from "../expr/evaluate";
+import type { ExprContext } from "../expr/evaluate";
 import {
   canonicalPoolKey,
   foldState,
@@ -57,7 +58,7 @@ import { attackRollParts, sumParts } from "./attacks";
 import { onClassList } from "./spell-list";
 import { heldElsewhere } from "./held";
 import { EXPERTISE_KIND, isProficient, settleExpertise } from "./expertise";
-import { collect, innatePoolId, occurrencePrefix, type CollectResult, type DeclaredChoice, type PartSource } from "./collect";
+import { collect, innatePoolId, occurrencePrefix, type CollectResult, type DeclaredChoice, type Part, type PartSource } from "./collect";
 import {
   casterLevel,
   maxForDie,
@@ -273,6 +274,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
   const hitDicePools = resolveHitDice(collected, live?.spent.hitDice ?? {});
   if (spellcasting) resolveInnateCosts(spellcasting, collected, engine, resources, hitDicePools, live, diagnostics);
   const actions = resolveActions(collected, engine, resources, spellcasting, hitDicePools, live, content, diagnostics);
+  if (spellcasting) resolveSpellActions(spellcasting, engine, resources, hitDicePools, live, content, diagnostics);
   const effects = resolveEffects(effectDefs, live);
   const items = resolveInventory(collected, inventory);
 
@@ -657,8 +659,65 @@ function resolveActions(
   content: ContentIndex,
   diagnostics: Diagnostic[],
 ): ResolvedAction[] {
+  const out = resolveActionParts(collected.actions, engine, resources, spellcasting, hitDicePools, live, content, diagnostics);
+  return withoutBarePoolButtons(out, resources);
+}
+
+/**
+ * What a spell does when it is cast, for the spells panel: each spell's own `actions`
+ * part resolved against the class it is cast as, so its save DC, attack bonus and healing
+ * are that class's. These are not in the character's action list, which is for what a
+ * feature grants; a spell is cast from the spell list.
+ */
+function resolveSpellActions(
+  spellcasting: ResolvedSpellcasting,
+  engine: StatEngine,
+  resources: ResolvedResource[],
+  hitDicePools: ResolvedCharacter["hp"]["hitDice"],
+  live: LiveState | undefined,
+  content: ContentIndex,
+  diagnostics: Diagnostic[],
+): void {
+  for (const spell of spellcasting.spells) {
+    const defs = (spell.element.actions ?? []) as ActionDef[];
+    if (!defs.length) continue;
+    const from: PartSource = { element: spell.element, class: spell.class };
+    spell.actions = resolveActionParts(
+      defs.map((def) => ({ def, from })), engine, resources, spellcasting, hitDicePools, live, content, diagnostics,
+    );
+  }
+}
+
+/**
+ * The expressions an action's dice and bonuses read. `@spellcasting.mod` is the modifier
+ * of the ability the action casts with, which is the class's for a spell and the ability
+ * an innate grant chose for one the character has no class for: "1d8 + @spellcasting.mod"
+ * is Cure Wounds for whoever is casting it.
+ */
+function actionContext(
+  engine: StatEngine,
+  from: PartSource,
+  content: ContentIndex,
+  spellcasting: ResolvedSpellcasting | undefined,
+): ExprContext {
+  const ability = castingClassOf(from, content, spellcasting)?.ability;
+  if (!ability) return engine.ctx;
+  return { ...engine.ctx, lookup: (path) => (path === "spellcasting.mod" ? engine.abilityMod(ability) : engine.ctx.lookup(path)) };
+}
+
+function resolveActionParts(
+  parts: Part<ActionDef>[],
+  engine: StatEngine,
+  resources: ResolvedResource[],
+  spellcasting: ResolvedSpellcasting | undefined,
+  hitDicePools: ResolvedCharacter["hp"]["hitDice"],
+  live: LiveState | undefined,
+  content: ContentIndex,
+  diagnostics: Diagnostic[],
+): ResolvedAction[] {
   const out: ResolvedAction[] = [];
-  for (const { def, from } of collected.actions) {
+  for (const { def, from } of parts) {
+    const ctx = actionContext(engine, from, content, spellcasting);
     const key = def.id.includes(":") ? def.id : `${from.element.id}:${def.id}`;
     const { resolvedCost, available, unavailableReason, deferred } = resolveCostLines(
       def.cost, def.name ?? def.id, from, engine, resources, spellcasting, hitDicePools, live, diagnostics,
@@ -666,7 +725,7 @@ function resolveActions(
 
     const dice = (notation: string | undefined, what: string): { text: string } | undefined => {
       if (!notation) return undefined;
-      const out = resolveDice(notation, engine.ctx, deferred);
+      const out = resolveDice(notation, ctx, deferred);
       if (out.error)
         diagnostics.push({
           severity: "warning",
@@ -727,7 +786,7 @@ function resolveActions(
       definition: def satisfies ActionDef,
     });
   }
-  return withoutBarePoolButtons(out, resources);
+  return out;
 }
 
 /**
