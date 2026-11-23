@@ -509,8 +509,8 @@ function OptionRow({
     .join(" ");
   const { handlers } = useHold({
     onTap: onPick,
-    // Reading an option replaces the sheet's contents rather than stacking a
-    // second sheet on the first.
+    // Reading an option stacks a sheet on the picker, so dismissing it goes
+    // back to the options.
     onHold: () =>
       sheet.open({
         title: option.name,
