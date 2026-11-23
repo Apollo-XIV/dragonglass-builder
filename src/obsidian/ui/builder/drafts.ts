@@ -8,13 +8,19 @@
  * sheet — can say so rather than quietly overwriting it.
  */
 
-import type { BuildFile } from "../../../core/types";
+import type { BuildFile, InventoryFile, SpellsFile } from "../../../core/types";
 
 export interface Draft {
   /** The working copy. */
   build: BuildFile;
+  /** The working spell list and inventory. Absent in drafts written before the builder held them. */
+  spells?: SpellsFile;
+  inventory?: InventoryFile;
   /** The character's build as it was when the edit began. */
   base: BuildFile;
+  /** The spell list and inventory as they were when the edit began. */
+  baseSpells?: SpellsFile;
+  baseInventory?: InventoryFile;
   /** ISO timestamp of the last keystroke. */
   saved: string;
 }
@@ -33,7 +39,14 @@ export const NO_DRAFTS: DraftStore = { get: () => undefined, set: () => {}, clea
  * files are small enough that this is cheaper than keeping a version counter
  * honest across devices.
  */
-export function baseHasMoved(draft: Draft, current: BuildFile | undefined): boolean {
-  if (!current) return false;
-  return JSON.stringify(draft.base) !== JSON.stringify(current);
+export function baseHasMoved(draft: Draft, current: DraftFiles): boolean {
+  const moved = (from: unknown, to: unknown): boolean => from !== undefined && to !== undefined && JSON.stringify(from) !== JSON.stringify(to);
+  return moved(draft.base, current.build) || moved(draft.baseSpells, current.spells) || moved(draft.baseInventory, current.inventory);
+}
+
+/** The files a builder session holds. */
+export interface DraftFiles {
+  build?: BuildFile;
+  spells?: SpellsFile;
+  inventory?: InventoryFile;
 }

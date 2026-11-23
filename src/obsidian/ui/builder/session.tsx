@@ -14,10 +14,10 @@
  */
 
 import { createContext, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { diffBuilds, type BuildDiff } from "../../../core/resolver/diff";
+import { diffBuilds, diffInventory, diffSpells, type BuildDiff } from "../../../core/resolver/diff";
 import type { BuildFile } from "../../../core/types";
 import type { CharacterStore } from "../../character-store";
-import { baseHasMoved, type Draft } from "./drafts";
+import { baseHasMoved, type Draft, type DraftFiles } from "./drafts";
 import { useShell } from "../narrow/platform";
 
 export interface BuilderSession {
@@ -63,6 +63,17 @@ function isNew(build: BuildFile | undefined): boolean {
   return !build || ((build.levels?.length ?? 0) === 0 && !build.species);
 }
 
+/** The files a session holds, picked out of the character. */
+function held(data: DraftFiles): DraftFiles {
+  return { build: data.build, spells: data.spells, inventory: data.inventory };
+}
+
+/** Would resuming this draft change anything? */
+function draftDiffers(draft: Draft, current: DraftFiles): boolean {
+  const differs = (from: unknown, to: unknown): boolean => from !== undefined && JSON.stringify(from) !== JSON.stringify(to);
+  return differs(draft.build, current.build) || differs(draft.spells, current.spells) || differs(draft.inventory, current.inventory);
+}
+
 function useSession(store: CharacterStore, active: boolean): BuilderSession | undefined {
   const shell = useShell();
   const folder = store.paths.folder;
@@ -74,12 +85,12 @@ function useSession(store: CharacterStore, active: boolean): BuilderSession | un
   const [pendingDraft, setPendingDraft] = useState<Draft | undefined>(() =>
     creating ? undefined : shell.drafts.get(folder),
   );
-  const base = useRef<BuildFile | undefined>(build);
+  const base = useRef<DraftFiles>(held(store.data));
 
   useEffect(() => {
     if (!active || creating) return;
     store.beginEdit(["build", "spells", "inventory"]);
-    base.current = store.editBase?.build ?? build;
+    base.current = held(store.editBase ?? store.data);
 
     return () => {
       // Leaving the builder puts the character back to its saved state, so a
@@ -92,21 +103,36 @@ function useSession(store: CharacterStore, active: boolean): BuilderSession | un
   }, [active, creating, store]);
 
   const working = store.data.build;
-  const diff = useMemo(
-    () =>
-      base.current && working
-        ? diffBuilds(base.current, working, (id) => store.index?.get(id)?.name ?? id)
-        : { lines: [], count: 0 },
-    [working, store.index, store.version],
-  );
+  const workingSpells = store.data.spells;
+  const workingInventory = store.data.inventory;
+  // Spells and inventory are held by the session as much as the build is, so a
+  // change to only those is still something to save.
+  const diff = useMemo(() => {
+    const nameOf = (id: string): string => store.index?.get(id)?.name ?? id;
+    const parts = [
+      base.current.build && working ? diffBuilds(base.current.build, working, nameOf) : undefined,
+      diffSpells(base.current.spells, workingSpells, nameOf),
+      diffInventory(base.current.inventory, workingInventory, nameOf),
+    ];
+    const lines = parts.flatMap((part) => part?.lines ?? []);
+    return { lines, count: lines.length };
+  }, [working, workingSpells, workingInventory, store.index, store.version]);
 
   const dirty = !creating && diff.count > 0;
 
   // The draft is written as you work, so closing the pane loses nothing.
   useEffect(() => {
-    if (!active || creating || !dirty || !working || !base.current) return;
-    shell.drafts.set(folder, { build: working, base: base.current, saved: new Date().toISOString() });
-  }, [active, creating, dirty, working, folder, shell]);
+    if (!active || creating || !dirty || !working || !base.current.build) return;
+    shell.drafts.set(folder, {
+      build: working,
+      spells: workingSpells,
+      inventory: workingInventory,
+      base: base.current.build,
+      baseSpells: base.current.spells,
+      baseInventory: base.current.inventory,
+      saved: new Date().toISOString(),
+    });
+  }, [active, creating, dirty, working, workingSpells, workingInventory, folder, shell]);
 
   if (!active) return undefined;
 
@@ -114,13 +140,15 @@ function useSession(store: CharacterStore, active: boolean): BuilderSession | un
     creating,
     dirty,
     diff,
-    pendingDraft: pendingDraft && working && JSON.stringify(pendingDraft.build) !== JSON.stringify(working)
-      ? pendingDraft
-      : undefined,
-    baseMoved: store.editBaseMoved || (pendingDraft ? baseHasMoved(pendingDraft, working) : false),
+    pendingDraft: pendingDraft && working && draftDiffers(pendingDraft, held(store.data)) ? pendingDraft : undefined,
+    baseMoved: store.editBaseMoved || (pendingDraft ? baseHasMoved(pendingDraft, held(store.data)) : false),
     resumeDraft: () => {
       if (!pendingDraft) return;
-      store.restoreEdit({ build: pendingDraft.build });
+      store.restoreEdit({
+        build: pendingDraft.build,
+        ...(pendingDraft.spells ? { spells: pendingDraft.spells } : {}),
+        ...(pendingDraft.inventory ? { inventory: pendingDraft.inventory } : {}),
+      });
       setPendingDraft(undefined);
     },
     discardDraft: () => {
@@ -130,14 +158,14 @@ function useSession(store: CharacterStore, active: boolean): BuilderSession | un
     save: () => {
       store.commitEdit();
       shell.drafts.clear(folder);
-      base.current = store.data.build;
+      base.current = held(store.data);
       // Editing continues after a save, so the next change starts a new diff.
       store.beginEdit(["build", "spells", "inventory"]);
     },
     discard: () => {
       store.discardEdit();
       shell.drafts.clear(folder);
-      base.current = store.data.build;
+      base.current = held(store.data);
       store.beginEdit(["build", "spells", "inventory"]);
     },
   };

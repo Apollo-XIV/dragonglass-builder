@@ -7,7 +7,7 @@
  * explain consequences — the change report in `validity.ts` does that.
  */
 
-import type { BuildFile } from "../types";
+import type { BuildFile, InventoryEntry, InventoryFile, SpellEntry, SpellsFile } from "../types";
 import { ABILITIES } from "../types";
 import { classLevels } from "./levels";
 
@@ -76,4 +76,59 @@ function choicePairs(base: BuildFile, next: BuildFile): [string, string[], strin
 
 function sameAnswer(a: string[], b: string[]): boolean {
   return a.length === b.length && a.every((id, i) => id === b[i]);
+}
+
+/**
+ * Spells added to or taken from the list, and preparation changes. A spell is
+ * keyed by its class as well as its id, so a multiclass character's two copies
+ * of the same spell are two entries.
+ */
+export function diffSpells(
+  base: SpellsFile | undefined,
+  next: SpellsFile | undefined,
+  nameOf: (id: string) => string = (id) => id,
+): BuildDiff {
+  const lines: string[] = [];
+  const key = (spell: SpellEntry): string => `${spell.class ?? ""}|${spell.id}`;
+  const before = new Map((base?.spells ?? []).map((spell) => [key(spell), spell]));
+  const after = new Map((next?.spells ?? []).map((spell) => [key(spell), spell]));
+
+  for (const [k, spell] of after) {
+    const old = before.get(k);
+    if (!old) lines.push(`Spell added: ${nameOf(spell.id)}`);
+    else if (!!old.prepared !== !!spell.prepared)
+      lines.push(`${nameOf(spell.id)}: ${old.prepared ? "prepared" : "not prepared"} → ${spell.prepared ? "prepared" : "not prepared"}`);
+    else if (JSON.stringify(old) !== JSON.stringify(spell)) lines.push(`Spell changed: ${nameOf(spell.id)}`);
+  }
+  for (const [k, spell] of before) if (!after.has(k)) lines.push(`Spell removed: ${nameOf(spell.id)}`);
+
+  return { lines, count: lines.length };
+}
+
+/** Items added, removed or changed, keyed by each entry's own uid, and coin. */
+export function diffInventory(
+  base: InventoryFile | undefined,
+  next: InventoryFile | undefined,
+  nameOf: (id: string) => string = (id) => id,
+): BuildDiff {
+  const lines: string[] = [];
+  const name = (entry: InventoryEntry): string => entry.item?.name ?? (entry.id ? nameOf(entry.id) : "custom item");
+  const before = new Map((base?.items ?? []).map((entry) => [entry.uid, entry]));
+  const after = new Map((next?.items ?? []).map((entry) => [entry.uid, entry]));
+
+  for (const [uid, entry] of after) {
+    const old = before.get(uid);
+    if (!old) lines.push(`Item added: ${name(entry)}${(entry.quantity ?? 1) > 1 ? ` ×${entry.quantity}` : ""}`);
+    else if ((old.quantity ?? 1) !== (entry.quantity ?? 1)) lines.push(`${name(entry)}: ${old.quantity ?? 1} → ${entry.quantity ?? 1}`);
+    else if (JSON.stringify(old) !== JSON.stringify(entry)) lines.push(`Item changed: ${name(entry)}`);
+  }
+  for (const [uid, entry] of before) if (!after.has(uid)) lines.push(`Item removed: ${name(entry)}`);
+
+  for (const coin of ["cp", "sp", "ep", "gp", "pp"] as const) {
+    const from = base?.currency?.[coin] ?? 0;
+    const to = next?.currency?.[coin] ?? 0;
+    if (from !== to) lines.push(`${coin.toUpperCase()}: ${from} → ${to}`);
+  }
+
+  return { lines, count: lines.length };
 }
