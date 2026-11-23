@@ -5301,3 +5301,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-picker-head > p {
   margin: 0;
 }
+
+/* A bottom sheet's claim on the back gesture (back-button.ts): a modal that is never seen. */
+.modal-container.dg-back-proxy {
+  display: none;
+}

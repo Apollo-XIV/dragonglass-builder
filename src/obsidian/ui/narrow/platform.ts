@@ -24,6 +24,9 @@ export interface Shell {
   /** Lets the shell adjust the container the layout lives in: the narrow layout
    * owns its own scrolling, so the view's element must stop scrolling. */
   setLayout(mode: "narrow" | "desktop"): void;
+  /** Makes the platform's back gesture call `onBack` instead of leaving, until
+   * the returned release is called. Claims stack, the latest taken first. */
+  claimBack(onBack: () => void): () => void;
 }
 
 /** `navigator.vibrate` is Android-only; everywhere else this does nothing. */
@@ -51,6 +54,7 @@ export const ShellContext = createContext<Shell>({
   setTitle: () => {},
   setLayout: () => {},
   openSheet: () => {},
+  claimBack: () => () => {},
 });
 
 export function useShell(): Shell {

@@ -9,6 +9,7 @@ import { CharacterApp } from "./ui/CharacterApp";
 import { PluginContext } from "./ui/context";
 import { ShellContext, createHaptics, type Shell } from "./ui/narrow/platform";
 import { resolveAccent } from "./settings";
+import { claimBack } from "./back-button";
 
 export const DRAGONGLASS_VIEW = "dragonglass-5e-view";
 
@@ -75,6 +76,8 @@ export class DragonglassFileView extends FileView {
       this.contentEl.toggleClass("is-narrow", mode === "narrow");
       this.contentEl.toggleClass("is-desktop", mode === "desktop");
     },
+    // Only a phone or tablet has a back gesture to claim.
+    claimBack: (onBack) => (Platform.isMobileApp ? claimBack(this.app, onBack) : () => {}),
   };
 
   constructor(leaf: WorkspaceLeaf, private readonly plugin: DragonglassPlugin) {

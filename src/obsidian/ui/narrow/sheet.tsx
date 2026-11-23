@@ -13,6 +13,9 @@
  * opened from the page replaces the whole stack. `close` closes the sheet its
  * own `useSheet` opened, with whatever is on top of it, so a picker that closes
  * itself after a pick never takes the confirmation that pick opened with it.
+ *
+ * Each open layer claims the phone's back gesture, so back closes the top sheet
+ * and goes back to the one below rather than leaving the app.
  */
 
 import {
@@ -26,6 +29,7 @@ import {
   type ReactNode,
 } from "react";
 import { UI } from "./constants";
+import { useShell } from "./platform";
 import { closeLayer, pushLayer, type Layer } from "./sheet-stack";
 
 export interface SheetSpec {
@@ -104,13 +108,14 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
     [settle],
   );
 
-  // Escape closes the top sheet, on desktop and with an attached keyboard.
+  // Escape closes the top sheet, on desktop and with an attached keyboard. One
+  // already handled closed it through the layer's back claim.
   const open = layers.length > 0;
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent): void => {
       const top = stack.current[stack.current.length - 1];
-      if (event.key === "Escape" && top) close(top.id);
+      if (event.key === "Escape" && !event.defaultPrevented && top) close(top.id);
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
@@ -147,6 +152,9 @@ function SheetLayer({
   // and that release is not a request to close.
   const scrimPressed = useRef(false);
   const dismiss = (): void => close(layer.id);
+  const shell = useShell();
+  // Layers mount bottom first, so the claims stack in the same order as the sheets.
+  useEffect(() => shell.claimBack(() => close(layer.id)), [shell, close, layer.id]);
   const context = useMemo<HostContext>(() => ({ depth, push, close }), [depth, push, close]);
 
   return (

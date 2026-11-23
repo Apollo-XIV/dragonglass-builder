@@ -210,6 +210,12 @@ The narrow layout's own rules:
   from props. The sheet host sits above the component that opened it, so React renders
   the host first and a prop-derived value is always one update behind — which is exactly
   the case the resource menu exists for.
+- **Back closes one sheet.** Obsidian's Android back handler pops its own internal stack of
+  modals and menus before it leaves the app, and the only public way onto that stack is to
+  open a `Modal`. So each open sheet layer claims back through `shell.claimBack`, which on
+  a phone opens a hidden `Modal` (`src/obsidian/back-button.ts`); closing it by back or
+  Escape closes that layer. In a desktop Obsidian, `history.back()` pops the same stack,
+  which is how to test it over CDP.
 - **The shell boundary** (`narrow/platform.ts`) carries the things only Obsidian can
   do — vibrate, set the title, open the sheet, reclass the container — so narrow
   components don't import `obsidian` for them.
