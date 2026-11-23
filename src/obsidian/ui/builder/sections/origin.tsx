@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 import { unverifiedNotes } from "../../../../core/content/provenance";
+import { grantsPreview } from "../../../../core/content/preview";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type { Element } from "../../../../core/types";
 import type {
@@ -166,6 +167,8 @@ export function OriginSection({
     name: element.name,
     text: typeof element.text === "string" ? element.text : undefined,
     fluff: typeof element.fluff === "string" ? element.fluff : undefined,
+    // A species' rules are the traits it grants, not its own text.
+    preview: grantsPreview(element, (id) => index.get(id)),
     tag: index.abbreviation(element.source),
     source: sourceRefOf(index, element.source),
     unverified: unverifiedNotes(element),

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { previewOf } from "../src/core/content/preview";
+import { grantsPreview, previewOf } from "../src/core/content/preview";
 import type { Element } from "../src/core/types";
 
 const el = (id: string, kind: string, name: string, extra: Record<string, unknown> = {}): Element =>
@@ -63,5 +63,45 @@ describe("previewOf", () => {
     const cls = el("t:class:x", "class", "X", { text: "X.", levels: { "1": { grants: ["t:x:loop"] } } });
     const preview = previewOf(cls, (id) => (id === loop.id ? loop : undefined))!;
     expect(preview.levels[0]!.features[0]!.children).toEqual([]);
+  });
+});
+
+describe("grantsPreview", () => {
+  // A 2024 species from 5etools: no text, every rule in a granted trait.
+  const traits = [
+    el("t:aasimar:darkvision", "species-trait", "Darkvision", { text: "See in the dark." }),
+    el("t:aasimar:healing-hands", "species-trait", "Healing Hands", { text: "Heal by touch." }),
+    el("t:spell:light", "spell", "Light", { spellLevel: 0 }),
+  ];
+  const lookup = new Map(traits.map((e) => [e.id, e]));
+  const read = (id: string): Element | undefined => lookup.get(id);
+  const aasimar = (extra: Record<string, unknown> = {}): Element =>
+    el("t:species:aasimar", "species", "Aasimar", {
+      text: "",
+      grants: ["t:spell:light", "t:aasimar:darkvision", "t:aasimar:healing-hands"],
+      choices: [{ id: "c", name: "Language", count: 2, from: {} }],
+      ...extra,
+    });
+
+  it("reads what a species grants as one row with no level", () => {
+    const preview = grantsPreview(aasimar(), read)!;
+    expect(preview.intro).toBeUndefined();
+    expect(preview.levels).toHaveLength(1);
+    const [row] = preview.levels;
+    expect(row!.level).toBeUndefined();
+    expect(row!.features.map((f) => [f.name, f.text])).toEqual([
+      ["Darkvision", "See in the dark."],
+      ["Healing Hands", "Heal by touch."],
+    ]);
+    expect(row!.spells).toEqual(["Light"]);
+    expect(row!.choices).toEqual(["Language"]);
+  });
+
+  it("keeps the species' own text as the intro", () => {
+    expect(grantsPreview(aasimar({ text: "**Age.** Long-lived." }), read)!.intro).toBe("**Age.** Long-lived.");
+  });
+
+  it("is nothing for an element that grants and asks nothing", () => {
+    expect(grantsPreview(el("t:feat:x", "feat", "X", { text: "Does a thing." }), read)).toBeUndefined();
   });
 });

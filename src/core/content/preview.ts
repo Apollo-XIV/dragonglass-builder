@@ -11,9 +11,10 @@ export interface PreviewFeature {
   spells: string[];
 }
 
-/** What one level of a class or subclass brings. */
+/** What one level of a class or subclass brings, or all an element without levels does. */
 export interface PreviewLevel {
-  level: number;
+  /** Absent for an element without levels: a species, a background. */
+  level?: number;
   features: PreviewFeature[];
   /** Spells granted at this level, by name. */
   spells: string[];
@@ -22,7 +23,8 @@ export interface PreviewLevel {
 }
 
 /**
- * What picking a class or subclass gives, level by level, read before it is taken.
+ * What picking a class or subclass gives, level by level, read before it is taken, or what
+ * an origin grants outright as one level-less row (`grantsPreview`).
  * `intro` is the description to show when the element has no text of its own.
  */
 export interface ElementPreview {
@@ -34,6 +36,43 @@ const textOf = (element: Element): string | undefined =>
   typeof element.text === "string" && element.text.trim() ? element.text : undefined;
 
 const same = (a: string, b: string): boolean => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+/** A granted feature with what it grants in turn; nothing for a spell, or one already being read. */
+function featureOf(id: string, seen: Set<string>, get: (id: string) => Element | undefined): PreviewFeature | undefined {
+  const found = get(id);
+  if (!found || found.kind === "spell" || seen.has(id)) return undefined;
+  const inner = new Set(seen).add(id);
+  const out: PreviewFeature = { id, name: found.name, text: textOf(found), children: [], spells: [] };
+  for (const child of (found.grants ?? []).map(grantId)) {
+    if (get(child)?.kind === "spell") out.spells.push(get(child)!.name);
+    else {
+      const nested = featureOf(child, inner, get);
+      if (nested) out.children.push(nested);
+    }
+  }
+  return out;
+}
+
+/**
+ * An origin read as the one row of what it grants and asks: a species' traits, a
+ * background's feature. A 5etools species holds its rules only in the traits it grants —
+ * a 2024 one has no text at all — so without this its reading is its setting prose and
+ * nothing it does.
+ */
+export function grantsPreview(element: Element, get: (id: string) => Element | undefined): ElementPreview | undefined {
+  const row: PreviewLevel = { features: [], spells: [], choices: [] };
+  for (const id of (element.grants ?? []).map(grantId)) {
+    const granted = get(id);
+    if (granted?.kind === "spell") row.spells.push(granted.name);
+    else {
+      const read = featureOf(id, new Set([element.id]), get);
+      if (read) row.features.push(read);
+    }
+  }
+  row.choices = (element.choices ?? []).map((c) => c.name ?? (c.count === 1 ? "one option" : `${c.count} options`));
+  if (!row.features.length && !row.spells.length && !row.choices.length) return undefined;
+  return { intro: textOf(element), levels: [row] };
+}
 
 /**
  * The levels an element with `levels` brings, each granted feature with its text.
@@ -50,20 +89,7 @@ export function previewOf(element: Element | undefined, get: (id: string) => Ele
   let intro = textOf(element);
   const unwrap = intro === undefined;
 
-  const feature = (id: string, seen: Set<string>): PreviewFeature | undefined => {
-    const found = get(id);
-    if (!found || found.kind === "spell" || seen.has(id)) return undefined;
-    const inner = new Set(seen).add(id);
-    const out: PreviewFeature = { id, name: found.name, text: textOf(found), children: [], spells: [] };
-    for (const child of (found.grants ?? []).map(grantId)) {
-      if (get(child)?.kind === "spell") out.spells.push(get(child)!.name);
-      else {
-        const nested = feature(child, inner);
-        if (nested) out.children.push(nested);
-      }
-    }
-    return out;
-  };
+  const feature = (id: string, seen: Set<string>) => featureOf(id, seen, get);
 
   const levels: PreviewLevel[] = [];
   const keys = Object.keys(element.levels)

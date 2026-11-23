@@ -1,6 +1,6 @@
 /**
- * What a class or subclass brings, level by level, so it can be read before it is
- * picked. Each feature folds open to its text; the text is only rendered once open,
+ * What a class or subclass brings, level by level, or a species its traits, so it can
+ * be read before it is picked. Each feature folds open to its text; the text is only rendered once open,
  * since a class can name thirty features.
  */
 
@@ -34,8 +34,8 @@ export function LevelPreview({ preview }: { preview?: ElementPreview }): ReactNo
   return (
     <div className="dg-preview">
       {preview.levels.map((row) => (
-        <section className="dg-preview-level" key={row.level}>
-          <h4>Level {row.level}</h4>
+        <section className="dg-preview-level" key={row.level ?? "all"}>
+          {row.level === undefined ? null : <h4>Level {row.level}</h4>}
           {row.features.map((feature) => (
             <FeatureFold key={feature.id} feature={feature} />
           ))}
