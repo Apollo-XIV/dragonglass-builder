@@ -6,11 +6,26 @@
  * which the plugin sets when a user chooses one; otherwise it follows the theme.
  */
 
+/*
+ * Spell levels: I to IX, and ◆ for a cantrip. Source Serif 4 cut down to those four
+ * glyphs and renamed, as its licence asks of a modified copy; scripts/numerals-font.py
+ * makes this rule. Copyright 2014-2023 Adobe, with Reserved Font Name 'Source', under
+ * the SIL Open Font License 1.1 (fonts/OFL.txt).
+ */
+@font-face {
+  font-family: "Dragonglass Numerals";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: block;
+  src: url("data:font/woff2;base64,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") format("woff2");
+}
+
 .dragonglass {
   --dg-accent: var(--interactive-accent);
   --dg-gap: var(--size-4-3);
   --dg-radius: var(--radius-m);
   --dg-tap: 2.25rem;
+  --dg-font-numeral: "Dragonglass Numerals", var(--font-text);
   overflow: auto;
   padding: 0;
 }
@@ -18,6 +33,11 @@
 .dragonglass.is-compact {
   --dg-gap: var(--size-4-2);
   --dg-tap: 2.75rem;
+}
+
+/* Digits aren't in the numeral face, so the arabic setting falls through to the text font. */
+.dg-spell-level {
+  font-family: var(--dg-font-numeral);
 }
 
 .dg-root {
@@ -1579,8 +1599,10 @@
 }
 
 /* A real, focusable control for screen readers, with no visual footprint
- * (spec 3.7). */
-.dg-layout .dg-sr-only {
+ * (spec 3.7). A spell level carries its own, since a hover card is portalled
+ * outside the layout. */
+.dg-layout .dg-sr-only,
+.dg-spell-level .dg-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;

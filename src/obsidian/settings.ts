@@ -24,6 +24,8 @@ export interface LayoutSettings {
    * conventional tracker of fields and buttons. Both write the same events.
    */
   hpTracker: "register" | "conventional";
+  /** Spell levels as I to IX, or as 1 to 9 for anyone who doesn't read roman numerals easily. */
+  numerals: "roman" | "arabic";
 }
 
 /** The rail sections a layout can offer, in the spec's default order (4.4). */
@@ -148,6 +150,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     hideUnverifiedMarkers: false,
     pins: [],
     hpTracker: "register",
+    numerals: "roman",
   },
   narrow: {
     layout: "auto",
