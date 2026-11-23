@@ -249,7 +249,7 @@ export function StatusChips({
           title={`Concentrating${concentration.name ? ` on ${concentration.name}` : ""} — click to end, hold to read`}
           onTap={() => setConcentration(store, false)}
         >
-          <Icon name="brain-circuit" />
+          <Icon name="dg-concentration" />
           Concentrating
           <Icon name="x" className="dg-d-chip-x" />
         </StatusButton>
