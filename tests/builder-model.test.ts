@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { levelForXp, setLevelHp, XP_THRESHOLDS } from "../src/core/resolver/levels";
 import { NO_FEATURES } from "../src/obsidian/ui/builder/features";
 import { orderSections, type SectionDef } from "../src/obsidian/ui/builder/registry";
+import { chosenSpec } from "../src/obsidian/ui/builder/picker";
 import {
   multiclassNote,
   pointsSpent,
@@ -80,5 +81,20 @@ describe("small helpers", () => {
 
   it("looks ahead only at owners that stage themselves by character level", () => {
     expect(upcomingStaged([], 3, 3)).toEqual([]);
+  });
+});
+
+describe("chosenSpec", () => {
+  const option = (name: string, text?: string) => ({ id: name, name, text });
+
+  it("reads one pick as the pick itself, and nothing as nothing", () => {
+    expect(chosenSpec("Subclass", [])).toBeUndefined();
+    expect(chosenSpec("Subclass", [option("Champion", "Hit hard.")])).toMatchObject({ title: "Champion", text: "Hit hard." });
+  });
+
+  it("reads several picks as one text under the choice's name, a heading each", () => {
+    const spec = chosenSpec("Skills", [option("Athletics", "Climb."), option("Stealth")])!;
+    expect(spec.title).toBe("Skills");
+    expect(spec.text).toBe("### Athletics\n\nClimb.\n\n### Stealth\n\n*No rules text.*");
   });
 });

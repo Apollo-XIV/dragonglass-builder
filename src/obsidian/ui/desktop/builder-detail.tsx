@@ -5,10 +5,15 @@
  */
 
 import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from "react";
-import { Facts, Markdown } from "../components";
-import { LevelPreview } from "../level-preview";
-import { ProvenanceMark, UnverifiedNote } from "../provenance";
-import { DetailContext, type DetailSpec, type DetailStrategy, type InfoRowProps } from "../builder/detail";
+import { ProvenanceMark } from "../provenance";
+import {
+  DetailBody,
+  DetailContext,
+  type DetailSpec,
+  type DetailStrategy,
+  type InfoRowProps,
+  type ReadableProps,
+} from "../builder/detail";
 
 interface Sink {
   hover: (spec: DetailSpec | undefined) => void;
@@ -52,6 +57,24 @@ function DeskRow({ title, subtitle, text, fluff, facts, preview, tag, page, tags
   );
 }
 
+/** A button read by hovering it; clicking it does its own thing rather than pinning. */
+function DeskReadable({ spec, onTap, className, children }: ReadableProps): ReactNode {
+  const sink = useContext(SinkContext);
+  const read = spec ? (): void => sink.hover(spec) : undefined;
+  const leave = spec ? (): void => sink.hover(undefined) : undefined;
+  return (
+    <button
+      className={className}
+      onClick={onTap}
+      onPointerEnter={read}
+      onPointerLeave={leave}
+      onFocus={read}
+      onBlur={leave}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function DesktopDetailProvider({ children }: { children: ReactNode }): ReactNode {
   const [hovered, setHovered] = useState<DetailSpec | undefined>();
@@ -69,7 +92,7 @@ export function DesktopDetailProvider({ children }: { children: ReactNode }): Re
       hold: (on) => (on ? window.clearTimeout(leaving.current) : hover(undefined)),
     };
   }, []);
-  const strategy = useMemo<DetailStrategy>(() => ({ Row: DeskRow, mode: "pane", read: sink.hover }), [sink]);
+  const strategy = useMemo<DetailStrategy>(() => ({ Row: DeskRow, Readable: DeskReadable, mode: "pane", read: sink.hover }), [sink]);
 
   return (
     <DetailContext.Provider value={strategy}>
@@ -102,15 +125,7 @@ export function DetailPane(): ReactNode {
             </p>
           ) : null}
           {spec.overriddenBy ? <p className="dg-warn">Overridden by {spec.overriddenBy}</p> : null}
-          <UnverifiedNote notes={spec.unverified} />
-          {spec.fluff ? <Markdown source={spec.fluff} className="dg-fluff" /> : null}
-          <Facts facts={spec.facts} />
-          {spec.text ? (
-            <Markdown source={spec.text} />
-          ) : spec.preview?.levels.length ? null : (
-            <p className="dg-muted">No rules text.</p>
-          )}
-          <LevelPreview preview={spec.preview} />
+          <DetailBody spec={spec} />
           {spec.tags?.length ? (
             <div className="dg-tags">
               {spec.tags.map((tag) => (

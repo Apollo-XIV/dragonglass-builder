@@ -16,10 +16,9 @@ import {
   type MutableRefObject,
   type ReactNode,
 } from "react";
-import { Markdown } from "../components";
 import type { Fact } from "../../../core/content/facts";
 import type { ElementPreview } from "../../../core/content/preview";
-import { Facts, Icon } from "../components";
+import { Icon } from "../components";
 import { ChipRow } from "./chips";
 import {
   activeCount,
@@ -30,9 +29,8 @@ import {
   type SourceFilter,
   type SourceRef,
 } from "./source-filter";
-import { ProvenanceMark, UnverifiedNote } from "../provenance";
-import { LevelPreview } from "../level-preview";
-import { useDetail, type DetailSpec } from "./detail";
+import { ProvenanceMark } from "../provenance";
+import { DetailBody, useDetail, type DetailSpec } from "./detail";
 import { useBuilderFeatures } from "./features";
 import { useHold } from "../narrow/hold";
 import { useSheet } from "../narrow/sheet";
@@ -66,6 +64,32 @@ export interface PickerOption {
   bucket?: string;
   /** What the filter chips narrow by: a spell's level, an item's first tag. */
   group?: string;
+}
+
+/** How an option reads: in the sidebar as it is hovered, in a sheet as it is held, and as a choice's answer. */
+export function specOf(option: PickerOption): DetailSpec {
+  return {
+    title: option.name,
+    tag: option.tag,
+    text: option.text,
+    fluff: option.fluff,
+    facts: option.facts,
+    preview: option.preview,
+    subtitle: option.warnings?.join("; "),
+    unverified: option.unverified,
+  };
+}
+
+/**
+ * How a filled choice reads: what was picked. Several picks read as one text, a
+ * heading each, since a sheet or the sidebar shows one thing at a time.
+ */
+export function chosenSpec(label: string, chosen: readonly PickerOption[]): DetailSpec | undefined {
+  if (chosen.length <= 1) return chosen[0] && specOf(chosen[0]);
+  return {
+    title: label,
+    text: chosen.map((o) => `### ${o.name}\n\n${o.text ?? "*No rules text.*"}`).join("\n\n"),
+  };
 }
 
 export interface PickerSpec {
@@ -354,18 +378,7 @@ export function PickerBody({
               onRead
                 ? (on) =>
                     onRead(
-                      on
-                        ? {
-                            title: option.name,
-                            tag: option.tag,
-                            text: option.text,
-                            fluff: option.fluff,
-                            facts: option.facts,
-                            preview: option.preview,
-                            subtitle: option.warnings?.join("; "),
-                            unverified: option.unverified,
-                          }
-                        : undefined,
+                      on ? specOf(option) : undefined,
                     )
                 : undefined
             }
@@ -520,18 +533,7 @@ function OptionRow({
       sheet.open({
         title: option.name,
         subtitle: option.tag,
-        body: () =>
-          option.text || option.fluff || option.facts?.length || option.preview?.levels.length ? (
-            <>
-              <UnverifiedNote notes={option.unverified} />
-              {option.fluff ? <Markdown source={option.fluff} className="dg-fluff" /> : null}
-              <Facts facts={option.facts} />
-              {option.text ? <Markdown source={option.text} /> : null}
-              <LevelPreview preview={option.preview} />
-            </>
-          ) : (
-            <p className="dg-muted">No rules text.</p>
-          ),
+        body: () => <DetailBody spec={specOf(option)} />,
       }),
     className,
   });

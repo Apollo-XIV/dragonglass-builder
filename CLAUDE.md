@@ -137,7 +137,8 @@ already a dialog on desktop), and `sections/sources.tsx` imports `obsidian`. The
   each answer it, so Review's "go to this choice" works in both.
 - **`builder/detail.tsx`**: how a thing is read. Narrow holds a row and a sheet opens; desktop hovers
   and the sidebar shows it. With `inlinePicker` on, a choice's options open under its row (`usePickerSlot`)
-  and are read in that same sidebar, so there is no dialog with a column of its own. Sections render `InfoRow`.
+  and are read in that same sidebar, so there is no dialog with a column of its own. Sections render `InfoRow`;
+  a filled choice is a `Readable`, a button that does its own thing on a tap and reads as what was chosen.
 - **`builder/features.ts`**: `BuilderFeatures` flags for what a layout opts into (per-level HP, options that
   open under their row, search in pickers, row removal, custom items, Browse, Sources, Notes...). Each is written once as a shared
   component; narrow sets none today, so adding one to a phone is a flag in `NarrowRoot` and a CSS job.

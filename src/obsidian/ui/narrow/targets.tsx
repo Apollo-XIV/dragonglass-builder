@@ -17,6 +17,7 @@ import type { CharacterStore } from "../../character-store";
 import type { Fact } from "../../../core/content/facts";
 import { Facts, Icon, Markdown } from "../components";
 import { ProvenanceMark, UnverifiedNote } from "../provenance";
+import { DetailBody, type ReadableProps } from "../builder/detail";
 import { UI } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHold } from "./hold";
@@ -384,6 +385,21 @@ export function ReadRow({
         View details
       </button>
     </div>
+  );
+}
+
+/** A button that taps as itself and holds to read: a filled choice, read as what was chosen. */
+export function HoldReadable({ spec, onTap, className, children }: ReadableProps): ReactNode {
+  const sheet = useSheet();
+  const { handlers } = useHold({
+    onTap,
+    onHold: spec ? () => sheet.open({ title: spec.title, subtitle: spec.subtitle, body: () => <DetailBody spec={spec} /> }) : undefined,
+    className,
+  });
+  return (
+    <button {...handlers} style={handlers.style}>
+      {children}
+    </button>
   );
 }
 

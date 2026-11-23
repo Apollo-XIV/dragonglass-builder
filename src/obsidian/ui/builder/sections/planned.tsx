@@ -10,7 +10,7 @@ import type { CharacterStore } from "../../../character-store";
 import { InfoRow } from "../detail";
 import { inheritedFilterOf, sourceRefOf, upcomingStaged, type LevelEntryShape } from "../model";
 import { useCardShown } from "../reorder/fold";
-import { usePicker } from "../picker";
+import { chosenSpec, usePicker, type PickerOption } from "../picker";
 import { ChoiceRow } from "./origin";
 
 /** One planned level: what it grants and the picks queued for it. */
@@ -153,29 +153,31 @@ function PlannedEntry({
 
       {(entry.choices ?? []).map((choice) => {
         const chosen = planned?.choices[choice.id] ?? [];
-        const options = index.query(choice.from);
+        const options = index.query(choice.from).map((option): PickerOption => {
+          const preview = previewOf(option, (id) => index.get(id));
+          return {
+            id: option.id,
+            name: option.name,
+            text: typeof option.text === "string" ? option.text : preview?.intro,
+            preview,
+            tag: index.abbreviation(option.source),
+            source: sourceRefOf(index, option.source),
+            unverified: unverifiedNotes(option),
+          };
+        });
+        const picked = chosen.flatMap((id) => options.filter((o) => o.id === id).slice(0, 1));
         return (
           <ChoiceRow
             key={choice.id}
             label={choice.name ?? `Choose ${choice.count ?? 1}`}
             value={chosen.map((id) => index.get(id)?.name ?? id).join(", ") || undefined}
             empty={chosen.length === 0}
+            reading={chosenSpec(choice.name ?? "Choice", picked)}
             onOpen={() =>
               picker({
                 title: choice.name ?? "Choose",
                 subtitle: "planned, applies when you reach it",
-                options: options.map((option) => {
-                  const preview = previewOf(option, (id) => index.get(id));
-                  return {
-                    id: option.id,
-                    name: option.name,
-                    text: typeof option.text === "string" ? option.text : preview?.intro,
-                    preview,
-                    tag: index.abbreviation(option.source),
-                    source: sourceRefOf(index, option.source),
-                    unverified: unverifiedNotes(option),
-                  };
-                }),
+                options,
                 defaultFilter: inheritedFilterOf(index, classId),
                 selected: chosen,
                 count: choice.count ?? 1,

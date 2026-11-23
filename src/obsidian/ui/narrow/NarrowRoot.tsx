@@ -22,11 +22,11 @@ import { SheetHost } from "./sheet";
 export const NARROW_FEATURES: BuilderFeatures = { ...NO_FEATURES, levelHp: true, liveCommit: true };
 import { useShell } from "./platform";
 import { BuilderSessionProvider, useBuilderSession } from "../builder/session";
-import { ReadRow } from "./targets";
+import { HoldReadable, ReadRow } from "./targets";
 import { ToastHost } from "./toast";
 
 /** Narrow reads by holding a row, and turns on nothing beyond the shared builder. */
-const NARROW_DETAIL = { Row: ReadRow, mode: "hold" as const };
+const NARROW_DETAIL = { Row: ReadRow, Readable: HoldReadable, mode: "hold" as const };
 
 export function NarrowRoot({
   store,

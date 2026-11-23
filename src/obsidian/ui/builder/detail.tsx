@@ -10,7 +10,9 @@
 import type { Fact } from "../../../core/content/facts";
 import type { ElementPreview } from "../../../core/content/preview";
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
-import { ProvenanceMark } from "../provenance";
+import { Facts, Markdown } from "../components";
+import { LevelPreview } from "../level-preview";
+import { ProvenanceMark, UnverifiedNote } from "../provenance";
 
 export interface DetailSpec {
   title: string;
@@ -39,8 +41,22 @@ export interface InfoRowProps extends DetailSpec {
   children?: ReactNode;
 }
 
+/**
+ * A button that does something on a tap or click and can also be read: a filled
+ * choice, which opens its options and reads as what was chosen.
+ */
+export interface ReadableProps {
+  /** What reading it shows; nothing, and it is only a button. */
+  spec?: DetailSpec;
+  onTap: () => void;
+  className?: string;
+  children?: ReactNode;
+}
+
 export interface DetailStrategy {
   Row: ComponentType<InfoRowProps>;
+  /** Absent, a `Readable` is a plain button with nothing to read. */
+  Readable?: ComponentType<ReadableProps>;
   /**
    * `hold`: reading is a gesture that opens a sheet over the screen.
    * `pane`: reading is hovering, and the text appears beside what is hovered.
@@ -68,6 +84,14 @@ function PlainRow({ title, subtitle, unverified, className, children }: InfoRowP
   );
 }
 
+function PlainReadable({ onTap, className, children }: ReadableProps): ReactNode {
+  return (
+    <button className={className} onClick={onTap}>
+      {children}
+    </button>
+  );
+}
+
 export const DetailContext = createContext<DetailStrategy>({ Row: PlainRow, mode: "hold" });
 
 export function useDetail(): DetailStrategy {
@@ -78,4 +102,27 @@ export function useDetail(): DetailStrategy {
 export function InfoRow(props: InfoRowProps): ReactNode {
   const { Row } = useDetail();
   return <Row {...props} />;
+}
+
+/** A button the current layout lets you read, the way it reads rows. */
+export function Readable(props: ReadableProps): ReactNode {
+  const { Readable: Strategy = PlainReadable } = useDetail();
+  return <Strategy {...props} />;
+}
+
+/** The body of a reading, in whichever place the layout shows it: a sheet, a sidebar. */
+export function DetailBody({ spec }: { spec: DetailSpec }): ReactNode {
+  return (
+    <>
+      <UnverifiedNote notes={spec.unverified} />
+      {spec.fluff ? <Markdown source={spec.fluff} className="dg-fluff" /> : null}
+      <Facts facts={spec.facts} />
+      {spec.text ? (
+        <Markdown source={spec.text} />
+      ) : spec.preview?.levels.length ? null : (
+        <p className="dg-muted">No rules text.</p>
+      )}
+      <LevelPreview preview={spec.preview} />
+    </>
+  );
 }

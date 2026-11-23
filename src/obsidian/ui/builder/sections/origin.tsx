@@ -3,6 +3,7 @@
 import { type ReactNode } from "react";
 import { unverifiedNotes } from "../../../../core/content/provenance";
 import { inactivePicks } from "../../../../core/resolver/validity";
+import type { Element } from "../../../../core/types";
 import type {
   PendingChoice,
   ResolvedCharacter,
@@ -25,7 +26,8 @@ import {
   sourceRefOf,
   STANDARD_ARRAY,
 } from "../model";
-import { usePicker, usePickerSlot } from "../picker";
+import { chosenSpec, specOf, usePicker, usePickerSlot, type PickerOption } from "../picker";
+import { Readable, type DetailSpec } from "../detail";
 
 /** A row that opens a choice sheet: label, current selection or "Choose", chevron. */
 export function ChoiceRow({
@@ -33,10 +35,13 @@ export function ChoiceRow({
   value,
   empty,
   invalid,
+  reading,
   onOpen,
 }: {
   label: string;
   value?: string;
+  /** What was chosen, read the way the layout reads: held on a phone, hovered on a desktop. */
+  reading?: DetailSpec;
   /** Dashed accent border, for a decision still to make (spec 7.3). */
   empty?: boolean;
   invalid?: string;
@@ -45,9 +50,10 @@ export function ChoiceRow({
   const slot = usePickerSlot();
   return (
     <>
-      <button
+      <Readable
         className={empty ? "dg-choice-row is-empty" : "dg-choice-row"}
-        onClick={() => slot.open(onOpen)}
+        spec={value ? reading : undefined}
+        onTap={() => slot.open(onOpen)}
       >
         <span className="dg-choice-main">
           <span className="dg-choice-label">{label}</span>
@@ -65,7 +71,7 @@ export function ChoiceRow({
         <span className="dg-choice-chevron" aria-hidden="true">
           ›
         </span>
-      </button>
+      </Readable>
       {slot.node}
     </>
   );
@@ -85,6 +91,15 @@ export function PendingChoiceRow({
   const { plugin } = usePlugin();
   const change = useBuildChange(store);
   const chosen = choice.chosen.map(nameOf).join(", ");
+  const optionsOf = (options: PendingChoice["options"]): PickerOption[] =>
+    optionsFor(
+      { ...choice, options },
+      (id) => (nameOf(id) === id ? undefined : nameOf(id)),
+      (id) => (store.index ? sourceRefOf(store.index, id) : undefined),
+      (id) => store.index?.get(id),
+    );
+  // Only what was chosen is read on the row; the rest wait for the picker to open.
+  const picked = optionsOf(choice.options.filter((o) => choice.chosen.includes(o.id)));
 
   const write = (ids: string[]): void => {
     change({
@@ -101,6 +116,7 @@ export function PendingChoiceRow({
       label={choice.name}
       value={chosen || undefined}
       empty={!choice.complete}
+      reading={chosenSpec(choice.name, picked)}
       invalid={
         choice.invalid.length
           ? choice.invalid.map(nameOf).join(", ")
@@ -110,7 +126,7 @@ export function PendingChoiceRow({
         picker({
           title: choice.name,
           subtitle: `${choice.sourceName}${choice.count > 1 ? ` · choose ${choice.count}` : ""}`,
-          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id)), (id) => (store.index ? sourceRefOf(store.index, id) : undefined), (id) => store.index?.get(id)),
+          options: optionsOf(choice.options),
           defaultFilter: store.index ? inheritedFilterOf(store.index, choice.source) : undefined,
           selected: choice.chosen,
           count: choice.count,
@@ -145,6 +161,19 @@ export function OriginSection({
     return <p className="dg-muted">No build.5e in this character's folder.</p>;
 
   const nameOf = (id: string): string => index.get(id)?.name ?? id;
+  const optionOf = (element: Element): PickerOption => ({
+    id: element.id,
+    name: element.name,
+    text: typeof element.text === "string" ? element.text : undefined,
+    fluff: typeof element.fluff === "string" ? element.fluff : undefined,
+    tag: index.abbreviation(element.source),
+    source: sourceRefOf(index, element.source),
+    unverified: unverifiedNotes(element),
+  });
+  const readingOf = (id: string | undefined): DetailSpec | undefined => {
+    const element = id ? index.get(id) : undefined;
+    return element && specOf(optionOf(element));
+  };
   const elementPicker = (
     kind: string,
     title: string,
@@ -153,15 +182,7 @@ export function OriginSection({
   ): void =>
     picker({
       title,
-      options: index.byKind(kind).map((element) => ({
-        id: element.id,
-        name: element.name,
-        text: typeof element.text === "string" ? element.text : undefined,
-        fluff: typeof element.fluff === "string" ? element.fluff : undefined,
-        tag: index.abbreviation(element.source),
-        source: sourceRefOf(index, element.source),
-        unverified: unverifiedNotes(element),
-      })),
+      options: index.byKind(kind).map(optionOf),
       selected: current ? [current] : [],
       count: 1,
       enforce: plugin.settings.enforceRequirements,
@@ -177,6 +198,7 @@ export function OriginSection({
         label="Species"
         value={character.species?.name}
         empty={!character.species}
+        reading={readingOf(build.species)}
         onOpen={() =>
           elementPicker("species", "Species", build.species, (id) =>
             change({ type: "species", id }),
@@ -187,6 +209,7 @@ export function OriginSection({
         label="Background"
         value={character.background?.name}
         empty={!character.background}
+        reading={readingOf(build.background)}
         onOpen={() =>
           elementPicker("background", "Background", build.background, (id) =>
             change({ type: "background", id }),
