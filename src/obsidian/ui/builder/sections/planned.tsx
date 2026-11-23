@@ -2,6 +2,7 @@
 
 import { type ReactNode } from "react";
 import { unverifiedNotes } from "../../../../core/content/provenance";
+import { previewOf } from "../../../../core/content/preview";
 import { plannedFor, setPlannedChoice } from "../../../../core/resolver/levels";
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { Element } from "../../../../core/types";
@@ -163,14 +164,18 @@ function PlannedEntry({
               picker({
                 title: choice.name ?? "Choose",
                 subtitle: "planned, applies when you reach it",
-                options: options.map((option) => ({
-                  id: option.id,
-                  name: option.name,
-                  text: typeof option.text === "string" ? option.text : undefined,
-                  tag: index.abbreviation(option.source),
-                  source: sourceRefOf(index, option.source),
-                  unverified: unverifiedNotes(option),
-                })),
+                options: options.map((option) => {
+                  const preview = previewOf(option, (id) => index.get(id));
+                  return {
+                    id: option.id,
+                    name: option.name,
+                    text: typeof option.text === "string" ? option.text : preview?.intro,
+                    preview,
+                    tag: index.abbreviation(option.source),
+                    source: sourceRefOf(index, option.source),
+                    unverified: unverifiedNotes(option),
+                  };
+                }),
                 defaultFilter: inheritedFilterOf(index, classId),
                 selected: chosen,
                 count: choice.count ?? 1,

@@ -9,6 +9,7 @@ import {
   normalisedQueue,
 } from "../../../../core/resolver/levels";
 import { factsOf } from "../../../../core/content/facts";
+import { previewOf } from "../../../../core/content/preview";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type {
   PendingChoice,
@@ -260,6 +261,7 @@ export function LevelButtons({
           id: cls.id,
           name: cls.name,
           text: typeof cls.text === "string" ? cls.text : undefined,
+          preview: previewOf(cls, (id) => index.get(id)),
           fluff: typeof cls.fluff === "string" ? cls.fluff : undefined,
           tag: index.abbreviation(cls.source),
           source: sourceRefOf(index, cls.source),

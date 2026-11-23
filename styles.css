@@ -853,6 +853,37 @@
   overflow-wrap: anywhere;
 }
 
+/* What a class or subclass brings, level by level (level-preview.tsx). */
+.dg-preview {
+  margin-top: var(--size-4-3);
+}
+
+.dg-preview-level {
+  padding: var(--size-4-2) 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.dg-preview-level h4 {
+  margin: 0 0 var(--size-4-1);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.dg-preview-feature > summary {
+  cursor: pointer;
+  padding: var(--size-2-2) 0;
+}
+
+.dg-preview-body {
+  padding: 0 0 var(--size-4-2) var(--size-4-4);
+}
+
+.dg-preview-line {
+  margin: var(--size-2-2) 0;
+}
+
 /* --- tables --------------------------------------------------------------- */
 
 .dg-table {

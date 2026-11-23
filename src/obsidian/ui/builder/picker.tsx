@@ -18,6 +18,7 @@ import {
 } from "react";
 import { Markdown } from "../components";
 import type { Fact } from "../../../core/content/facts";
+import type { ElementPreview } from "../../../core/content/preview";
 import { Facts, Icon } from "../components";
 import { ChipRow } from "./chips";
 import {
@@ -30,6 +31,7 @@ import {
   type SourceRef,
 } from "./source-filter";
 import { ProvenanceMark, UnverifiedNote } from "../provenance";
+import { LevelPreview } from "../level-preview";
 import { useDetail, type DetailSpec } from "./detail";
 import { useBuilderFeatures } from "./features";
 import { useHold } from "../narrow/hold";
@@ -41,6 +43,8 @@ export interface PickerOption {
   text?: string;
   fluff?: string;
   facts?: Fact[];
+  /** What a class or subclass brings, level by level. */
+  preview?: ElementPreview;
   /** Source abbreviation: SRD, PHB. */
   tag?: string;
   /** The book it comes from, for the ruleset and sourcebook filter. */
@@ -357,6 +361,7 @@ export function PickerBody({
                             text: option.text,
                             fluff: option.fluff,
                             facts: option.facts,
+                            preview: option.preview,
                             subtitle: option.warnings?.join("; "),
                             unverified: option.unverified,
                           }
@@ -516,12 +521,13 @@ function OptionRow({
         title: option.name,
         subtitle: option.tag,
         body: () =>
-          option.text || option.fluff || option.facts?.length ? (
+          option.text || option.fluff || option.facts?.length || option.preview?.levels.length ? (
             <>
               <UnverifiedNote notes={option.unverified} />
               {option.fluff ? <Markdown source={option.fluff} className="dg-fluff" /> : null}
               <Facts facts={option.facts} />
               {option.text ? <Markdown source={option.text} /> : null}
+              <LevelPreview preview={option.preview} />
             </>
           ) : (
             <p className="dg-muted">No rules text.</p>

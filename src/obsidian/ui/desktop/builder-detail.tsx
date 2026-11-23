@@ -4,22 +4,32 @@
  * layout's hold, behind the same `InfoRow` the shared sections render.
  */
 
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import { Facts, Markdown } from "../components";
+import { LevelPreview } from "../level-preview";
 import { ProvenanceMark, UnverifiedNote } from "../provenance";
 import { DetailContext, type DetailSpec, type DetailStrategy, type InfoRowProps } from "../builder/detail";
 
 interface Sink {
   hover: (spec: DetailSpec | undefined) => void;
   pin: (spec: DetailSpec) => void;
+  /** The pointer is in the sidebar: keep what it shows, or let it go. */
+  hold: (on: boolean) => void;
 }
 
-const SinkContext = createContext<Sink>({ hover: () => {}, pin: () => {} });
+/**
+ * How long what was hovered stays after the pointer leaves it, which is long enough
+ * to cross into the sidebar and keep it there: a class's levels fold open, and a
+ * long text scrolls, so the sidebar has to be somewhere the pointer can go.
+ */
+const LINGER_MS = 250;
+
+const SinkContext = createContext<Sink>({ hover: () => {}, pin: () => {}, hold: () => {} });
 const CurrentContext = createContext<DetailSpec | undefined>(undefined);
 
-function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, unverified, className, children }: InfoRowProps): ReactNode {
+function DeskRow({ title, subtitle, text, fluff, facts, preview, tag, page, tags, overriddenBy, unverified, className, children }: InfoRowProps): ReactNode {
   const sink = useContext(SinkContext);
-  const spec: DetailSpec = { title, subtitle, text, fluff, facts, tag, page, tags, overriddenBy, unverified };
+  const spec: DetailSpec = { title, subtitle, text, fluff, facts, preview, tag, page, tags, overriddenBy, unverified };
   return (
     <div
       className={["dg-read-row", "is-readable", className].filter(Boolean).join(" ")}
@@ -46,8 +56,20 @@ function DeskRow({ title, subtitle, text, fluff, facts, tag, page, tags, overrid
 export function DesktopDetailProvider({ children }: { children: ReactNode }): ReactNode {
   const [hovered, setHovered] = useState<DetailSpec | undefined>();
   const [pinned, setPinned] = useState<DetailSpec | undefined>();
-  const sink = useMemo<Sink>(() => ({ hover: setHovered, pin: setPinned }), []);
-  const strategy = useMemo<DetailStrategy>(() => ({ Row: DeskRow, mode: "pane", read: setHovered }), []);
+  const leaving = useRef<number | undefined>(undefined);
+  const sink = useMemo<Sink>(() => {
+    const hover = (spec: DetailSpec | undefined): void => {
+      window.clearTimeout(leaving.current);
+      if (spec) setHovered(spec);
+      else leaving.current = window.setTimeout(() => setHovered(undefined), LINGER_MS);
+    };
+    return {
+      hover,
+      pin: setPinned,
+      hold: (on) => (on ? window.clearTimeout(leaving.current) : hover(undefined)),
+    };
+  }, []);
+  const strategy = useMemo<DetailStrategy>(() => ({ Row: DeskRow, mode: "pane", read: sink.hover }), [sink]);
 
   return (
     <DetailContext.Provider value={strategy}>
@@ -61,8 +83,15 @@ export function DesktopDetailProvider({ children }: { children: ReactNode }): Re
 /** The sidebar: whatever is hovered, else whatever was last clicked. */
 export function DetailPane(): ReactNode {
   const spec = useContext(CurrentContext);
+  const sink = useContext(SinkContext);
   return (
-    <aside className="dg-b-detail" aria-label="Details" aria-live="polite">
+    <aside
+      className="dg-b-detail"
+      aria-label="Details"
+      aria-live="polite"
+      onPointerEnter={() => sink.hold(true)}
+      onPointerLeave={() => sink.hold(false)}
+    >
       {spec ? (
         <>
           <h3>{spec.title}</h3>
@@ -76,7 +105,12 @@ export function DetailPane(): ReactNode {
           <UnverifiedNote notes={spec.unverified} />
           {spec.fluff ? <Markdown source={spec.fluff} className="dg-fluff" /> : null}
           <Facts facts={spec.facts} />
-          {spec.text ? <Markdown source={spec.text} /> : <p className="dg-muted">No rules text.</p>}
+          {spec.text ? (
+            <Markdown source={spec.text} />
+          ) : spec.preview?.levels.length ? null : (
+            <p className="dg-muted">No rules text.</p>
+          )}
+          <LevelPreview preview={spec.preview} />
           {spec.tags?.length ? (
             <div className="dg-tags">
               {spec.tags.map((tag) => (

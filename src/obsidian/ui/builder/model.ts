@@ -5,6 +5,7 @@
  */
 
 import { factsOf } from "../../../core/content/facts";
+import { previewOf } from "../../../core/content/preview";
 import { unverifiedNotes } from "../../../core/content/provenance";
 import { averageForDie } from "../../../core/resolver/spellslots";
 import { describeRequirement } from "../../../core/content/requirements";
@@ -90,20 +91,25 @@ export function optionsFor(
   choice: PendingChoice,
   nameOf: (id: string) => string | undefined = () => undefined,
   sourceOf: (sourceId: string) => SourceRef | undefined = () => undefined,
+  get: (id: string) => Element | undefined = () => undefined,
 ): PickerOption[] {
-  return choice.options.map((option) => ({
-    id: option.id,
-    name: option.name,
-    text: option.text,
-    fluff: option.fluff,
-    facts: factsOf(option.element, nameOf),
-    tag: option.abbreviation,
-    source: sourceOf(option.source),
-    warnings: option.warnings,
-    unverified: unverifiedNotes(option.element),
-    allowed: option.allowed,
-    heldBy: option.heldBy,
-  }));
+  return choice.options.map((option) => {
+    const preview = previewOf(option.element, get);
+    return {
+      id: option.id,
+      name: option.name,
+      text: option.text ?? preview?.intro,
+      fluff: option.fluff,
+      facts: factsOf(option.element, nameOf),
+      preview,
+      tag: option.abbreviation,
+      source: sourceOf(option.source),
+      warnings: option.warnings,
+      unverified: unverifiedNotes(option.element),
+      allowed: option.allowed,
+      heldBy: option.heldBy,
+    };
+  });
 }
 
 export function relativeTime(iso: string): string {

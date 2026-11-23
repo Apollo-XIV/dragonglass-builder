@@ -110,7 +110,7 @@ export function PendingChoiceRow({
         picker({
           title: choice.name,
           subtitle: `${choice.sourceName}${choice.count > 1 ? ` · choose ${choice.count}` : ""}`,
-          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id)), (id) => (store.index ? sourceRefOf(store.index, id) : undefined)),
+          options: optionsFor(choice, (id) => (nameOf(id) === id ? undefined : nameOf(id)), (id) => (store.index ? sourceRefOf(store.index, id) : undefined), (id) => store.index?.get(id)),
           defaultFilter: store.index ? inheritedFilterOf(store.index, choice.source) : undefined,
           selected: choice.chosen,
           count: choice.count,

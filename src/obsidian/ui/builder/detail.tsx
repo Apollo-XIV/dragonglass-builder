@@ -8,6 +8,7 @@
  */
 
 import type { Fact } from "../../../core/content/facts";
+import type { ElementPreview } from "../../../core/content/preview";
 import { createContext, useContext, type ComponentType, type ReactNode } from "react";
 import { ProvenanceMark } from "../provenance";
 
@@ -20,6 +21,8 @@ export interface DetailSpec {
   fluff?: string;
   /** Reference data shown between the fluff and the rules text: a spell's range and components. */
   facts?: Fact[];
+  /** What a class or subclass brings, level by level, after the text. */
+  preview?: ElementPreview;
   /** Source abbreviation and page, where known. */
   tag?: string;
   page?: string | number;
