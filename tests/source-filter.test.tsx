@@ -11,6 +11,8 @@ import {
   matchesFilter,
   type SourceRef,
 } from "../src/obsidian/ui/builder/source-filter";
+import { sourceRefOf } from "../src/obsidian/ui/builder/model";
+import { ContentIndex } from "../src/core/content";
 
 const srd: SourceRef = { id: "srd", label: "SRD", name: "SRD 5.1", ruleset: "2014" };
 const srd24: SourceRef = { id: "srd24", label: "SRD24", name: "SRD 5.2", ruleset: "2024" };
@@ -138,5 +140,31 @@ describe("a book that names no ruleset", () => {
 
   it("is not made a ruleset chip", () => {
     expect(facetsOf([homebrew]).rulesets).toEqual([]);
+  });
+});
+
+describe("one source holding several books", () => {
+  // A full 5etools conversion: one source, `srd`, and an element in each printing book.
+  const index = ContentIndex.build([
+    {
+      id: "srd",
+      elements: [
+        { id: "phb", kind: "sourcebook", name: "Player's Handbook", source: "phb", abbreviation: "PHB", ruleset: "2014" },
+        { id: "xge", kind: "sourcebook", name: "Xanathar's Guide to Everything", source: "xge", abbreviation: "XGE", ruleset: "2014" },
+        { id: "srd:spell:fire-bolt", kind: "spell", name: "Fire Bolt", source: "phb", spellLevel: 0 },
+        { id: "srd:spell:toll-the-dead", kind: "spell", name: "Toll the Dead", source: "xge", spellLevel: 0 },
+      ],
+    },
+  ]);
+  const refs = ["srd:spell:fire-bolt", "srd:spell:toll-the-dead"].map((id) => sourceRefOf(index, index.get(id)!.source));
+
+  it("tags each option with its own book, not the source it was loaded from", () => {
+    expect(refs.map((r) => r?.label)).toEqual(["PHB", "XGE"]);
+  });
+
+  it("offers a chip per book, under the one ruleset", () => {
+    const facets = facetsOf(refs);
+    expect(facets.sources.map((f) => f.label)).toEqual(["PHB", "XGE"]);
+    expect(facets.rulesets.map((f) => f.label)).toEqual(["2014"]);
   });
 });
