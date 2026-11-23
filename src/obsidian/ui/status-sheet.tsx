@@ -5,7 +5,7 @@
  * status can be read and then added or removed without going back to the menu.
  */
 
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   CONCENTRATION_RULES,
   CONDITION_RULES,
@@ -192,8 +192,6 @@ export function StatusButton({
       style={handlers.style}
       title={title}
       aria-haspopup="dialog"
-      // Pointer events do the tapping, so a click only arrives from the keyboard.
-      onClick={(e: MouseEvent) => e.detail === 0 && onTap()}
       onContextMenu={(e) => {
         e.preventDefault();
         if (e.button === 2) read();

@@ -6,9 +6,14 @@
  * press, cancels if the finger drifts or anything scrolls, and fires a haptic
  * when it registers. A release after a registered hold is swallowed, so reading a
  * feature never also rolls its dice.
+ *
+ * The tap acts on the `click`, the press's last event, not on `pointerup`. A tap
+ * that closes the sheet it sits in (a single-choice option) would otherwise take
+ * the sheet away before the click, and the click would land on whatever was
+ * under it.
  */
 
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { HOLD } from "./constants";
 import { useNarrowSettings } from "./context";
 import { useHaptics } from "./platform";
@@ -18,6 +23,7 @@ export interface HoldHandlers {
   onPointerUp: (event: ReactPointerEvent) => void;
   onPointerMove: (event: ReactPointerEvent) => void;
   onPointerCancel: (event: ReactPointerEvent) => void;
+  onClick: (event: ReactMouseEvent) => void;
   onContextMenu: (event: { preventDefault: () => void }) => void;
   style: CSSProperties;
   className: string;
@@ -47,7 +53,9 @@ export function useHold({
   const [pressed, setPressed] = useState(false);
   const [held, setHeld] = useState(false);
 
-  const state = useRef({ timer: 0, origin: { x: 0, y: 0 }, registered: false, active: false });
+  // `swallow` carries a press that must not tap (a hold, a drag) from its release
+  // to the click that follows it.
+  const state = useRef({ timer: 0, origin: { x: 0, y: 0 }, registered: false, active: false, swallow: false });
 
   const cancel = useCallback((): void => {
     const s = state.current;
@@ -63,6 +71,7 @@ export function useHold({
   useEffect(() => {
     if (!pressed) return;
     const onScroll = (): void => {
+      state.current.swallow = true;
       state.current.registered = false;
       setHeld(false);
       cancel();
@@ -99,6 +108,7 @@ export function useHold({
 
   const handlers: HoldHandlers = {
     onPointerDown: (event) => {
+      state.current.swallow = false;
       if (disabled || !onHold) return;
       const target = event.currentTarget as HTMLElement;
       // A plain control inside the target (a row's Use button) owns its own press.
@@ -134,24 +144,39 @@ export function useHold({
       if (!s.active) return;
       const dx = event.clientX - s.origin.x;
       const dy = event.clientY - s.origin.y;
-      if (Math.hypot(dx, dy) > HOLD.cancelDistance) cancel();
+      if (Math.hypot(dx, dy) > HOLD.cancelDistance) {
+        s.swallow = true;
+        cancel();
+      }
     },
     onPointerUp: (event) => {
       const s = state.current;
       const registered = s.registered;
-      const wasActive = s.active;
       s.registered = false;
       cancel();
       setHeld(false);
-      if (disabled) return;
       // A hold that fired already did its job; releasing must not also act.
       if (registered) {
+        s.swallow = true;
+        event.preventDefault();
+      }
+    },
+    onClick: (event) => {
+      const s = state.current;
+      const swallow = s.swallow;
+      s.swallow = false;
+      if (disabled) return;
+      // A click from a nested control (a row's Use button) is that control's.
+      if (nestedControl(event.target, event.currentTarget as HTMLElement)) return;
+      // A keyboard click (`detail` 0) never had a press to swallow.
+      if (swallow && event.detail !== 0) {
         event.preventDefault();
         return;
       }
-      if (wasActive || !onHold) onTap?.();
+      onTap?.();
     },
     onPointerCancel: () => {
+      state.current.swallow = true;
       state.current.registered = false;
       setHeld(false);
       cancel();

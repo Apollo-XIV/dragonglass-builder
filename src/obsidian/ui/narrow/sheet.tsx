@@ -49,6 +49,10 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
   const [spec, setSpec] = useState<SheetSpec | undefined>();
   const [drag, setDrag] = useState(0);
   const pointer = useRef<{ id: number; y: number } | undefined>(undefined);
+  // Whether the press now ending began on the scrim. Only such a press dismisses:
+  // a hold that swapped the sheet's contents for something shorter is released
+  // over the scrim, and that release is not a request to close.
+  const scrimPressed = useRef(false);
 
   const current = useRef<SheetSpec | undefined>(undefined);
   current.current = spec;
@@ -93,7 +97,17 @@ export function SheetHost({ children }: { children: ReactNode }): ReactNode {
           {/* Closes on the click, the tap's last event, not on the press: a scrim
               gone at `pointerdown` leaves the release and the click to land on
               whatever is under it, and a tap meant to dismiss opens something. */}
-          <div className="dg-sheet-scrim" onClick={close} />
+          <div
+            className="dg-sheet-scrim"
+            onPointerDown={() => {
+              scrimPressed.current = true;
+            }}
+            onClick={() => {
+              const pressed = scrimPressed.current;
+              scrimPressed.current = false;
+              if (pressed) close();
+            }}
+          />
           <div
             className="dg-bottom-sheet"
             role="dialog"

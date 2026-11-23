@@ -8,7 +8,7 @@
  * An action that costs several pools opens the first.
  */
 
-import { useState, type MouseEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { poolOf } from "../../core/resolver/pins";
 import { readingText } from "../../core/resolver/resolved";
 import { describeRecharge } from "../../core/state/recharge";
@@ -83,8 +83,6 @@ export function UseAction({
         // be paid for is exactly when the player wants the menu to put a use back.
         aria-disabled={!action.available || undefined}
         aria-haspopup={menu ? "dialog" : undefined}
-        // Pointer events do the tapping, so a click only arrives from the keyboard.
-        onClick={(e: MouseEvent) => e.detail === 0 && use()}
         onContextMenu={(e) => {
           e.preventDefault();
           if (e.button === 2) menu?.();
