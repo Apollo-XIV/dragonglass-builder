@@ -45,6 +45,8 @@ export interface Explanation {
   total: number;
   /** Dice notation for the roll, when there is one: "1d20 + 5", "1d8 + 3". */
   notation?: string;
+  /** What a damage roll deals, as a damage type id: "fire". */
+  damageType?: string;
   rows: ExplainRow[];
   notes: ExplainNote[];
   /** "13 = 8 base DC + 2 proficiency bonus + 3 INT modifier". */
@@ -161,10 +163,12 @@ export function explainParts({
   parts,
   notes = [],
   advantage = "none",
+  damageType,
 }: {
   label: string;
   kind?: RollKind;
   notation?: string;
+  damageType?: string;
   parts: { label: string; amount: number; source?: string }[];
   notes?: ExplainNote[];
   advantage?: NumericStat["advantage"];
@@ -177,5 +181,5 @@ export function explainParts({
     source: part.source,
     applied: true,
   }));
-  return { label, kind, total, notation, rows, notes, formula: formulaFor(total, rows), advantage };
+  return { label, kind, total, notation, damageType, rows, notes, formula: formulaFor(total, rows), advantage };
 }

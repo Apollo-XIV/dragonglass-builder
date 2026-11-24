@@ -7,11 +7,11 @@
  * character with no spellcasting — are absent from the page and from the rail.
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { factsOf } from "../../../core/content/facts";
 import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
-import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
+import { explainParts, explainSet, explainStat } from "../../../core/resolver/explain";
 import { readingText, type ResolvedAction, type ResolvedCharacter, type ResolvedInnate, type ResolvedResource, type ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import { withSpent } from "../../../core/state/use-action";
@@ -20,17 +20,23 @@ import type { CharacterStore } from "../../character-store";
 import { Avatar } from "../avatar";
 import { AbilityBlock } from "../abilities";
 import { HpPanel } from "../hp-panel";
-import { Markdown, signed } from "../components";
+import { Icon, Markdown, signed } from "../components";
 import { prettyPath } from "../sheet-panels";
 import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
 import { NarrowScroller, type SectionSpec } from "./scroller";
-import { useSheet } from "./sheet";
+import { useToast } from "./toast";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
-import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
+import { rangeLead, type Lead } from "../range-lead";
+import { componentsLead, spellFlagLeads } from "../spell-leads";
+import { SpellLevel } from "../spell-level";
+import { CastBox, HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, usePoolControls } from "./targets";
+import { slotFor } from "../../../core/state/cast";
 import { UseAction } from "../use-action";
 import { StatusChips } from "../desktop/header";
+import { ALL_SOURCES, spellsView } from "../../../core/resolver/spell-sources";
+import { SourceChips, SpellHeader } from "../spell-header";
 
 /** Section ids are stable; the order comes from the settings (spec 4.4). */
 const SHEET_ICONS: Record<string, string> = {
@@ -210,33 +216,6 @@ function RestRow({ store, character }: { store: CharacterStore; character: Resol
   );
 }
 
-function StatTile({
-  label,
-  value,
-  explanation,
-}: {
-  label: string;
-  value: string;
-  explanation?: () => Explanation;
-}): ReactNode {
-  const sheet = useSheet();
-  return (
-    <ReadRow
-      title={value}
-      subtitle={label}
-      className="dg-n-tile"
-      onTap={
-        explanation
-          ? () => {
-              const current = explanation();
-              sheet.open({ title: current.label, body: () => <TextBody formula={current.formula} /> });
-            }
-          : undefined
-      }
-    />
-  );
-}
-
 function ResourceRow({ resource, store }: { resource: ResolvedResource; store: CharacterStore }): ReactNode {
   return (
     <ReadRow
@@ -280,8 +259,108 @@ const ACTIVATION_CHIPS = [
   { id: "reaction", label: "Reaction" },
 ];
 
+/** The icon that stands for an activation in a row; anything else is still written out. */
+const ACTIVATION_LEADS: Record<string, Lead> = {
+  action: { icon: "dg-action", label: "Action" },
+  "bonus-action": { icon: "dg-bonus-action", label: "Bonus action" },
+  reaction: { icon: "dg-reaction", label: "Reaction" },
+};
+
+/**
+ * A spell's casting time is prose. "1 action", "1 bonus action" and "1 reaction, which you
+ * take when..." lead with an icon; anything else ("1 minute", "1 action or 8 hours") stays
+ * written out. The sheet and screen readers get the whole text, trigger included.
+ */
+function castingLead(castingTime: string | undefined): Lead | undefined {
+  const match = castingTime?.match(/^1 (action|bonus action|reaction)(,|$)/);
+  if (!castingTime || !match) return undefined;
+  return { icon: ACTIVATION_LEADS[match[1].replace(" ", "-")].icon, label: castingTime, hint: `Casting time: ${castingTime}` };
+}
+
+const schoolName = (school: string): string => `${school.charAt(0).toUpperCase()}${school.slice(1)}`;
+
+const leads = (...all: (Lead | undefined)[]): Lead[] => all.filter((l): l is Lead => !!l);
+
 /** Damage that depends on the amount spent can only be rolled once an amount is chosen. */
 const variableDamage = (action: ResolvedAction): boolean => mentionsSpent(action.damageResolved);
+
+/** An action's attack roll, damage and healing as tap targets, and its save DC as a plain box. */
+function ActionRolls({
+  action,
+  inSpell,
+  cast,
+}: {
+  action: ResolvedAction;
+  /** A spell's own action: its save DC is shown, as a button when casting costs a slot. */
+  inSpell?: boolean;
+  /** Spends the slot casting costs; absent for a cantrip. */
+  cast?: () => string | false;
+}): ReactNode {
+  const heal = action.healResolved && !mentionsSpent(action.healResolved) ? action.healResolved : undefined;
+  return (
+    <>
+      {cast && action.save ? (
+        <CastBox
+          label={`${action.save.ability.toUpperCase()} ${action.save.dc}`}
+          detail={`${action.name}, DC ${action.save.dc} ${action.save.ability.toUpperCase()} save`}
+          cast={cast}
+        />
+      ) : action.save && inSpell ? (
+        <span className="dg-save-box is-free">
+          <span className="dg-save-dc" aria-hidden="true">
+            {action.save.ability.toUpperCase()} {action.save.dc}
+          </span>
+          <span className="dg-save-cast" aria-hidden="true">
+            FREE
+          </span>
+          <span className="dg-sr-only">{`DC ${action.save.dc} ${action.save.ability.toUpperCase()} save, costs no spell slot`}</span>
+        </span>
+      ) : null}
+      {action.attack ? (
+        <RollBox
+          kind="d20"
+          lead="dg-die-d20-plain"
+          beforeRoll={cast}
+          label={`${action.name} attack`}
+          explanation={() =>
+            explainParts({
+              label: `${action.name} attack`,
+              kind: "d20",
+              notation: `1d20 ${signed(action.attack!.attackBonus)}`,
+              parts: action.attack!.attackParts,
+            })
+          }
+        />
+      ) : null}
+      {action.damageResolved && !variableDamage(action) ? (
+        <RollBox
+          kind="damage"
+          display={action.damageResolved}
+          label={`${action.name} damage`}
+          explanation={() =>
+            explainParts({
+              label: action.name,
+              kind: "damage",
+              notation: action.damageResolved,
+              damageType: action.damageType,
+              parts: [{ label: action.damageResolved ?? "", amount: 0 }],
+            })
+          }
+        />
+      ) : null}
+      {heal ? (
+        <RollBox
+          kind="damage"
+          display={heal}
+          label={`${action.name} healing`}
+          explanation={() =>
+            explainParts({ label: `${action.name} healing`, kind: "damage", notation: heal, parts: [{ label: heal, amount: 0 }] })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
 
 export function ActionsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const [filter, setFilter] = useState("all");
@@ -296,11 +375,15 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={attack.key}
           title={attack.name}
-          subtitle={[attack.ranged ? "Ranged" : "Melee", attack.damageType, attack.range].filter(Boolean).join(" · ")}
+          lead={leads(rangeLead(attack.range))}
+          subtitle={[attack.ranged ? "Ranged" : "Melee", attack.damageType, rangeLead(attack.range) ? undefined : attack.range]
+            .filter(Boolean)
+            .join(" · ")}
           text={typeof attack.item.element.text === "string" ? attack.item.element.text : undefined}
         >
           <RollBox
             kind="d20"
+            lead="dg-die-d20-plain"
             label={`${attack.name} attack`}
             explanation={() =>
               explainParts({
@@ -320,6 +403,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
                 label: `${attack.name} damage`,
                 kind: "damage",
                 notation: attack.damage,
+                damageType: attack.damageType,
                 parts: [{ label: attack.damageDice, amount: 0 }, ...attack.damageParts.map((p) => (p.dice ? { label: `${p.label} (${p.dice})`, amount: 0 } : p))],
                 notes: attack.damageNotes,
               })
@@ -332,9 +416,10 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         <ReadRow
           key={action.key}
           title={action.name}
+          lead={leads(ACTIVATION_LEADS[action.activation], rangeLead(action.range))}
           subtitle={[
-            action.activation.replace("-", " "),
-            action.range,
+            ACTIVATION_LEADS[action.activation] ? undefined : action.activation.replace("-", " "),
+            rangeLead(action.range) ? undefined : action.range,
             action.save ? `DC ${action.save.dc} ${action.save.ability.toUpperCase()}` : undefined,
             action.healResolved ? `heals ${withSpent(action.healResolved, undefined)}` : undefined,
             action.durationResolved ? withSpent(action.durationResolved, undefined) : undefined,
@@ -345,35 +430,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           text={readingText(action)}
           className={action.available ? undefined : "is-unavailable"}
         >
-          {action.attack ? (
-            <RollBox
-              kind="d20"
-              label={`${action.name} attack`}
-              explanation={() =>
-                explainParts({
-                  label: `${action.name} attack`,
-                  kind: "d20",
-                  notation: `1d20 ${signed(action.attack!.attackBonus)}`,
-                  parts: action.attack!.attackParts,
-                })
-              }
-            />
-          ) : null}
-          {action.damageResolved && !variableDamage(action) ? (
-            <RollBox
-              kind="damage"
-              display={action.damageResolved}
-              label={`${action.name} damage`}
-              explanation={() =>
-                explainParts({
-                  label: action.name,
-                  kind: "damage",
-                  notation: action.damageResolved,
-                  parts: [{ label: action.damageResolved ?? "", amount: 0 }],
-                })
-              }
-            />
-          ) : null}
+          <ActionRolls action={action} />
           {action.resolvedCost?.length || action.applies ? (
             <UseAction action={action} store={store} />
           ) : null}
@@ -407,9 +464,18 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
 export function SpellsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const casting = character.spellcasting;
   const [filter, setFilter] = useState("all");
-  if (!casting) return null;
+  // View state, keyed by source id: a merged set can split or re-merge under it.
+  const [source, setSource] = useState(ALL_SOURCES);
+  const toast = useToast();
+  const view = casting ? spellsView(casting, source) : undefined;
+  // A source that is gone, or one source left, goes back to All rather than waiting to return.
+  const selected = view?.selected;
+  useEffect(() => {
+    if (selected !== undefined && selected !== source) setSource(selected);
+  }, [selected, source]);
+  if (!casting || !view) return null;
 
-  const levels = [...new Set(casting.spells.map((s) => s.spellLevel))].sort((a, b) => a - b);
+  const levels = [...new Set(view.spells.map((s) => s.spellLevel))].sort((a, b) => a - b);
   const chips = [
     { id: "all", label: "All" },
     ...levels.map((level) => ({ id: `level-${level}`, label: level === 0 ? "Cantrip" : `Lv ${level}` })),
@@ -417,26 +483,14 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
     { id: "concentration", label: "Conc." },
   ];
 
-  const spells = casting.spells.filter((spell) => matchesSpellFilter(spell, filter));
+  // A level chip the source has no spells at would filter to nothing.
+  const activeFilter = chips.some((c) => c.id === filter) ? filter : "all";
+  const spells = view.spells.filter((spell) => matchesSpellFilter(spell, activeFilter));
 
   return (
     <>
-      <div className="dg-n-stat-row">
-        {casting.classes.map((cls) => (
-          <div className="dg-n-tile" key={cls.class}>
-            <StatTile
-              label={`${cls.name} save DC`}
-              value={String(cls.dc.value)}
-              explanation={() => explainStat(cls.dc, { label: `${cls.name} spell save DC` })}
-            />
-            <RollBox
-              kind="d20"
-              label={`${cls.name} spell attack`}
-              explanation={() => explainStat(cls.attack, { label: `${cls.name} spell attack`, kind: "d20" })}
-            />
-          </div>
-        ))}
-      </div>
+      <SourceChips sources={view.sources} active={view.selected} onPick={setSource} />
+      <SpellHeader sets={view.sets} proficiency={character.proficiencyBonus.value} />
 
       {character.status.concentration ? (
         <div className="dg-n-banner">
@@ -452,27 +506,43 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
         </div>
       ) : null}
 
-      <div className="dg-n-slots">
-        {casting.slots.map((slot) => (
-          <SlotPill key={slot.level} store={store} level={slot.level} remaining={slot.remaining} max={slot.max} />
-        ))}
-        {casting.pact ? (
-          <SlotPill store={store} level={casting.pact.level} remaining={casting.pact.remaining} max={casting.pact.max} pact />
-        ) : null}
-      </div>
+      {view.noSlots ? null : (
+        <div className="dg-n-slots">
+          {view.slots.map((slot) => (
+            <SlotPill key={slot.level} store={store} level={slot.level} remaining={slot.remaining} max={slot.max} />
+          ))}
+          {view.pact ? (
+            <SlotPill store={store} level={view.pact.level} remaining={view.pact.remaining} max={view.pact.max} pact />
+          ) : null}
+        </div>
+      )}
 
-      <ChipRow chips={chips} active={filter} onPick={setFilter} />
+      <ChipRow chips={chips} active={activeFilter} onPick={setFilter} />
 
       {spells.map((spell) => (
         <ReadRow
           key={spell.id}
           title={spell.name}
+          titleSuffix={
+            <>
+              {spell.school ? (
+                <>
+                  <Icon name={`dg-school-${spell.school}`} className="dg-read-school" tooltip={schoolName(spell.school)} />
+                  <span className="dg-sr-only">{`${schoolName(spell.school)}, `}</span>
+                </>
+              ) : null}
+              <SpellLevel level={spell.spellLevel} tooltip />
+            </>
+          }
+          lead={leads(
+            castingLead(spell.castingTime),
+            rangeLead(spell.range),
+            componentsLead(spell.components),
+            ...spellFlagLeads(spell),
+          )}
           subtitle={[
-            spell.spellLevel === 0 ? "Cantrip" : `Level ${spell.spellLevel}`,
-            spell.castingTime,
-            spell.range,
-            spell.concentration ? "concentration" : undefined,
-            spell.ritual ? "ritual" : undefined,
+            castingLead(spell.castingTime) ? undefined : spell.castingTime,
+            rangeLead(spell.range) ? undefined : spell.range,
             spell.innate.length ? innateLabel(spell) : undefined,
           ]
             .filter(Boolean)
@@ -481,6 +551,9 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
           facts={factsOf(spell.element)}
           className={spell.prepared || spell.alwaysPrepared ? "is-prepared" : undefined}
         >
+          {(spell.actions ?? []).map((action) => (
+            <ActionRolls key={action.key} action={action} inSpell cast={spell.spellLevel > 0 ? () => castSpell(store, spell, toast) : undefined} />
+          ))}
           {spell.innate
             .filter((cast) => cast.resolvedCost?.length)
             .map((cast) => (
@@ -496,6 +569,20 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
       {spells.length === 0 ? <p className="dg-muted">No spells match this filter.</p> : null}
     </>
   );
+}
+
+/**
+ * Spends the slot casting a spell takes, reading the pools as they are now rather than as
+ * the row last drew them. Returns what the toast should add, or false when no slot is left.
+ */
+function castSpell(store: CharacterStore, spell: ResolvedSpell, toast: ReturnType<typeof useToast>): string | false {
+  const slot = slotFor(store.resolved?.spellcasting, spell.spellLevel);
+  if (!slot) {
+    toast.show({ label: spell.name, detail: "No spell slot left" });
+    return false;
+  }
+  store.appendEvents(event("spend", { target: slot.target, amount: 1 }));
+  return `${slot.pact ? "Pact slot" : `Level ${slot.level} slot`} spent · ${slot.remainingAfter} left`;
 }
 
 /** "2 ki points", or "2–5 ki points" for a chosen amount. */

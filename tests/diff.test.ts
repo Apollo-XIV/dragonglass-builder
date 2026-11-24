@@ -4,8 +4,8 @@
  */
 
 import { describe, expect, it } from "vitest";
-import { diffBuilds } from "../src/core/resolver/diff";
-import type { BuildFile } from "../src/core/types";
+import { diffBuilds, diffInventory, diffSpells } from "../src/core/resolver/diff";
+import type { BuildFile, InventoryFile, SpellsFile } from "../src/core/types";
 
 const base: BuildFile = {
   kind: "build",
@@ -63,5 +63,61 @@ describe("diffing two builds", () => {
     expect(diff.count).toBe(3);
     expect(diff.lines).toContain("Species: Dwarf → Elf");
     expect(diff.lines).toContain("STR: 15 → 16");
+  });
+});
+
+describe("diffing spells and inventory", () => {
+  // A builder session holds these as well as the build, so changing only them
+  // must still be something to save.
+  const spells: SpellsFile = {
+    kind: "spells",
+    schemaVersion: 1,
+    spells: [
+      { id: "bless", class: "paladin", prepared: true },
+      { id: "shield-of-faith", class: "paladin" },
+    ],
+  };
+  const spellNames: Record<string, string> = { bless: "Bless", "shield-of-faith": "Shield of Faith", "cure-wounds": "Cure Wounds" };
+  const spellName = (id: string): string => spellNames[id] ?? id;
+
+  it("says nothing about an unchanged list", () => {
+    expect(diffSpells(spells, spells, spellName).count).toBe(0);
+  });
+
+  it("names spells added and removed", () => {
+    const next = { ...spells, spells: [spells.spells[0]!, { id: "cure-wounds", class: "paladin" }] };
+    expect(diffSpells(spells, next, spellName).lines).toEqual(["Spell added: Cure Wounds", "Spell removed: Shield of Faith"]);
+  });
+
+  it("counts a spell list appearing where there was none", () => {
+    expect(diffSpells(undefined, spells, spellName).count).toBe(2);
+  });
+
+  it("reports a change of preparation", () => {
+    const next = { ...spells, spells: [{ ...spells.spells[0]!, prepared: false }, spells.spells[1]!] };
+    expect(diffSpells(spells, next, spellName).lines).toEqual(["Bless: prepared → not prepared"]);
+  });
+
+  it("names items added, removed and recounted, and coin", () => {
+    const base: InventoryFile = {
+      kind: "inventory",
+      schemaVersion: 1,
+      items: [
+        { uid: "a", id: "rope", quantity: 1 },
+        { uid: "b", id: "torch", quantity: 5 },
+      ],
+      currency: { gp: 10 },
+    };
+    const next: InventoryFile = {
+      ...base,
+      items: [{ uid: "a", id: "rope", quantity: 2 }, { uid: "c", item: { name: "Lucky Coin" } }],
+      currency: { gp: 15 },
+    };
+    expect(diffInventory(base, next, (id) => id).lines).toEqual([
+      "rope: 1 → 2",
+      "Item added: Lucky Coin",
+      "Item removed: torch",
+      "GP: 10 → 15",
+    ]);
   });
 });

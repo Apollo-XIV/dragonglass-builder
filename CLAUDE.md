@@ -50,7 +50,8 @@ src/obsidian/        the plugin
   view.ts            one view for .5e, dispatching on each file's kind
   character-store.ts one store per character folder; owns reads, writes and resolution
   sources.ts         vault, path and pinned GitHub source loading
-  icons.ts           the game icons Lucide has no equivalent for (d20, vial)
+  icons.ts           the dg- icons: game icons (d20, vial), the spell icon roles
+                     (dg-concentration, dg-damage-fire, dg-school-evocation...)
   ui/                React
   ui/hp-panel.tsx    the HP vial, register and calc; belongs to neither layout
   ui/builder/        the builder, for both layouts: sections, picker, change confirmation,
@@ -108,6 +109,10 @@ The desktop layout's own rules:
   24-unit one and scales, so the d20 and the vial fill their frame instead of sitting as
   a speck in its corner. Size icons in a label in `rem`, not `em`: labels are 11px, and a
   fraction of that is a smudge.
+- **Name an icon by its role, not its picture.** A spell property, damage type, area or
+  school is a `dg-` icon registered in `icons.ts` (aliasing Lucide, or vendoring an icon
+  newer than Obsidian's bundle), so `dg-damage-${damageType}` and `dg-school-${school}`
+  come straight from the content ids and changing a picture is a one-line edit there.
 - **Nothing rollable carries an `aria-label`.** Obsidian opens a tooltip of its own for
   any element that has one, on top of the hover card; the accessible name is a
   `.dg-sr-only` span inside the button instead.

@@ -14,12 +14,16 @@ export function signed(n: number): string {
   return n >= 0 ? `+${n}` : String(n);
 }
 
-export function Icon({ name, className }: { name: string; className?: string }): ReactNode {
+/**
+ * `tooltip` is Obsidian's own hover label, which it opens for any element with an `aria-label`.
+ * The icon stays hidden from screen readers; whoever draws it supplies the text they hear.
+ */
+export function Icon({ name, className, tooltip }: { name: string; className?: string; tooltip?: string }): ReactNode {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     if (ref.current) setIcon(ref.current, name);
   }, [name]);
-  return <span ref={ref} className={className ? `dg-icon ${className}` : "dg-icon"} aria-hidden="true" />;
+  return <span ref={ref} className={className ? `dg-icon ${className}` : "dg-icon"} aria-hidden="true" aria-label={tooltip} />;
 }
 
 export function Section({

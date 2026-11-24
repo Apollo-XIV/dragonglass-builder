@@ -188,6 +188,20 @@ export class DragonglassSettingTab extends PluginSettingTab {
       );
 
     new Setting(containerEl)
+      .setName("Spell level numerals")
+      .setDesc("Show spell levels as roman numerals (I, II, III) or as numbers (1, 2, 3). Cantrips are a ◆ either way.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOption("roman", "Roman")
+          .addOption("arabic", "Numbers")
+          .setValue(this.plugin.settings.layout.numerals)
+          .onChange(async (value) => {
+            this.plugin.settings.layout.numerals = value === "arabic" ? "arabic" : "roman";
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
       .setName("Start in play mode")
       .setDesc("Hides builder controls when a sheet opens. Useful at the table.")
       .addToggle((toggle) =>

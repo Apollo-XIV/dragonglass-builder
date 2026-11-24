@@ -6,11 +6,26 @@
  * which the plugin sets when a user chooses one; otherwise it follows the theme.
  */
 
+/*
+ * Spell levels: I to IX, and ◆ for a cantrip. Source Serif 4 cut down to those four
+ * glyphs and renamed, as its licence asks of a modified copy; scripts/numerals-font.py
+ * makes this rule. Copyright 2014-2023 Adobe, with Reserved Font Name 'Source', under
+ * the SIL Open Font License 1.1 (fonts/OFL.txt).
+ */
+@font-face {
+  font-family: "Dragonglass Numerals";
+  font-style: normal;
+  font-weight: 200 900;
+  font-display: block;
+  src: url("data:font/woff2;base64,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") format("woff2");
+}
+
 .dragonglass {
   --dg-accent: var(--interactive-accent);
   --dg-gap: var(--size-4-3);
   --dg-radius: var(--radius-m);
   --dg-tap: 2.25rem;
+  --dg-font-numeral: "Dragonglass Numerals", var(--font-text);
   overflow: auto;
   padding: 0;
 }
@@ -18,6 +33,11 @@
 .dragonglass.is-compact {
   --dg-gap: var(--size-4-2);
   --dg-tap: 2.75rem;
+}
+
+/* Digits aren't in the numeral face, so the arabic setting falls through to the text font. */
+.dg-spell-level {
+  font-family: var(--dg-font-numeral);
 }
 
 .dg-root {
@@ -1450,6 +1470,7 @@
 }
 
 .dg-layout .dg-roll-box,
+.dg-layout button.dg-save-box,
 .dg-read-row,
 .dg-layout .dg-resource-pill {
   position: relative;
@@ -1483,6 +1504,21 @@
   font-size: var(--font-ui-smaller);
 }
 
+.dg-layout .dg-save-box {
+  display: inline-grid;
+  place-items: center;
+  align-content: center;
+  min-height: 28px;
+  padding: 0 var(--size-4-2);
+  border-radius: var(--radius-m);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  white-space: nowrap;
+}
+
 .dg-read-row {
   display: flex;
   align-items: center;
@@ -1512,9 +1548,54 @@
   white-space: nowrap;
 }
 
+.dg-read-title-suffix {
+  color: var(--text-muted);
+  font-size: 0.85em;
+  font-weight: normal;
+  margin-left: 0.75em;
+  opacity: 0.6;
+}
+
 .dg-read-subtitle {
   color: var(--text-muted);
   font-size: 12px;
+}
+
+.dg-read-title-suffix .dg-read-school {
+  margin-right: 0.3em;
+  vertical-align: -0.15em;
+}
+
+.dg-read-title-suffix .dg-read-school svg {
+  height: 1em;
+  width: 1em;
+}
+
+.dg-read-subtitle .dg-read-lead {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.25em;
+  vertical-align: -0.15em;
+}
+
+/* The icon's span is a line box, so its svg sits on a baseline with room for descenders under it;
+ * as a flex item that makes it taller than the svg and the distance beside it looks low. */
+.dg-read-subtitle .dg-read-lead .dg-icon {
+  display: flex;
+}
+
+.dg-read-subtitle .dg-read-lead {
+  line-height: 1;
+}
+
+/* Marks that make up one fact (V, S, M) sit closer than an icon does to its distance. */
+.dg-read-subtitle .dg-read-lead .dg-icon + .dg-icon {
+  margin-left: -0.2em;
+}
+
+.dg-read-subtitle .dg-read-lead svg {
+  height: 1rem;
+  width: 1rem;
 }
 
 .dg-read-row.is-prepared .dg-read-title::before {
@@ -1547,6 +1628,7 @@
 }
 
 .dg-layout .dg-roll-box.is-holding::after,
+.dg-layout button.dg-save-box.is-holding::after,
 .dg-layout .dg-resource-pill.is-holding::after {
   inset: 0;
   border-radius: 0;
@@ -1579,8 +1661,10 @@
 }
 
 /* A real, focusable control for screen readers, with no visual footprint
- * (spec 3.7). */
-.dg-layout .dg-sr-only {
+ * (spec 3.7). A spell level carries its own, since a hover card is portalled
+ * outside the layout. */
+.dg-layout .dg-sr-only,
+.dg-spell-level .dg-sr-only {
   position: absolute;
   width: 1px;
   height: 1px;
@@ -1938,11 +2022,87 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   margin-left: auto;
 }
 
-.dg-n-stat-row {
+/* The Spells header: one card per stat set, stacked on a phone. A small muted label
+ * names the sources and the ability; under it the save DC and the attack are two equal
+ * cells in one row, each a value over its caption. */
+.dg-layout .dg-sp-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--size-4-2);
   padding-bottom: var(--size-4-2);
+}
+
+.dg-layout .dg-sp-set {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.dg-layout .dg-sp-set-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.dg-layout .dg-sp-set-ability {
+  letter-spacing: 0.08em;
+}
+
+.dg-layout .dg-sp-set-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--size-4-2);
+}
+
+.dg-layout .dg-sp-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dg-layout .dg-sp-cell > .dg-target {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.dg-layout .dg-sp-cell .dg-roll-box {
+  width: 100%;
+  /* Larger than the base size so it reads at a glance, but under the DC beside it. */
+  font-size: 1.3em;
+}
+
+/* The save DC is a plain cell of the roll box's height: no outline, nothing to roll. */
+.dg-layout .dg-sp-dc.dg-read-row {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 38px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dg-layout .dg-sp-dc .dg-read-main {
+  flex: 0;
+  align-items: center;
+}
+
+.dg-layout .dg-sp-dc .dg-read-title {
+  font-size: 1.6em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-layout .dg-sp-caption {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 /* The desktop's speed, AC, initiative and proficiency tiles, four across: the
@@ -3816,7 +3976,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 }
 
 .dg-d-tab-body > .dg-n-chips,
-.dg-d-tab-body > .dg-n-stat-row,
+.dg-d-tab-body > .dg-sp-header,
 .dg-d-tab-body > .dg-n-slots,
 .dg-d-tab-body > .dg-n-banner,
 .dg-d-tab-body > .dg-muted,
@@ -3836,14 +3996,15 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex-wrap: wrap;
 }
 
-/* The spellcasting tiles are built to fill a phone's width; here they sit at
- * their own size at the left rather than stretching a DC across the panel. */
-.dg-d-tab-body .dg-n-stat-row {
-  justify-content: flex-start;
+/* Wide, the stat sets sit in a row that wraps, each at its own size rather than
+ * stretching a DC across the panel. */
+.dg-d-tab-body .dg-sp-header {
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
-.dg-d-tab-body .dg-n-stat-row > .dg-n-tile {
-  flex: 0 1 11rem;
+.dg-d-tab-body .dg-sp-set {
+  flex: 0 1 15rem;
 }
 
 /* The desktop sheet bodies are dialogs, not bottom sheets: a card in the middle
@@ -5336,4 +5497,75 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* A bottom sheet's claim on the back gesture (back-button.ts): a modal that is never seen. */
 .modal-container.dg-back-proxy {
   display: none;
+}
+
+/* An amount and its damage type's icon, kept on one line in a roll box and in the toast. */
+.dg-layout .dg-damage-total {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  /* A line box of the glyphs' own height, so centring the icon centres it on the digits. */
+  line-height: 1;
+}
+
+.dg-layout .dg-damage-type {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35em;
+}
+
+.dg-layout .dg-damage-type svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+/* A die before the modifier in an attack's roll box, on the digits' centre line. */
+.dg-layout .dg-lead-total {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.dg-layout .dg-lead-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.3em;
+}
+
+.dg-layout .dg-lead-icon svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* The save as a button that casts: the DC over a small CAST, the height of a roll box. */
+.dg-layout button.dg-save-box,
+.dg-layout .dg-save-box.is-free {
+  position: relative;
+  overflow: hidden;
+  min-width: 56px;
+  height: 38px;
+  gap: 0;
+  box-shadow: none;
+  line-height: 1;
+}
+
+/* Outlined like the d20 roll box beside it, not filled. */
+.dg-layout button.dg-save-box {
+  background: transparent;
+  border: 1px solid var(--dg-accent);
+}
+
+/* A cantrip's save is read, not pressed: the same size, with no outline to suggest a button. */
+.dg-layout .dg-save-box.is-free {
+  border: 1px solid transparent;
+}
+
+.dg-layout .dg-save-cast {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }

@@ -24,6 +24,8 @@ export interface LayoutSettings {
    * conventional tracker of fields and buttons. Both write the same events.
    */
   hpTracker: "register" | "conventional";
+  /** Spell levels as I to IX, or as 1 to 9 for anyone who doesn't read roman numerals easily. */
+  numerals: "roman" | "arabic";
 }
 
 /** The rail sections a layout can offer, in the spec's default order (4.4). */
@@ -119,14 +121,14 @@ export const DEFAULT_SOURCES: readonly SourceRef[] = [
     id: "srd",
     type: "github",
     location: "Apollo-XIV/dragonglass-source-5e-srd-5.1",
-    pin: "0.1.6",
+    pin: "0.1.7",
     name: "System Reference Document 5.1",
   },
   {
     id: "srd24",
     type: "github",
     location: "Apollo-XIV/dragonglass-source-5e-srd-5.2",
-    pin: "0.1.6",
+    pin: "0.1.7",
     name: "System Reference Document 5.2",
   },
 ];
@@ -148,6 +150,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
     hideUnverifiedMarkers: false,
     pins: [],
     hpTracker: "register",
+    numerals: "roman",
   },
   narrow: {
     layout: "auto",

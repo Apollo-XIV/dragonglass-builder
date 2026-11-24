@@ -868,6 +868,14 @@ References `@abilities.con.mod`, `@prof`, `@level`, `@level(monk)`,
 Parsed by a small parser — **never `eval`**. Dice and damage are strings in standard
 notation and may embed expressions: `"2d6 + @abilities.str.mod"`.
 
+In an action's `damage`, `heal` and `duration`, `@spellcasting.mod` is the modifier of the
+ability the action casts with: the owning class's, or the one an innate grant chose. A healing
+spell is `"heal": "1d8 + @spellcasting.mod"` and means the same for every caster.
+
+A spell's own `actions` part is resolved for the class it is cast as and lands on
+`ResolvedSpell.actions` (its DC, attack bonus and healing), not in the character's `actions`:
+those are what features grant.
+
 Stats resolve lazily with cycle detection: a CON modifier feeding HP needs no declared
 order, and a stat depending on itself reports `expression-cycle` and yields 0.
 
