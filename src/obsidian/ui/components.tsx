@@ -4,6 +4,7 @@
  */
 
 import { MarkdownRenderer, setIcon } from "obsidian";
+import { spaceTables } from "../../core/markdown";
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
 import type { Annotation, Contribution, NumericStat, ResolvedElement, SetStat } from "../../core/resolver/resolved";
 import type { Fact } from "../../core/content/facts";
@@ -77,7 +78,11 @@ export function Tabs({
   );
 }
 
-/** Renders markdown through Obsidian, so links, embeds and callouts all work. */
+/**
+ * Renders markdown through Obsidian, so links, embeds and callouts all work.
+ * `markdown-rendered` is the class themes scope reading-view styling to (tables
+ * above all), and MarkdownRenderer does not add it to the element it is given.
+ */
 export function Markdown({
   source,
   sourcePath = "",
@@ -94,10 +99,10 @@ export function Markdown({
     const el = ref.current;
     if (!el) return;
     el.empty();
-    void MarkdownRenderer.render(app, source, el, sourcePath, view);
+    void MarkdownRenderer.render(app, spaceTables(source), el, sourcePath, view);
   }, [app, source, sourcePath, view]);
 
-  return <div className={className ? `dg-markdown ${className}` : "dg-markdown"} ref={ref} />;
+  return <div className={className ? `markdown-rendered dg-markdown ${className}` : "markdown-rendered dg-markdown"} ref={ref} />;
 }
 
 function describeContribution(row: Contribution): string {
