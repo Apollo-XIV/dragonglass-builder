@@ -1470,6 +1470,7 @@
 }
 
 .dg-layout .dg-roll-box,
+.dg-layout button.dg-save-box,
 .dg-read-row,
 .dg-layout .dg-resource-pill {
   position: relative;
@@ -1501,6 +1502,21 @@
   border-color: transparent;
   color: var(--text-on-accent);
   font-size: var(--font-ui-smaller);
+}
+
+.dg-layout .dg-save-box {
+  display: inline-grid;
+  place-items: center;
+  align-content: center;
+  min-height: 28px;
+  padding: 0 var(--size-4-2);
+  border-radius: var(--radius-m);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  background: var(--background-modifier-hover);
+  color: var(--text-normal);
+  white-space: nowrap;
 }
 
 .dg-read-row {
@@ -1612,6 +1628,7 @@
 }
 
 .dg-layout .dg-roll-box.is-holding::after,
+.dg-layout button.dg-save-box.is-holding::after,
 .dg-layout .dg-resource-pill.is-holding::after {
   inset: 0;
   border-radius: 0;
@@ -5403,4 +5420,75 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* A bottom sheet's claim on the back gesture (back-button.ts): a modal that is never seen. */
 .modal-container.dg-back-proxy {
   display: none;
+}
+
+/* An amount and its damage type's icon, kept on one line in a roll box and in the toast. */
+.dg-layout .dg-damage-total {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  /* A line box of the glyphs' own height, so centring the icon centres it on the digits. */
+  line-height: 1;
+}
+
+.dg-layout .dg-damage-type {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 0.35em;
+}
+
+.dg-layout .dg-damage-type svg {
+  display: block;
+  width: 1em;
+  height: 1em;
+}
+
+/* A die before the modifier in an attack's roll box, on the digits' centre line. */
+.dg-layout .dg-lead-total {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  line-height: 1;
+}
+
+.dg-layout .dg-lead-icon {
+  display: inline-flex;
+  align-items: center;
+  margin-right: 0.3em;
+}
+
+.dg-layout .dg-lead-icon svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/* The save as a button that casts: the DC over a small CAST, the height of a roll box. */
+.dg-layout button.dg-save-box,
+.dg-layout .dg-save-box.is-free {
+  position: relative;
+  overflow: hidden;
+  min-width: 56px;
+  height: 38px;
+  gap: 0;
+  box-shadow: none;
+  line-height: 1;
+}
+
+/* Outlined like the d20 roll box beside it, not filled. */
+.dg-layout button.dg-save-box {
+  background: transparent;
+  border: 1px solid var(--dg-accent);
+}
+
+/* A cantrip's save is read, not pressed: the same size, with no outline to suggest a button. */
+.dg-layout .dg-save-box.is-free {
+  border: 1px solid transparent;
+}
+
+.dg-layout .dg-save-cast {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }

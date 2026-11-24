@@ -4,8 +4,9 @@
  * `setIcon` (and so the `Icon` component) finds them by name like any other,
  * and so swapping a picture is a change here, not a hunt through the views.
  *
- * Three sources, all drawn in Lucide's 24-unit outline style:
+ * Four sources, all drawn in Lucide's 24-unit outline style:
  * - **Game icons** Lucide has no equivalent for (the d20, the vial).
+ * - **The dice** (`dg-die-d20`...), filled silhouettes imported whole from `dice-icons.ts`.
  * - **Lucide icons newer than Obsidian's bundle**, vendored from lucide-static
  *   1.78.0 (ISC). Obsidian 1.14.5 ships without them.
  * - **Aliases** of the Lucide icons Obsidian does ship, copied out of
@@ -22,6 +23,7 @@
  */
 
 import { addIcon, getIcon } from "obsidian";
+import { DICE } from "./dice-icons";
 
 /** 24 units of drawing in the 100-unit box `addIcon` declares. */
 const SCALE = 100 / 24;
@@ -99,7 +101,7 @@ const ALIASES: Record<string, string> = {
 
   "dg-damage-fire": "flame",
   "dg-damage-cold": "snowflake",
-  "dg-damage-acid": "test-tube-diagonal",
+  "dg-damage-acid": "flask-conical",
   "dg-damage-poison": "bubbles",
   "dg-damage-necrotic": "skull",
   "dg-damage-radiant": "sun",
@@ -132,7 +134,7 @@ const ROTATED: Record<string, { from: string; degrees: number }> = {
 };
 
 export function registerGameIcons(): void {
-  for (const [name, svg] of Object.entries(DRAWN)) addIcon(name, scaled(svg));
+  for (const [name, svg] of Object.entries({ ...DRAWN, ...DICE })) addIcon(name, scaled(svg));
   for (const [name, from] of Object.entries(ALIASES)) alias(name, from);
   for (const [name, { from, degrees }] of Object.entries(ROTATED)) alias(name, from, degrees);
 }

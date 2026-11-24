@@ -98,7 +98,18 @@ export function TextBody({
 // Rolling
 // ---------------------------------------------------------------------------
 
-function toastFor(explanation: Explanation, options: RollOptions): ToastSpec {
+/** A damage amount followed by the icon of its type: "14 🔥". */
+function DamageTotal({ total, type }: { total: ReactNode; type: string }): ReactNode {
+  return (
+    <span className="dg-damage-total">
+      {total}
+      <Icon name={`dg-damage-${type}`} className="dg-damage-type" />
+      <span className="dg-sr-only">{` ${type} damage`}</span>
+    </span>
+  );
+}
+
+function toastFor(explanation: Explanation, options: RollOptions, note?: string): ToastSpec {
   const notation = explanation.notation ?? `1d20 ${explanation.total >= 0 ? `+${explanation.total}` : explanation.total}`;
   const result = rollNotation(notation, undefined, options);
   const qualifier = options.advantage
@@ -109,9 +120,9 @@ function toastFor(explanation: Explanation, options: RollOptions): ToastSpec {
         ? " critical"
         : "";
   return {
-    label: `${explanation.label}${qualifier}`,
+    label: `${explanation.label}${qualifier}${note ? ` · ${note}` : ""}`,
     detail: describeRoll(result),
-    total: result.total,
+    total: explanation.damageType ? <DamageTotal total={result.total} type={explanation.damageType} /> : result.total,
     tag:
       result.natural === 20
         ? { text: "nat 20", tone: "crit" }
@@ -125,15 +136,24 @@ function toastFor(explanation: Explanation, options: RollOptions): ToastSpec {
  * Tap rolls, hold explains. Returns the two handlers so any rollable — an
  * ability, a skill, an attack, a weapon's damage — behaves identically.
  */
-export function useRollable(explanation: () => Explanation): { roll: (options?: RollOptions) => void; explain: () => void } {
+export function useRollable(
+  explanation: () => Explanation,
+  /**
+   * Runs before a roll: what rolling costs, such as a spell slot. Returns a note for the
+   * toast, or false when it can't be paid and nothing should be rolled.
+   */
+  beforeRoll?: () => string | false | void,
+): { roll: (options?: RollOptions) => void; explain: () => void } {
   const sheet = useSheet();
   const toast = useToast();
   const haptics = useHaptics();
 
   const roll = (options: RollOptions = {}): void => {
     const current = explanation();
+    const note = beforeRoll?.();
+    if (note === false) return;
     haptics.buzz(UI.rollHaptic);
-    toast.show(toastFor(current, options));
+    toast.show(toastFor(current, options, note || undefined));
   };
 
   const explain = (): void => {
@@ -180,6 +200,8 @@ export function RollBox({
   display,
   kind,
   label,
+  lead,
+  beforeRoll,
 }: {
   explanation: () => Explanation;
   /** What the box shows; defaults to the signed total. */
@@ -187,14 +209,19 @@ export function RollBox({
   kind: "d20" | "damage";
   /** Accessible name, when the display alone isn't enough. */
   label?: string;
+  /** An icon drawn before the display, on the same line: the die an attack rolls. */
+  lead?: string;
+  /** See `useRollable`. */
+  beforeRoll?: () => string | false | void;
 }): ReactNode {
-  const { roll, explain } = useRollable(explanation);
+  const { roll, explain } = useRollable(explanation, beforeRoll);
   const { handlers } = useHold({
     onTap: () => roll(),
     onHold: explain,
     className: kind === "d20" ? "dg-roll-box" : "dg-roll-box is-dice",
   });
   const settings = useNarrowSettings();
+  const damageType = kind === "damage" ? explanation().damageType : undefined;
   const total = display ?? defaultDisplay(explanation);
 
   return (
@@ -205,13 +232,77 @@ export function RollBox({
         aria-label={label}
         aria-haspopup="dialog"
       >
-        {total}
+        {damageType ? (
+          <DamageTotal total={total} type={damageType} />
+        ) : lead ? (
+          <span className="dg-lead-total">
+            <Icon name={lead} className="dg-lead-icon" />
+            {total}
+          </span>
+        ) : (
+          total
+        )}
       </button>
       {settings.infoButtons ? <InfoButton onClick={explain} /> : null}
       <button className="dg-sr-only" onClick={explain}>
         View details
       </button>
     </span>
+  );
+}
+
+/**
+ * A spell's save DC as a button that casts it: the DC over a small CAST, so it's plain that
+ * a tap spends the slot. The save itself is the target's to roll, so nothing is rolled.
+ */
+export function CastBox({
+  label,
+  detail,
+  cast,
+}: {
+  /** "DEX 14". */
+  label: string;
+  /** Heard by a screen reader: "Fireball, DC 14 DEX save". */
+  detail: string;
+  /** Spends the slot and returns a note for the toast, or false when it can't be paid. */
+  cast: () => string | false | void;
+}): ReactNode {
+  const toast = useToast();
+  const haptics = useHaptics();
+  const sheet = useSheet();
+  const tap = (): void => {
+    const note = cast();
+    if (note === false) return;
+    haptics.buzz(UI.rollHaptic);
+    toast.show({ label: detail, detail: note || undefined });
+  };
+  // Holding it reads, like every other target; the hold is also what gives it the press
+  // fill and stops the row behind it opening its own sheet.
+  const { handlers } = useHold({
+    onTap: tap,
+    onHold: () =>
+      sheet.open({
+        title: detail,
+        subtitle: "Casting spends a spell slot",
+        body: () => <TextBody formula={label} />,
+        actions: () => (
+          <button className="dg-sheet-button is-primary" onClick={tap}>
+            Cast
+          </button>
+        ),
+      }),
+    className: "dg-save-box",
+  });
+  return (
+    <button {...handlers} style={handlers.style}>
+      <span className="dg-save-dc" aria-hidden="true">
+        {label}
+      </span>
+      <span className="dg-save-cast" aria-hidden="true">
+        CAST
+      </span>
+      <span className="dg-sr-only">{`Cast ${detail}`}</span>
+    </button>
   );
 }
 

@@ -26,12 +26,14 @@ import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
 import { NarrowScroller, type SectionSpec } from "./scroller";
 import { useSheet } from "./sheet";
+import { useToast } from "./toast";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
 import { rangeLead, type Lead } from "../range-lead";
 import { componentsLead, spellFlagLeads } from "../spell-leads";
 import { SpellLevel } from "../spell-level";
-import { HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
+import { CastBox, HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
+import { slotFor } from "../../../core/state/cast";
 import { UseAction } from "../use-action";
 import { StatusChips } from "../desktop/header";
 
@@ -308,6 +310,84 @@ const leads = (...all: (Lead | undefined)[]): Lead[] => all.filter((l): l is Lea
 /** Damage that depends on the amount spent can only be rolled once an amount is chosen. */
 const variableDamage = (action: ResolvedAction): boolean => mentionsSpent(action.damageResolved);
 
+/** An action's attack roll, damage and healing as tap targets, and its save DC as a plain box. */
+function ActionRolls({
+  action,
+  inSpell,
+  cast,
+}: {
+  action: ResolvedAction;
+  /** A spell's own action: its save DC is shown, as a button when casting costs a slot. */
+  inSpell?: boolean;
+  /** Spends the slot casting costs; absent for a cantrip. */
+  cast?: () => string | false;
+}): ReactNode {
+  const heal = action.healResolved && !mentionsSpent(action.healResolved) ? action.healResolved : undefined;
+  return (
+    <>
+      {cast && action.save ? (
+        <CastBox
+          label={`${action.save.ability.toUpperCase()} ${action.save.dc}`}
+          detail={`${action.name}, DC ${action.save.dc} ${action.save.ability.toUpperCase()} save`}
+          cast={cast}
+        />
+      ) : action.save && inSpell ? (
+        <span className="dg-save-box is-free">
+          <span className="dg-save-dc" aria-hidden="true">
+            {action.save.ability.toUpperCase()} {action.save.dc}
+          </span>
+          <span className="dg-save-cast" aria-hidden="true">
+            FREE
+          </span>
+          <span className="dg-sr-only">{`DC ${action.save.dc} ${action.save.ability.toUpperCase()} save, costs no spell slot`}</span>
+        </span>
+      ) : null}
+      {action.attack ? (
+        <RollBox
+          kind="d20"
+          lead="dg-die-d20-plain"
+          beforeRoll={cast}
+          label={`${action.name} attack`}
+          explanation={() =>
+            explainParts({
+              label: `${action.name} attack`,
+              kind: "d20",
+              notation: `1d20 ${signed(action.attack!.attackBonus)}`,
+              parts: action.attack!.attackParts,
+            })
+          }
+        />
+      ) : null}
+      {action.damageResolved && !variableDamage(action) ? (
+        <RollBox
+          kind="damage"
+          display={action.damageResolved}
+          label={`${action.name} damage`}
+          explanation={() =>
+            explainParts({
+              label: action.name,
+              kind: "damage",
+              notation: action.damageResolved,
+              damageType: action.damageType,
+              parts: [{ label: action.damageResolved ?? "", amount: 0 }],
+            })
+          }
+        />
+      ) : null}
+      {heal ? (
+        <RollBox
+          kind="damage"
+          display={heal}
+          label={`${action.name} healing`}
+          explanation={() =>
+            explainParts({ label: `${action.name} healing`, kind: "damage", notation: heal, parts: [{ label: heal, amount: 0 }] })
+          }
+        />
+      ) : null}
+    </>
+  );
+}
+
 export function ActionsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const [filter, setFilter] = useState("all");
   const attacks = useMemo(() => weaponAttacks(character), [character]);
@@ -329,6 +409,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
         >
           <RollBox
             kind="d20"
+            lead="dg-die-d20-plain"
             label={`${attack.name} attack`}
             explanation={() =>
               explainParts({
@@ -348,6 +429,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
                 label: `${attack.name} damage`,
                 kind: "damage",
                 notation: attack.damage,
+                damageType: attack.damageType,
                 parts: [{ label: attack.damageDice, amount: 0 }, ...attack.damageParts.map((p) => (p.dice ? { label: `${p.label} (${p.dice})`, amount: 0 } : p))],
                 notes: attack.damageNotes,
               })
@@ -374,35 +456,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
           text={readingText(action)}
           className={action.available ? undefined : "is-unavailable"}
         >
-          {action.attack ? (
-            <RollBox
-              kind="d20"
-              label={`${action.name} attack`}
-              explanation={() =>
-                explainParts({
-                  label: `${action.name} attack`,
-                  kind: "d20",
-                  notation: `1d20 ${signed(action.attack!.attackBonus)}`,
-                  parts: action.attack!.attackParts,
-                })
-              }
-            />
-          ) : null}
-          {action.damageResolved && !variableDamage(action) ? (
-            <RollBox
-              kind="damage"
-              display={action.damageResolved}
-              label={`${action.name} damage`}
-              explanation={() =>
-                explainParts({
-                  label: action.name,
-                  kind: "damage",
-                  notation: action.damageResolved,
-                  parts: [{ label: action.damageResolved ?? "", amount: 0 }],
-                })
-              }
-            />
-          ) : null}
+          <ActionRolls action={action} />
           {action.resolvedCost?.length || action.applies ? (
             <UseAction action={action} store={store} />
           ) : null}
@@ -436,6 +490,7 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
 export function SpellsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const casting = character.spellcasting;
   const [filter, setFilter] = useState("all");
+  const toast = useToast();
   if (!casting) return null;
 
   const levels = [...new Set(casting.spells.map((s) => s.spellLevel))].sort((a, b) => a - b);
@@ -460,6 +515,7 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
             />
             <RollBox
               kind="d20"
+              lead="dg-die-d20-plain"
               label={`${cls.name} spell attack`}
               explanation={() => explainStat(cls.attack, { label: `${cls.name} spell attack`, kind: "d20" })}
             />
@@ -524,6 +580,9 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
           facts={factsOf(spell.element)}
           className={spell.prepared || spell.alwaysPrepared ? "is-prepared" : undefined}
         >
+          {(spell.actions ?? []).map((action) => (
+            <ActionRolls key={action.key} action={action} inSpell cast={spell.spellLevel > 0 ? () => castSpell(store, spell, toast) : undefined} />
+          ))}
           {spell.innate
             .filter((cast) => cast.resolvedCost?.length)
             .map((cast) => (
@@ -539,6 +598,20 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
       {spells.length === 0 ? <p className="dg-muted">No spells match this filter.</p> : null}
     </>
   );
+}
+
+/**
+ * Spends the slot casting a spell takes, reading the pools as they are now rather than as
+ * the row last drew them. Returns what the toast should add, or false when no slot is left.
+ */
+function castSpell(store: CharacterStore, spell: ResolvedSpell, toast: ReturnType<typeof useToast>): string | false {
+  const slot = slotFor(store.resolved?.spellcasting, spell.spellLevel);
+  if (!slot) {
+    toast.show({ label: spell.name, detail: "No spell slot left" });
+    return false;
+  }
+  store.appendEvents(event("spend", { target: slot.target, amount: 1 }));
+  return `${slot.pact ? "Pact slot" : `Level ${slot.level} slot`} spent · ${slot.remainingAfter} left`;
 }
 
 /** "2 ki points", or "2–5 ki points" for a chosen amount. */
