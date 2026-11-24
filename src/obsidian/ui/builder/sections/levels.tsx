@@ -9,6 +9,7 @@ import {
   normalisedQueue,
 } from "../../../../core/resolver/levels";
 import { previewOf } from "../../../../core/content/preview";
+import { choiceKey, choicesIn, levelChildren } from "../../../../core/resolver/grant-tree";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type {
   PendingChoice,
@@ -19,7 +20,7 @@ import { usePlugin } from "../../context";
 import { UI } from "../../narrow/constants";
 import { useSheet } from "../../narrow/sheet";
 import { InactivePickRow, useBuildChange } from "../changes";
-import { FeatureChip } from "../grants";
+import { FeatureChip, GrantRows } from "../grants";
 import { useBuilderStop } from "../nav";
 import { defaultHpFor, multiclassNotes, sourceRefOf } from "../model";
 import { useBuilderFeatures } from "../features";
@@ -77,12 +78,10 @@ export function LevelCard({
   const classLevel = classLevelAt(build, index);
   const outstanding = choices.filter((c) => !c.complete).length;
   const chosenIds = new Set(choices.flatMap((c) => c.chosen));
-  const automatic = character.elements.filter(
-    (element) =>
-      element.class === level.class &&
-      element.level === classLevel &&
-      !chosenIds.has(element.id),
-  );
+  // What this level of the class brought, as a tree: a choice's picks bring their
+  // own features under it, so a patron's arrive under the patron rather than beside.
+  const content = store.index;
+  const brought = content ? levelChildren(character, level.class, classLevel, index, (id) => content.get(id)) : [];
   // Anything staged against character level rather than a class — a species
   // trait that arrives at 5 — belongs to this card too, since this is the level
   // that brought it. Shown apart from the class's own features because it did
@@ -93,11 +92,12 @@ export function LevelCard({
       element.level === index + 1 &&
       !chosenIds.has(element.id),
   );
-  // A feature shown on this card carries the choices it declares on its own row;
-  // the rest — the class level's own, or a feature's shown elsewhere — are rows here.
-  const shownFeatures = new Set([...automatic, ...staged].map((element) => element.id));
+  // A staged feature carries the choices it declares on its own row, as the tree's
+  // features do; whatever neither placed is a row of its own.
   const ownChoices = (id: string): PendingChoice[] => choices.filter((choice) => choice.source === id);
-  const loose = choices.filter((choice) => !shownFeatures.has(choice.source));
+  const placed = new Set(choicesIn(brought).map(choiceKey));
+  const stagedIds = new Set(staged.map((element) => element.id));
+  const loose = choices.filter((choice) => !placed.has(choiceKey(choice)) && !stagedIds.has(choice.source));
   const inactive = store.index
     ? inactivePicks(store.index, build).filter((p) => p.levelIndex === index)
     : [];
@@ -171,9 +171,15 @@ export function LevelCard({
         <LevelHp store={store} index={index} classId={level.class} />
       ) : null}
 
-      {!shown ? null : automatic.length ? (
+      {shown && brought.length ? (
         <div className="dg-level-features">
-          {automatic.map((feature) => (
+          <GrantRows nodes={brought} store={store} nameOf={nameOf} rowClass="dg-level-feature" />
+        </div>
+      ) : null}
+
+      {shown && staged.length ? (
+        <div className="dg-level-features is-staged">
+          {staged.map((feature) => (
             <FeatureChip
               key={feature.id}
               feature={feature}
@@ -181,14 +187,6 @@ export function LevelCard({
               store={store}
               nameOf={nameOf}
             />
-          ))}
-        </div>
-      ) : null}
-
-      {shown && staged.length ? (
-        <div className="dg-level-features is-staged">
-          {staged.map((feature) => (
-            <FeatureChip key={feature.id} feature={feature} nameOf={nameOf} />
           ))}
         </div>
       ) : null}

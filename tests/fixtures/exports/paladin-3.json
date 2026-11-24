@@ -254,6 +254,7 @@
           "id": "srd:devotion:channel-divinity",
           "kind": "subclass-feature",
           "via": [
+            "srd:class:paladin",
             "srd:subclass:oath-of-devotion"
           ]
         },
@@ -261,6 +262,7 @@
           "id": "srd:spell:protection-from-evil-and-good",
           "kind": "spell",
           "via": [
+            "srd:class:paladin",
             "srd:subclass:oath-of-devotion"
           ]
         },
@@ -268,6 +270,7 @@
           "id": "srd:spell:sanctuary",
           "kind": "spell",
           "via": [
+            "srd:class:paladin",
             "srd:subclass:oath-of-devotion"
           ]
         }
@@ -1136,6 +1139,7 @@
         "class": "srd:class:paladin",
         "classLevel": 3,
         "via": [
+          "srd:class:paladin",
           "srd:subclass:oath-of-devotion"
         ]
       },

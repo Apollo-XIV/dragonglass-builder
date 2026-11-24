@@ -80,56 +80,74 @@ export function GrantTree({
   nameOf: (id: string) => string;
 }): ReactNode {
   if (!nodes.length) return null;
-  const named = (id: string): string | undefined => (nameOf(id) === id ? undefined : nameOf(id));
   return (
     <div className="dg-grants">
-      {rowsOf(nodes).map((row) => (
-        <div className="dg-grant" key={keyOf(row)}>
-          {row.type === "element" ? (
-            <FeatureChip
-              feature={row.element}
-              choices={ownChoices(row)}
-              store={store}
-              nameOf={nameOf}
-              className="dg-grant-feature"
-            />
-          ) : row.type === "choice" ? (
-            <PendingChoiceRow choice={row.choice} store={store} nameOf={nameOf} />
-          ) : row.type === "list" ? (
-            <InfoRow
-              title={row.elements.map((e) => e.name).join(", ")}
-              subtitle={row.elements.length > 1 ? LISTED_KINDS[row.kind] : row.kind}
-              text={row.elements
-                .filter((e) => e.text)
-                .map((e) => `**${e.name}.** ${e.text}`)
-                .join("\n\n") || undefined}
-              className="dg-grant-feature"
-            />
-          ) : row.type === "spell" ? (
-            <InfoRow
-              title={row.spell.name}
-              subtitle={row.level ? `spell · from level ${row.level}` : "spell"}
-              text={typeof row.spell.text === "string" ? row.spell.text : undefined}
-              facts={factsOf(row.spell, named)}
-              unverified={unverifiedNotes(row.spell)}
-              className="dg-grant-feature"
-            />
-          ) : (
-            // Not the character's yet, so drawn faded; it still reads like any other row.
-            <InfoRow
-              title={row.name}
-              subtitle={`${row.kind.replace(/-/g, " ")} · at level ${row.level}`}
-              text={row.text}
-              facts={row.element ? factsOf(row.element, named) : undefined}
-              unverified={row.element ? unverifiedNotes(row.element) : undefined}
-              className="dg-grant-feature is-upcoming"
-            />
-          )}
-          {row.type === "list" ? null : <GrantTree nodes={underRow(row)} store={store} nameOf={nameOf} />}
-        </div>
-      ))}
+      <GrantRows nodes={nodes} store={store} nameOf={nameOf} />
     </div>
   );
+}
+
+/**
+ * The rows of a tree without the indent that says whose they are: for a list that is
+ * already its owner's, like a level card. What each row brought is still indented.
+ */
+export function GrantRows({
+  nodes,
+  store,
+  nameOf,
+  rowClass = "dg-grant-feature",
+}: {
+  nodes: GrantNode[];
+  store: CharacterStore;
+  nameOf: (id: string) => string;
+  rowClass?: string;
+}): ReactNode {
+  const named = (id: string): string | undefined => (nameOf(id) === id ? undefined : nameOf(id));
+  return rowsOf(nodes).map((row) => (
+    <div className="dg-grant" key={keyOf(row)}>
+      {row.type === "element" ? (
+        <FeatureChip
+          feature={row.element}
+          choices={ownChoices(row)}
+          store={store}
+          nameOf={nameOf}
+          className={rowClass}
+        />
+      ) : row.type === "choice" ? (
+        <PendingChoiceRow choice={row.choice} store={store} nameOf={nameOf} />
+      ) : row.type === "list" ? (
+        <InfoRow
+          title={row.elements.map((e) => e.name).join(", ")}
+          subtitle={row.elements.length > 1 ? LISTED_KINDS[row.kind] : row.kind}
+          text={row.elements
+            .filter((e) => e.text)
+            .map((e) => `**${e.name}.** ${e.text}`)
+            .join("\n\n") || undefined}
+          className={rowClass}
+        />
+      ) : row.type === "spell" ? (
+        <InfoRow
+          title={row.spell.name}
+          subtitle={row.level ? `spell · from level ${row.level}` : "spell"}
+          text={typeof row.spell.text === "string" ? row.spell.text : undefined}
+          facts={factsOf(row.spell, named)}
+          unverified={unverifiedNotes(row.spell)}
+          className={rowClass}
+        />
+      ) : (
+        // Not the character's yet, so drawn faded; it still reads like any other row.
+        <InfoRow
+          title={row.name}
+          subtitle={`${row.kind.replace(/-/g, " ")} · at level ${row.level}`}
+          text={row.text}
+          facts={row.element ? factsOf(row.element, named) : undefined}
+          unverified={row.element ? unverifiedNotes(row.element) : undefined}
+          className={`${rowClass} is-upcoming`}
+        />
+      )}
+      {row.type === "list" ? null : <GrantTree nodes={underRow(row)} store={store} nameOf={nameOf} />}
+    </div>
+  ));
 }
 
 /**

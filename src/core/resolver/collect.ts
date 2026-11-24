@@ -368,7 +368,10 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
     const levelIndex = classId ? levelIndexOf.get(classId)?.[level - 1] : level - 1;
     const from: PartSource = { element: owner, level, class: classId };
 
-    const levelCtx: Ctx = { origin: [owner.id], scope: "level", levelIndex, level, class: classId };
+    // The owner's whole path, as its own grants carry: a patron's features hang
+    // under the patron, and the patron under the warlock level that chose it.
+    const ownerOrigin = result.byId.get(owner.id)?.origin ?? [];
+    const levelCtx: Ctx = { origin: [...ownerOrigin, owner.id], scope: "level", levelIndex, level, class: classId };
     for (const key of LEVEL_PART_KEYS) {
       const list = entry[key];
       if (!list) continue;
@@ -389,7 +392,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       result.choices.push({
         definition: def,
         owner,
-        origin: result.byId.get(owner.id)?.origin ?? [],
+        origin: ownerOrigin,
         scope: "level",
         levelIndex,
         level,

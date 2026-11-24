@@ -89,6 +89,41 @@ function children(character: ResolvedCharacter, id: string, origin: Origin, get:
   ];
 }
 
+/**
+ * What one level of a class brought, as a tree: its features and choices, with what
+ * each pick brought under the choice that made it — a patron's features under the
+ * patron. Read from the class's whole tree with everything from other levels pruned;
+ * something brought here by an element from an earlier level (a subclass feature at
+ * Warlock 6) stands as a root, since its owner's row is on that earlier card.
+ */
+export function levelChildren(
+  character: ResolvedCharacter,
+  classId: string,
+  classLevel: number,
+  levelIndex: number,
+  get: Lookup,
+): GrantNode[] {
+  const here = (node: GrantNode, parentHere: boolean): boolean => {
+    switch (node.type) {
+      case "element":
+        return node.element.class === classId && node.element.level === classLevel;
+      case "choice":
+        return node.choice.levelIndex === levelIndex;
+      case "spell":
+        return parentHere;
+      case "upcoming":
+        return false;
+    }
+  };
+  const prune = (nodes: GrantNode[], parentHere: boolean): GrantNode[] =>
+    nodes.flatMap((node) => {
+      const kept = here(node, parentHere);
+      const children = prune(node.children, kept);
+      return kept ? [{ ...node, children }] : children;
+    });
+  return prune(grantChildren(character, classId, get), false);
+}
+
 /** An element's levels keyed by character level, in order. Empty for anything else. */
 function stagedEntries(element: Element): [number, LevelEntry][] {
   if (element.levelsBy !== "character" || !element.levels) return [];

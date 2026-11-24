@@ -1,7 +1,7 @@
 /** The grant tree: what a species or background brought, set out under it. */
 
 import { describe, expect, it } from "vitest";
-import { choiceKey, choicesIn, grantChildren, type GrantNode } from "../src/core/resolver/grant-tree";
+import { choiceKey, choicesIn, grantChildren, levelChildren, type GrantNode } from "../src/core/resolver/grant-tree";
 import { resolve } from "../src/core/resolver/resolve";
 import type { Element } from "../src/core/types";
 import { build, testIndex, TEST_BOOK } from "./helpers";
@@ -123,5 +123,57 @@ describe("grantChildren", () => {
       "spell test:spell:rebuke @3",
       "? test:tiefling:boon",
     ]);
+  });
+});
+
+describe("levelChildren", () => {
+  const patron = [
+    TEST_BOOK,
+    {
+      ...el("test:class:warlock", "class"),
+      hitDie: "d8",
+      levels: {
+        "1": {
+          grants: ["test:warlock:pact-magic"],
+          choices: [{ id: "test:warlock:patron", name: "Patron", count: 1, from: { kind: "subclass" } }],
+        },
+        "2": { grants: ["test:warlock:invocations"] },
+      },
+    } as Element,
+    el("test:warlock:pact-magic", "class-feature"),
+    el("test:warlock:invocations", "class-feature"),
+    el("test:subclass:fiend", "subclass", {
+      levels: {
+        "1": { grants: ["test:fiend:blessing"] },
+        "2": { grants: ["test:fiend:luck"] },
+      },
+    }),
+    el("test:fiend:blessing", "subclass-feature"),
+    el("test:fiend:luck", "subclass-feature"),
+  ];
+  const content = testIndex(patron);
+  const warlock = resolve({
+    content,
+    build: build({
+      levels: [
+        { class: "test:class:warlock", hp: "average", choices: { "test:warlock:patron": ["test:subclass:fiend"] } },
+        { class: "test:class:warlock", hp: "average" },
+      ],
+    }),
+  });
+  const at = (classLevel: number): GrantNode[] =>
+    levelChildren(warlock, "test:class:warlock", classLevel, classLevel - 1, (id) => content.get(id));
+  const names = (nodes: GrantNode[]): string[] =>
+    nodes.map((n) => (n.type === "element" ? n.element.id : n.type === "choice" ? n.choice.id : n.type));
+
+  it("hangs what a patron brought under the choice that picked it", () => {
+    const first = at(1);
+    expect(names(first)).toEqual(["test:warlock:pact-magic", "test:warlock:patron"]);
+    // The choice's row names the patron; what the patron brought is under it.
+    expect(names(first[1].children)).toEqual(["test:fiend:blessing"]);
+  });
+
+  it("stands a later subclass feature as a root on its own level, and nothing from another", () => {
+    expect(names(at(2))).toEqual(["test:warlock:invocations", "test:fiend:luck"]);
   });
 });
