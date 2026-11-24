@@ -89,15 +89,30 @@ export default class DragonglassPlugin extends Plugin {
 
     this.addSettingTab(new DragonglassSettingTab(this.app, this));
 
-    const newCharacter = () =>
-      new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder, "build")).open();
+    const newCharacter = (parent?: string) =>
+      new NewCharacterModal(this.app, this, (folder) => void this.openCharacter(folder, "build"), parent).open();
 
-    this.addRibbonIcon("dg-d20", "New character", newCharacter);
+    this.addRibbonIcon("dg-d20", "New character", () => newCharacter());
+
+    // The same "file-menu" event serves the desktop right-click and the mobile long-press, and
+    // "action-primary" is the section holding New note / New folder / New canvas.
+    this.registerEvent(
+      this.app.workspace.on("file-menu", (menu, file) => {
+        if (!(file instanceof TFolder)) return;
+        menu.addItem((item) =>
+          item
+            .setTitle("New character")
+            .setIcon("dg-d20")
+            .setSection("action-primary")
+            .onClick(() => newCharacter(file.path)),
+        );
+      }),
+    );
 
     this.addCommand({
       id: "new-character",
       name: "New character",
-      callback: newCharacter,
+      callback: () => newCharacter(),
     });
 
     this.addCommand({

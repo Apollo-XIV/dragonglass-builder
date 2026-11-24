@@ -9,9 +9,10 @@ export class NewCharacterModal extends Modal {
     app: App,
     private readonly plugin: DragonglassPlugin,
     private readonly onCreated: (folder: string) => void,
+    folder?: string,
   ) {
     super(app);
-    this.folder = plugin.settings.charactersFolder;
+    this.folder = folder ?? plugin.settings.charactersFolder;
   }
 
   onOpen(): void {
