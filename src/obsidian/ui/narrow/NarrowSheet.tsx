@@ -7,11 +7,11 @@
  * character with no spellcasting — are absent from the page and from the rail.
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { factsOf } from "../../../core/content/facts";
 import { describeRecharge, rechargesOnRest } from "../../../core/state/recharge";
 import { weaponAttacks } from "../../../core/resolver/attacks";
-import { explainParts, explainSet, explainStat, type Explanation } from "../../../core/resolver/explain";
+import { explainParts, explainSet, explainStat } from "../../../core/resolver/explain";
 import { readingText, type ResolvedAction, type ResolvedCharacter, type ResolvedInnate, type ResolvedResource, type ResolvedSpell } from "../../../core/resolver/resolved";
 import { event } from "../../../core/state/fold";
 import { withSpent } from "../../../core/state/use-action";
@@ -25,17 +25,18 @@ import { prettyPath } from "../sheet-panels";
 import { useNarrowSettings } from "./context";
 import { Rail } from "./rail";
 import { NarrowScroller, type SectionSpec } from "./scroller";
-import { useSheet } from "./sheet";
 import { useToast } from "./toast";
 import { ArmourTile, InitiativeTile, ProficiencyTile, SpeedTile } from "../stat-tiles";
 import { ChipRow } from "../builder/chips";
 import { rangeLead, type Lead } from "../range-lead";
 import { componentsLead, spellFlagLeads } from "../spell-leads";
 import { SpellLevel } from "../spell-level";
-import { CastBox, HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, TextBody, usePoolControls } from "./targets";
+import { CastBox, HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, usePoolControls } from "./targets";
 import { slotFor } from "../../../core/state/cast";
 import { UseAction } from "../use-action";
 import { StatusChips } from "../desktop/header";
+import { ALL_SOURCES, spellsView } from "../../../core/resolver/spell-sources";
+import { SourceChips, SpellHeader } from "../spell-header";
 
 /** Section ids are stable; the order comes from the settings (spec 4.4). */
 const SHEET_ICONS: Record<string, string> = {
@@ -212,33 +213,6 @@ function RestRow({ store, character }: { store: CharacterStore; character: Resol
         Hit dice: {character.hp.hitDice.map((pool) => `${pool.remaining}${pool.die}`).join(", ") || "none"}
       </span>
     </div>
-  );
-}
-
-function StatTile({
-  label,
-  value,
-  explanation,
-}: {
-  label: string;
-  value: string;
-  explanation?: () => Explanation;
-}): ReactNode {
-  const sheet = useSheet();
-  return (
-    <ReadRow
-      title={value}
-      subtitle={label}
-      className="dg-n-tile"
-      onTap={
-        explanation
-          ? () => {
-              const current = explanation();
-              sheet.open({ title: current.label, body: () => <TextBody formula={current.formula} /> });
-            }
-          : undefined
-      }
-    />
   );
 }
 
@@ -490,10 +464,18 @@ export function ActionsSection({ store, character }: { store: CharacterStore; ch
 export function SpellsSection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
   const casting = character.spellcasting;
   const [filter, setFilter] = useState("all");
+  // View state, keyed by source id: a merged set can split or re-merge under it.
+  const [source, setSource] = useState(ALL_SOURCES);
   const toast = useToast();
-  if (!casting) return null;
+  const view = casting ? spellsView(casting, source) : undefined;
+  // A source that is gone, or one source left, goes back to All rather than waiting to return.
+  const selected = view?.selected;
+  useEffect(() => {
+    if (selected !== undefined && selected !== source) setSource(selected);
+  }, [selected, source]);
+  if (!casting || !view) return null;
 
-  const levels = [...new Set(casting.spells.map((s) => s.spellLevel))].sort((a, b) => a - b);
+  const levels = [...new Set(view.spells.map((s) => s.spellLevel))].sort((a, b) => a - b);
   const chips = [
     { id: "all", label: "All" },
     ...levels.map((level) => ({ id: `level-${level}`, label: level === 0 ? "Cantrip" : `Lv ${level}` })),
@@ -501,27 +483,14 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
     { id: "concentration", label: "Conc." },
   ];
 
-  const spells = casting.spells.filter((spell) => matchesSpellFilter(spell, filter));
+  // A level chip the source has no spells at would filter to nothing.
+  const activeFilter = chips.some((c) => c.id === filter) ? filter : "all";
+  const spells = view.spells.filter((spell) => matchesSpellFilter(spell, activeFilter));
 
   return (
     <>
-      <div className="dg-n-stat-row">
-        {casting.classes.map((cls) => (
-          <div className="dg-n-tile" key={cls.class}>
-            <StatTile
-              label={`${cls.name} save DC`}
-              value={String(cls.dc.value)}
-              explanation={() => explainStat(cls.dc, { label: `${cls.name} spell save DC` })}
-            />
-            <RollBox
-              kind="d20"
-              lead="dg-die-d20-plain"
-              label={`${cls.name} spell attack`}
-              explanation={() => explainStat(cls.attack, { label: `${cls.name} spell attack`, kind: "d20" })}
-            />
-          </div>
-        ))}
-      </div>
+      <SourceChips sources={view.sources} active={view.selected} onPick={setSource} />
+      <SpellHeader sets={view.sets} proficiency={character.proficiencyBonus.value} />
 
       {character.status.concentration ? (
         <div className="dg-n-banner">
@@ -537,16 +506,18 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
         </div>
       ) : null}
 
-      <div className="dg-n-slots">
-        {casting.slots.map((slot) => (
-          <SlotPill key={slot.level} store={store} level={slot.level} remaining={slot.remaining} max={slot.max} />
-        ))}
-        {casting.pact ? (
-          <SlotPill store={store} level={casting.pact.level} remaining={casting.pact.remaining} max={casting.pact.max} pact />
-        ) : null}
-      </div>
+      {view.noSlots ? null : (
+        <div className="dg-n-slots">
+          {view.slots.map((slot) => (
+            <SlotPill key={slot.level} store={store} level={slot.level} remaining={slot.remaining} max={slot.max} />
+          ))}
+          {view.pact ? (
+            <SlotPill store={store} level={view.pact.level} remaining={view.pact.remaining} max={view.pact.max} pact />
+          ) : null}
+        </div>
+      )}
 
-      <ChipRow chips={chips} active={filter} onPick={setFilter} />
+      <ChipRow chips={chips} active={activeFilter} onPick={setFilter} />
 
       {spells.map((spell) => (
         <ReadRow

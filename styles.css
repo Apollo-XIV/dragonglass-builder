@@ -2022,11 +2022,87 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   margin-left: auto;
 }
 
-.dg-n-stat-row {
+/* The Spells header: one card per stat set, stacked on a phone. A small muted label
+ * names the sources and the ability; under it the save DC and the attack are two equal
+ * cells in one row, each a value over its caption. */
+.dg-layout .dg-sp-header {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: var(--size-4-2);
   padding-bottom: var(--size-4-2);
+}
+
+.dg-layout .dg-sp-set {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+}
+
+.dg-layout .dg-sp-set-label {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.dg-layout .dg-sp-set-ability {
+  letter-spacing: 0.08em;
+}
+
+.dg-layout .dg-sp-set-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--size-4-2);
+}
+
+.dg-layout .dg-sp-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+}
+
+.dg-layout .dg-sp-cell > .dg-target {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.dg-layout .dg-sp-cell .dg-roll-box {
+  width: 100%;
+  /* Larger than the base size so it reads at a glance, but under the DC beside it. */
+  font-size: 1.3em;
+}
+
+/* The save DC is a plain cell of the roll box's height: no outline, nothing to roll. */
+.dg-layout .dg-sp-dc.dg-read-row {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 38px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+
+.dg-layout .dg-sp-dc .dg-read-main {
+  flex: 0;
+  align-items: center;
+}
+
+.dg-layout .dg-sp-dc .dg-read-title {
+  font-size: 1.6em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.dg-layout .dg-sp-caption {
+  color: var(--text-muted);
+  font-size: 12px;
 }
 
 /* The desktop's speed, AC, initiative and proficiency tiles, four across: the
@@ -3900,7 +3976,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 }
 
 .dg-d-tab-body > .dg-n-chips,
-.dg-d-tab-body > .dg-n-stat-row,
+.dg-d-tab-body > .dg-sp-header,
 .dg-d-tab-body > .dg-n-slots,
 .dg-d-tab-body > .dg-n-banner,
 .dg-d-tab-body > .dg-muted,
@@ -3920,14 +3996,15 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex-wrap: wrap;
 }
 
-/* The spellcasting tiles are built to fill a phone's width; here they sit at
- * their own size at the left rather than stretching a DC across the panel. */
-.dg-d-tab-body .dg-n-stat-row {
-  justify-content: flex-start;
+/* Wide, the stat sets sit in a row that wraps, each at its own size rather than
+ * stretching a DC across the panel. */
+.dg-d-tab-body .dg-sp-header {
+  flex-direction: row;
+  flex-wrap: wrap;
 }
 
-.dg-d-tab-body .dg-n-stat-row > .dg-n-tile {
-  flex: 0 1 11rem;
+.dg-d-tab-body .dg-sp-set {
+  flex: 0 1 15rem;
 }
 
 /* The desktop sheet bodies are dialogs, not bottom sheets: a card in the middle

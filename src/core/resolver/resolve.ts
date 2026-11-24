@@ -1320,7 +1320,14 @@ function resolveSpellcasting(
     innateOnly = false,
     learned?: { counts: boolean },
   ): void => {
-    if (seen.has(element.id)) return;
+    if (seen.has(element.id)) {
+      // Already here, as a grant or another class's pick. The first stays the spell, and
+      // its limits are unchanged, but this class casts it too.
+      const first = [...spells, ...orphaned].find((s) => s.id === element.id);
+      if (first && classId && first.class !== classId && classIds.has(classId) && !first.alsoClasses?.includes(classId))
+        first.alsoClasses = [...(first.alsoClasses ?? []), classId];
+      return;
+    }
     seen.add(element.id);
     const spell = element as SpellElement;
     const resolved: ResolvedSpell = {
@@ -1418,6 +1425,8 @@ function resolveSpellcasting(
       source: from.element.id,
       sourceName: from.element.name,
       ability,
+      ownAbility: def.ability !== undefined,
+      class: from.class && classIds.has(from.class) ? from.class : undefined,
       dc: attack === undefined ? undefined : 8 + attack,
       attack,
       resource:

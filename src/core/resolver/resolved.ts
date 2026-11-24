@@ -311,6 +311,10 @@ export interface ResolvedInnate {
   sourceName: string;
   /** Absent when neither the grant nor the owning class names one. */
   ability?: Ability;
+  /** True when the grant names its own ability (a feat, a lineage), rather than borrowing its class's. */
+  ownAbility?: boolean;
+  /** The casting class the grant belongs to, when it came with one. */
+  class?: string;
   dc?: number;
   attack?: number;
   /** Key of the uses pool; absent when the spell is cast at will or from another pool. */
@@ -358,6 +362,8 @@ export interface ResolvedSpell {
   /** Here only because something grants it innately: not prepared, picked or counted. */
   innateOnly: boolean;
   class?: string;
+  /** Other casting classes that also have it, when something else got it onto the sheet first. */
+  alsoClasses?: string[];
   source: string;
   abbreviation?: string;
   page?: number | string;
