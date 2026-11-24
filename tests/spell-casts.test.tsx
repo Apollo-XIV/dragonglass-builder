@@ -21,7 +21,7 @@ const spell = (n: string, spellLevel: number, actions?: ActionDef[]): Element =>
 
 const wizard: Element = {
   id: "test:class:wizard", kind: "class", name: "Wizardish", source: "test", key: "wizard", hitDie: "d6",
-  spellcasting: { ability: "int", progression: "full", type: "spellbook", list: "wizard-spell", prepared: 6, spellbook: 6 },
+  spellcasting: { ability: "int", progression: "full", type: "spellbook", list: "wizard-spell", prepared: 10, spellbook: 10 },
   levels: { "1": { innateSpells: [{ spell: "test:spell:mage-armor" }] } },
 } as Element;
 
@@ -36,13 +36,26 @@ const content = testIndex([
   spell("sleep", 1, [cast("Sleep", { save: { ability: "wis" } })]),
   spell("cure-wounds", 1, [cast("Cure Wounds", { heal: "1d8 + @spellcasting.mod" })]),
   spell("alarm", 1),
+  spell("ice-knife", 1, [
+    cast("Ice Knife (piercing)", { attack: { type: "ranged-spell" }, damage: "1d10", damageType: "piercing" }),
+    cast("Ice Knife (cold)", { save: { ability: "dex" }, damage: "2d6", damageType: "cold" }),
+  ]),
+  spell("ice-storm", 1, [
+    cast("Ice Storm (bludgeoning)", { save: { ability: "dex" }, damage: "2d10", damageType: "bludgeoning" }),
+    cast("Ice Storm (cold)", { save: { ability: "dex" }, damage: "4d6", damageType: "cold" }),
+  ]),
+  spell("prismatic", 1, [cast("Red", { save: { ability: "dex" } }), cast("Blue", { save: { ability: "con" } })]),
+  spell("chromatic", 1, [
+    cast("Chromatic (acid)", { attack: { type: "ranged-spell" }, damage: "3d8", damageType: "acid" }),
+    cast("Chromatic (cold)", { attack: { type: "ranged-spell" }, damage: "3d8", damageType: "cold" }),
+  ]),
   spell("mage-armor", 1),
   spell("misty-step", 2),
 ]);
 
 /** The row for one spell, from its title to the next row. */
 function row(name: string): string {
-  const spells: SpellEntry[] = ["ray-of-frost", "sleep", "cure-wounds", "alarm"].map((n) => ({ id: `test:spell:${n}`, class: wizard.id, prepared: true }));
+  const spells: SpellEntry[] = ["ray-of-frost", "sleep", "cure-wounds", "alarm", "ice-knife", "ice-storm", "prismatic", "chromatic"].map((n) => ({ id: `test:spell:${n}`, class: wizard.id, prepared: true }));
   const buildFile = build({
     abilities: { method: "manual", base: scores({ int: 16 }) },
     species: fey.id,
@@ -85,6 +98,22 @@ describe("paying for a cast on the sheet", () => {
       expect(words(row(name)), name).toEqual(["CAST"]);
       expect(row(name), name).toContain("dg-save-box is-bare");
     }
+  });
+
+  it("casts from one box however many parts the spell has", () => {
+    // The attack and the save are one cast: the save's box spends it, the attack doesn't again.
+    expect(words(row("ice-knife"))).toEqual(["CAST"]);
+    expect(row("ice-knife")).toContain("dg-roll-box");
+    // Two parts under one DEX save show the save once.
+    expect(words(row("ice-storm"))).toEqual(["CAST"]);
+    expect(row("ice-storm").match(/class="dg-save-dc"/g)).toHaveLength(1);
+    // A second, different save is shown, but only the first casts.
+    expect(words(row("prismatic"))).toEqual(["CAST"]);
+    expect(row("prismatic")).toMatch(/dg-save-box is-free.*CON/s);
+  });
+
+  it("lets the first attack cast a spell with no save, and gives it no CAST of its own", () => {
+    expect(words(row("chromatic"))).toEqual([]);
   });
 
   it("gives a cantrip no CAST, since it spends nothing", () => {

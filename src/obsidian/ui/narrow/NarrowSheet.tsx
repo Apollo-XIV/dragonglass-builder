@@ -290,19 +290,28 @@ function ActionRolls({
   inSpell,
   cast,
   atWill,
+  beforeAttack,
+  free,
+  hideSave,
 }: {
   action: ResolvedAction;
-  /** A spell's own action: its save DC is shown, as a button when casting costs a slot. */
+  /** A spell's own action: its save DC is shown, as a button when this save is what casts it. */
   inSpell?: boolean;
-  /** Spends the slot casting costs; absent for a cantrip. */
+  /** The save's box casts the spell: spends the slot, or nothing at will. */
   cast?: () => string | false | void;
   /** The cast spends nothing: the save's button reads AT WILL. */
   atWill?: boolean;
+  /** The attack roll is what casts the spell, and spends the slot first. */
+  beforeAttack?: () => string | false | void;
+  /** A cantrip: its save says FREE under the DC. */
+  free?: boolean;
+  /** The same save is already on the row, from an earlier part of the spell. */
+  hideSave?: boolean;
 }): ReactNode {
   const heal = action.healResolved && !mentionsSpent(action.healResolved) ? action.healResolved : undefined;
   return (
     <>
-      {cast && action.save ? (
+      {hideSave ? null : cast && action.save ? (
         <CastBox
           label={`${action.save.ability.toUpperCase()} ${action.save.dc}`}
           detail={`${action.name}, DC ${action.save.dc} ${action.save.ability.toUpperCase()} save`}
@@ -314,17 +323,19 @@ function ActionRolls({
           <span className="dg-save-dc" aria-hidden="true">
             {action.save.ability.toUpperCase()} {action.save.dc}
           </span>
-          <span className="dg-save-cast" aria-hidden="true">
-            FREE
-          </span>
-          <span className="dg-sr-only">{`DC ${action.save.dc} ${action.save.ability.toUpperCase()} save, costs no spell slot`}</span>
+          {free ? (
+            <span className="dg-save-cast" aria-hidden="true">
+              FREE
+            </span>
+          ) : null}
+          <span className="dg-sr-only">{`DC ${action.save.dc} ${action.save.ability.toUpperCase()} save${free ? ", costs no spell slot" : ""}`}</span>
         </span>
       ) : null}
       {action.attack ? (
         <RollBox
           kind="d20"
           lead="dg-die-d20-plain"
-          beforeRoll={atWill ? undefined : cast}
+          beforeRoll={beforeAttack}
           label={`${action.name} attack`}
           explanation={() =>
             explainParts({
@@ -574,10 +585,11 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
 }
 
 /**
- * A spell's rolls, and how casting it is paid for. A spell cast at will spends nothing and
- * says AT WILL; otherwise one that takes a slot spends it from the save's box, the attack
- * roll, or — when it has neither — a CAST button of its own. A spell granted only with
- * uses of its own, or only for another pool's cost, spends no slot.
+ * A spell's rolls, and how casting it is paid for. Casting is one thing however many parts
+ * the spell has (Ice Storm's bludgeoning and cold are one DEX save), so exactly one control
+ * casts: the first save's box, else the first attack roll, else a CAST button of its own. A
+ * spell cast at will spends nothing and says AT WILL, on the save's box or alone. A spell
+ * granted only with uses of its own, or only for another pool's cost, spends no slot.
  */
 function SpellCasts({
   spell,
@@ -593,14 +605,25 @@ function SpellCasts({
   // Nothing to spend yet: the at-will cast is where an effect it applies will hang.
   const cast = atWill ? () => "Cast at will" : slotted ? () => castSpell(store, spell, toast) : undefined;
   const actions = spell.actions ?? [];
-  const rolled = actions.some((action) => action.attack || action.save);
+  const castAt = actions.findIndex((action) => action.save);
+  const rollAt = castAt < 0 && !atWill ? actions.findIndex((action) => action.attack) : -1;
+  const saveKey = (action: ResolvedAction): string | undefined => action.save && `${action.save.ability} ${action.save.dc}`;
   return (
-    <>
-      {actions.map((action) => (
-        <ActionRolls key={action.key} action={action} inSpell cast={cast} atWill={atWill} />
+    <span className="dg-sp-casts">
+      {actions.map((action, i) => (
+        <ActionRolls
+          key={action.key}
+          action={action}
+          inSpell
+          cast={i === castAt ? cast : undefined}
+          atWill={atWill}
+          beforeAttack={i === rollAt ? cast : undefined}
+          free={spell.spellLevel === 0}
+          hideSave={actions.slice(0, i).some((earlier) => saveKey(earlier) === saveKey(action))}
+        />
       ))}
-      {cast && !rolled ? <CastBox detail={spell.name} cast={cast} atWill={atWill} /> : null}
-    </>
+      {cast && castAt < 0 && rollAt < 0 ? <CastBox detail={spell.name} cast={cast} atWill={atWill} /> : null}
+    </span>
   );
 }
 

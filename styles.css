@@ -5641,6 +5641,19 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--text-muted);
 }
 
+/* A spell's boxes wrap onto a second line rather than squeezing its name to nothing. */
+.dg-sp-casts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--size-4-2);
+  max-width: 60%;
+}
+
+.dg-sp-casts:empty {
+  display: none;
+}
+
 /* CAST or AT WILL with no DC over it: the word is the whole label, at the box's own size. */
 .dg-layout .dg-save-box.is-bare .dg-save-cast {
   font-size: var(--font-ui-smaller);
