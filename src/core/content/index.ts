@@ -85,6 +85,7 @@ export class ContentIndex {
   private load(sources: LoadedSource[]): void {
     // Pass 1: validate, note which source owns each id, build the alias map.
     const aliasToKind = new Map<string, string>();
+    const declaredKinds = new Set<string>();
     const accepted: { el: Element; origin: ElementOrigin }[] = [];
     const shadowed = new Map<string, string[]>();
 
@@ -127,6 +128,7 @@ export class ContentIndex {
 
         if (el.kind === "kind") {
           const kd = el as KindElement;
+          declaredKinds.add(kd.key);
           for (const alias of kd.aliases ?? []) if (!aliasToKind.has(alias)) aliasToKind.set(alias, kd.key);
         }
       });
@@ -143,9 +145,11 @@ export class ContentIndex {
       });
     }
 
-    // Pass 2: normalise kinds through aliases, then index.
+    // Pass 2: normalise kinds through aliases, then index. An alias is a legacy spelling,
+    // so it never captures a kind some source declares as its own: the SRD's `ancestry`
+    // (a Dragonborn's dragon) is not core's legacy `ancestry` (a species).
     for (const { el } of accepted) {
-      const translated = aliasToKind.get(el.kind);
+      const translated = declaredKinds.has(el.kind) ? undefined : aliasToKind.get(el.kind);
       const element: Element = translated && translated !== el.kind ? { ...el, kind: translated } : el;
       this.elements.set(element.id, element);
 

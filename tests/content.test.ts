@@ -201,6 +201,21 @@ describe("ContentIndex", () => {
     expect(index.byKind("race")).toHaveLength(0);
   });
 
+  it("leaves a kind a source declares as its own, even when it is another kind's alias", () => {
+    const ancestry = { id: "srd:kind:ancestry", kind: "kind", name: "Ancestry", source: "srd", key: "ancestry", label: "Ancestry" };
+    const index = ContentIndex.build([
+      source("core", [...kindDefs.filter((k) => k.id !== "core:kind:species"), { ...kindDefs[0], aliases: ["race", "ancestry"] }]),
+      source("srd", [
+        book,
+        ancestry,
+        { id: "srd:race:dwarf", kind: "race", name: "Dwarf", source: "srd" },
+        { id: "srd:ancestry:red", kind: "ancestry", name: "Red Dragon", source: "srd" },
+      ]),
+    ]);
+    expect(index.byKind("species").map((e) => e.id)).toEqual(["srd:race:dwarf"]);
+    expect(index.get("srd:ancestry:red")?.kind).toBe("ancestry");
+  });
+
   it("resolves collisions by source priority and records the override", () => {
     const srdFeat = { id: "srd:feat:alert", kind: "feat", name: "Alert", source: "srd" };
     const hbFeat = { id: "srd:feat:alert", kind: "feat", name: "Alert (buffed)", source: "hb" };

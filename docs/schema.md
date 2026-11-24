@@ -82,7 +82,8 @@ rejection, and a cost the rules leave open ("varies") is `special`.
 Kinds are declared by elements of `kind: "kind"`, carrying `key`, `label`, optional
 `plural`, `tab` (which sheet or builder tab the kind lives on; `null` means untabbed),
 `display` (`list` | `card` | `table`), `aliases` (legacy kind strings translated on load,
-so `race` reads as `species`), `browsable` and `order`.
+so `race` reads as `species` — unless some source declares that string as a kind of its
+own, which then keeps it), `browsable` and `order`.
 
 Core kinds ship in a built-in core source (`content/core/`, bundled at build time —
 **never hand-edit it as content**). Any other source may add kinds, and the sheet grows a
