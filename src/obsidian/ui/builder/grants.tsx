@@ -2,16 +2,21 @@
  * What something brought, set out under it: its granted features and its choices,
  * indented behind one continuous line so it reads as theirs. Nests — a pick that
  * brings choices of its own gets its own indent under the choice that made it.
+ *
+ * A feature that declares a choice is one row, not two: the feature's own row reads
+ * as the feature and carries the decision as a control, and what the pick brought
+ * hangs under it.
  */
 
 import { type ReactNode } from "react";
 import { factsOf } from "../../../core/content/facts";
 import { unverifiedNotes } from "../../../core/content/provenance";
 import { choiceKey, type GrantNode } from "../../../core/resolver/grant-tree";
-import type { ResolvedElement } from "../../../core/resolver/resolved";
+import type { PendingChoice, ResolvedElement } from "../../../core/resolver/resolved";
 import type { CharacterStore } from "../../character-store";
 import { PendingChoiceRow } from "./choice-row";
 import { InfoRow } from "./detail";
+import { usePickerSlot } from "./picker";
 
 /** Kinds that say little on their own, so a parent's are listed together on one row. */
 const LISTED_KINDS: Record<string, string> = { skill: "skills", language: "languages" };
@@ -54,6 +59,17 @@ function keyOf(row: Row): string {
   }
 }
 
+/** The choices an element declared, which its own row carries. Every choice under an element is its own. */
+function ownChoices(node: GrantNode): PendingChoice[] {
+  return node.children.flatMap((child) => (child.type === "choice" ? [child.choice] : []));
+}
+
+/** What hangs under a row: an element's own choices are on its row, so what their picks brought takes their place. */
+function underRow(node: GrantNode): GrantNode[] {
+  if (node.type !== "element") return node.children;
+  return node.children.flatMap((child) => (child.type === "choice" ? child.children : [child]));
+}
+
 export function GrantTree({
   nodes,
   store,
@@ -70,7 +86,13 @@ export function GrantTree({
       {rowsOf(nodes).map((row) => (
         <div className="dg-grant" key={keyOf(row)}>
           {row.type === "element" ? (
-            <FeatureChip feature={row.element} nameOf={nameOf} className="dg-grant-feature" />
+            <FeatureChip
+              feature={row.element}
+              choices={ownChoices(row)}
+              store={store}
+              nameOf={nameOf}
+              className="dg-grant-feature"
+            />
           ) : row.type === "choice" ? (
             <PendingChoiceRow choice={row.choice} store={store} nameOf={nameOf} />
           ) : row.type === "list" ? (
@@ -103,32 +125,65 @@ export function GrantTree({
               className="dg-grant-feature is-upcoming"
             />
           )}
-          {row.type === "list" ? null : <GrantTree nodes={row.children} store={store} nameOf={nameOf} />}
+          {row.type === "list" ? null : <GrantTree nodes={underRow(row)} store={store} nameOf={nameOf} />}
         </div>
       ))}
     </div>
   );
 }
 
-/** An automatic feature: readable for its text, no decision attached. */
+/**
+ * A feature: readable for its text, and carrying the choices it declares as controls
+ * on the same row. A single choice the feature names already goes unlabelled; their
+ * options open under the whole row, since one squeezed beside the title can't be read.
+ */
 export function FeatureChip({
   feature,
   nameOf,
+  choices = [],
+  store,
   className = "dg-level-feature",
 }: {
   feature: ResolvedElement;
   nameOf: (id: string) => string;
+  /** The choices this feature declares; they need the store to be answered. */
+  choices?: PendingChoice[];
+  store?: CharacterStore;
   className?: string;
 }): ReactNode {
+  const slot = usePickerSlot();
+  const decides = store && choices.length ? choices : [];
+  const unlabelled = decides.length === 1 && decides[0].name === feature.name;
   return (
-    <InfoRow
-      title={feature.name}
-      subtitle={feature.kind.replace(/-/g, " ")}
-      text={feature.text}
-      fluff={feature.fluff}
-      facts={factsOf(feature.element, (id) => (nameOf(id) === id ? undefined : nameOf(id)))}
-      unverified={unverifiedNotes(feature.element)}
-      className={className}
-    />
+    <>
+      <InfoRow
+        title={feature.name}
+        subtitle={feature.kind.replace(/-/g, " ")}
+        text={feature.text}
+        fluff={feature.fluff}
+        facts={factsOf(feature.element, (id) => (nameOf(id) === id ? undefined : nameOf(id)))}
+        unverified={unverifiedNotes(feature.element)}
+        className={[className, decides.length ? "has-choice" : "", decides.length > 1 ? "has-choices" : ""]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {store && decides.length ? (
+          <span className="dg-feature-choices">
+            {decides.map((choice) => (
+              <PendingChoiceRow
+                key={choiceKey(choice)}
+                choice={choice}
+                store={store}
+                nameOf={nameOf}
+                inline
+                unlabelled={unlabelled}
+                slot={slot}
+              />
+            ))}
+          </span>
+        ) : null}
+      </InfoRow>
+      {slot.node}
+    </>
   );
 }

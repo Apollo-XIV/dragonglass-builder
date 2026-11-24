@@ -93,6 +93,11 @@ export function LevelCard({
       element.level === index + 1 &&
       !chosenIds.has(element.id),
   );
+  // A feature shown on this card carries the choices it declares on its own row;
+  // the rest — the class level's own, or a feature's shown elsewhere — are rows here.
+  const shownFeatures = new Set([...automatic, ...staged].map((element) => element.id));
+  const ownChoices = (id: string): PendingChoice[] => choices.filter((choice) => choice.source === id);
+  const loose = choices.filter((choice) => !shownFeatures.has(choice.source));
   const inactive = store.index
     ? inactivePicks(store.index, build).filter((p) => p.levelIndex === index)
     : [];
@@ -169,7 +174,13 @@ export function LevelCard({
       {!shown ? null : automatic.length ? (
         <div className="dg-level-features">
           {automatic.map((feature) => (
-            <FeatureChip key={feature.id} feature={feature} nameOf={nameOf} />
+            <FeatureChip
+              key={feature.id}
+              feature={feature}
+              choices={ownChoices(feature.id)}
+              store={store}
+              nameOf={nameOf}
+            />
           ))}
         </div>
       ) : null}
@@ -182,7 +193,7 @@ export function LevelCard({
         </div>
       ) : null}
 
-      {(shown ? choices : []).map((choice) => (
+      {(shown ? loose : []).map((choice) => (
         <PendingChoiceRow
           key={`${choice.id}-${index}`}
           choice={choice}

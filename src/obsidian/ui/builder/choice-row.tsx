@@ -7,7 +7,7 @@ import { usePlugin } from "../context";
 import { useBuildChange } from "./changes";
 import { Readable, type DetailSpec } from "./detail";
 import { inheritedFilterOf, optionsFor, sourceRefOf } from "./model";
-import { chosenSpec, usePicker, usePickerSlot, type PickerOption } from "./picker";
+import { chosenSpec, usePicker, usePickerSlot, type PickerOption, type PickerSlot } from "./picker";
 
 /** A row that opens a choice sheet: label, current selection or "Choose", chevron. */
 export function ChoiceRow({
@@ -17,8 +17,12 @@ export function ChoiceRow({
   invalid,
   reading,
   onOpen,
+  slot: shared,
+  slotKey,
+  inline,
 }: {
-  label: string;
+  /** Absent on an inline control whose feature's own title already names it. */
+  label?: string;
   value?: string;
   /** What was chosen, read the way the layout reads: held on a phone, hovered on a desktop. */
   reading?: DetailSpec;
@@ -26,17 +30,23 @@ export function ChoiceRow({
   empty?: boolean;
   invalid?: string;
   onOpen: () => void;
+  /** A slot the caller places, for a control inside a row its options shouldn't open in. */
+  slot?: PickerSlot;
+  slotKey?: string;
+  /** Drawn as a control on a feature's row rather than a row of its own. */
+  inline?: boolean;
 }): ReactNode {
-  const slot = usePickerSlot();
+  const own = usePickerSlot();
+  const slot = shared ?? own;
   return (
     <>
       <Readable
-        className={empty ? "dg-choice-row is-empty" : "dg-choice-row"}
+        className={["dg-choice-row", inline ? "is-inline" : "", empty ? "is-empty" : ""].filter(Boolean).join(" ")}
         spec={value ? reading : undefined}
-        onTap={() => slot.open(onOpen)}
+        onTap={() => slot.open(onOpen, slotKey)}
       >
         <span className="dg-choice-main">
-          <span className="dg-choice-label">{label}</span>
+          {label ? <span className="dg-choice-label">{label}</span> : null}
           <span
             className={
               value ? "dg-choice-value" : "dg-choice-value is-placeholder"
@@ -52,7 +62,7 @@ export function ChoiceRow({
           ›
         </span>
       </Readable>
-      {slot.node}
+      {shared ? null : slot.node}
     </>
   );
 }
@@ -62,10 +72,18 @@ export function PendingChoiceRow({
   choice,
   store,
   nameOf,
+  inline,
+  unlabelled,
+  slot,
 }: {
   choice: PendingChoice;
   store: CharacterStore;
   nameOf: (id: string) => string;
+  /** On its feature's row; see `ChoiceRow`. */
+  inline?: boolean;
+  /** For an inline control whose feature already names it. */
+  unlabelled?: boolean;
+  slot?: PickerSlot;
 }): ReactNode {
   const picker = usePicker();
   const { plugin } = usePlugin();
@@ -93,7 +111,10 @@ export function PendingChoiceRow({
 
   return (
     <ChoiceRow
-      label={choice.name}
+      label={unlabelled ? undefined : choice.name}
+      inline={inline}
+      slot={slot}
+      slotKey={choice.id}
       value={chosen || undefined}
       empty={!choice.complete}
       reading={chosenSpec(choice.name, picked)}

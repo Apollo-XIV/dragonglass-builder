@@ -169,22 +169,30 @@ export function usePicker(): (spec: PickerSpec) => void {
   };
 }
 
+export interface PickerSlot {
+  node: ReactNode;
+  /**
+   * Open `ask`'s picker here, or close it if it is the one open. `key` tells apart
+   * the choices sharing one slot, so opening another switches rather than closes.
+   */
+  open: (ask: () => void, key?: string) => void;
+}
+
 /**
  * A place under a row for its options to open. Where the layout has no inline
  * pickers `open` simply runs `ask`, and the picker is the sheet it always was.
  */
-export function usePickerSlot(): {
-  node: ReactNode;
-  open: (ask: () => void) => void;
-} {
+export function usePickerSlot(): PickerSlot {
   const inline = useBuilderFeatures().inlinePicker;
   const armed = useContext(ArmedSlot);
   const [spec, setSpec] = useState<PickerSpec | undefined>();
+  const [openKey, setOpenKey] = useState<string | undefined>();
   const detail = useDetail();
 
-  const open = (ask: () => void): void => {
+  const open = (ask: () => void, key?: string): void => {
     if (!inline || !armed) return ask();
-    if (spec) return setSpec(undefined);
+    if (spec && key === openKey) return setSpec(undefined);
+    setOpenKey(key);
     armed.current = setSpec;
     try {
       ask();

@@ -2392,6 +2392,45 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   border-bottom: none;
 }
 
+/* A feature that declares a choice carries it on its own row, as a control at the
+ * end: the row reads as the feature, the control picks. Several choices — Magic
+ * Initiate's three — stack under the title instead, each labelled. */
+.dg-read-row.has-choices {
+  flex-wrap: wrap;
+}
+
+.dg-feature-choices {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  gap: var(--size-4-1);
+  min-width: 0;
+  max-width: 60%;
+}
+
+.dg-read-row.has-choices > .dg-feature-choices {
+  flex: 1 0 100%;
+  max-width: none;
+  padding-bottom: var(--size-4-1);
+}
+
+.dg-layout .dg-choice-row.is-inline {
+  width: auto;
+  min-height: 32px;
+  margin: 0;
+  padding: var(--size-2-2) var(--size-4-2);
+}
+
+.dg-read-row.has-choices .dg-choice-row.is-inline {
+  width: 100%;
+}
+
+.dg-choice-row.is-inline .dg-choice-main {
+  flex-direction: row;
+  align-items: baseline;
+  gap: var(--size-4-2);
+}
+
 /* What a character level not yet reached will bring: faded, but read as usual. */
 .dg-grants .dg-read-row.dg-grant-feature.is-upcoming {
   opacity: 0.5;

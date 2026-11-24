@@ -788,6 +788,53 @@ describe("species features staged by character level", () => {
   });
 });
 
+describe("a feature that declares a choice", () => {
+  const BOOK: Element = {
+    id: "fc", kind: "sourcebook", name: "Feature Choice Book", source: "fc", abbreviation: "FC",
+  } as Element;
+  const FIRE: Element = { id: "fc:resistance:fire", kind: "damage-resistance", name: "Fire Resistance", source: "fc" };
+  const RED: Element = { id: "fc:ancestry:red", kind: "ancestry", name: "Red Dragon", source: "fc", grants: [FIRE.id] };
+  const ANCESTRY: Element = {
+    id: "fc:trait:ancestry", kind: "species-trait", name: "Draconic Ancestry", source: "fc",
+    text: "Choose the kind of dragon.",
+    choices: [{ id: "fc:choice:ancestry", name: "Draconic Ancestry", count: 1, from: { ids: [RED.id] } }],
+  };
+  const SPECIES: Element = { id: "fc:species:dragonborn", kind: "species", name: "Dragonborn", source: "fc", grants: [ANCESTRY.id] };
+  const index = testIndex([BOOK, FIRE, RED, ANCESTRY, SPECIES]);
+  const build = (choices: Record<string, string[]>): BuildFile => ({
+    kind: "build", schemaVersion: 1, name: "Kriv", level: 0, species: SPECIES.id, choices,
+    abilities: { method: "manual", base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
+    levels: [],
+  });
+
+  function builderHtml(choices: Record<string, string[]>): string {
+    const store = makeStoreWith(index, build(choices));
+    return render(
+      createElement(NarrowRoot, {
+        store,
+        character: store.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "builder" as const,
+      }),
+      store,
+    );
+  }
+
+  it("is one row, carrying the decision as a control the feature's title already names", () => {
+    const html = builderHtml({});
+    expect(html).toMatch(/dg-grant-feature has-choice/);
+    expect(html).toMatch(/dg-choice-row is-inline is-empty/);
+    // Named once, by the feature; the control doesn't repeat it as a label.
+    expect(html).toMatch(/is-inline is-empty"><span class="dg-choice-main"><span class="dg-choice-value is-placeholder">Choose/);
+  });
+
+  it("shows the pick on the row and what the pick brought under it", () => {
+    const html = builderHtml({ "fc:choice:ancestry": [RED.id] });
+    expect(html).toMatch(/is-inline"[^>]*>.*Red Dragon/);
+    expect(html).toContain("Fire Resistance");
+  });
+});
+
 describe("the source browser and entry wizard", () => {
   const store = makeStore();
   const srdRef = { id: "srd", type: "github" as const, location: "owner/srd", enabled: true };
