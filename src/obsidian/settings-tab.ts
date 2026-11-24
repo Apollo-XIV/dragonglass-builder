@@ -1,5 +1,6 @@
 import { Modal, Notice, PluginSettingTab, Setting, TextComponent, type App } from "obsidian";
 import type DragonglassPlugin from "../main";
+import { builtAt, commit } from "virtual:build-info";
 import {
   SECRET_STORAGE_UPDATE_MESSAGE,
   clearSessionLogin,
@@ -346,6 +347,11 @@ export class DragonglassSettingTab extends PluginSettingTab {
           await this.plugin.saveSettings();
         }),
       );
+    // So a running copy can be matched to a commit: a reload that didn't take shows here.
+    containerEl.createEl("p", {
+      cls: "setting-item-description",
+      text: `Build ${commit}: ${new Date(builtAt).toLocaleString()}`,
+    });
   }
 
   private renderGithubAccount(containerEl: HTMLElement): void {
