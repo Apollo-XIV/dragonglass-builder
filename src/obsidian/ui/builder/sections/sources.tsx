@@ -60,7 +60,7 @@ export function SourcesPanel({ store }: { store: CharacterStore }): ReactNode {
     }
     const file = store.data.sources ?? blankSources();
     const id = uniqueId(suggestSourceId(parsed), [...own.map((s) => s.id), ...plugin.settings.sources.map((s) => s.id)]);
-    store.update("sources", { ...file, sources: [...own, { ...parsed, id, ...(auth ? { auth } : {}) } as SourceRef] });
+    store.update("sources", { ...file, sources: [{ ...parsed, id, ...(auth ? { auth } : {}) } as SourceRef, ...own] });
     setAddValue("");
     setAddToken("");
     setAddUseLogin(false);
@@ -338,7 +338,7 @@ function NewSourceForm({
       });
       const file = store.data.sources ?? blankSources();
       const existing = file.sources ?? [];
-      store.update("sources", { ...file, sources: [...existing, ref] });
+      store.update("sources", { ...file, sources: [ref, ...existing] });
       await plugin.reloadSources();
       new Notice(`Created "${ref.name ?? ref.id}"`);
       onCreated(ref);

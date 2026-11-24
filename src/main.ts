@@ -491,12 +491,12 @@ export default class DragonglassPlugin extends Plugin {
     throw new Error(`too many folders named like "${base}"`);
   }
 
-  /** Adds a source to the vault-wide list, keeping ids unique. */
+  /** Adds a source to the top of the vault-wide list, keeping ids unique. */
   async addSource(ref: SourceRef): Promise<void> {
     const taken = new Set(this.settings.sources.map((s) => s.id));
     let id = ref.id;
     for (let n = 2; taken.has(id); n++) id = `${ref.id}-${n}`;
-    this.settings.sources = [...this.settings.sources, { ...ref, id }];
+    this.settings.sources = [{ ...ref, id }, ...this.settings.sources];
     await this.saveSettings();
   }
 }
