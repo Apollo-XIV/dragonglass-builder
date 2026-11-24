@@ -65,6 +65,7 @@ export interface DetailStrategy {
   /**
    * Show something in the reading pane without a row of its own: an option in an
    * open list, say. Absent where reading is a gesture rather than a place.
+   * `undefined` says the reader has moved off; the pane may keep what it shows.
    */
   read?: (spec: DetailSpec | undefined) => void;
 }
