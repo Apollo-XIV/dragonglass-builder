@@ -3953,7 +3953,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-top: none;
-  border-radius: 0 var(--d-radius-box) var(--d-radius-box) var(--d-radius-box);
+  border-radius: 0 0 var(--d-radius-box) var(--d-radius-box);
   background: var(--d-surface);
 }
 
@@ -4814,7 +4814,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-top: none;
-  border-radius: 0 var(--d-radius-box) var(--d-radius-box) var(--d-radius-box);
+  border-radius: 0 0 var(--d-radius-box) var(--d-radius-box);
   background: var(--d-surface);
   display: flex;
   flex-direction: column;

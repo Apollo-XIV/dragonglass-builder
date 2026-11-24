@@ -45,7 +45,7 @@ export function TabsPanel({ store, character }: { store: CharacterStore; charact
   return (
     <section className="dg-d-tabs-panel">
       <TabBar tabs={tabs} active={active} onPick={setWanted} />
-      <div className="dg-d-tab-body" role="tabpanel" aria-label={current?.label}>
+      <div className="dg-d-tab-body" role="tabpanel">
         {current?.body()}
       </div>
     </section>
