@@ -11,7 +11,7 @@ import { InfoRow } from "../detail";
 import { inheritedFilterOf, sourceRefOf, upcomingStaged, type LevelEntryShape } from "../model";
 import { useCardShown } from "../reorder/fold";
 import { chosenSpec, usePicker, type PickerOption } from "../picker";
-import { ChoiceRow } from "./origin";
+import { ChoiceRow } from "../choice-row";
 
 /** One planned level: what it grants and the picks queued for it. */
 export function PlannedCard({

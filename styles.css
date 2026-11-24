@@ -2365,6 +2365,38 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   font-size: 1.2em;
 }
 
+/* What something brought, set out under it: indented behind one continuous line
+ * that says whose it is. A tree nests, each depth with a line of its own. */
+.dg-grants {
+  /* Narrow, because the line already says how deep a row is. It sits halfway between
+   * the owner's row edge and its children's row edges. */
+  --dg-grant-indent: 20px;
+  --dg-grant-line: 2px;
+  --dg-grant-at: calc((var(--dg-grant-indent) - var(--dg-grant-line)) / 2);
+  margin: 0 0 var(--size-4-2) var(--dg-grant-at);
+  padding-left: calc(var(--dg-grant-indent) - var(--dg-grant-at) - var(--dg-grant-line));
+  /* Neutral, so a tree nested two deep is structure rather than decoration. */
+  border-left: var(--dg-grant-line) solid color-mix(in srgb, var(--text-normal) 16%, transparent);
+}
+
+.dg-grants .dg-grants {
+  margin-top: var(--size-4-1);
+}
+
+.dg-grant:last-child > .dg-grants {
+  margin-bottom: 0;
+}
+
+.dg-grants .dg-read-row.dg-grant-feature {
+  min-height: 36px;
+  border-bottom: none;
+}
+
+/* What a character level not yet reached will bring: faded, but read as usual. */
+.dg-grants .dg-read-row.dg-grant-feature.is-upcoming {
+  opacity: 0.5;
+}
+
 .dg-level-card {
   margin-bottom: var(--size-4-3);
   padding: var(--size-4-2);

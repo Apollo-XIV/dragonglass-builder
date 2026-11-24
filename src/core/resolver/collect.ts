@@ -60,6 +60,8 @@ export interface CollectedElement extends PartSource {
 export interface DeclaredChoice {
   definition: ChoiceDef;
   owner: Element;
+  /** The elements the owner was reached through, outermost first. */
+  origin: string[];
   scope: "build" | "level";
   levelIndex?: number;
   level?: number;
@@ -282,6 +284,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       result.choices.push({
         definition: def,
         owner: el,
+        origin: ctx.origin,
         scope: ctx.scope,
         levelIndex: ctx.levelIndex,
         level: ctx.level,
@@ -386,6 +389,7 @@ export function collect(index: ContentIndex, build: BuildFile, inventory?: Inven
       result.choices.push({
         definition: def,
         owner,
+        origin: result.byId.get(owner.id)?.origin ?? [],
         scope: "level",
         levelIndex,
         level,

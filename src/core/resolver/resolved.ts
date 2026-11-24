@@ -264,6 +264,8 @@ export interface PendingChoice {
   /** Element that declared the choice. */
   source: string;
   sourceName: string;
+  /** The elements `source` was reached through, outermost first, as on `ResolvedElement`. */
+  origin: Origin;
   /** Where the answer is written. */
   scope: "build" | "level";
   /** 0-based index into build.levels when scope is "level". */

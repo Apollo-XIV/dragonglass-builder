@@ -8,27 +8,25 @@ import {
   classLevels,
   normalisedQueue,
 } from "../../../../core/resolver/levels";
-import { factsOf } from "../../../../core/content/facts";
 import { previewOf } from "../../../../core/content/preview";
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type {
   PendingChoice,
   ResolvedCharacter,
-  ResolvedElement,
 } from "../../../../core/resolver/resolved";
 import type { CharacterStore } from "../../../character-store";
 import { usePlugin } from "../../context";
 import { UI } from "../../narrow/constants";
 import { useSheet } from "../../narrow/sheet";
 import { InactivePickRow, useBuildChange } from "../changes";
-import { InfoRow } from "../detail";
+import { FeatureChip } from "../grants";
 import { useBuilderStop } from "../nav";
 import { defaultHpFor, multiclassNotes, sourceRefOf } from "../model";
 import { useBuilderFeatures } from "../features";
 import { usePicker, usePickerSlot } from "../picker";
 import { useCardShown } from "../reorder/fold";
 import { LevelHp } from "./extras";
-import { PendingChoiceRow } from "./origin";
+import { PendingChoiceRow } from "../choice-row";
 
 /** The choices a character still has open, by the build level they belong to. */
 export function choicesByLevel(character: ResolvedCharacter): Map<number, PendingChoice[]> {
@@ -202,21 +200,6 @@ export function LevelCard({
         />
       ))}
     </div>
-  );
-}
-
-/** An automatic feature: holdable for its text, no decision attached. */
-function FeatureChip({ feature, nameOf }: { feature: ResolvedElement; nameOf: (id: string) => string }): ReactNode {
-  return (
-    <InfoRow
-      title={feature.name}
-      subtitle={feature.kind.replace(/-/g, " ")}
-      text={feature.text}
-      fluff={feature.fluff}
-      facts={factsOf(feature.element, (id) => (nameOf(id) === id ? undefined : nameOf(id)))}
-      unverified={unverifiedNotes(feature.element)}
-      className="dg-level-feature"
-    />
   );
 }
 

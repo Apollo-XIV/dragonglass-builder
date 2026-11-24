@@ -151,6 +151,15 @@ already a dialog on desktop), and `sections/sources.tsx` imports `obsidian`. The
 
 New builder behaviour goes in `ui/builder/`, never in a shell.
 
+**What something brought is a tree** (`core/resolver/grant-tree.ts`, drawn by `builder/grants.tsx`).
+It is read from the `origin` every resolved element and pending choice carries, so it can't disagree
+with the resolver. A choice's children are what its picks brought, not the picks, which the choice's
+row already names. Innate spells are listed too, and an element staged by character level lists what
+its later levels bring as `upcoming` nodes (drawn faded, still readable) — read from the content,
+since the resolver never collected them. Skills and languages fold into one row per parent, in
+`grants.tsx`, which is presentation. Origin hangs one tree under the species and one under the
+background; anything that owns grants can do the same.
+
 **The Progression list** (`sections/progression.tsx`) is one ordered list: the levels taken, a draggable
 PLANNED divider, then the queue. Reordering it is the progression spec's conflict rule, and these are the
 parts worth knowing before you touch it:

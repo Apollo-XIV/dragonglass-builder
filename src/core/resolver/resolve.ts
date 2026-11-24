@@ -1165,6 +1165,7 @@ function resolveChoices(
       definition,
       source: owner.id,
       sourceName: owner.name,
+      origin: declared.origin,
       scope: declared.scope,
       levelIndex: declared.levelIndex,
       level: declared.level,

@@ -762,10 +762,11 @@ describe("species features staged by character level", () => {
     expect(builderHtml(5)).toContain("Draconic Flight");
   });
 
-  it("does not show it on a character who hasn't got there yet", () => {
+  it("shows it only as upcoming, under the species, on a character who hasn't got there yet", () => {
     const early = builderHtml(4);
     expect(early).toContain("Breath Weapon");
-    expect(early).not.toContain("Draconic Flight");
+    expect(early.match(/Draconic Flight/g)).toHaveLength(1);
+    expect(early).toMatch(/is-upcoming"><span class="dg-read-main"><span class="dg-read-title">Draconic Flight/);
   });
 
   it("looks ahead to what has not arrived yet", () => {
