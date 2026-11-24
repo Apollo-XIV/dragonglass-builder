@@ -5640,3 +5640,9 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
+
+/* CAST or AT WILL with no DC over it: the word is the whole label, at the box's own size. */
+.dg-layout .dg-save-box.is-bare .dg-save-cast {
+  font-size: var(--font-ui-smaller);
+  color: var(--text-normal);
+}

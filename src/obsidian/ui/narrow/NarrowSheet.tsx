@@ -289,12 +289,15 @@ function ActionRolls({
   action,
   inSpell,
   cast,
+  atWill,
 }: {
   action: ResolvedAction;
   /** A spell's own action: its save DC is shown, as a button when casting costs a slot. */
   inSpell?: boolean;
   /** Spends the slot casting costs; absent for a cantrip. */
-  cast?: () => string | false;
+  cast?: () => string | false | void;
+  /** The cast spends nothing: the save's button reads AT WILL. */
+  atWill?: boolean;
 }): ReactNode {
   const heal = action.healResolved && !mentionsSpent(action.healResolved) ? action.healResolved : undefined;
   return (
@@ -304,6 +307,7 @@ function ActionRolls({
           label={`${action.save.ability.toUpperCase()} ${action.save.dc}`}
           detail={`${action.name}, DC ${action.save.dc} ${action.save.ability.toUpperCase()} save`}
           cast={cast}
+          atWill={atWill}
         />
       ) : action.save && inSpell ? (
         <span className="dg-save-box is-free">
@@ -320,7 +324,7 @@ function ActionRolls({
         <RollBox
           kind="d20"
           lead="dg-die-d20-plain"
-          beforeRoll={cast}
+          beforeRoll={atWill ? undefined : cast}
           label={`${action.name} attack`}
           explanation={() =>
             explainParts({
@@ -551,9 +555,7 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
           facts={factsOf(spell.element)}
           className={spell.prepared || spell.alwaysPrepared ? "is-prepared" : undefined}
         >
-          {(spell.actions ?? []).map((action) => (
-            <ActionRolls key={action.key} action={action} inSpell cast={spell.spellLevel > 0 ? () => castSpell(store, spell, toast) : undefined} />
-          ))}
+          <SpellCasts spell={spell} store={store} toast={toast} />
           {spell.innate
             .filter((cast) => cast.resolvedCost?.length)
             .map((cast) => (
@@ -567,6 +569,37 @@ export function SpellsSection({ store, character }: { store: CharacterStore; cha
         </ReadRow>
       ))}
       {spells.length === 0 ? <p className="dg-muted">No spells match this filter.</p> : null}
+    </>
+  );
+}
+
+/**
+ * A spell's rolls, and how casting it is paid for. A spell cast at will spends nothing and
+ * says AT WILL; otherwise one that takes a slot spends it from the save's box, the attack
+ * roll, or — when it has neither — a CAST button of its own. A spell granted only with
+ * uses of its own, or only for another pool's cost, spends no slot.
+ */
+function SpellCasts({
+  spell,
+  store,
+  toast,
+}: {
+  spell: ResolvedSpell;
+  store: CharacterStore;
+  toast: ReturnType<typeof useToast>;
+}): ReactNode {
+  const atWill = spell.innate.some((cast) => !cast.resource && !cast.resolvedCost?.length);
+  const slotted = !atWill && spell.spellLevel > 0 && !spell.innateOnly;
+  // Nothing to spend yet: the at-will cast is where an effect it applies will hang.
+  const cast = atWill ? () => "Cast at will" : slotted ? () => castSpell(store, spell, toast) : undefined;
+  const actions = spell.actions ?? [];
+  const rolled = actions.some((action) => action.attack || action.save);
+  return (
+    <>
+      {actions.map((action) => (
+        <ActionRolls key={action.key} action={action} inSpell cast={cast} atWill={atWill} />
+      ))}
+      {cast && !rolled ? <CastBox detail={spell.name} cast={cast} atWill={atWill} /> : null}
     </>
   );
 }

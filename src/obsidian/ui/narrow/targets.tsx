@@ -252,20 +252,24 @@ export function RollBox({
 }
 
 /**
- * A spell's save DC as a button that casts it: the DC over a small CAST, so it's plain that
- * a tap spends the slot. The save itself is the target's to roll, so nothing is rolled.
+ * A button that casts a spell. With a save, the DC over a small CAST, so it's plain that a
+ * tap spends the slot; the save itself is the target's to roll, so nothing is rolled. A
+ * spell with no roll or save is the word alone. AT WILL is the same box for a spell cast
+ * without a slot or a use, which spends nothing.
  */
 export function CastBox({
   label,
   detail,
   cast,
+  atWill,
 }: {
-  /** "DEX 14". */
-  label: string;
+  /** "DEX 14"; absent for a spell with no save. */
+  label?: string;
   /** Heard by a screen reader: "Fireball, DC 14 DEX save". */
   detail: string;
   /** Spends the slot and returns a note for the toast, or false when it can't be paid. */
   cast: () => string | false | void;
+  atWill?: boolean;
 }): ReactNode {
   const toast = useToast();
   const haptics = useHaptics();
@@ -283,25 +287,27 @@ export function CastBox({
     onHold: () =>
       sheet.open({
         title: detail,
-        subtitle: "Casting spends a spell slot",
-        body: () => <TextBody formula={label} />,
+        subtitle: atWill ? "Cast at will, without a slot" : "Casting spends a spell slot",
+        body: () => (label ? <TextBody formula={label} /> : null),
         actions: () => (
           <button className="dg-sheet-button is-primary" onClick={tap}>
             Cast
           </button>
         ),
       }),
-    className: "dg-save-box",
+    className: label ? "dg-save-box" : "dg-save-box is-bare",
   });
   return (
     <button {...handlers} style={handlers.style}>
-      <span className="dg-save-dc" aria-hidden="true">
-        {label}
-      </span>
+      {label ? (
+        <span className="dg-save-dc" aria-hidden="true">
+          {label}
+        </span>
+      ) : null}
       <span className="dg-save-cast" aria-hidden="true">
-        CAST
+        {atWill ? "AT WILL" : "CAST"}
       </span>
-      <span className="dg-sr-only">{`Cast ${detail}`}</span>
+      <span className="dg-sr-only">{atWill ? `Cast ${detail} at will` : `Cast ${detail}`}</span>
     </button>
   );
 }
