@@ -5933,3 +5933,17 @@ body.is-mobile .dg-ability-stepbar {
   box-shadow: var(--shadow-s);
   touch-action: manipulation;
 }
+
+/* An invisible halo, so a thumb that lands near a button still counts as on it
+ * rather than falling through to the page, which would unfocus the tile. 12px
+ * is half the gap between the two buttons, so the halos meet and don't overlap. */
+.dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
+  position: relative;
+}
+
+.dg-ability-stepbar .dg-ability-step.dg-ability-step-button::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+}
