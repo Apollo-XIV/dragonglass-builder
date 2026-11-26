@@ -134,8 +134,15 @@ function StepButtons({
   );
   return (
     <div className="dg-ability-stepbar">
-      {button(-1, "Lower score", "minus")}
-      {button(1, "Raise score", "plus")}
+      <div
+        className="dg-ability-stepbar-guard"
+        // A near miss lands here: swallow it, so the tile keeps focus and the next try works.
+        onMouseDown={(e) => e.preventDefault()}
+        onPointerDown={(e) => e.preventDefault()}
+      >
+        {button(-1, "Lower score", "minus")}
+        {button(1, "Raise score", "plus")}
+      </div>
     </div>
   );
 }

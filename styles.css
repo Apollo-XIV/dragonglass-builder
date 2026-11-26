@@ -5922,6 +5922,18 @@ body.is-mobile .dg-ability-stepbar {
   padding-bottom: calc(var(--size-4-4) + 44px + env(safe-area-inset-bottom, 0px) + var(--size-4-4) + var(--size-4-4));
 }
 
+/* The second, wider halo: it does nothing itself, but it takes the tap, so a miss
+ * doesn't reach the page and unfocus the tile. The negative margin cancels the padding,
+ * so the buttons stay where they were. */
+.dg-ability-stepbar-guard {
+  pointer-events: auto;
+  display: flex;
+  gap: var(--size-4-6);
+  padding: 28px;
+  margin: -28px;
+  border-radius: 50px;
+}
+
 .dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
   pointer-events: auto;
   width: 72px;
