@@ -5831,21 +5831,21 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   justify-content: center;
 }
 
-.dg-reel-current {
-  /* What leaves shrinks, and what arrives grows, as the reel rolls. */
-  transform: translateY(calc(var(--dir, 1) * var(--p, 0) * -100%)) scale(calc(1 - var(--p, 0) * 0.4));
+/* Each number sits at --d slots from the visible one (1 is a whole slot above). What is
+ * further away shrinks, so what leaves shrinks and what arrives grows as the wheel turns. */
+.dg-reel-slot {
+  transform: translateY(calc(var(--d, 0) * -100%)) scale(calc(1 - var(--a, 0) * 0.4));
+  /* A number the peek covers vanishes at once; one it uncovers waits for the peek to leave. */
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0s linear 240ms;
 }
 
-.dg-reel-incoming {
-  transform: translateY(calc(var(--dir, 1) * (1 - var(--p, 0)) * 100%)) scale(calc(0.6 + var(--p, 0) * 0.4));
+.dg-reel-slot.is-covered {
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0s;
 }
 
-.dg-reel.is-animated .dg-reel-slot {
-  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 240ms ease;
-}
-
-/* Halfway through a roll only the near half of the incoming slot shows, so the peek
- * takes that half, whichever side it arrives from. */
+/* Halfway through a roll only the near half of the peek's slot shows, so the peek takes
+ * that half, whichever side it arrives from. */
 .dg-reel-peek {
   display: flex;
   align-items: center;
@@ -5854,21 +5854,13 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--text-accent);
 }
 
-.dg-reel[data-from="above"] .dg-reel-incoming {
-  align-items: flex-end;
-}
-
-.dg-reel[data-from="below"] .dg-reel-incoming {
-  align-items: flex-start;
-}
-
 /* ...and sits against the edge nearest the number, then is drawn on towards it. --dir is
  * -1 when the peek arrives from above, so the same pull moves it down or up as needed. */
-.dg-reel[data-from="above"] .dg-reel-peek {
+.dg-reel-incoming[data-from="above"] {
   align-items: flex-end;
 }
 
-.dg-reel[data-from="below"] .dg-reel-peek {
+.dg-reel-incoming[data-from="below"] {
   align-items: flex-start;
 }
 
@@ -5883,20 +5875,9 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 /* No roll for those who ask for less motion: a quick fade, the peek showing in full. */
 @media (prefers-reduced-motion: reduce) {
-  .dg-reel-current,
-  .dg-reel-incoming {
+  .dg-reel-slot:not(.is-covered) {
     transform: none;
-  }
-
-  .dg-reel-current {
-    opacity: max(0, calc(1 - var(--p, 0) * 2));
-  }
-
-  .dg-reel-incoming {
-    opacity: min(1, calc(var(--p, 0) * 2));
-  }
-
-  .dg-reel.is-animated .dg-reel-slot {
+    opacity: var(--o, 1);
     transition: opacity 120ms linear;
   }
 }

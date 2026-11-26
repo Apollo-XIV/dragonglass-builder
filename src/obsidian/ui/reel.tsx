@@ -1,11 +1,14 @@
 /**
- * A number that rolls. When `value` changes the old one scrolls out and the new one in; a
- * `peek` rolls the reel about halfway and holds there, showing its content in the slot where
- * the next value would arrive. Nothing here knows what the content means, so a slot machine
- * can use it as well as a point-buy tile.
+ * A number that rolls, as a wheel with the number line printed round it: every number sits at
+ * a fixed place, and changing `value` only turns the wheel. Nothing remembers which way it
+ * last turned, so a turn-around mid-roll is just the wheel changing its mind, and the CSS
+ * transition carries on from wherever each number has got to. A `peek` turns the wheel about
+ * halfway and holds there, showing its content in the slot where the next value would arrive.
+ * Nothing here knows what the content means, so a slot machine can use it as well as a
+ * point-buy tile.
  */
 
-import { useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 
 export interface ReelPeek {
   /** Changes whenever the content does, so the reel knows to redraw it. */
@@ -15,67 +18,65 @@ export interface ReelPeek {
   direction: 1 | -1;
 }
 
-/** Matches the transition in styles.css. */
-const ROLL_MS = 240;
+type Direction = 1 | -1;
+
 const HALFWAY = 0.5;
+/** How many numbers either side of the value are kept in place, ready to roll in. */
+const REACH = 2;
+
+/** A slot's place on the wheel, as a distance from the visible slot: 1 is a whole slot above. */
+function place(d: number): CSSProperties {
+  const away = Math.min(1, Math.abs(d));
+  return { "--d": d, "--a": away } as CSSProperties;
+}
 
 export function Reel({
   value,
   peek,
   className,
 }: {
-  value: number | string;
+  value: number;
   peek?: ReelPeek;
   className?: string;
 }): ReactNode {
-  // `shown` fills the visible slot; `incoming` the slot the reel is rolling towards.
-  const [shown, setShown] = useState<number | string>(value);
-  const [incoming, setIncoming] = useState<{ content: ReactNode; direction: 1 | -1 }>({
-    content: null,
-    direction: 1,
-  });
-  const [progress, setProgress] = useState(0);
-  const [animate, setAnimate] = useState(true);
+  // A peek that has been let go of still slides away with its content, not an empty slot.
+  const kept = useRef<Partial<Record<Direction, ReactNode>>>({});
+  if (peek) kept.current[peek.direction] = peek.content;
 
-  useEffect(() => {
-    if (value !== shown) {
-      const direction = typeof value === "number" && typeof shown === "number" && value < shown ? -1 : 1;
-      setIncoming({ content: value, direction });
-      setAnimate(true);
-      setProgress(1);
-      // Once it has landed, the incoming value becomes the shown one without animating.
-      const done = window.setTimeout(() => {
-        setAnimate(false);
-        setShown(value);
-        setProgress(0);
-      }, ROLL_MS);
-      return () => window.clearTimeout(done);
-    }
-    setAnimate(true);
-    if (peek) {
-      setIncoming({ content: peek.content, direction: peek.direction });
-      setProgress(HALFWAY);
-    } else {
-      setProgress(0);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, peek?.id, peek?.direction]);
+  // The wheel turns towards a peek's direction by half a slot.
+  const pull = peek ? peek.direction * HALFWAY : 0;
+  const slots: ReactNode[] = [];
+  for (let offset = -REACH; offset <= REACH; offset++) {
+    const n = value + offset;
+    const d = offset - pull;
+    slots.push(
+      <span
+        key={n}
+        className={`dg-reel-slot${peek && offset === peek.direction ? " is-covered" : ""}`}
+        style={{ ...place(d), "--o": Math.max(0, 1 - Math.abs(d) * 2) } as CSSProperties}
+        aria-hidden={offset === 0 ? undefined : true}
+      >
+        {n}
+      </span>,
+    );
+  }
+  for (const direction of [1, -1] as const) {
+    const content = kept.current[direction];
+    if (content === undefined) continue;
+    const d = direction - pull;
+    slots.push(
+      <span
+        key={`peek${direction}`}
+        className="dg-reel-slot dg-reel-incoming"
+        data-from={direction > 0 ? "above" : "below"}
+        // --dir is -1 when the peek arrives from above.
+        style={{ ...place(d), "--dir": -direction, "--o": Math.min(1, (1 - Math.abs(d)) * 2) } as CSSProperties}
+        aria-hidden="true"
+      >
+        {content}
+      </span>,
+    );
+  }
 
-  const style = {
-    // The slot's offset: a raise (1) arrives from above, so the reel moves down.
-    "--dir": -incoming.direction,
-    "--p": progress,
-  } as CSSProperties;
-  return (
-    <span
-      className={`dg-reel${animate ? " is-animated" : ""}${className ? ` ${className}` : ""}`}
-      style={style}
-      data-from={incoming.direction > 0 ? "above" : "below"}
-    >
-      <span className="dg-reel-slot dg-reel-current">{shown}</span>
-      <span className="dg-reel-slot dg-reel-incoming" aria-hidden="true">
-        {incoming.content}
-      </span>
-    </span>
-  );
+  return <span className={`dg-reel${className ? ` ${className}` : ""}`}>{slots}</span>;
 }
