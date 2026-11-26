@@ -2818,7 +2818,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
    * leaving it empty. The left column stops growing at its own widths; the right
    * takes the rest, as the spec asks. */
   grid-template-columns: auto minmax(20rem, 1fr);
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--d-gap);
   flex: 1;
   min-height: 0;
@@ -2834,12 +2834,12 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 /* Skills and the Senses/Proficiencies pair share the rows under the identity
  * column. Skills is column 1 and the stacked pair column 2, and the identity
- * column spans both. The pair's min-content carries the row floor, so the bottom
- * row never shrinks below a readable Skills box. */
+ * column spans both. The bottom row has no floor: the boxes scroll inside
+ * themselves, and a floor here is what made the page scroll as a whole. */
 .dg-desk-left {
   display: grid;
   grid-template-columns: minmax(10rem, 16rem) minmax(8rem, 12rem);
-  grid-template-rows: auto minmax(18rem, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--d-gap);
   min-width: 0;
   min-height: 0;
@@ -3518,6 +3518,10 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: an absolutely
+   * positioned child is only clipped by a scroller that is (or sits inside) its
+   * containing block, and one that escaped made the whole page scroll. */
+  position: relative;
   padding: 0 var(--d-pad) var(--size-4-2);
 }
 
