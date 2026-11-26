@@ -79,12 +79,17 @@ function useSpin(value: number | null, spin: number | undefined, range: ValueRan
     const span = range.max - range.min + 1;
     const start = at.current ?? range.min;
     const steps = SPIN_STEPS + ((((value - start - SPIN_STEPS) % span) + span) % span);
+    // Each step waits a little longer than the last, up to about three times the first. The
+    // last gap stays close to the one before it: the reel's own transition does the settling,
+    // and a long pause before the final step reads as a nudge one past where it stopped.
+    const gaps = Array.from({ length: steps }, (_, i) => 1 + 2.5 * ((i + 1) / steps) ** 2);
+    const scale = SPIN_MS / gaps.reduce((a, b) => a + b, 0);
     const timers: ReturnType<typeof setTimeout>[] = [];
-    for (let i = 1; i <= steps; i++) {
-      // Position over time eases out as a cubic, so each step waits longer than the last.
-      const t = SPIN_MS * (1 - Math.cbrt(1 - i / steps));
-      timers.push(setTimeout(() => setPosition(start + i), t));
-    }
+    let t = 0;
+    gaps.forEach((gap, i) => {
+      t += gap * scale;
+      timers.push(setTimeout(() => setPosition(start + i + 1), t));
+    });
     return () => timers.forEach(clearTimeout);
     // `range` is a method's, which doesn't change under a chip.
     // eslint-disable-next-line react-hooks/exhaustive-deps

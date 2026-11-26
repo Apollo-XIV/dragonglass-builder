@@ -149,11 +149,11 @@ describe("pools", () => {
 describe("switching method", () => {
   const scores = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
 
-  it("turns point-buy scores into pre-assigned chips in a new pool", () => {
+  it("starts the first rolled pool empty, keeping the scores in their tiles", () => {
     const a = switchMethod({ method: "point-buy", base: scores }, "rolled", "4d6-drop-lowest");
     expect(a.base).toEqual(scores);
-    expect(a.pools).toEqual([{ id: "p1", method: "4d6-drop-lowest", values: [15, 14, 13, 12, 10, 8] }]);
-    expect(usedChips(a).size).toBe(6);
+    expect(a.pools).toEqual([{ id: "p1", method: "4d6-drop-lowest", values: [null, null, null, null, null, null] }]);
+    expect(usedChips(a).size).toBe(0);
   });
 
   it("finds the chips stored pools already hold, so switching back loses no rolls", () => {
@@ -163,11 +163,12 @@ describe("switching method", () => {
     const away = switchMethod(a, "point-buy", "3d6");
     expect(away.base.dex).toBe(8);
     const back = switchMethod({ ...away, base: { ...away.base, dex: 14 } }, "rolled", "3d6");
-    expect(back.pools!.map((p) => p.id)).toEqual(["p1", "p2", "p3"]);
+    expect(back.pools!.map((p) => p.id)).toEqual(["p1", "p2"]);
     expect(chipOf(back, "str")).toBe("p1:0");
     expect(chipOf(back, "dex")).toBe("p1:3");
-    // The four 8s point buy filled in had no chip, so they went to a new pool.
-    expect(back.pools![2]!.values).toEqual([8, 8, 8, 8, null, null]);
+    // The four 8s point buy filled in have no chip, so they stay in their tiles without one.
+    expect(back.base.con).toBe(8);
+    expect(chipOf(back, "con")).toBeUndefined();
   });
 
   it("assigns the standard array's chips where the scores match, and keeps the rest", () => {

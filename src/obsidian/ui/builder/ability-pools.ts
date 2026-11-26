@@ -161,11 +161,11 @@ export function removePool(abilities: BuildAbilities, id: string): BuildAbilitie
 }
 
 /**
- * Changes the method without losing a score. Into a pool method, each score becomes a chip
- * already assigned: a rolled score finds a chip of its value in the stored pools, or goes in
- * a new pool with any others that found none; a standard array score finds a value in the
- * array, or stays in its tile until something replaces it. Out of a pool method, an ability
- * still empty starts at 8, where point buy starts.
+ * Changes the method without losing a score. Into a pool method, a score that matches an
+ * unused chip of its value (in the stored rolled pools, or the array) becomes that chip,
+ * already assigned; one that doesn't stays in its tile until something replaces it. A first
+ * rolled pool starts empty, ready to be rolled. Out of a pool method, an ability still empty
+ * starts at 8, where point buy starts.
  */
 export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, rollWith: string): BuildAbilities {
   if (abilities.method === method) return abilities;
@@ -176,7 +176,7 @@ export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, r
   }
 
   let next: BuildAbilities = { ...rest, method, assigned: {} };
-  const unmatched: Ability[] = [];
+  if (method === "rolled" && !(next.pools ?? []).length) next = addPool(next, rollWith).abilities;
   for (const ability of ABILITIES) {
     const value = abilities.base[ability];
     if (value === undefined) continue;
@@ -185,16 +185,6 @@ export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, r
       .flatMap((p) => p.values.map((v, slot) => ({ chip: chipId(p.id, slot), v })))
       .find(({ chip, v }) => v === value && !used.has(chip));
     if (free) next = withAbility(next, ability, value, free.chip);
-    else unmatched.push(ability);
-  }
-
-  if (method === "rolled" && (unmatched.length || !(next.pools ?? []).length)) {
-    const added = addPool(next, rollWith);
-    next = added.abilities;
-    unmatched.forEach((ability, slot) => {
-      const chip = chipId(added.pool, slot);
-      next = withAbility(setValue(next, chip, abilities.base[ability]!), ability, abilities.base[ability], chip);
-    });
   }
   return next;
 }
