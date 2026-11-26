@@ -232,6 +232,8 @@ export function AbilityAssign({
   };
 
   const draggedValue = dragged ? chipValue(abilities, dragged) : null;
+  // The tile the chip in hand is already on, so it is plain where it would move from.
+  const linked = focus ? used.get(focus.chip) : undefined;
   const picking = armed || dragged !== null;
 
   return (
@@ -267,6 +269,7 @@ export function AbilityAssign({
               value={abilities.base[ability]}
               chip={chipOf(abilities, ability)}
               picking={picking}
+              linked={linked === ability}
               landing={landing === ability}
               onPress={() => pressTile(ability)}
             />
@@ -294,6 +297,7 @@ function PoolTile({
   value,
   chip,
   picking,
+  linked,
   landing,
   onPress,
 }: {
@@ -305,6 +309,8 @@ function PoolTile({
   chip: string | undefined;
   /** A chip is picked up, so the empty tiles show where it can go. */
   picking: boolean;
+  /** The chip picked up or being edited is this tile's. */
+  linked: boolean;
   /** A chip is flying in: the number waits for it. */
   landing: boolean;
   onPress: () => void;
@@ -319,7 +325,7 @@ function PoolTile({
     <ScoreTileFrame
       ref={drop.setNodeRef}
       data-tile={ability}
-      className={`is-pool${drop.isOver ? " is-over" : ""}${picking && value === undefined ? " is-target" : ""}`}
+      className={`is-pool${drop.isOver ? " is-over" : ""}${linked ? " is-linked" : ""}${picking && value === undefined ? " is-target" : ""}`}
       label={ability.toUpperCase()}
       total={value === undefined ? undefined : block.score.value}
       modifier={block.mod}

@@ -149,26 +149,37 @@ describe("pools", () => {
 describe("switching method", () => {
   const scores = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
 
-  it("starts the first rolled pool empty, keeping the scores in their tiles", () => {
-    const a = switchMethod({ method: "point-buy", base: scores }, "rolled", "4d6-drop-lowest");
-    expect(a.base).toEqual(scores);
-    expect(a.pools).toEqual([{ id: "p1", method: "4d6-drop-lowest", values: [null, null, null, null, null, null] }]);
-    expect(usedChips(a).size).toBe(0);
+  it("turns scores into pre-assigned chips of a new pool, in ability order", () => {
+    const a = switchMethod({ method: "point-buy", base: { ...scores, str: 11, dex: 13 } }, "rolled", "4d6-drop-lowest");
+    expect(a.pools).toEqual([{ id: "p1", method: "4d6-drop-lowest", values: [11, 13, 13, 12, 10, 8] }]);
+    expect(a.assigned).toEqual({ str: "p1:0", dex: "p1:1", con: "p1:2", int: "p1:3", wis: "p1:4", cha: "p1:5" });
   });
 
-  it("finds the chips stored pools already hold, so switching back loses no rolls", () => {
+  it("starts an empty pool when there are no scores to bring", () => {
+    const a = switchMethod({ method: "standard-array", base: {} }, "rolled", "3d6");
+    expect(a.pools).toEqual([{ id: "p1", method: "3d6", values: [null, null, null, null, null, null] }]);
+  });
+
+  it("gives each score back its own chip after a trip away, never another of the same value", () => {
+    // 13 and 11 rolled in that order, then assigned the other way round.
+    let a = rolled([13, 11, 12, 9, 18, 8]);
+    for (const [chip, ability] of [["p1:1", "str"], ["p1:0", "dex"], ["p1:2", "con"], ["p1:3", "int"], ["p1:4", "wis"], ["p1:5", "cha"]] as const)
+      a = assign(a, chip, ability);
+    const back = switchMethod(switchMethod(a, "point-buy", "3d6"), "rolled", "3d6");
+    expect(back.pools).toEqual(a.pools);
+    expect(back.assigned).toEqual(a.assigned);
+  });
+
+  it("puts only the scores changed while away into a new pool", () => {
     let a = rolled([18, 3, 15, 14, 13, 12]);
     a = assign(a, "p1:0", "str");
-    a = addPool(a, "3d6").abilities;
     const away = switchMethod(a, "point-buy", "3d6");
     expect(away.base.dex).toBe(8);
-    const back = switchMethod({ ...away, base: { ...away.base, dex: 14 } }, "rolled", "3d6");
-    expect(back.pools!.map((p) => p.id)).toEqual(["p1", "p2"]);
+    const back = switchMethod({ ...away, base: { ...away.base, str: 18, dex: 14 } }, "rolled", "3d6");
     expect(chipOf(back, "str")).toBe("p1:0");
-    expect(chipOf(back, "dex")).toBe("p1:3");
-    // The four 8s point buy filled in have no chip, so they stay in their tiles without one.
-    expect(back.base.con).toBe(8);
-    expect(chipOf(back, "con")).toBeUndefined();
+    // DEX's 14 is not taken from p1:3: it never came from there.
+    expect(back.pools![1]!.values).toEqual([14, 8, 8, 8, 8, null]);
+    expect(chipOf(back, "dex")).toBe("p2:0");
   });
 
   it("assigns the standard array's chips where the scores match, and keeps the rest", () => {
@@ -183,6 +194,5 @@ describe("switching method", () => {
   it("starts empty abilities at 8 when leaving a pool method", () => {
     const a = switchMethod(assign(rolled([15]), "p1:0", "str"), "point-buy", "3d6");
     expect(a.base).toEqual({ str: 15, dex: 8, con: 8, int: 8, wis: 8, cha: 8 });
-    expect(a.assigned).toBeUndefined();
   });
 });

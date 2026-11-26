@@ -686,7 +686,8 @@ export interface BuildAbilities {
   pools?: AbilityPool[];
   /**
    * Which chip each ability's base came from, as `pool:slot` ("p1:3", or "standard:0" for
-   * the standard array, which is never stored as a pool). Only for the current method.
+   * the standard array, which is never stored as a pool). Kept through a non-pool method, so
+   * switching back to rolled finds each score's chip again.
    */
   assigned?: Partial<Record<Ability, string>>;
 }

@@ -6115,9 +6115,14 @@ body.is-mobile .dg-ability-stepbar {
   height: 1rem;
 }
 
-/* A tile waiting for a chip, and the tile a chip is over. */
-.dg-score-tile.is-pool.is-over {
+/* The tile a chip is over, and the tile the chip in hand is already on. */
+.dg-score-tile.is-pool.is-over,
+.dg-score-tile.is-pool.is-linked {
   border-color: var(--interactive-accent);
+}
+
+.dg-score-tile.is-pool.is-linked {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
 }
 
 .dg-score-tile-grip {

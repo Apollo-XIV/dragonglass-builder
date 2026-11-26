@@ -161,30 +161,45 @@ export function removePool(abilities: BuildAbilities, id: string): BuildAbilitie
 }
 
 /**
- * Changes the method without losing a score. Into a pool method, a score that matches an
- * unused chip of its value (in the stored rolled pools, or the array) becomes that chip,
- * already assigned; one that doesn't stays in its tile until something replaces it. A first
- * rolled pool starts empty, ready to be rolled. Out of a pool method, an ability still empty
- * starts at 8, where point buy starts.
+ * Changes the method without losing a score. Into rolled, a score still holding the value of
+ * the chip it had last time rolled was used goes back to that chip; the rest become chips of a
+ * new pool, in ability order, already assigned. Into the standard array, a score takes an
+ * unused value of the array if there is one, or stays in its tile until something replaces
+ * it. Out of a pool method, an ability still empty starts at 8, where point buy starts, and
+ * the chips each score came from are kept for coming back.
  */
 export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, rollWith: string): BuildAbilities {
   if (abilities.method === method) return abilities;
-  const { assigned: _dropped, ...rest } = abilities;
   if (!isPoolMethod(method)) {
     const base = Object.fromEntries(ABILITIES.map((a) => [a, abilities.base[a] ?? 8])) as Record<Ability, number>;
-    return { ...rest, method, base };
+    return { ...abilities, method, base };
   }
 
-  let next: BuildAbilities = { ...rest, method, assigned: {} };
-  if (method === "rolled" && !(next.pools ?? []).length) next = addPool(next, rollWith).abilities;
+  // A standard array chip never names a rolled pool's slot, so only rolled chips come back.
+  const previous = abilities.assigned ?? {};
+  let next: BuildAbilities = { ...abilities, method, assigned: {} };
+  const unmatched: Ability[] = [];
   for (const ability of ABILITIES) {
     const value = abilities.base[ability];
     if (value === undefined) continue;
     const used = usedChips(next);
-    const free = poolsOf(next)
-      .flatMap((p) => p.values.map((v, slot) => ({ chip: chipId(p.id, slot), v })))
-      .find(({ chip, v }) => v === value && !used.has(chip));
-    if (free) next = withAbility(next, ability, value, free.chip);
+    const chip =
+      method === "rolled"
+        ? [previous[ability]].find((c) => c !== undefined && chipValue(next, c) === value && !used.has(c))
+        : poolsOf(next)
+            .flatMap((p) => p.values.map((v, slot) => ({ chip: chipId(p.id, slot), v })))
+            .find(({ chip, v }) => v === value && !used.has(chip))?.chip;
+    if (chip) next = withAbility(next, ability, value, chip);
+    else unmatched.push(ability);
+  }
+
+  if (method === "rolled" && (unmatched.length || !(next.pools ?? []).length)) {
+    const added = addPool(next, rollWith);
+    next = added.abilities;
+    unmatched.forEach((ability, slot) => {
+      const chip = chipId(added.pool, slot);
+      next = withAbility(setValue(next, chip, abilities.base[ability]!), ability, abilities.base[ability], chip);
+    });
   }
   return next;
 }
