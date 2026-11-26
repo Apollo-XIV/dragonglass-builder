@@ -161,7 +161,8 @@ export function removePool(abilities: BuildAbilities, id: string): BuildAbilitie
 }
 
 /**
- * Changes the method without losing a score. Into rolled, a score still holding the value of
+ * Changes the method. Scores carry over only to or from manual; going straight between two
+ * other methods starts the new one clean. Into rolled, a score still holding the value of
  * the chip it had last time rolled was used goes back to that chip; the rest become chips of a
  * new pool, in ability order, already assigned. Into the standard array, a score takes an
  * unused value of the array if there is one, or stays in its tile until something replaces
@@ -170,6 +171,10 @@ export function removePool(abilities: BuildAbilities, id: string): BuildAbilitie
  */
 export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, rollWith: string): BuildAbilities {
   if (abilities.method === method) return abilities;
+  if (abilities.method !== "manual" && method !== "manual") {
+    const { pools: _pools, assigned: _assigned, ...rest } = abilities;
+    abilities = { ...rest, base: {} };
+  }
   if (!isPoolMethod(method)) {
     const base = Object.fromEntries(ABILITIES.map((a) => [a, abilities.base[a] ?? 8])) as Record<Ability, number>;
     return { ...abilities, method, base };

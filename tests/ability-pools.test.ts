@@ -150,7 +150,7 @@ describe("switching method", () => {
   const scores = { str: 15, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
 
   it("turns scores into pre-assigned chips of a new pool, in ability order", () => {
-    const a = switchMethod({ method: "point-buy", base: { ...scores, str: 11, dex: 13 } }, "rolled", "4d6-drop-lowest");
+    const a = switchMethod({ method: "manual", base: { ...scores, str: 11, dex: 13 } }, "rolled", "4d6-drop-lowest");
     expect(a.pools).toEqual([{ id: "p1", method: "4d6-drop-lowest", values: [11, 13, 13, 12, 10, 8] }]);
     expect(a.assigned).toEqual({ str: "p1:0", dex: "p1:1", con: "p1:2", int: "p1:3", wis: "p1:4", cha: "p1:5" });
   });
@@ -165,7 +165,7 @@ describe("switching method", () => {
     let a = rolled([13, 11, 12, 9, 18, 8]);
     for (const [chip, ability] of [["p1:1", "str"], ["p1:0", "dex"], ["p1:2", "con"], ["p1:3", "int"], ["p1:4", "wis"], ["p1:5", "cha"]] as const)
       a = assign(a, chip, ability);
-    const back = switchMethod(switchMethod(a, "point-buy", "3d6"), "rolled", "3d6");
+    const back = switchMethod(switchMethod(a, "manual", "3d6"), "rolled", "3d6");
     expect(back.pools).toEqual(a.pools);
     expect(back.assigned).toEqual(a.assigned);
   });
@@ -173,7 +173,7 @@ describe("switching method", () => {
   it("puts only the scores changed while away into a new pool", () => {
     let a = rolled([18, 3, 15, 14, 13, 12]);
     a = assign(a, "p1:0", "str");
-    const away = switchMethod(a, "point-buy", "3d6");
+    const away = switchMethod(a, "manual", "3d6");
     expect(away.base.dex).toBe(8);
     const back = switchMethod({ ...away, base: { ...away.base, str: 18, dex: 14 } }, "rolled", "3d6");
     expect(chipOf(back, "str")).toBe("p1:0");
@@ -183,7 +183,7 @@ describe("switching method", () => {
   });
 
   it("assigns the standard array's chips where the scores match, and keeps the rest", () => {
-    const a = switchMethod({ method: "point-buy", base: { ...scores, str: 17 } }, "standard-array", "3d6");
+    const a = switchMethod({ method: "manual", base: { ...scores, str: 17 } }, "standard-array", "3d6");
     expect(a.base.str).toBe(17);
     expect(chipOf(a, "str")).toBeUndefined();
     expect(chipOf(a, "dex")).toBe("standard:1");
@@ -192,7 +192,17 @@ describe("switching method", () => {
   });
 
   it("starts empty abilities at 8 when leaving a pool method", () => {
-    const a = switchMethod(assign(rolled([15]), "p1:0", "str"), "point-buy", "3d6");
+    const a = switchMethod(assign(rolled([15]), "p1:0", "str"), "manual", "3d6");
     expect(a.base).toEqual({ str: 15, dex: 8, con: 8, int: 8, wis: 8, cha: 8 });
+  });
+
+  it("wipes when going directly between two non-manual methods", () => {
+    const fromRolled = switchMethod(assign(rolled([15]), "p1:0", "str"), "point-buy", "3d6");
+    expect(fromRolled.base).toEqual({ str: 8, dex: 8, con: 8, int: 8, wis: 8, cha: 8 });
+    const toRolled = switchMethod({ method: "point-buy", base: { ...scores } }, "rolled", "3d6");
+    expect(toRolled.pools).toEqual([{ id: "p1", method: "3d6", values: [null, null, null, null, null, null] }]);
+    expect(toRolled.base).toEqual({});
+    const toArray = switchMethod({ method: "point-buy", base: { ...scores } }, "standard-array", "3d6");
+    expect(toArray.base).toEqual({});
   });
 });
