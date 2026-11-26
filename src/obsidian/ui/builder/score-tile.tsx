@@ -121,7 +121,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
       onKeyUp={onKeyUp}
     >
       <span id={nameId} className="dg-score-tile-header">
-        {total}/{signed(modifier)} {label}
+        {label} {total}({signed(modifier)})
       </span>
       <span className="dg-score-tile-body">
         <span className="dg-score-tile-flank is-left">{bonus ? signed(bonus) : null}</span>
