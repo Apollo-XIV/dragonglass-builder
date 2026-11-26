@@ -4859,6 +4859,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--d-gap);
 }
 
@@ -4866,6 +4867,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: see `.dg-d-tab-body`. */
+  position: relative;
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-top: none;
@@ -4887,6 +4890,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-b-detail {
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: see `.dg-d-tab-body`. */
+  position: relative;
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-radius: var(--d-radius-box);
