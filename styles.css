@@ -5929,9 +5929,9 @@ body.is-mobile .dg-ability-stepbar {
   pointer-events: auto;
   display: flex;
   gap: var(--size-4-6);
-  padding: 28px;
-  margin: -28px;
-  border-radius: 50px;
+  padding: 56px;
+  margin: -56px;
+  border-radius: 100px;
 }
 
 .dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
