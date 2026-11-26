@@ -41,10 +41,12 @@ export function AbilityTiles({
   const step = (ability: Ability, direction: Direction, intent: StepIntent): void => {
     const result = stepScore(rules, { value: base[ability], spent }, direction, peek, intent);
     setPeek(result.peek);
-    if (result.commit === undefined) return;
+    if (result.commit !== undefined) commit(ability, result.commit);
+  };
+  const commit = (ability: Ability, value: number): void => {
     store.mutateBuild((b) => ({
       ...b,
-      abilities: { ...b.abilities, base: { ...base, ...b.abilities.base, [ability]: result.commit! } },
+      abilities: { ...b.abilities, base: { ...base, ...b.abilities.base, [ability]: value } },
     }));
   };
 
@@ -75,6 +77,9 @@ export function AbilityTiles({
               }}
               onStep={(direction, intent) => step(ability, direction, intent)}
               onPeekEnd={() => setPeek(null)}
+              onEdit={rules.peek ? undefined : (value) => commit(ability, value)}
+              min={rules.min}
+              max={rules.max}
             />
           );
         })}

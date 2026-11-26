@@ -5822,6 +5822,39 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   line-height: 1.5;
 }
 
+.dg-score-tile .dg-score-tile-input {
+  /* Same size and weight as the reel's number, so the swap does not move anything. */
+  box-sizing: content-box;
+  width: 2ch;
+  /* Obsidian sizes a bare input itself, which beats the value class. */
+  font-size: 1.9em;
+  font-weight: 700;
+  line-height: 1.5;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0 var(--size-4-1);
+  border: none;
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+  color: var(--text-normal);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--interactive-accent);
+  outline: none;
+}
+
+.dg-score-tile .dg-score-tile-input:focus,
+.dg-score-tile .dg-score-tile-input:focus-visible {
+  border: none;
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+.dg-score-tile .dg-score-tile-input::selection {
+  background: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+}
+
 .dg-reel {
   display: grid;
   overflow: hidden;

@@ -13,6 +13,7 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type HTMLAttributes,
   type KeyboardEvent,
   type ReactNode,
@@ -44,6 +45,10 @@ export interface ScoreTileProps {
   onStep: (direction: Direction, intent: StepIntent) => void;
   /** A held peek was let go of. */
   onPeekEnd: () => void;
+  /** When given, tapping the selected tile again types a value in; it is reported already clamped. */
+  onEdit?: (value: number) => void;
+  min?: number;
+  max?: number;
 }
 
 const KEY_DIRECTION: Record<string, Direction> = { ArrowUp: 1, ArrowDown: -1 };
@@ -121,12 +126,25 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
   const shiftPeek = useRef(false);
   const onPeekEnd = useRef(props.onPeekEnd);
   onPeekEnd.current = props.onPeekEnd;
+  const { onEdit, min = 1, max = 30 } = props;
+  const [draft, setDraft] = useState<string | null>(null);
+  const editing = draft !== null;
+  // Focus selects on the press, so whether the tile already was is read before it lands.
+  const wasSelected = useRef(false);
+
+  const finishEdit = (commit: boolean): void => {
+    const typed = Number(draft);
+    setDraft(null);
+    if (!commit || !draft?.trim() || !Number.isFinite(typed)) return;
+    const next = Math.min(max, Math.max(min, Math.round(typed)));
+    if (next !== value) onEdit?.(next);
+  };
 
   // The wheel steps only a tile that is selected and under the pointer, and leaves the
   // page alone otherwise. React's own wheel listener is passive, so this one is native.
   useEffect(() => {
     const el = ref.current;
-    if (!el || !selected) return;
+    if (!el || !selected || editing) return;
     const wheel = createWheelStepper();
     const onWheel = (e: WheelEvent): void => {
       e.preventDefault();
@@ -141,7 +159,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [selected]);
+  }, [selected, editing]);
 
   // A key tapped steps; a key held, or pressed with shift, peeks.
   const keys = useRef<ReturnType<typeof createHoldGesture<Direction>> | null>(null);
@@ -153,6 +171,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
   useEffect(() => () => keys.current?.cancel(), []);
 
   const onKeyDown = (e: KeyboardEvent): void => {
+    if (editing) return;
     const direction = KEY_DIRECTION[e.key];
     if (!direction) return;
     e.preventDefault();
@@ -165,6 +184,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
   };
 
   const onKeyUp = (e: KeyboardEvent): void => {
+    if (editing) return;
     if (e.key === "Shift" && shiftPeek.current) {
       shiftPeek.current = false;
       props.onPeekEnd();
@@ -188,8 +208,18 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
       aria-labelledby={nameId}
       aria-valuenow={value}
       aria-valuetext={`${value}, total ${total}`}
+      onPointerDownCapture={() => {
+        wasSelected.current = selected;
+      }}
+      onClick={() => {
+        if (onEdit && wasSelected.current && selected && !editing) setDraft(String(value));
+        wasSelected.current = false;
+      }}
       onFocus={props.onSelect}
-      onBlur={() => {
+      onBlur={(e) => {
+        // Focus moving to the field inside is not leaving the tile.
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        if (editing) finishEdit(true);
         keys.current?.cancel();
         shiftPeek.current = false;
         props.onDeselect();
@@ -197,6 +227,30 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
       onKeyDown={onKeyDown}
       onKeyUp={onKeyUp}
     >
+      {editing ? (
+        <input
+          className="dg-score-tile-value dg-score-tile-input"
+          type="text"
+          inputMode="numeric"
+          autoFocus
+          value={draft}
+          aria-label={`${label} base score, ${min} to ${max}`}
+          onFocus={(e) => e.currentTarget.select()}
+          onChange={(e) => setDraft(e.target.value.replace(/\D/g, "").slice(0, 2))}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              finishEdit(true);
+              ref.current?.focus();
+            } else if (e.key === "Escape") {
+              e.preventDefault();
+              e.stopPropagation();
+              finishEdit(false);
+              ref.current?.focus();
+            }
+          }}
+        />
+      ) : (
       <Reel
         className="dg-score-tile-value"
         value={value}
@@ -214,6 +268,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
             : undefined
         }
       />
+      )}
     </ScoreTileFrame>
   );
 }
