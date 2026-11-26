@@ -5916,6 +5916,12 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   pointer-events: none;
 }
 
+/* Obsidian's mobile toolbar sits over the foot of the screen (see .dg-bottom-sheet),
+ * so lift the buttons clear of it. */
+body.is-mobile .dg-ability-stepbar {
+  padding-bottom: calc(var(--size-4-4) + 44px + env(safe-area-inset-bottom, 0px) + var(--size-4-4));
+}
+
 .dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
   pointer-events: auto;
   width: 64px;
