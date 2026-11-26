@@ -7,26 +7,16 @@ import { choiceKey, choicesIn, grantChildren } from "../../../../core/resolver/g
 import { inactivePicks } from "../../../../core/resolver/validity";
 import type { Element } from "../../../../core/types";
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
-import {
-  ABILITIES,
-  type Ability,
-  type BuildFile,
-} from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
 import { usePlugin } from "../../context";
-import { useSheet } from "../../narrow/sheet";
 import { InactivePickRow, useBuildChange } from "../changes";
 import { ChoiceRow, PendingChoiceRow } from "../choice-row";
-import { useBuilderFeatures } from "../features";
 import { GrantTree } from "../grants";
-import {
-  POINT_BUY_BUDGET,
-  pointsSpent,
-  sourceRefOf,
-  STANDARD_ARRAY,
-} from "../model";
+import { sourceRefOf } from "../model";
 import { specOf, usePicker, type PickerOption } from "../picker";
 import { type DetailSpec } from "../detail";
+import { AbilityMethod } from "./ability-method";
+import { AbilityTiles } from "./ability-tiles";
 
 export function OriginSection({
   store,
@@ -36,7 +26,6 @@ export function OriginSection({
   character: ResolvedCharacter;
 }): ReactNode {
   const picker = usePicker();
-  const sheet = useSheet();
   const { plugin } = usePlugin();
   const change = useBuildChange(store);
   const index = store.index;
@@ -111,34 +100,8 @@ export function OriginSection({
       />
       <GrantTree nodes={backgroundGrants} store={store} nameOf={nameOf} />
 
-      <div className="dg-n-ability-grid">
-        {ABILITIES.map((ability) => {
-          const block = character.abilities[ability];
-          const bonus = block.score.value - build.abilities.base[ability];
-          return (
-            <button
-              key={ability}
-              className="dg-n-ability"
-              onClick={() =>
-                sheet.open({
-                  title: "Ability scores",
-                  subtitle: build.abilities.method.replace("-", " "),
-                  body: () => (
-                    <AbilityEditor store={store} character={character} />
-                  ),
-                })
-              }
-            >
-              <span className="dg-n-ability-name">{ability.toUpperCase()}</span>
-              <span className="dg-n-ability-total">{block.score.value}</span>
-              <span className="dg-n-ability-score">
-                {build.abilities.base[ability]}
-                {bonus ? ` ${bonus > 0 ? "+" : "−"}${Math.abs(bonus)}` : ""}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+      <AbilityMethod store={store} />
+      <AbilityTiles store={store} character={character} />
 
       {character.pendingChoices
         .filter((choice) => choice.scope === "build" && !placed.has(choiceKey(choice)))
@@ -161,114 +124,6 @@ export function OriginSection({
             nameOf={nameOf}
           />
         ))}
-    </>
-  );
-}
-
-function AbilityEditor({
-  store,
-  character,
-}: {
-  store: CharacterStore;
-  character: ResolvedCharacter;
-}): ReactNode {
-  const build = store.data.build;
-  if (!build) return null;
-  const features = useBuilderFeatures();
-  const base = build.abilities.base;
-  const spent = pointsSpent(base, ABILITIES);
-  const pointBuyValid = ABILITIES.every((a) => base[a] >= 8 && base[a] <= 15);
-
-  const set = (ability: Ability, value: number): void =>
-    store.mutateBuild((b) => ({
-      ...b,
-      abilities: {
-        ...b.abilities,
-        base: {
-          ...b.abilities.base,
-          [ability]: Math.min(30, Math.max(1, value)),
-        },
-      },
-    }));
-
-  return (
-    <>
-      <select
-        className="dg-select"
-        value={build.abilities.method}
-        onChange={(e) =>
-          store.mutateBuild((b) => ({
-            ...b,
-            abilities: {
-              ...b.abilities,
-              method: e.target.value as BuildFile["abilities"]["method"],
-            },
-          }))
-        }
-      >
-        <option value="point-buy">Point buy</option>
-        <option value="standard-array">Standard array</option>
-        <option value="rolled">Rolled</option>
-        <option value="manual">Manual</option>
-      </select>
-      {build.abilities.method === "point-buy" ? (
-        <p
-          className={
-            spent > POINT_BUY_BUDGET ||
-            (features.abilityInputs && !pointBuyValid)
-              ? "dg-warn"
-              : "dg-muted"
-          }
-        >
-          {spent} of {POINT_BUY_BUDGET} points spent
-          {features.abilityInputs && !pointBuyValid
-            ? " · point buy expects base scores from 8 to 15"
-            : ""}
-        </p>
-      ) : null}
-      {features.abilityInputs && build.abilities.method === "standard-array" ? (
-        <p className="dg-muted">
-          Assign {STANDARD_ARRAY.join(", ")} across the six abilities.
-        </p>
-      ) : null}
-      {ABILITIES.map((ability) => {
-        const block = character.abilities[ability];
-        return (
-          <div className="dg-score-row" key={ability}>
-            <span className="dg-n-ability-name">{ability.toUpperCase()}</span>
-            <button
-              onClick={() => set(ability, base[ability] - 1)}
-              aria-label={`Lower ${ability}`}
-            >
-              −
-            </button>
-            {features.abilityInputs ? (
-              <input
-                type="number"
-                min={1}
-                max={30}
-                className="dg-score-input"
-                value={base[ability]}
-                onChange={(e) =>
-                  set(ability, Number(e.currentTarget.value) || 1)
-                }
-              />
-            ) : (
-              <span className="dg-score-value">{base[ability]}</span>
-            )}
-            <button
-              onClick={() => set(ability, base[ability] + 1)}
-              aria-label={`Raise ${ability}`}
-            >
-              +
-            </button>
-            <span className="dg-muted">
-              → {block.score.value} (
-              {block.mod >= 0 ? `+${block.mod}` : block.mod})
-            </span>
-          </div>
-        );
-      })}
     </>
   );
 }

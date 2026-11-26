@@ -44,7 +44,7 @@ export const DESKTOP_FEATURES: BuilderFeatures = {
   pickerSearch: true,
   rowEditing: true,
   customItem: true,
-  abilityInputs: true,
+  abilityStepButtons: false,
   diagnostics: true,
   browse: true,
   sources: true,
