@@ -24,7 +24,7 @@ import { ABILITIES, type Ability, type BuildAbilities } from "../../../../core/t
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { CharacterStore } from "../../../character-store";
 import { usePlugin } from "../../context";
-import { ChipGhost, PoolControls, PoolRow, type PoolActions, type PoolFocus } from "../ability-pool";
+import { ChipGhost, PoolControls, PoolRow, type PoolActions, type PoolFocus, type Spin } from "../ability-pool";
 import {
   addPool,
   assign,
@@ -60,7 +60,7 @@ export function AbilityAssign({
     focusRef.current = next;
     setFocusState(next);
   };
-  const [spins, setSpins] = useState<Record<string, number>>({});
+  const [spins, setSpins] = useState<Record<string, Spin>>({});
   const [dragged, setDragged] = useState<string | null>(null);
   const [landing, setLanding] = useState<Ability | null>(null);
 
@@ -100,7 +100,7 @@ export function AbilityAssign({
   // The store's build, not this render's: a blur and a tap can both write before a re-render.
   const current = (): BuildAbilities => store.data.build?.abilities ?? abilities;
   const spin = (chips: string[]): void =>
-    setSpins((s) => ({ ...s, ...Object.fromEntries(chips.map((c) => [c, (s[c] ?? 0) + 1])) }));
+    setSpins((s) => ({ ...s, ...Object.fromEntries(chips.map((c, rank) => [c, { count: (s[c]?.count ?? 0) + 1, rank }])) }));
   const edit = (chip: string, draft = ""): void => setFocus({ chip, mode: "edit", draft });
 
   const chipElement = (chip: string): Element | null | undefined =>

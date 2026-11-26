@@ -51,8 +51,16 @@ export interface PoolActions {
 }
 
 const SPIN_MS = 900;
+/** In a batch, each reel runs this much longer than the one to its left, so they land in turn. */
+const SPIN_STAGGER_MS = 220;
 /** At least this many numbers go past, so even a reroll to the same value spins. */
 const SPIN_STEPS = 12;
+
+/** A chip's reel was set turning: `count` is new each time, `rank` its place in the batch. */
+export interface Spin {
+  count: number;
+  rank: number;
+}
 
 function wrapper(range: ValueRange): (n: number) => number {
   const span = range.max - range.min + 1;
@@ -63,19 +71,19 @@ function wrapper(range: ValueRange): (n: number) => number {
  * Where a chip's reel stands. Without a new `spin` it is just the value; with one the reel
  * turns on from where it was, a number at a time, slowing down, and stops on the value.
  */
-function useSpin(value: number | null, spin: number | undefined, range: ValueRange | undefined): number | null {
+function useSpin(value: number | null, spin: Spin | undefined, range: ValueRange | undefined): number | null {
   const [position, setPosition] = useState(value);
   const at = useRef(value);
   at.current = position;
-  const seen = useRef(spin);
+  const seen = useRef(spin?.count);
 
   useEffect(() => {
-    if (spin === seen.current || !range || value === null || prefersReducedMotion()) {
-      seen.current = spin;
+    if (spin?.count === seen.current || !range || value === null || prefersReducedMotion()) {
+      seen.current = spin?.count;
       setPosition(value);
       return;
     }
-    seen.current = spin;
+    seen.current = spin?.count;
     const span = range.max - range.min + 1;
     const start = at.current ?? range.min;
     const steps = SPIN_STEPS + ((((value - start - SPIN_STEPS) % span) + span) % span);
@@ -83,7 +91,7 @@ function useSpin(value: number | null, spin: number | undefined, range: ValueRan
     // last gap stays close to the one before it: the reel's own transition does the settling,
     // and a long pause before the final step reads as a nudge one past where it stopped.
     const gaps = Array.from({ length: steps }, (_, i) => 1 + 2.5 * ((i + 1) / steps) ** 2);
-    const scale = SPIN_MS / gaps.reduce((a, b) => a + b, 0);
+    const scale = (SPIN_MS + SPIN_STAGGER_MS * (spin?.rank ?? 0)) / gaps.reduce((a, b) => a + b, 0);
     const timers: ReturnType<typeof setTimeout>[] = [];
     let t = 0;
     gaps.forEach((gap, i) => {
@@ -93,7 +101,7 @@ function useSpin(value: number | null, spin: number | undefined, range: ValueRan
     return () => timers.forEach(clearTimeout);
     // `range` is a method's, which doesn't change under a chip.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [value, spin]);
+  }, [value, spin?.count]);
 
   return position;
 }
@@ -111,7 +119,7 @@ export function PoolRow({
   number?: number;
   used: ReadonlyMap<string, Ability>;
   focus: PoolFocus | null;
-  spins: Readonly<Record<string, number>>;
+  spins: Readonly<Record<string, Spin>>;
   actions: PoolActions;
 }): ReactNode {
   const editing = focus?.mode === "edit" && focus.chip.startsWith(`${pool.id}:`) ? focus : null;
@@ -208,7 +216,7 @@ function PoolChip({
   armed: boolean;
   /** Set while the chip is open to typing. */
   draft: string | undefined;
-  spin: number | undefined;
+  spin: Spin | undefined;
   actions: PoolActions;
 }): ReactNode {
   const editing = draft !== undefined;
@@ -269,7 +277,7 @@ function PoolChip({
       }}
     >
       {/* Keyed by the roll, so a reduced-motion reroll fades in afresh rather than spinning. */}
-      <span key={spin ?? 0} className="dg-pool-chip-value" aria-hidden="true">
+      <span key={spin?.count ?? 0} className="dg-pool-chip-value" aria-hidden="true">
         {position === null ? null : <Reel value={position} label={label} />}
       </span>
       {typable ? (

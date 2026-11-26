@@ -6136,10 +6136,10 @@ body.is-mobile .dg-ability-stepbar {
   height: auto;
   min-height: var(--dg-tap, 40px);
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
   justify-content: center;
-  gap: 2px;
+  gap: var(--size-4-1);
   padding: var(--size-4-1);
   font-size: var(--font-ui-smaller);
   white-space: nowrap;
@@ -6149,6 +6149,7 @@ body.is-mobile .dg-ability-stepbar {
 
 .dg-pool-control-button .dg-icon,
 .dg-pool-control-button svg {
+  flex: none;
   width: 1rem;
   height: 1rem;
 }
