@@ -15,6 +15,8 @@ import { GrantTree } from "../grants";
 import { sourceRefOf } from "../model";
 import { specOf, usePicker, type PickerOption } from "../picker";
 import { type DetailSpec } from "../detail";
+import { isPoolMethod } from "../ability-pools";
+import { AbilityAssign } from "./ability-assign";
 import { AbilityMethod } from "./ability-method";
 import { AbilityTiles } from "./ability-tiles";
 
@@ -101,7 +103,11 @@ export function OriginSection({
       <GrantTree nodes={backgroundGrants} store={store} nameOf={nameOf} />
 
       <AbilityMethod store={store} />
-      <AbilityTiles store={store} character={character} />
+      {isPoolMethod(build.abilities.method) ? (
+        <AbilityAssign store={store} character={character} />
+      ) : (
+        <AbilityTiles store={store} character={character} />
+      )}
 
       {character.pendingChoices
         .filter((choice) => choice.scope === "build" && !placed.has(choiceKey(choice)))

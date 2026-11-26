@@ -1,10 +1,22 @@
 /**
- * One ability score you can step. The tile knows a value, a bonus and a label, and reports
+ * One ability score tile. The frame is shared: a header with the total and modifier, the
+ * bonus either side, and a slot in the middle for the base, which is a reel (point buy), a
+ * plain number (pools), or a dashed cutout where a number has yet to go.
+ *
+ * `ScoreTile` is the one you can step. It knows a value, a bonus and a label, and reports
  * steps; what a step costs or where it stops is the caller's, so every method of assigning
  * scores can use it. Wheel and keys are adapters here: each turns its event into `onStep`.
  */
 
-import { useEffect, useId, useRef, type KeyboardEvent, type ReactNode } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useRef,
+  type HTMLAttributes,
+  type KeyboardEvent,
+  type ReactNode,
+} from "react";
 import { Icon } from "../components";
 import { Reel } from "../reel";
 import { createWheelStepper, type Direction, type StepIntent } from "./ability-stepper";
@@ -38,6 +50,65 @@ const KEY_DIRECTION: Record<string, Direction> = { ArrowUp: 1, ArrowDown: -1 };
 
 export function signed(n: number): string {
   return `${n < 0 ? "−" : "+"}${Math.abs(n)}`;
+}
+
+export interface ScoreTileFrameProps extends HTMLAttributes<HTMLDivElement> {
+  label: string;
+  /** Absent while the base is: there is nothing to total yet. */
+  total: number | undefined;
+  modifier: number;
+  bonus: number;
+  bonusText: string;
+  /** The id the header carries, for whatever the tile is labelled by. */
+  headerId?: string;
+  /** The base: a `Reel`, a `TileNumber` or a `TileCutout`. */
+  children: ReactNode;
+}
+
+export const ScoreTileFrame = forwardRef<HTMLDivElement, ScoreTileFrameProps>(function ScoreTileFrame(
+  { label, total, modifier, bonus, bonusText, headerId, children, className, ...rest },
+  ref,
+) {
+  return (
+    <div ref={ref} className={`dg-score-tile${className ? ` ${className}` : ""}`} {...rest}>
+      <span id={headerId} className="dg-score-tile-header">
+        {total === undefined ? `${label} —` : `${label} ${total}(${signed(modifier)})`}
+      </span>
+      <span className="dg-score-tile-body">
+        <span className="dg-score-tile-flank is-left">{bonus ? signed(bonus) : null}</span>
+        {children}
+        <span className="dg-score-tile-flank is-right">
+          {bonus ? (
+            <span className="dg-score-tile-indicator" title={bonusText}>
+              <Icon name={bonus > 0 ? "trending-up" : "trending-down"} />
+              <span className="dg-sr-only">{bonusText}</span>
+            </span>
+          ) : null}
+        </span>
+      </span>
+    </div>
+  );
+});
+
+/** A base that stays put: a pool's chip, assigned. */
+export function TileNumber({ value, className }: { value: number; className?: string }): ReactNode {
+  return (
+    <span className={`dg-score-tile-value dg-score-tile-number${className ? ` ${className}` : ""}`} data-centre="">
+      {value}
+    </span>
+  );
+}
+
+/** Where a chip will sit. `pulse` while one is picked up, so the targets are obvious. */
+export function TileCutout({ pulse, className }: { pulse: boolean; className?: string }): ReactNode {
+  return (
+    <span
+      className={`dg-score-tile-value dg-score-tile-cutout${pulse ? " is-pulsing" : ""}${className ? ` ${className}` : ""}`}
+      data-centre=""
+    >
+      <span className="dg-sr-only">Empty</span>
+    </span>
+  );
 }
 
 export function ScoreTile(props: ScoreTileProps): ReactNode {
@@ -103,9 +174,15 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
   };
 
   return (
-    <div
+    <ScoreTileFrame
       ref={ref}
-      className={`dg-score-tile${selected ? " is-selected" : ""}`}
+      label={label}
+      total={total}
+      modifier={modifier}
+      bonus={bonus}
+      bonusText={bonusText}
+      headerId={nameId}
+      className={selected ? "is-selected" : undefined}
       tabIndex={0}
       role="spinbutton"
       aria-labelledby={nameId}
@@ -120,37 +197,23 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
       onKeyDown={onKeyDown}
       onKeyUp={onKeyUp}
     >
-      <span id={nameId} className="dg-score-tile-header">
-        {label} {total}({signed(modifier)})
-      </span>
-      <span className="dg-score-tile-body">
-        <span className="dg-score-tile-flank is-left">{bonus ? signed(bonus) : null}</span>
-        <Reel
-          className="dg-score-tile-value"
-          value={value}
-          peek={
-            peek
-              ? {
-                  id: peek.id,
-                  direction: peek.direction,
-                  content: (
-                    <span className={peek.available ? "dg-reel-peek" : "dg-reel-peek is-blocked"}>
-                      {peek.label}
-                    </span>
-                  ),
-                }
-              : undefined
-          }
-        />
-        <span className="dg-score-tile-flank is-right">
-          {bonus ? (
-            <span className="dg-score-tile-indicator" title={bonusText}>
-              <Icon name={bonus > 0 ? "trending-up" : "trending-down"} />
-              <span className="dg-sr-only">{bonusText}</span>
-            </span>
-          ) : null}
-        </span>
-      </span>
-    </div>
+      <Reel
+        className="dg-score-tile-value"
+        value={value}
+        peek={
+          peek
+            ? {
+                id: peek.id,
+                direction: peek.direction,
+                content: (
+                  <span className={peek.available ? "dg-reel-peek" : "dg-reel-peek is-blocked"}>
+                    {peek.label}
+                  </span>
+                ),
+              }
+            : undefined
+        }
+      />
+    </ScoreTileFrame>
   );
 }

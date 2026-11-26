@@ -5,7 +5,8 @@
  * transition carries on from wherever each number has got to. A `peek` turns the wheel about
  * halfway and holds there, showing its content in the slot where the next value would arrive.
  * Nothing here knows what the content means, so a slot machine can use it as well as a
- * point-buy tile.
+ * point-buy tile. A `label` prints something other than the number at each place, which is how
+ * a slot machine's strip repeats its range round an endless wheel.
  */
 
 import { useRef, type CSSProperties, type ReactNode } from "react";
@@ -34,10 +35,12 @@ export function Reel({
   value,
   peek,
   className,
+  label,
 }: {
   value: number;
   peek?: ReelPeek;
   className?: string;
+  label?: (n: number) => ReactNode;
 }): ReactNode {
   // A peek that has been let go of still slides away with its content, not an empty slot.
   const kept = useRef<Partial<Record<Direction, ReactNode>>>({});
@@ -56,7 +59,7 @@ export function Reel({
         style={{ ...place(d), "--o": Math.max(0, 1 - Math.abs(d) * 2) } as CSSProperties}
         aria-hidden={offset === 0 ? undefined : true}
       >
-        {n}
+        {label ? label(n) : n}
       </span>,
     );
   }

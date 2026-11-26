@@ -663,6 +663,34 @@ export interface LayoutFile extends CharacterFile {
 }
 
 export type AbilityMethod = "point-buy" | "standard-array" | "rolled" | "manual";
+
+/**
+ * A row of six rolled values, any of which can be assigned to any ability. A slot is
+ * empty or holds a value; two equal values are two chips, told apart by their slot.
+ */
+export interface AbilityPool {
+  id: string;
+  /** How the values are rolled, a roll method id ("4d6-drop-lowest"). */
+  method: string;
+  values: (number | null)[];
+}
+
+export interface BuildAbilities {
+  method: AbilityMethod;
+  /**
+   * The starting scores, before any bonus. The resolver reads only these. In a pool method
+   * an ability with no value assigned is absent, and the resolver treats it as 10.
+   */
+  base: Partial<Record<Ability, number>>;
+  /** Rolled pools. Kept when the method changes, so switching away and back loses no rolls. */
+  pools?: AbilityPool[];
+  /**
+   * Which chip each ability's base came from, as `pool:slot` ("p1:3", or "standard:0" for
+   * the standard array, which is never stored as a pool). Only for the current method.
+   */
+  assigned?: Partial<Record<Ability, string>>;
+}
+
 export type HpChoice = "max" | "average" | number;
 
 export interface BuildLevel {
@@ -697,10 +725,7 @@ export interface BuildFile extends CharacterFile {
   level: number;
   species?: string;
   background?: string;
-  abilities: {
-    method: AbilityMethod;
-    base: Record<Ability, number>;
-  };
+  abilities: BuildAbilities;
   levels: BuildLevel[];
   /** Choices not tied to a class level: species, background, feats. */
   choices?: Record<string, string[]>;

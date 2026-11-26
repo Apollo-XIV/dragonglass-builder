@@ -33,7 +33,8 @@ export function AbilityTiles({
   if (!build) return null;
 
   const rules = rulesFor(build.abilities.method);
-  const base = build.abilities.base;
+  // Switching out of a pool method fills every score, but a hand-edited file may not have.
+  const base = Object.fromEntries(ABILITIES.map((a) => [a, build.abilities.base[a] ?? rules.min])) as Record<Ability, number>;
   const spent = pointsSpentOn(rules, ABILITIES.map((a) => base[a]));
 
   // The one stepper every input calls: commits, peeks or drops a peek.
@@ -43,7 +44,7 @@ export function AbilityTiles({
     if (result.commit === undefined) return;
     store.mutateBuild((b) => ({
       ...b,
-      abilities: { ...b.abilities, base: { ...b.abilities.base, [ability]: result.commit! } },
+      abilities: { ...b.abilities, base: { ...base, ...b.abilities.base, [ability]: result.commit! } },
     }));
   };
 

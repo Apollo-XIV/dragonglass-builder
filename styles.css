@@ -5940,3 +5940,264 @@ body.is-mobile .dg-ability-stepbar {
   inset: -12px;
   border-radius: 50%;
 }
+
+/* -- Pools of rolled values and the standard array ------------------------- */
+
+.dg-ability-assign {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+}
+
+.dg-pools {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  border-radius: var(--radius-m);
+}
+
+/* A tile's number dragged back to the pools empties the tile. */
+.dg-pools.is-over {
+  outline: 1px dashed var(--interactive-accent);
+  outline-offset: var(--size-4-1);
+}
+
+/* Six in a row, phone or not. */
+.dg-pool-chips {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--size-4-1);
+}
+
+/* A chip has a fill and no edge; the accent ring is its picked-up and typing state. */
+.dg-pool-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-hover);
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  outline: none;
+  transition: opacity 160ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.dg-pool-chip:focus-visible,
+.dg-pool-chip.is-armed,
+.dg-pool-chip.is-editing {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.dg-pool-chip.is-armed {
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+}
+
+/* An empty slot is an edge with nothing in it. */
+.dg-pool-chip.is-empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.dg-pool-chip.is-empty.is-editing {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.dg-pool-chip.is-used {
+  opacity: 0.35;
+}
+
+.dg-pool-chip.is-used.is-armed,
+.dg-pool-chip.is-used.is-editing {
+  opacity: 0.7;
+}
+
+.dg-pool-chip.is-lifted {
+  opacity: 0.2;
+}
+
+.dg-pool-chip.is-dragged {
+  height: 100%;
+  cursor: grabbing;
+  background: var(--background-primary);
+  box-shadow: 0 0 0 2px var(--interactive-accent), var(--shadow-s);
+}
+
+.dg-pool-chip-value {
+  display: flex;
+  line-height: 1.5;
+}
+
+.dg-pool-chip.has-draft .dg-pool-chip-value {
+  visibility: hidden;
+}
+
+/* The input lies over the reel: transparent until something is typed into it. */
+.dg-pool-chip .dg-pool-chip-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: center;
+  caret-color: var(--text-accent);
+  cursor: text;
+}
+
+.dg-pool-chip .dg-pool-chip-input:focus,
+.dg-pool-chip .dg-pool-chip-input:hover {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Under the pools, over whatever is below them: the tiles stay put. */
+.dg-pool-controls {
+  position: absolute;
+  top: calc(100% + var(--size-4-1));
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  box-shadow: var(--shadow-s), 0 0 0 1px var(--background-modifier-border);
+  animation: dg-pool-controls-in 140ms ease-out;
+  transition: opacity 140ms ease;
+}
+
+.dg-pool-controls.is-faded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes dg-pool-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.dg-pool-controls .dg-pool-control.dg-pool-control-button {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: var(--dg-tap, 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--size-4-1);
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+  box-shadow: none;
+  touch-action: manipulation;
+}
+
+.dg-pool-control-button .dg-icon,
+.dg-pool-control-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+/* A tile waiting for a chip, and the tile a chip is over. */
+.dg-score-tile.is-pool.is-over {
+  border-color: var(--interactive-accent);
+}
+
+.dg-score-tile-grip {
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: manipulation;
+}
+
+.dg-score-tile-number {
+  display: block;
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A chip is flying in: the number waits under it. */
+.dg-score-tile-number.is-landing {
+  visibility: hidden;
+}
+
+.dg-score-tile-number.is-lifted {
+  opacity: 0.2;
+}
+
+/* The cutout sits where the number will, the number's own size. */
+.dg-score-tile-cutout {
+  display: block;
+  justify-self: center;
+  box-sizing: border-box;
+  width: 1.6em;
+  height: 1.15em;
+  margin: 0.2em 0;
+  border: 2px dashed var(--background-modifier-border-hover);
+  border-radius: var(--radius-s);
+}
+
+.dg-score-tile-cutout.is-pulsing {
+  animation: dg-cutout-pulse 1100ms ease-in-out infinite;
+}
+
+@keyframes dg-cutout-pulse {
+  50% {
+    border-color: var(--interactive-accent);
+    transform: scale(1.08);
+  }
+}
+
+/* The number flying from a chip to its tile. It lives on the body, outside .dg-layout. */
+.dg-chip-ghost {
+  position: fixed;
+  z-index: var(--layer-popover, 30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-pool-chip-value {
+    animation: dg-chip-fade 150ms ease;
+  }
+
+  .dg-score-tile-cutout.is-pulsing {
+    animation: none;
+    border-color: var(--interactive-accent);
+  }
+
+  .dg-pool-controls {
+    animation: none;
+  }
+}
+
+@keyframes dg-chip-fade {
+  from {
+    opacity: 0;
+  }
+}

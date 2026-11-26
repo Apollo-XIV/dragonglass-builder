@@ -98,6 +98,7 @@ There are two different questions: what is my character at this level, and what 
 ### build.5e
 
 - Stores selections only: species, background, class levels, ability scores and their method, and every choice made. Derived values (AC, modifiers, DCs) are never stored; the resolver computes them.
+- Rolled ability scores keep their rolls: `abilities.pools` holds each pool of six values with the roll method that made it, and `abilities.assigned` names the chip (`pool:slot`, or `standard:n` for the standard array) each score came from. `abilities.base` is still the only thing the resolver reads; in a pool method an ability with nothing assigned is absent from it, and resolves as 10. Changing method never drops a score: scores become pre-assigned chips going into a pool method, and empty abilities start at 8 coming out of one.
 - Class levels are a level-by-level log, so multiclass order, per-level HP and per-level choices are explicit. Choices are keyed by the content's choice id.
 - XP lives here because it's tied closely to level. `xp` and `level` are separate fields rather than level being derived from XP, so milestone campaigns work and XP only prompts a level-up instead of forcing it.
 

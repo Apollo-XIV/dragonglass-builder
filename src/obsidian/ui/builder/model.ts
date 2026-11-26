@@ -17,7 +17,7 @@ import { inheritedFilter, type SourceFilter, type SourceRef } from "./source-fil
 
 export { POINT_BUY_BUDGET, POINT_BUY_COSTS as POINT_BUY_COST } from "./ability-stepper";
 import { POINT_BUY_COSTS } from "./ability-stepper";
-export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+export { STANDARD_ARRAY } from "./ability-pools";
 
 /** How many planned levels show per class before "Show more" (spec 7.6). */
 export const PLANNED_PAGE = 3;
