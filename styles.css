@@ -5973,8 +5973,37 @@ body.is-mobile .dg-ability-stepbar {
   outline-offset: var(--size-4-1);
 }
 
+/* A pool is a box of its own, so two of them don't read as one grid of twelve. Its number,
+ * when there is more than one, sits on the left edge. */
+.dg-pool {
+  display: flex;
+  align-items: stretch;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1);
+  border-radius: var(--radius-m);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+}
+
+.dg-pool.is-editing {
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.dg-pool-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 1.25em;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* Six in a row, phone or not. */
 .dg-pool-chips {
+  flex: 1 1 auto;
+  min-width: 0;
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: var(--size-4-1);

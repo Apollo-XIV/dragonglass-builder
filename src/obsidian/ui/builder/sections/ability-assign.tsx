@@ -255,10 +255,11 @@ export function AbilityAssign({
         onDragCancel={() => setDragged(null)}
       >
         <Pools>
-          {pools.map((pool) => (
+          {pools.map((pool, i) => (
             <PoolRow
               key={pool.id}
               pool={pool}
+              number={pools.length > 1 ? i + 1 : undefined}
               used={used}
               focus={focus}
               spins={spins}

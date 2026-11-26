@@ -100,12 +100,15 @@ function useSpin(value: number | null, spin: number | undefined, range: ValueRan
 
 export function PoolRow({
   pool,
+  number,
   used,
   focus,
   spins,
   actions,
 }: {
   pool: PoolView;
+  /** The pool's place in the list, shown on its edge when there is more than one. */
+  number?: number;
   used: ReadonlyMap<string, Ability>;
   focus: PoolFocus | null;
   spins: Readonly<Record<string, number>>;
@@ -115,6 +118,11 @@ export function PoolRow({
 
   return (
     <div className={`dg-pool${editing ? " is-editing" : ""}`} data-pool={pool.id}>
+      {number !== undefined ? (
+        <span className="dg-pool-number" aria-hidden="true">
+          {number}
+        </span>
+      ) : null}
       <div
         className="dg-pool-chips"
         onClick={(e) => {
