@@ -19,6 +19,7 @@ import {
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { ABILITIES, type Ability, type BuildAbilities } from "../../../../core/types";
 import type { ResolvedCharacter } from "../../../../core/resolver/resolved";
 import type { CharacterStore } from "../../../character-store";
@@ -231,10 +232,18 @@ export function AbilityAssign({
     }
   };
 
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
   const draggedValue = dragged ? chipValue(abilities, dragged) : null;
   // The tile the chip in hand is already on, so it is plain where it would move from.
   const linked = focus ? used.get(focus.chip) : undefined;
   const picking = armed || dragged !== null;
+
+  const ghost = (
+    <DragOverlay dropAnimation={null}>{draggedValue !== null ? <ChipGhost value={draggedValue} /> : null}</DragOverlay>
+  );
+  const overlay = mounted ? createPortal(ghost, root.current?.ownerDocument.body ?? document.body) : null;
 
   return (
     <div ref={root} className="dg-ability-assign">
@@ -275,7 +284,9 @@ export function AbilityAssign({
             />
           ))}
         </div>
-        <DragOverlay dropAnimation={null}>{draggedValue !== null ? <ChipGhost value={draggedValue} /> : null}</DragOverlay>
+        {/* On the body: an ancestor that transforms or contains makes it the containing block of the
+            overlay's position: fixed, and the ghost then trails the pointer by that ancestor's offset. */}
+        {overlay}
       </DndContext>
     </div>
   );
