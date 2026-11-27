@@ -84,6 +84,55 @@ export function takeInventoryItem(file: InventoryFile, id: string): InventoryFil
     : removeInventoryEntry(file, at);
 }
 
+/** Every entry inside `uid`, however deep. */
+function holdings(file: InventoryFile, uid: string): Set<string> {
+  const inside = new Set<string>();
+  let grew = true;
+  while (grew) {
+    grew = false;
+    for (const e of file.items)
+      if (e.container && (e.container === uid || inside.has(e.container)) && !inside.has(e.uid)) {
+        inside.add(e.uid);
+        grew = true;
+      }
+  }
+  return inside;
+}
+
+/**
+ * The entries `index` may be put in: containers (`isContainer` says which), other than
+ * itself or anything it holds, so a bag can never end up inside its own contents.
+ */
+export function containerChoices(
+  file: InventoryFile,
+  index: number,
+  isContainer: (entry: InventoryEntry) => boolean,
+): InventoryEntry[] {
+  const entry = file.items[index];
+  if (!entry) return [];
+  const inside = holdings(file, entry.uid);
+  return file.items.filter((e) => e.uid !== entry.uid && !inside.has(e.uid) && isContainer(e));
+}
+
+/** Puts the entry at `index` in a container, or in the open with `undefined`. A cycle is refused. */
+export function setContainer(file: InventoryFile, index: number, container: string | undefined): InventoryFile {
+  const entry = file.items[index];
+  if (!entry) return file;
+  if (container && (container === entry.uid || holdings(file, entry.uid).has(container))) return file;
+  const { container: _old, ...rest } = entry;
+  const next = container ? { ...rest, container } : rest;
+  return { ...file, items: file.items.map((e, i) => (i === index ? next : e)) };
+}
+
+/** Spends one of a consumable: the quantity drops, and the entry goes at zero. */
+export function spendOneInventoryItem(file: InventoryFile, index: number): InventoryFile {
+  const entry = file.items[index];
+  if (!entry) return file;
+  const q = entry.quantity ?? 1;
+  if (q <= 1) return removeInventoryEntry(file, index);
+  return { ...file, items: file.items.map((e, i) => (i === index ? { ...e, quantity: q - 1 } : e)) };
+}
+
 /** Appends an entry, giving it its id now. */
 export function appendInventoryEntry(
   file: InventoryFile,

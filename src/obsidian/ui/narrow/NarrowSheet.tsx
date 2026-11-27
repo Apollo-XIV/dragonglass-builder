@@ -34,6 +34,7 @@ import { SpellLevel } from "../spell-level";
 import { CastBox, HoldReadTarget, HoldRollTarget, ReadRow, ResourcePill, RollBox, usePoolControls } from "./targets";
 import { slotFor } from "../../../core/state/cast";
 import { UseAction } from "../use-action";
+import { AddButtons, canEquip, CurrencyFields, ItemDetail, OriginChip, useInventoryEditor } from "../inventory-editor";
 import { StatusChips } from "../desktop/header";
 import { ALL_SOURCES, spellsView } from "../../../core/resolver/spell-sources";
 import { SourceChips, SpellHeader } from "../spell-header";
@@ -89,15 +90,12 @@ export function NarrowSheet({
         body: <SpellsSection store={store} character={character} />,
       });
 
-    // The resolver always reports all five coin types, so "has currency" means a
-    // non-zero one; otherwise Inventory could never be absent.
-    const hasMoney = Object.values(character.currency).some((n) => n > 0);
-    if (character.inventory.length || hasMoney)
-      available.set("inventory", {
+    // Always there: it is where a character with nothing yet adds their first item.
+    available.set("inventory", {
         id: "inventory",
         label: "Inventory",
         status: `${Math.round(character.carried.weight)} lb`,
-        body: <InventorySection character={character} />,
+        body: <InventorySection store={store} character={character} />,
       });
 
     const features = featureList(character);
@@ -703,26 +701,31 @@ function SlotPill({
 // Inventory, features, skills, details
 // ---------------------------------------------------------------------------
 
-export function InventorySection({ character }: { character: ResolvedCharacter }): ReactNode {
-  const currency = Object.entries(character.currency).filter(([, n]) => n > 0);
+export function InventorySection({ store, character }: { store: CharacterStore; character: ResolvedCharacter }): ReactNode {
+  const editor = useInventoryEditor(store);
   return (
     <>
       <p className="dg-muted">
         {Math.round(character.carried.weight)} of {Math.round(character.carried.capacity)} lb
-        {currency.length ? ` · ${currency.map(([unit, n]) => `${n} ${unit}`).join(", ")}` : ""}
       </p>
-      {character.inventory.map((item) => (
-        <ReadRow
-          key={`${item.element.id}-${item.index}`}
-          title={item.quantity > 1 ? `${item.name} ×${item.quantity}` : item.name}
-          subtitle={[item.equipped ? "equipped" : undefined, item.attuned ? "attuned" : undefined, item.weight ? `${item.weight} lb` : undefined]
-            .filter(Boolean)
-            .join(" · ")}
-          text={typeof item.element.text === "string" ? item.element.text : undefined}
-          facts={factsOf(item.element)}
-        />
-      ))}
+      {character.inventory.map((item) => {
+        const equippable = canEquip(item);
+        return (
+          <ReadRow
+            key={item.entry.uid}
+            title={item.quantity > 1 ? `${item.name} ×${item.quantity}` : item.name}
+            titleSuffix={<OriginChip entry={item.entry} />}
+            subtitle={[item.equipped ? "equipped" : undefined, item.attuned ? "attuned" : undefined, item.weight ? `${item.weight} lb` : undefined]
+              .filter(Boolean)
+              .join(" · ")}
+            onTap={equippable ? () => editor.patch(item.index, { equipped: !item.equipped }) : undefined}
+            detail={(close) => <ItemDetail store={store} uid={item.entry.uid} close={close} />}
+          />
+        );
+      })}
       {character.inventory.length === 0 ? <p className="dg-muted">Nothing carried.</p> : null}
+      <AddButtons editor={editor} />
+      <CurrencyFields store={store} />
     </>
   );
 }

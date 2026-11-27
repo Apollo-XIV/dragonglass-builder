@@ -57,6 +57,7 @@
     "name": "Backpack",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -83,6 +84,7 @@
     "name": "Barrel",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -96,6 +98,7 @@
     "name": "Basket",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -278,6 +281,7 @@
     "name": "Chest",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -785,6 +789,7 @@
     "name": "Pouch",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -798,6 +803,7 @@
     "name": "Quiver",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",
@@ -877,6 +883,7 @@
     "name": "Sack",
     "source": "srd",
     "tags": [
+      "container",
       "equipment"
     ],
     "itemType": "gear",

@@ -31,6 +31,7 @@ import {
   signed,
 } from "./components";
 import { UseAction } from "./use-action";
+import { AddButtons, ItemDetail, OriginChip, useInventoryEditor } from "./inventory-editor";
 
 const ACTIVATION_ORDER = ["action", "bonus-action", "reaction", "free", "special", "minute", "hour", "passive"];
 
@@ -497,6 +498,7 @@ export function InventoryPanel({
     store.update("inventory", { ...file, currency: { ...file.currency, [coin]: Math.max(0, value) } });
   };
 
+  const editor = useInventoryEditor(store);
   return (
     <>
       <Section
@@ -507,8 +509,9 @@ export function InventoryPanel({
           </span>
         }
       >
+        {readOnly ? null : <AddButtons editor={editor} />}
         {character.inventory.length === 0 ? (
-          <Empty>Nothing carried. Add items from the builder's inventory tab.</Empty>
+          <Empty>Nothing carried yet.</Empty>
         ) : (
           <table className="dg-table">
             <thead>
@@ -526,6 +529,7 @@ export function InventoryPanel({
                 <InventoryRow
                   key={`${item.index}-${item.element.id}`}
                   item={item}
+                  store={store}
                   readOnly={readOnly}
                   onPatch={(change) => patch(item.index, change)}
                   onRemove={() => remove(item.index)}
@@ -558,11 +562,13 @@ export function InventoryPanel({
 
 function InventoryRow({
   item,
+  store,
   readOnly,
   onPatch,
   onRemove,
 }: {
   item: ResolvedItem;
+  store: CharacterStore;
   readOnly?: boolean;
   onPatch: (change: Partial<InventoryEntry>) => void;
   onRemove: () => void;
@@ -578,6 +584,7 @@ function InventoryRow({
             {item.name}
           </button>
           {item.resolvedRef ? null : <Pill tone="info">custom</Pill>}
+          <OriginChip entry={item.entry} />
         </td>
         <td>
           <input
@@ -630,7 +637,11 @@ function InventoryRow({
                 tags: element.tags,
               }}
             />
-            {item.entry.notes ? <p>{item.entry.notes}</p> : null}
+            {readOnly ? (
+              item.entry.notes ? <p>{item.entry.notes}</p> : null
+            ) : (
+              <ItemDetail store={store} uid={item.entry.uid} close={() => setOpen(false)} compact />
+            )}
           </td>
         </tr>
       ) : null}

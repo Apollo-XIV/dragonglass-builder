@@ -437,8 +437,11 @@ export function ReadRow({
   onTap,
   className,
   unverified,
+  detail,
 }: {
   title: string;
+  /** What a hold opens instead of the row's text: a view that edits. */
+  detail?: (close: () => void) => ReactNode;
   /** Drawn after the title in the row, quieter than it; the sheet's title stays plain. */
   titleSuffix?: ReactNode;
   /** Why the row's parts are unverified, one note each; the marker is only drawn when there are some. */
@@ -465,7 +468,7 @@ export function ReadRow({
     sheet.open({
       title,
       subtitle: [...(lead ?? []).map((l) => l.label), subtitle].filter(Boolean).join(" · ") || undefined,
-      body: () => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} unverified={unverified} />,
+      body: detail ? () => detail(sheet.close) : (() => <TextBody text={text} fluff={fluff} facts={facts} formula={formula} unverified={unverified} />),
     });
 
   const { handlers } = useHold({

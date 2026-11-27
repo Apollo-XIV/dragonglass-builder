@@ -2,6 +2,9 @@ import { describe, expect, it } from "vitest";
 import {
   addInventoryItem,
   addStartingEquipment,
+  containerChoices,
+  setContainer,
+  spendOneInventoryItem,
   applyGoldDelta,
   goldAmount,
   goldOutOfRange,
@@ -214,5 +217,36 @@ describe("linked custom items", () => {
     const r = run({ id: "custom:copy", name: "Copy", weapon: { damage: "1d10" } });
     expect(r.diagnostics.filter((d) => d.code === "unresolved-reference")).toEqual([]);
     expect((r.inventory[0].element as Element & { weapon: unknown }).weapon).toEqual({ damage: "1d10" });
+  });
+});
+
+describe("moving and spending entries", () => {
+  const bag = (items: InventoryFile["items"]): InventoryFile => file(items);
+
+  it("offers containers other than the entry and what it holds", () => {
+    const f = bag([
+      { uid: "pack", id: "i:pack" },
+      { uid: "pouch", id: "i:pouch", container: "pack" },
+      { uid: "rope", id: "i:rope" },
+    ]);
+    const all = () => true;
+    expect(containerChoices(f, 2, all).map((e) => e.uid)).toEqual(["pack", "pouch"]);
+    expect(containerChoices(f, 0, all).map((e) => e.uid)).toEqual(["rope"]);
+  });
+
+  it("puts an entry in a bag and takes it out, and refuses a cycle", () => {
+    let f = bag([{ uid: "pack", id: "i:pack" }, { uid: "pouch", id: "i:pouch", container: "pack" }]);
+    expect(setContainer(f, 0, "pouch")).toBe(f);
+    expect(setContainer(f, 0, "pack")).toBe(f);
+    f = setContainer(f, 1, undefined);
+    expect(f.items[1]).toEqual({ uid: "pouch", id: "i:pouch" });
+    expect(setContainer(f, 1, "pack").items[1].container).toBe("pack");
+  });
+
+  it("spends one, and removes the entry at zero", () => {
+    let f = bag([{ uid: "p", id: "i:potion", quantity: 2 }]);
+    f = spendOneInventoryItem(f, 0);
+    expect(f.items[0].quantity).toBe(1);
+    expect(spendOneInventoryItem(f, 0).items).toEqual([]);
   });
 });

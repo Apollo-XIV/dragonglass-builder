@@ -18,6 +18,7 @@ import { testIndex } from "./helpers";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
+import { InventoryPanel } from "../src/obsidian/ui/sheet-panels";
 import { DesktopBuilder } from "../src/obsidian/ui/desktop/DesktopBuilder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
 import { NarrowRoot, NARROW_FEATURES } from "../src/obsidian/ui/narrow/NarrowRoot";
@@ -598,8 +599,8 @@ describe("the narrow layout", () => {
       }),
       noSpells,
     );
-    // The paladin still casts, so Spells stays; a character with no inventory
-    // loses Inventory from the page and from the rail together.
+    // The paladin still casts, so Spells stays. Inventory stays even with nothing in
+    // it, because it is where the first item is added from the sheet.
     const noGear = makeStore({ inventory: { kind: "inventory", schemaVersion: 1, items: [], currency: {} } });
     const noGearHtml = render(
       createElement(NarrowRoot, {
@@ -611,7 +612,9 @@ describe("the narrow layout", () => {
       noGear,
     );
     expect(bare).toContain(">Spells<");
-    expect(noGearHtml).not.toContain('aria-label="Inventory"');
+    expect(noGearHtml).toContain('aria-label="Inventory"');
+    expect(noGearHtml).toContain("+ Add items");
+    expect(noGearHtml).toContain("+ Custom Item");
   });
 });
 
@@ -982,5 +985,49 @@ describe("the narrow layout's providers", () => {
   it("keeps pickers in the sheet, not inline", () => {
     expect(NARROW_FEATURES.inlinePicker).toBe(false);
     expect(NARROW_FEATURES.liveCommit).toBe(true);
+  });
+});
+
+describe("inventory editing on the sheet", () => {
+  const withGear = (): CharacterStore =>
+    makeStore({
+      inventory: {
+        kind: "inventory",
+        schemaVersion: 1,
+        items: [
+          { uid: "a", id: "srd:item:backpack" },
+          { uid: "b", id: "srd:item:chain-mail", origin: { element: "srd:class:paladin", choice: "x" } },
+        ],
+        currency: { gp: 15 },
+      },
+    });
+
+  it("narrow: adds, edits coins and marks starting equipment", () => {
+    const store = withGear();
+    const html = render(
+      createElement(NarrowRoot, {
+        store,
+        character: store.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "sheet" as const,
+      }),
+      store,
+    );
+    expect(html).toContain("+ Add items");
+    expect(html).toContain("+ Custom Item");
+    expect(html).toContain("dg-inv-origin");
+    expect(html).toContain('value="15"');
+  });
+
+  it("desktop: has the add buttons and no longer sends the player to the builder", () => {
+    for (const store of [withGear(), makeStore({ inventory: { kind: "inventory", schemaVersion: 1, items: [] } })]) {
+      const html = render(
+        createElement(InventoryPanel, { store, character: store.resolved as ResolvedCharacter }),
+        store,
+      );
+      expect(html).toContain("+ Add items");
+      expect(html).toContain("+ Custom Item");
+      expect(html).not.toContain("builder");
+    }
   });
 });

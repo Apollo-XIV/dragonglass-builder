@@ -6388,3 +6388,42 @@ body.is-mobile .dg-ability-stepbar {
     min-width: 32px;
   }
 }
+
+/* Inventory editing on the sheet. */
+.dg-inv-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0;
+}
+.dg-inv-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.dg-inv-detail .dg-inv-check {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.dg-inv-detail textarea {
+  min-height: 4em;
+}
+.dg-inv-origin {
+  margin-left: 6px;
+  font-size: 0.8em;
+  opacity: 0.8;
+}
+.dg-layout .dg-currency {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+.dg-layout .dg-currency label {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 4.5em;
+  min-width: 0;
+}
