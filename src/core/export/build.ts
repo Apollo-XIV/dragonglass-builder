@@ -8,7 +8,7 @@ import type { ContentIndex } from "../content";
 import { idProblems } from "../character-id";
 import { resolve } from "../resolver/resolve";
 import type { Contribution, NumericStat, PendingChoice, ResolvedAction, ResolvedCharacter, ResolvedElement } from "../resolver/resolved";
-import type { BuildFile, Element, InventoryEntry, InventoryFile, SheetFile, SpellsFile } from "../types";
+import { ABILITIES, type Ability, type BuildFile, type Element, type InventoryEntry, type InventoryFile, type SheetFile, type SpellsFile } from "../types";
 import {
   EXPORT_SCHEMA_VERSION,
   type ExportChoice,
@@ -158,7 +158,8 @@ export async function buildExport(input: BuildExportInput): Promise<ExportDocume
       species: origin(r.species),
       background: origin(r.background),
       abilityMethod: build.abilities.method,
-      abilityBase: { ...build.abilities.base },
+      // An ability a pool method has not assigned yet resolves as 10, so it exports as one.
+      abilityBase: Object.fromEntries(ABILITIES.map((a) => [a, build.abilities.base[a] ?? 10])) as Record<Ability, number>,
       derived: {
         abilities: Object.fromEntries(Object.entries(r.abilities).map(([k, a]) => [k, a.score.value])),
         proficiencyBonus: r.proficiencyBonus.value,

@@ -28,8 +28,8 @@ export interface BuilderFeatures {
   rowEditing: boolean;
   /** Create an item that is in no source. */
   customItem: boolean;
-  /** Typed ability scores, with the method's rules beside them. */
-  abilityInputs: boolean;
+  /** Minus and plus fixed to the bottom of the screen, to step the selected ability score. */
+  abilityStepButtons: boolean;
   /** The Notes block of file and resolver diagnostics. */
   diagnostics: boolean;
   /** The read-only class and subclass browser. */
@@ -59,7 +59,7 @@ export const NO_FEATURES: BuilderFeatures = {
   pickerSearch: false,
   rowEditing: false,
   customItem: false,
-  abilityInputs: false,
+  abilityStepButtons: false,
   diagnostics: false,
   browse: false,
   sources: false,

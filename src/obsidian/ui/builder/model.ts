@@ -15,9 +15,9 @@ import type { ContentIndex } from "../../../core/content";
 import type { PickerOption } from "./picker";
 import { inheritedFilter, type SourceFilter, type SourceRef } from "./source-filter";
 
-export const POINT_BUY_COST: Record<number, number> = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
-export const POINT_BUY_BUDGET = 27;
-export const STANDARD_ARRAY = [15, 14, 13, 12, 10, 8];
+export { POINT_BUY_BUDGET, POINT_BUY_COSTS as POINT_BUY_COST } from "./ability-stepper";
+import { POINT_BUY_COSTS } from "./ability-stepper";
+export { STANDARD_ARRAY } from "./ability-pools";
 
 /** How many planned levels show per class before "Show more" (spec 7.6). */
 export const PLANNED_PAGE = 3;
@@ -35,7 +35,7 @@ export const BUILDER_ICONS: Record<string, string> = {
 };
 
 export function pointsSpent(base: Record<string, number>, abilities: readonly string[]): number {
-  return abilities.reduce((n, a) => n + (POINT_BUY_COST[base[a]] ?? 0), 0);
+  return abilities.reduce((n, a) => n + (POINT_BUY_COSTS[base[a]] ?? 0), 0);
 }
 
 /** What a new level of this class gets for hit points, from the plugin's default. */

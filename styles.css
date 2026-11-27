@@ -389,7 +389,7 @@
 }
 
 .dg-button.is-damage {
-  border-color: var(--text-error);
+  border-color: var(--text-warning);
   color: var(--text-error);
 }
 
@@ -2167,9 +2167,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   padding: var(--size-4-2) 0;
   border: 1px solid var(--background-modifier-border);
   border-radius: var(--radius-m);
-  /* The sheet renders this as a div and the builder as a button, and they have
-   * to look identical: the builder's is only a button because tapping it opens
-   * the score editor. */
+  /* The sheet's tile; the builder's is its own component (.dg-score-tile). */
   background: transparent;
   box-shadow: none;
 }
@@ -2565,24 +2563,6 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   font-variant-numeric: tabular-nums;
 }
 
-.dg-score-row {
-  display: flex;
-  align-items: center;
-  gap: var(--size-4-2);
-  padding: var(--size-4-1) 0;
-}
-
-.dg-layout .dg-score-row button {
-  width: 40px;
-  height: 40px;
-}
-
-.dg-score-value {
-  min-width: 2ch;
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-}
-
 /* -- Choice sheets (spec 7.7) ------------------------------------------- */
 
 .dg-picker {
@@ -2838,7 +2818,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
    * leaving it empty. The left column stops growing at its own widths; the right
    * takes the rest, as the spec asks. */
   grid-template-columns: auto minmax(20rem, 1fr);
-  grid-template-rows: 1fr;
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--d-gap);
   flex: 1;
   min-height: 0;
@@ -2854,12 +2834,12 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 
 /* Skills and the Senses/Proficiencies pair share the rows under the identity
  * column. Skills is column 1 and the stacked pair column 2, and the identity
- * column spans both. The pair's min-content carries the row floor, so the bottom
- * row never shrinks below a readable Skills box. */
+ * column spans both. The bottom row has no floor: the boxes scroll inside
+ * themselves, and a floor here is what made the page scroll as a whole. */
 .dg-desk-left {
   display: grid;
   grid-template-columns: minmax(10rem, 16rem) minmax(8rem, 12rem);
-  grid-template-rows: auto minmax(18rem, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--d-gap);
   min-width: 0;
   min-height: 0;
@@ -3538,6 +3518,10 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: an absolutely
+   * positioned child is only clipped by a scroller that is (or sits inside) its
+   * containing block, and one that escaped made the whole page scroll. */
+  position: relative;
   padding: 0 var(--d-pad) var(--size-4-2);
 }
 
@@ -4875,6 +4859,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 22rem);
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--d-gap);
 }
 
@@ -4882,6 +4867,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: see `.dg-d-tab-body`. */
+  position: relative;
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-top: none;
@@ -4903,6 +4890,8 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-b-detail {
   min-height: 0;
   overflow-y: auto;
+  /* The containing block for the `.dg-sr-only` spans inside: see `.dg-d-tab-body`. */
+  position: relative;
   padding: var(--d-pad);
   border: 1px solid var(--d-border);
   border-radius: var(--d-radius-box);
@@ -5065,7 +5054,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* Excluded is an outline in the error colour with the name struck: it must read
    as the opposite of included without relying on colour alone. */
 .dg-layout .dg-n-chip.is-exclude {
-  border-color: var(--text-error);
+  border-color: var(--text-warning);
   color: var(--text-error);
   text-decoration: line-through;
 }
@@ -5085,14 +5074,6 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
   color: var(--text-accent);
   text-decoration: underline;
   cursor: pointer;
-}
-
-.dg-score-input {
-  background: transparent;
-  border: 1px solid var(--background-modifier-border);
-  border-radius: var(--radius-s);
-  text-align: center;
-  width: 3.5rem;
 }
 
 /* -- Progression: the reorderable list of levels (progression spec) ------- */
@@ -5658,4 +5639,674 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-layout .dg-save-box.is-bare .dg-save-cast {
   font-size: var(--font-ui-smaller);
   color: var(--text-normal);
+}
+
+/* -- Starting ability scores: method, rules and point-buy budget ---------- */
+
+.dg-ability-method {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-3);
+}
+
+.dg-ability-heading {
+  margin: 0;
+  font-size: var(--font-ui-small);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-muted);
+}
+
+.dg-ability-method-row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+}
+
+.dg-ability-method-row .dg-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.dg-ability-help.dg-ability-help-button {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--dg-tap);
+  height: var(--dg-tap);
+  padding: 0;
+  border-radius: var(--radius-s);
+}
+
+.dg-ability-help-button[aria-expanded="true"] {
+  color: var(--text-accent);
+  border-color: var(--text-accent);
+}
+
+.dg-ability-rules {
+  padding: var(--size-4-2) var(--size-4-3);
+  border-left: 2px solid var(--background-modifier-border);
+  color: var(--text-muted);
+  font-size: var(--font-ui-small);
+}
+
+.dg-ability-rules p {
+  margin: 0 0 var(--size-4-1);
+}
+
+.dg-ability-budget {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-3);
+  font-size: var(--font-ui-small);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dg-ability-budget-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 4px;
+  background: var(--background-modifier-border);
+  overflow: hidden;
+}
+
+.dg-ability-budget-fill {
+  height: 100%;
+  background: var(--interactive-accent);
+  transition: width 320ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 200ms ease;
+}
+
+/* The count rolls like a tile's score. A reel clips its overflow, which moves its baseline,
+ * so the line is centred as a row rather than trusting the text to line up beside it. */
+.dg-ability-budget-text {
+  display: inline-flex;
+  align-items: center;
+  line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-ability-budget-fill {
+    transition: none;
+  }
+}
+
+.dg-ability-budget-fill.is-over {
+  background: var(--text-error);
+}
+
+/* -- Ability score tile and its reel --------------------------------------- */
+
+.dg-score-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--size-4-1);
+  padding: var(--size-4-2) 0;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  cursor: pointer;
+  outline: none;
+  user-select: none;
+  /* Wheel over a selected tile steps it; the page must not scroll with it. */
+  overscroll-behavior: contain;
+}
+
+.dg-score-tile:focus-visible,
+.dg-score-tile.is-selected {
+  border-color: var(--interactive-accent);
+  background: var(--background-modifier-hover);
+}
+
+/* A base the method could not have given: amber edge, and a reset icon that resets it. */
+.dg-score-tile.is-invalid,
+.dg-score-tile.is-invalid:focus-visible,
+.dg-score-tile.is-invalid.is-selected {
+  border-color: var(--text-warning);
+}
+
+.dg-score-tile .dg-score-tile-reset-button {
+  position: absolute;
+  top: var(--size-2-1);
+  left: var(--size-2-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-warning);
+  cursor: pointer;
+}
+
+.dg-score-tile .dg-score-tile-reset-button .dg-icon,
+.dg-score-tile .dg-score-tile-reset-button svg {
+  width: 1rem;
+  height: 1rem;
+}
+
+.dg-score-tile-header {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Equal flanks either side of the base, so it is centred whatever they hold. */
+.dg-score-tile-body {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: var(--size-4-2);
+}
+
+.dg-score-tile-flank {
+  display: flex;
+  align-items: center;
+  color: var(--color-purple);
+  font-size: 1.1em;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition: transform 160ms ease;
+}
+
+.dg-score-tile-flank.is-left {
+  justify-content: flex-end;
+}
+
+.dg-score-tile-flank.is-right {
+  justify-content: flex-start;
+}
+
+/* Selected, the flanks stand back a little to give the roll room. */
+.dg-score-tile.is-selected .dg-score-tile-flank.is-left {
+  transform: translateX(calc(var(--size-4-2) * -1));
+}
+
+.dg-score-tile.is-selected .dg-score-tile-flank.is-right {
+  transform: translateX(var(--size-4-2));
+}
+
+.dg-score-tile-indicator {
+  display: inline-flex;
+}
+
+.dg-score-tile-indicator .dg-icon,
+.dg-score-tile-indicator svg {
+  width: 1.1em;
+  height: 1.1em;
+  stroke-width: 2.5;
+}
+
+.dg-score-tile-value {
+  font-size: 1.9em;
+  font-weight: 700;
+  /* Tall enough that half a slot still holds a peek's text. */
+  line-height: 1.5;
+}
+
+.dg-score-tile .dg-score-tile-input {
+  /* Same size and weight as the reel's number, so the swap does not move anything. */
+  box-sizing: content-box;
+  width: 2ch;
+  /* Obsidian sizes a bare input itself, which beats the value class. */
+  font-size: 1.9em;
+  font-weight: 700;
+  line-height: 1.5;
+  height: auto;
+  min-height: 0;
+  margin: 0;
+  padding: 0 var(--size-4-1);
+  border: none;
+  border-radius: var(--radius-s);
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+  color: var(--text-normal);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  caret-color: var(--interactive-accent);
+  outline: none;
+}
+
+.dg-score-tile .dg-score-tile-input:focus,
+.dg-score-tile .dg-score-tile-input:focus-visible {
+  border: none;
+  box-shadow: inset 0 -2px 0 var(--interactive-accent);
+}
+
+.dg-score-tile .dg-score-tile-input::selection {
+  background: color-mix(in srgb, var(--interactive-accent) 40%, transparent);
+}
+
+.dg-reel {
+  display: grid;
+  overflow: hidden;
+  /* Soft edges rather than a hard cut; short enough that a peek, which sits a quarter
+   * of the way in from its edge, stays clear of it. */
+  -webkit-mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  mask-image: linear-gradient(to bottom, transparent, #000 18%, #000 82%, transparent);
+  font-variant-numeric: tabular-nums;
+  min-width: 2ch;
+}
+
+.dg-reel-slot {
+  grid-area: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Each number sits at --d slots from the visible one (1 is a whole slot above). What is
+ * further away shrinks, so what leaves shrinks and what arrives grows as the wheel turns. */
+.dg-reel-slot {
+  transform: translateY(calc(var(--d, 0) * -100%)) scale(calc(1 - var(--a, 0) * 0.4));
+  /* A number the peek covers vanishes at once; one it uncovers waits for the peek to leave. */
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0s linear 240ms;
+}
+
+.dg-reel-slot.is-covered {
+  opacity: 0;
+  transition: transform 240ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0s;
+}
+
+/* Halfway through a roll only the near half of the peek's slot shows, so the peek takes
+ * that half, whichever side it arrives from. */
+.dg-reel-peek {
+  display: flex;
+  align-items: center;
+  height: 50%;
+  font-size: 0.65em;
+  color: var(--text-accent);
+}
+
+/* ...and sits against the edge nearest the number, then is drawn on towards it. --dir is
+ * -1 when the peek arrives from above, so the same pull moves it down or up as needed. */
+.dg-reel-incoming[data-from="above"] {
+  align-items: flex-end;
+}
+
+.dg-reel-incoming[data-from="below"] {
+  align-items: flex-start;
+}
+
+.dg-reel-peek {
+  --peek-pull: 0.6em;
+  transform: translateY(calc(var(--dir, 1) * var(--peek-pull) * -1));
+}
+
+.dg-reel-peek.is-blocked {
+  color: var(--text-faint);
+}
+
+/* No roll for those who ask for less motion: a quick fade, the peek showing in full. */
+@media (prefers-reduced-motion: reduce) {
+  .dg-reel-slot:not(.is-covered) {
+    transform: none;
+    opacity: var(--o, 1);
+    transition: opacity 120ms linear;
+  }
+}
+
+/* Minus and plus fixed to the screen's foot, on a gradient so they read over the page. */
+.dg-ability-stepbar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--layer-popover, 30);
+  display: flex;
+  justify-content: center;
+  gap: var(--size-4-6);
+  padding: var(--size-4-8) var(--size-4-4) calc(var(--size-4-4) + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(to top, var(--background-primary) 55%, transparent);
+  pointer-events: none;
+}
+
+/* Obsidian's mobile toolbar sits over the foot of the screen (see .dg-bottom-sheet),
+ * so lift the buttons clear of it. */
+body.is-mobile .dg-ability-stepbar {
+  padding-bottom: calc(var(--size-4-4) + 44px + env(safe-area-inset-bottom, 0px) + var(--size-4-4) + var(--size-4-4));
+}
+
+/* The second, wider halo: it does nothing itself, but it takes the tap, so a miss
+ * doesn't reach the page and unfocus the tile. The negative margin cancels the padding,
+ * so the buttons stay where they were. */
+.dg-ability-stepbar-guard {
+  pointer-events: auto;
+  display: flex;
+  gap: var(--size-4-6);
+  padding: 56px;
+  margin: -56px;
+  border-radius: 100px;
+}
+
+.dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
+  pointer-events: auto;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-s);
+  touch-action: manipulation;
+}
+
+/* An invisible halo, so a thumb that lands near a button still counts as on it
+ * rather than falling through to the page, which would unfocus the tile. 12px
+ * is half the gap between the two buttons, so the halos meet and don't overlap. */
+.dg-ability-stepbar .dg-ability-step.dg-ability-step-button {
+  position: relative;
+}
+
+.dg-ability-stepbar .dg-ability-step.dg-ability-step-button::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+  border-radius: 50%;
+}
+
+/* -- Pools of rolled values and the standard array ------------------------- */
+
+.dg-ability-assign {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  padding-top: var(--size-4-2);
+}
+
+.dg-pools {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  border-radius: var(--radius-m);
+}
+
+/* A tile's number dragged back to the pools empties the tile. */
+.dg-pools.is-over {
+  outline: 1px dashed var(--interactive-accent);
+  outline-offset: var(--size-4-1);
+}
+
+/* A pool is a box of its own, so two of them don't read as one grid of twelve. Its number,
+ * when there is more than one, sits on the left edge. */
+.dg-pool {
+  display: flex;
+  align-items: stretch;
+  gap: var(--size-4-2);
+  padding: var(--size-4-1);
+  border-radius: var(--radius-m);
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border);
+}
+
+.dg-pool.is-editing {
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.dg-pool-number {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-width: 1.25em;
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Six in a row, phone or not. */
+.dg-pool-chips {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--size-4-1);
+}
+
+/* A chip has a fill and no edge; the accent ring is its picked-up and typing state. */
+.dg-pool-chip {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 40px;
+  border-radius: var(--radius-s);
+  background: var(--background-modifier-hover);
+  font-size: var(--font-ui-medium);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+  outline: none;
+  transition: opacity 160ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+.dg-pool-chip:focus-visible,
+.dg-pool-chip.is-armed,
+.dg-pool-chip.is-editing {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.dg-pool-chip.is-armed {
+  background: color-mix(in srgb, var(--interactive-accent) 18%, transparent);
+}
+
+/* An empty slot is an edge with nothing in it. */
+.dg-pool-chip.is-empty {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--background-modifier-border-hover);
+}
+
+.dg-pool-chip.is-empty.is-editing {
+  box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.dg-pool-chip.is-used {
+  opacity: 0.35;
+}
+
+.dg-pool-chip.is-used.is-armed,
+.dg-pool-chip.is-used.is-editing {
+  opacity: 0.7;
+}
+
+.dg-pool-chip.is-lifted {
+  opacity: 0.2;
+}
+
+.dg-pool-chip.is-dragged {
+  height: 100%;
+  cursor: grabbing;
+  background: var(--background-primary);
+  box-shadow: 0 0 0 2px var(--interactive-accent), var(--shadow-s);
+}
+
+.dg-pool-chip-value {
+  display: flex;
+  line-height: 1.5;
+}
+
+.dg-pool-chip.has-draft .dg-pool-chip-value {
+  visibility: hidden;
+}
+
+/* The input lies over the reel: transparent until something is typed into it. */
+.dg-pool-chip .dg-pool-chip-input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: none;
+  border-radius: inherit;
+  background: transparent;
+  color: var(--text-normal);
+  font: inherit;
+  text-align: center;
+  caret-color: var(--text-accent);
+  cursor: text;
+}
+
+.dg-pool-chip .dg-pool-chip-input:focus,
+.dg-pool-chip .dg-pool-chip-input:hover {
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Under the pools, over whatever is below them: the tiles stay put. */
+.dg-pool-controls {
+  position: absolute;
+  top: calc(100% + var(--size-4-1));
+  left: 0;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1);
+  border-radius: var(--radius-m);
+  background: var(--background-primary);
+  box-shadow: var(--shadow-s), 0 0 0 1px var(--background-modifier-border);
+  animation: dg-pool-controls-in 140ms ease-out;
+  transition: opacity 140ms ease;
+}
+
+.dg-pool-controls.is-faded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes dg-pool-controls-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.dg-pool-controls .dg-pool-control.dg-pool-control-button {
+  flex: 1;
+  min-width: 0;
+  height: auto;
+  min-height: var(--dg-tap, 40px);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: var(--size-4-1);
+  padding: var(--size-4-1);
+  font-size: var(--font-ui-smaller);
+  white-space: nowrap;
+  box-shadow: none;
+  touch-action: manipulation;
+}
+
+.dg-pool-control-button .dg-icon,
+.dg-pool-control-button svg {
+  flex: none;
+  width: 1rem;
+  height: 1rem;
+}
+
+/* The tile a chip is over, and the tile the chip in hand is already on. */
+.dg-score-tile.is-pool.is-over,
+.dg-score-tile.is-pool.is-linked {
+  border-color: var(--interactive-accent);
+}
+
+.dg-score-tile.is-pool.is-linked {
+  background: color-mix(in srgb, var(--interactive-accent) 12%, transparent);
+}
+
+.dg-score-tile-grip {
+  display: flex;
+  justify-content: center;
+  cursor: grab;
+  touch-action: manipulation;
+}
+
+.dg-score-tile-number {
+  display: block;
+  min-width: 2ch;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A chip is flying in: the number waits under it. */
+.dg-score-tile-number.is-landing {
+  visibility: hidden;
+}
+
+.dg-score-tile-number.is-lifted {
+  opacity: 0.2;
+}
+
+/* The cutout sits where the number will, the number's own size. */
+.dg-score-tile-cutout {
+  display: block;
+  justify-self: center;
+  box-sizing: border-box;
+  width: 1.6em;
+  height: 1.15em;
+  margin: 0.2em 0;
+  border: 2px dashed var(--background-modifier-border-hover);
+  border-radius: var(--radius-s);
+}
+
+.dg-score-tile-cutout.is-pulsing {
+  animation: dg-cutout-pulse 1100ms ease-in-out infinite;
+}
+
+@keyframes dg-cutout-pulse {
+  50% {
+    border-color: var(--interactive-accent);
+    transform: scale(1.08);
+  }
+}
+
+/* The number flying from a chip to its tile. It lives on the body, outside .dg-layout. */
+.dg-chip-ghost {
+  position: fixed;
+  z-index: var(--layer-popover, 30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  color: var(--text-normal);
+  font-size: var(--font-ui-medium);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dg-pool-chip-value {
+    animation: dg-chip-fade 150ms ease;
+  }
+
+  .dg-score-tile-cutout.is-pulsing {
+    animation: none;
+    border-color: var(--interactive-accent);
+  }
+
+  .dg-pool-controls {
+    animation: none;
+  }
+}
+
+@keyframes dg-chip-fade {
+  from {
+    opacity: 0;
+  }
 }

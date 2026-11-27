@@ -718,6 +718,54 @@ describe("the narrow builder", () => {
   });
 });
 
+describe("ability scores from pools", () => {
+  const withAbilities = (abilities: BuildFile["abilities"]): CharacterStore => makeStore({ build: { ...build, abilities } });
+  const narrow = (s: CharacterStore): string =>
+    render(
+      createElement(NarrowRoot, {
+        store: s,
+        character: s.resolved as ResolvedCharacter,
+        settings: DEFAULT_SETTINGS.narrow,
+        mode: "builder" as const,
+      }),
+      s,
+    );
+  const desk = (s: CharacterStore): string =>
+    render(
+      createElement(DesktopBuilder, { store: s, character: s.resolved as ResolvedCharacter, settings: DEFAULT_SETTINGS }),
+      s,
+    );
+
+  const rolled = withAbilities({
+    method: "rolled",
+    base: { str: 17, dex: 12 },
+    pools: [{ id: "p1", method: "4d6-drop-lowest", values: [17, 12, 9, null, null, null] }],
+    assigned: { str: "p1:0", dex: "p1:1" },
+  });
+
+  it("draws a rolled pool's chips, used ones greyed, and cutouts for the empty tiles", () => {
+    for (const html of [narrow(rolled), desk(rolled)]) {
+      expect(html.match(/data-chip="p1:\d"/g)).toHaveLength(6);
+      expect(html.match(/dg-pool-chip[^"]*is-used/g)).toHaveLength(2);
+      expect(html.match(/dg-pool-chip[^"]*is-empty/g)).toHaveLength(3);
+      expect(html.match(/dg-score-tile-cutout/g)).toHaveLength(4);
+      expect(html).toContain("STR 17(+3)");
+      expect(html).not.toContain("dg-ability-budget");
+      expect(html).not.toContain("dg-ability-stepbar");
+    }
+  });
+
+  it("draws the standard array as one fixed pool with no inputs or controls", () => {
+    const standard = withAbilities({ method: "standard-array", base: { con: 15 }, assigned: { con: "standard:0" } });
+    const html = narrow(standard);
+    expect(html.match(/data-chip="standard:\d"/g)).toHaveLength(6);
+    expect(html).not.toContain("dg-pool-chip-input");
+    expect(html).not.toContain("dg-pool-controls");
+    expect(html).not.toContain("Roll all");
+    expect(html.match(/dg-score-tile-cutout/g)).toHaveLength(5);
+  });
+});
+
 describe("species features staged by character level", () => {
   const BOOK: Element = {
     id: "stage", kind: "sourcebook", name: "Staged Book", source: "stage", abbreviation: "STG",

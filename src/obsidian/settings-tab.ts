@@ -17,6 +17,7 @@ import type { SourceRef } from "../core/types";
 import { normalizeDir } from "../core/source-dir";
 import { describeSource, parseSourceInput, RULESETS, suggestSourceId, type CacheTier, type NarrowSettings } from "./settings";
 import { HOLD } from "./ui/narrow/constants";
+import { rollMethod, ROLL_METHODS } from "./ui/builder/roll-methods";
 
 export class DragonglassSettingTab extends PluginSettingTab {
   constructor(
@@ -113,6 +114,19 @@ export class DragonglassSettingTab extends PluginSettingTab {
           .setValue(this.plugin.settings.defaultHp)
           .onChange(async (value) => {
             this.plugin.settings.defaultHp = value as typeof this.plugin.settings.defaultHp;
+            await this.plugin.saveSettings();
+          }),
+      );
+
+    new Setting(containerEl)
+      .setName("Rolled ability scores")
+      .setDesc("How a character's first pool of rolled ability scores is rolled. Pools added later roll the same way as the pools before them.")
+      .addDropdown((dropdown) =>
+        dropdown
+          .addOptions(Object.fromEntries(ROLL_METHODS.map((m) => [m.id, m.label])))
+          .setValue(rollMethod(this.plugin.settings.defaultRollMethod).id)
+          .onChange(async (value) => {
+            this.plugin.settings.defaultRollMethod = value;
             await this.plugin.saveSettings();
           }),
       );

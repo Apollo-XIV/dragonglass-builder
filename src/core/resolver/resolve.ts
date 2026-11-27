@@ -66,6 +66,7 @@ import {
   proficiencyBonusFor,
   slotsForCasterLevel,
 } from "./spellslots";
+import { abilityPoolDiagnostics } from "./ability-pools";
 import { limitDiagnostics, spellLimits } from "./spell-limits";
 import { StatEngine, proficiencyMultiplier, type StatInput } from "./stats";
 import type {
@@ -118,6 +119,7 @@ export function resolve(input: ResolveInput): ResolvedCharacter {
 
   const collected = collect(content, build, inventory);
   diagnostics.push(...collected.diagnostics);
+  diagnostics.push(...abilityPoolDiagnostics(build.abilities));
 
   const totalLevel = Math.max(build.levels?.length ?? 0, 0) || build.level || 0;
   const inertPicks = settleExpertise(content, collected, totalLevel);

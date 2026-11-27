@@ -279,6 +279,15 @@ working in another pane. Leaving the builder discards the session and leaves the
 a draft (plugin data, keyed by folder), so the sheet shows what is saved. Making a
 character for the first time saves live instead, decided once when the builder opens.
 
+**Starting ability scores have three tile centres.** `builder/score-tile.tsx` is one frame
+(header, bonus flanks) around a reel (point buy steps it), a plain number or a dashed cutout
+(rolled and standard array). The pool methods' rules are `builder/ability-pools.ts`: chips are
+`pool:slot`, so two 14s are two chips, and `assign`, `unassign`, `setValue`, `switchMethod`
+keep `build.abilities.base` and the chips in step — tap-then-tap and drag both call them. A roll
+method (`roll-methods.ts`) is a range and a roll; typing a value reads only the range. A chip's
+roll is the same `Reel` labelled round its range, so it spins forwards onto a value already
+decided. In a pool method `base` can be missing an ability; read it with a default.
+
 **Picks for levels not yet taken.** `build.planned` queues choices by class and class
 level, never by character level, so taking a Fighter level leaves the Wizard plans
 alone. `addLevel` applies and consumes the queue; `removeLevel` demotes that level's

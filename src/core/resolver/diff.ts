@@ -35,7 +35,7 @@ export function diffBuilds(base: BuildFile, next: BuildFile, nameOf: (id: string
   for (const ability of ABILITIES) {
     const from = base.abilities.base[ability];
     const to = next.abilities.base[ability];
-    if (from !== to) lines.push(`${ability.toUpperCase()}: ${from} → ${to}`);
+    if (from !== to) lines.push(`${ability.toUpperCase()}: ${from ?? "unassigned"} → ${to ?? "unassigned"}`);
   }
 
   // Levels are reported by class, because that is how a player thinks about

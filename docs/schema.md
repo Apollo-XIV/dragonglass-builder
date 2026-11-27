@@ -256,6 +256,23 @@ gap, and `reorderProgression` writes a drag's result. An entry may carry `hp` (s
 dragged below the divider and back keeps its rolled hit points) and `queued: true` (a
 place held on purpose when it has no picks in it).
 
+### Starting ability scores
+
+`build.abilities` is `{ method, base, pools?, assigned? }`. `base` is the only part the resolver
+reads, and an ability missing from it resolves as 10: in a pool method (`rolled`,
+`standard-array`) an ability with nothing assigned is absent.
+
+- `pools` holds each rolled pool as `{ id, method, values }`: six slots, each a number or `null`
+  (empty), and the roll method that made it (`"4d6-drop-lowest"`). Pool ids contain no colon. The
+  standard array is never stored as a pool.
+- `assigned` maps an ability to the chip its `base` came from, as `pool:slot` (`"p1:3"`, or
+  `"standard:0"`). A chip is a slot, so two 14s are two chips. Pools and `assigned` are kept through
+  a method that does not use them, so switching back finds each score's chip again.
+
+A chip naming a pool that is gone, an empty or out-of-range slot, or claimed by two abilities is
+reported as `ability-pool-invalid` (a warning) and ignored by the builder; the scores still resolve
+from `base`.
+
 ### Validity is derived, never stored
 
 A stored pick is *live* if the current selections lead the collector to the choice it

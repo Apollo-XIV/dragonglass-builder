@@ -1,5 +1,6 @@
 import type { LayoutFile, NarrowPrefs, SourceRef } from "../core/types";
 import { normalizeDir } from "../core/source-dir";
+import { DEFAULT_ROLL_METHOD } from "./ui/builder/roll-methods";
 
 export type CacheTier = "none" | "smart" | "all";
 
@@ -101,6 +102,8 @@ export interface DragonglassSettings {
   exportFolder: string;
   /** Default hit point method for new levels. */
   defaultHp: "max" | "average" | "roll";
+  /** How a character's first pool of rolled ability scores is rolled: a roll method id. */
+  defaultRollMethod: string;
   layout: LayoutSettings;
   narrow: NarrowSettings;
   /** Milliseconds to wait before writing after a state change. */
@@ -142,6 +145,7 @@ export const DEFAULT_SETTINGS: DragonglassSettings = {
   charactersFolder: "Characters",
   exportFolder: "Exports",
   defaultHp: "average",
+  defaultRollMethod: DEFAULT_ROLL_METHOD,
   layout: {
     accent: "",
     compact: false,
