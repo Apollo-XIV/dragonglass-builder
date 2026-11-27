@@ -6310,3 +6310,81 @@ body.is-mobile .dg-ability-stepbar {
     opacity: 0;
   }
 }
+
+/* The facet picker: rows sized to their content, one scrolling row of facet chips. */
+.dg-layout .dg-fp {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--size-4-2, 8px);
+}
+.dg-layout .dg-fp-facets {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.dg-layout .dg-fp-facets::-webkit-scrollbar {
+  display: none;
+}
+.dg-layout .dg-fp-facets .dg-n-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+.dg-layout .dg-fp-facet-count {
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+}
+.dg-layout .dg-fp-list {
+  overflow-y: auto;
+  min-height: 0;
+  flex: 1 1 auto;
+}
+.dg-layout .dg-fp-line {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.dg-layout .dg-fp-line > .dg-fp-row {
+  flex: 1 1 auto;
+  min-height: 44px;
+  height: auto;
+}
+.dg-layout .dg-fp-meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller, 12px);
+  white-space: nowrap;
+}
+.dg-layout .dg-fp-stepper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dg-layout .dg-fp-stepper .dg-fp-step {
+  min-width: 44px;
+  min-height: 44px;
+}
+.dg-layout .dg-fp-qty {
+  min-width: 1.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dg-layout .dg-fp-strip {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  flex: 0 0 auto;
+}
+.dg-layout .dg-fp-strip .dg-n-chip {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
+@media (min-width: 900px) {
+  .dg-layout .dg-fp-line > .dg-fp-row,
+  .dg-layout .dg-fp-stepper .dg-fp-step {
+    min-height: 32px;
+    min-width: 32px;
+  }
+}

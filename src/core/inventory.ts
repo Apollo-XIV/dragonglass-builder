@@ -67,6 +67,23 @@ export function addInventoryItem(
   return { ...file, items: [...file.items, { uid: newEntryUid(file, next), id }] };
 }
 
+/**
+ * Takes one copy back: the newest plain entry for the item loses one, and goes when it
+ * had one. An entry with a state of its own (equipped, tagged, in a bag) is never
+ * the one taken, so stepping a picker down cannot undo something the player set up.
+ */
+export function takeInventoryItem(file: InventoryFile, id: string): InventoryFile {
+  let at = -1;
+  file.items.forEach((e, i) => {
+    if (isPlain(e, id)) at = i;
+  });
+  if (at < 0) return file;
+  const q = file.items[at].quantity ?? 1;
+  return q > 1
+    ? { ...file, items: file.items.map((e, i) => (i === at ? { ...e, quantity: q - 1 } : e)) }
+    : removeInventoryEntry(file, at);
+}
+
 /** Appends an entry, giving it its id now. */
 export function appendInventoryEntry(
   file: InventoryFile,

@@ -52,6 +52,7 @@ export {
   randomUid,
   newEntryUid,
   addInventoryItem,
+  takeInventoryItem,
   isStackable,
   appendInventoryEntry,
   removeInventoryEntry,

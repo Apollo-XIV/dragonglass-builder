@@ -1,6 +1,6 @@
 /** Spells, equipment and details: the lists a character carries and the facts about it. */
 
-import { useRef, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import { unverifiedNotes } from "../../../../core/content/provenance";
 import type {
   ResolvedCharacter,
@@ -9,14 +9,16 @@ import type {
 import { factsOf } from "../../../../core/content/facts";
 import { classSpellList } from "../../../../core/resolver/spell-list";
 import type { ClassSpellLimits, Count } from "../../../../core/resolver/spell-limits";
-import type { Element, ExtraSpellPick, SpellEntry } from "../../../../core/types";
+import type { Element, ExtraSpellPick, InventoryFile, SpellEntry } from "../../../../core/types";
 import type { CharacterStore } from "../../../character-store";
 import { chooseAvatar, importAvatar } from "../../../avatar-actions";
 import { Avatar } from "../../avatar";
 import { usePlugin } from "../../context";
-import { addInventoryItem, isStackable, removeInventoryEntry } from "../../../../core/index";
+import { addInventoryItem, isStackable, removeInventoryEntry, takeInventoryItem } from "../../../../core/index";
 import { useSheet } from "../../narrow/sheet";
-import { InfoRow } from "../detail";
+import { DetailBody, InfoRow } from "../detail";
+import { FacetPicker } from "../facet-picker";
+import { costText, ITEM_FACETS, itemRows, weightText } from "../item-adapter";
 import { useBuilderFeatures } from "../features";
 import { inheritedFilterOf, sourceRefOf } from "../model";
 import { usePicker, usePickerSlot, type PickerOption } from "../picker";
@@ -222,6 +224,48 @@ export function SpellsSection({
   );
 }
 
+/** The facet picker over every item, writing each tap to the inventory as it happens. */
+export function ItemPickerSheet({ store, close }: { store: CharacterStore; close: () => void }): ReactNode {
+  const index = store.index!;
+  const rows = useMemo(() => itemRows(index), [index]);
+  const [added, setAdded] = useState<Record<string, number>>({});
+  const read = useSheet();
+  const file = (): InventoryFile => store.data.inventory ?? { kind: "inventory", schemaVersion: 1, items: [] };
+  const bump = (id: string, d: 1 | -1): void => setAdded((a) => ({ ...a, [id]: Math.max(0, (a[id] ?? 0) + d) }));
+  return (
+    <FacetPicker
+      rows={rows}
+      idOf={(r) => r.id}
+      nameOf={(r) => r.name}
+      searchOf={(r) => r.tags}
+      facets={ITEM_FACETS}
+      renderMeta={(r) => [weightText(r.weight), costText(r.value)].filter(Boolean).join(" · ")}
+      added={added}
+      onAdd={(r) => {
+        store.update("inventory", addInventoryItem(file(), r.id, (i) => isStackable(index.get(i))));
+        bump(r.id, 1);
+      }}
+      onStep={(r, d) => {
+        store.update(
+          "inventory",
+          d > 0
+            ? addInventoryItem(file(), r.id, (i) => isStackable(index.get(i)))
+            : takeInventoryItem(file(), r.id),
+        );
+        bump(r.id, d);
+      }}
+      onRead={(r) =>
+        read.open({
+          title: r.name,
+          subtitle: r.tag,
+          body: () => <DetailBody spec={{ title: r.name, tag: r.tag, text: r.element.text as string | undefined, facts: factsOf(r.element) }} />,
+        })
+      }
+      close={close}
+    />
+  );
+}
+
 export function EquipmentSection({
   store,
   character,
@@ -229,7 +273,6 @@ export function EquipmentSection({
   store: CharacterStore;
   character: ResolvedCharacter;
 }): ReactNode {
-  const picker = usePicker();
   const slot = usePickerSlot();
   const sheet = useSheet();
   const features = useBuilderFeatures();
@@ -243,32 +286,9 @@ export function EquipmentSection({
     });
 
   const add = (): void =>
-    picker({
+    sheet.open({
       title: "Add items",
-      options: index.byKind("item").map((item) => ({
-        id: item.id,
-        name: item.name,
-        text: typeof item.text === "string" ? item.text : undefined,
-        facts: factsOf(item),
-        tag: index.abbreviation(item.source),
-        source: sourceRefOf(index, item.source),
-        group: item.tags?.[0],
-        unverified: unverifiedNotes(item),
-      })),
-      selected: [],
-      count: 99,
-      search: features.pickerSearch,
-      onCommit: (ids) => {
-        const file = store.data.inventory ?? {
-          kind: "inventory" as const,
-          schemaVersion: 1,
-          items: [],
-        };
-        store.update(
-          "inventory",
-          ids.reduce((next, id) => addInventoryItem(next, id, (i) => isStackable(index.get(i))), file),
-        );
-      },
+      body: () => <ItemPickerSheet store={store} close={sheet.close} />,
     });
 
   return (
