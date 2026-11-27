@@ -173,6 +173,8 @@ function validateEquipment(e: unknown, subject: string | undefined, path: string
     out.push(err("invalid-element", "an equipment entry has exactly one of item, currency and gold", subject, path));
   if (entry.item !== undefined && (typeof entry.item !== "string" || !entry.item))
     out.push(err("invalid-element", "equipment `item` must be an element id", subject, `${path}.item`));
+  if (entry.name !== undefined && (typeof entry.name !== "string" || !entry.name.trim() || entry.item === undefined))
+    out.push(err("invalid-element", "equipment `name` must be text, and goes with an `item`", subject, `${path}.name`));
   if (entry.quantity !== undefined && (typeof entry.quantity !== "number" || !Number.isInteger(entry.quantity) || entry.quantity < 1))
     out.push(err("invalid-element", "equipment `quantity` must be a whole number of at least 1", subject, `${path}.quantity`));
   if (entry.currency !== undefined) {
@@ -197,6 +199,21 @@ function validateEquipment(e: unknown, subject: string | undefined, path: string
         out.push(err("invalid-element", "gold needs `dice`, `multiplier` or both", subject, `${path}.gold`));
     }
   }
+}
+
+function validateContents(c: unknown, subject: string | undefined, out: Diagnostic[]): void {
+  if (!Array.isArray(c)) {
+    out.push(err("invalid-element", "contents must be an array", subject, "contents"));
+    return;
+  }
+  c.forEach((p, i) => {
+    const packed = p as { item?: unknown; quantity?: unknown } | null;
+    const path = `contents[${i}]`;
+    if (!packed || typeof packed !== "object" || typeof packed.item !== "string" || !packed.item)
+      out.push(err("invalid-element", "a packed item needs an item element id", subject, path));
+    if (packed && packed.quantity !== undefined && (typeof packed.quantity !== "number" || !Number.isInteger(packed.quantity) || packed.quantity < 1))
+      out.push(err("invalid-element", "packed `quantity` must be a whole number of at least 1", subject, `${path}.quantity`));
+  });
 }
 
 function validateResource(r: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
@@ -568,6 +585,7 @@ export function validateElement(raw: unknown): ValidationResult {
       out.push(err("invalid-element", "innateSpells must be an array", subject, "innateSpells"));
     else el.innateSpells.forEach((s, i) => validateInnate(s, declaredChoices(el), subject, `innateSpells[${i}]`, out));
   }
+  if (el.contents !== undefined) validateContents(el.contents, subject, out);
   if (el.equipment !== undefined) {
     if (!Array.isArray(el.equipment)) out.push(err("invalid-element", "equipment must be an array", subject, "equipment"));
     else el.equipment.forEach((q, i) => validateEquipment(q, subject, `equipment[${i}]`, out));

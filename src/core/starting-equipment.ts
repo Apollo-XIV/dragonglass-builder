@@ -12,7 +12,7 @@
  */
 
 import type { ContentIndex } from "./content";
-import { addStartingEquipment, applyGoldDelta, sweepEntries, type Currency, type EntryOrigin } from "./inventory";
+import { addStartingEquipment, applyGoldDelta, entryItemId, sweepEntries, type Currency, type EntryOrigin } from "./inventory";
 import { collect, type CollectResult } from "./resolver/collect";
 import type { PendingChoice } from "./resolver/resolved";
 import type { BuildFile, Element, InventoryEntry, InventoryFile, StartingState } from "./types";
@@ -21,7 +21,8 @@ const COINS = ["cp", "sp", "ep", "gp", "pp"] as const;
 
 export interface PlannedGroup {
   origin: EntryOrigin;
-  items: { id: string; quantity?: number }[];
+  /** `in` is the id of the item holding this one, within the same group; `name` makes it an instance under that name. */
+  items: { id: string; quantity?: number; in?: string; name?: string }[];
 }
 
 export interface StartingPlan {
@@ -38,13 +39,24 @@ export const groupKey = (origin: { element: string; choice: string }): string =>
 const sameOrigin = (a: string[], b: string[]): boolean => a.length === b.length && a.every((x, i) => x === b[i]);
 
 /** What the chosen options say the inventory should hold. */
-export function startingPlan(collected: CollectResult, build: BuildFile): StartingPlan {
+export function startingPlan(collected: CollectResult, build: BuildFile, index?: ContentIndex): StartingPlan {
   const plan: StartingPlan = { groups: {}, currency: {}, golds: [] };
-  const add = (origin: EntryOrigin, id: string, quantity = 1): void => {
+  const put = (origin: EntryOrigin, id: string, quantity: number, holder?: string, name?: string): void => {
     const group = (plan.groups[groupKey(origin)] ??= { origin, items: [] });
-    const at = group.items.find((i) => i.id === id);
+    const at = group.items.find((i) => i.id === id && i.in === holder && i.name === name);
     if (at) at.quantity = (at.quantity ?? 1) + quantity;
-    else group.items.push(quantity === 1 ? { id } : { id, quantity });
+    else
+      group.items.push({
+        id,
+        ...(quantity === 1 ? {} : { quantity }),
+        ...(holder ? { in: holder } : {}),
+        ...(name ? { name } : {}),
+      });
+  };
+  // An item with `contents` brings them along, inside it.
+  const add = (origin: EntryOrigin, id: string, quantity = 1, name?: string): void => {
+    put(origin, id, quantity, undefined, name);
+    for (const packed of index?.get(id)?.contents ?? []) put(origin, packed.item, (packed.quantity ?? 1) * quantity, id);
   };
 
   for (const el of collected.elements) {
@@ -59,7 +71,7 @@ export function startingPlan(collected: CollectResult, build: BuildFile): Starti
     const origin = { element: el.element.id, choice };
     const purse: Currency = {};
     for (const line of lines) {
-      if (line.item) add(origin, line.item, line.quantity);
+      if (line.item) add(origin, line.item, line.quantity, line.name);
       if (line.currency)
         for (const coin of COINS) if (line.currency[coin]) purse[coin] = (purse[coin] ?? 0) + line.currency[coin]!;
       if (line.gold) {
@@ -93,8 +105,10 @@ export interface StartingResult {
   changed: boolean;
 }
 
-const quantityOf = (items: { id: string; quantity?: number }[] | undefined, id: string): number =>
-  (items ?? []).filter((i) => i.id === id).reduce((n, i) => n + (i.quantity ?? 1), 0);
+type PlannedItem = PlannedGroup["items"][number];
+
+const quantityOf = (items: PlannedItem[] | undefined, id: string, holder?: string, name?: string): number =>
+  (items ?? []).filter((i) => i.id === id && i.in === holder && i.name === name).reduce((n, i) => n + (i.quantity ?? 1), 0);
 
 /**
  * Brings the inventory and the purse in line with the plan, from what was last applied.
@@ -117,18 +131,36 @@ export function reconcileStarting(
     const now = plan.groups[key]?.items;
     const [element, ...rest] = key.split("|");
     const origin: EntryOrigin = plan.groups[key]?.origin ?? { element, choice: rest.join("|") };
-    const ids = new Set([...(was ?? []).map((i) => i.id), ...(now ?? []).map((i) => i.id)]);
-    for (const id of ids) {
-      const before = quantityOf(was, id);
-      const after = quantityOf(now, id);
-      if (before === after) continue;
-      if (before > 0) {
-        const swept = sweepEntries(file, (e) => e.id === id && e.origin?.element === origin.element && e.origin.choice === origin.choice);
-        file = swept.file;
-        removed.push(...swept.removed);
-        kept.push(...swept.kept);
-      }
-      if (after > 0) file = addStartingEquipment(file, origin, [{ id, quantity: after }], next);
+    const lines = new Map<string, { id: string; in?: string; name?: string }>();
+    for (const i of [...(was ?? []), ...(now ?? [])]) lines.set(`${i.in ?? ""}|${i.id}|${i.name ?? ""}`, { id: i.id, in: i.in, name: i.name });
+    // Holders before what they hold, so a new pack exists when its contents are put in.
+    const ordered = [...lines.values()].sort((a, b) => Number(!!a.in) - Number(!!b.in));
+    const ofOrigin = (e: InventoryEntry): boolean => e.origin?.element === origin.element && e.origin.choice === origin.choice;
+    const changed = ordered.filter((l) => quantityOf(was, l.id, l.in, l.name) !== quantityOf(now, l.id, l.in, l.name));
+    // What an entry is packed in, when that is another entry of this group: the kit's own packing.
+    const heldBy = (f: InventoryFile, e: InventoryEntry): string | undefined => {
+      const holder = e.container ? f.items.find((h) => h.uid === e.container && ofOrigin(h)) : undefined;
+      return holder && entryItemId(holder);
+    };
+    const gone = changed.filter((l) => quantityOf(was, l.id, l.in, l.name) > 0);
+    if (gone.length) {
+      const before = file;
+      const swept = sweepEntries(
+        before,
+        (e) => ofOrigin(e) && gone.some((l) => l.id === entryItemId(e) && l.name === e.item?.name && l.in === heldBy(before, e)),
+        (e) => heldBy(before, e) !== undefined,
+      );
+      file = swept.file;
+      removed.push(...swept.removed);
+      kept.push(...swept.kept);
+    }
+    for (const { id, in: holder, name } of changed) {
+      const after = quantityOf(now, id, holder, name);
+      if (after === 0) continue;
+      const count = file.items.length;
+      file = addStartingEquipment(file, origin, [{ id, quantity: after, ...(name ? { name } : {}) }], next);
+      const holderEntry = holder ? file.items.find((h) => entryItemId(h) === holder && ofOrigin(h) && !h.container) : undefined;
+      if (holderEntry) file = { ...file, items: file.items.map((e, i) => (i === count ? { ...e, container: holderEntry.uid } : e)) };
     }
   }
 
@@ -167,7 +199,7 @@ export function applyStarting(
   next?: () => string,
 ): StartingResult {
   const file = inventory ?? { kind: "inventory" as const, schemaVersion: 1, items: [] };
-  return reconcileStarting(build, file, startingPlan(collect(index, build, inventory), build), next);
+  return reconcileStarting(build, file, startingPlan(collect(index, build, inventory), build, index), next);
 }
 
 /** Whether an element, or something it offers, puts items in the inventory. */

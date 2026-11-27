@@ -106,6 +106,11 @@ export interface EquipmentEntry {
   /** An item element id. */
   item?: string;
   quantity?: number;
+  /**
+   * What the source calls this one ("prayer book" for a Book). The entry is an instance of
+   * `item` under this name, so it keeps the item's stats and tags. Only with `item`.
+   */
+  name?: string;
   /** Currency the option adds, by denomination. */
   currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number };
   /**
@@ -113,6 +118,13 @@ export interface EquipmentEntry {
    * amount is `X × multiplier` gp. With no `dice`, the amount is `multiplier` as given.
    */
   gold?: { dice?: string; multiplier?: number };
+}
+
+/** An item packed inside another when starting equipment hands the holder out. */
+export interface PackedItem {
+  /** An item element id. */
+  item: string;
+  quantity?: number;
 }
 
 export const MODIFIER_OPS = [
@@ -442,6 +454,11 @@ export interface Element {
   spellListAdditions?: SpellListAddition[];
   /** Starting equipment this element adds when it is chosen. See docs/schema.md. */
   equipment?: EquipmentEntry[];
+  /**
+   * On an item: what it holds when starting equipment hands it out (a pack's contents). Each is
+   * put inside the item, one level deep. Ignored when the player adds the item themselves.
+   */
+  contents?: PackedItem[];
 
   /** Kind-specific fields and `x-` extensions. */
   [key: string]: unknown;
@@ -779,7 +796,7 @@ export interface BuildFile extends CharacterFile {
 
 export interface StartingState {
   /** What each group has added to the inventory, by `element|choice`. */
-  items: Record<string, { id: string; quantity?: number }[]>;
+  items: Record<string, { id: string; quantity?: number; in?: string; name?: string }[]>;
   /** The X typed or rolled for an option's starting gold, by option element id. */
   gold: Record<string, { x: number }>;
   /** What each element has added to the purse, by element id. */

@@ -202,3 +202,70 @@ describe("only the class at character level one", () => {
     expect(ids(swapped.inventory)).toEqual(["item-of-b-kit"]);
   });
 });
+
+describe("an item that holds things", () => {
+  const cls = (): Element =>
+    ({ id: "a", kind: "class", name: "a", source: "test", hitDie: "d8", levels: { "1": { choices: [{ id: "a:eq", count: 1, from: { kind: "kit", ids: ["a-kit", "a-none"] } }] } } }) as Element;
+  const item = (id: string, extra: object = {}): Element => ({ id, kind: "gear", name: id, source: "test", ...extra }) as Element;
+  const kit = (id: string, equipment: object[]): Element => ({ id, kind: "kit", name: id, source: "test", equipment }) as Element;
+  const world = testIndex([
+    TEST_BOOK,
+    cls(),
+    kit("a-kit", [{ item: "pack", quantity: 2 }, { item: "rope" }]),
+    kit("a-none", []),
+    item("pack", { tags: ["container"], contents: [{ item: "rope" }, { item: "torch", quantity: 10 }] }),
+    item("rope"),
+    item("torch"),
+  ]);
+  const chosen = (kitId: string) => plainBuild({ levels: [{ class: "a", hp: "max", choices: { "a:eq": [kitId] } }] });
+  const heldIn = (f: InventoryFile, id: string) => f.items.filter((e) => e.id === id).map((e) => f.items.find((h) => h.uid === e.container)?.id);
+
+  it("puts a pick's contents inside it, scaled by its quantity, and keeps loose copies loose", () => {
+    const { inventory } = applyStarting(world, chosen("a-kit"), empty(), next);
+    expect(inventory.items.find((e) => e.id === "pack")?.quantity).toBe(2);
+    expect(heldIn(inventory, "torch")).toEqual(["pack"]);
+    expect(inventory.items.find((e) => e.id === "torch")?.quantity).toBe(20);
+    expect(heldIn(inventory, "rope")).toEqual(expect.arrayContaining([undefined, "pack"]));
+  });
+
+  it("takes the pack and what is in it out together when the option changes", () => {
+    const first = applyStarting(world, chosen("a-kit"), empty(), next);
+    const r = applyStarting(world, { ...chosen("a-none"), starting: first.build.starting }, first.inventory, next);
+    expect(r.inventory.items).toEqual([]);
+    expect(r.kept).toEqual([]);
+  });
+
+  it("is a no-op when nothing changed", () => {
+    const first = applyStarting(world, chosen("a-kit"), empty(), next);
+    const again = applyStarting(world, { ...chosen("a-kit"), starting: first.build.starting }, first.inventory, next);
+    expect(again.changed).toBe(false);
+  });
+});
+
+describe("a line with a name", () => {
+  const item = (id: string, extra: object = {}): Element => ({ id, kind: "item", name: id, source: "test", ...extra }) as Element;
+  const world = testIndex([
+    TEST_BOOK,
+    { id: "a", kind: "class", name: "a", source: "test", hitDie: "d8", levels: { "1": { choices: [{ id: "a:eq", count: 1, from: { kind: "kit", ids: ["a-kit", "a-none"] } }] } } } as Element,
+    { id: "a-kit", kind: "kit", name: "kit", source: "test", equipment: [{ item: "book", name: "prayer book" }, { item: "book" }] } as Element,
+    { id: "a-none", kind: "kit", name: "none", source: "test", equipment: [] } as Element,
+    item("book", { tags: ["tome"] }),
+  ]);
+  const chosen = (kitId: string) => plainBuild({ levels: [{ class: "a", hp: "max", choices: { "a:eq": [kitId] } }] });
+
+  it("is an instance of the item under that name, beside a plain one", () => {
+    const { inventory } = applyStarting(world, chosen("a-kit"), empty(), next);
+    const named = inventory.items.find((e) => e.item);
+    expect(named?.item).toMatchObject({ base: "book", name: "prayer book" });
+    expect(named?.id).toBeUndefined();
+    expect(inventory.items.find((e) => e.id === "book")).toBeDefined();
+  });
+
+  it("goes when the option does, and is not added twice", () => {
+    const first = applyStarting(world, chosen("a-kit"), empty(), next);
+    const again = applyStarting(world, { ...chosen("a-kit"), starting: first.build.starting }, first.inventory, next);
+    expect(again.changed).toBe(false);
+    const r = applyStarting(world, { ...chosen("a-none"), starting: first.build.starting }, first.inventory, next);
+    expect(r.inventory.items).toEqual([]);
+  });
+});

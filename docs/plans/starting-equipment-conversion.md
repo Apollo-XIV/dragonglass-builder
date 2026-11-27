@@ -42,10 +42,18 @@ and the Acolyte) and `tests/srd/starting-equipment.test.ts` shows how to check o
 - A background's equipment must not be added twice by a class that lists the same item: they are
   separate origins, so two entries is correct.
 
+## Format additions made for the conversion
+
+- **`contents` on an item** unpacks a pack into the container it is when starting equipment hands it
+  out (one level deep). The converter writes it from 5etools' `packContents`, leaving out the
+  backpack, which the pack is.
+- **`name` on an `equipment` line** is what the source calls an item ("prayer book" for the Book): the
+  entry is an instance of the item under that name. To name one alternative of a pick, make each
+  alternative an option element.
+- Coins are not contents: the purse is one pool, so a pouch "containing 15 gp" is a pouch and a
+  `currency` line.
+
 ## Known gaps in the format
 
-- A pack's contents cannot be expressed, so a pack is one entry. `addStartingEquipment` can put items
-  inside a container (`within`), but no content produces it yet; if packs need unpacking, that is a
-  schema addition, not a converter decision.
 - A choice with more than three options in the builder falls back to the ordinary choice row rather
   than a selector.

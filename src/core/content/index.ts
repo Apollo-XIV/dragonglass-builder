@@ -263,6 +263,17 @@ export class ContentIndex {
             ...where,
           });
       });
+      (el.contents ?? []).forEach((packed, i) => {
+        if (typeof packed?.item === "string" && !this.elements.has(packed.item))
+          this.diagnostics.push({
+            severity: "warning",
+            code: "unresolved-reference",
+            message: `"${el.id}" holds "${packed.item}", which is not loaded`,
+            subject: el.id,
+            path: `contents[${i}].item`,
+            ...where,
+          });
+      });
       const levels = el.levels as Record<string, { grants?: (string | { id: string })[] }> | undefined;
       for (const [lvl, entry] of Object.entries(levels ?? {})) {
         for (const grant of entry.grants ?? []) {

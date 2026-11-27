@@ -7,6 +7,7 @@
  * is saved always agree. Nothing gives an id to an entry that lacks one.
  */
 
+import { customItemId } from "./custom-item";
 import { diceRange } from "./dice";
 import type { Element, EquipmentEntry, InventoryEntry, InventoryFile } from "./types";
 
@@ -176,7 +177,12 @@ export interface StartingItem {
   id: string;
   quantity?: number;
   within?: number;
+  /** An instance of `id` under this name: the entry links to it with `base` and carries the name. */
+  name?: string;
 }
+
+/** The element id an entry is of: its own, or the one a named instance is based on. */
+export const entryItemId = (e: InventoryEntry): string | undefined => e.id ?? e.item?.base;
 
 /**
  * Appends starting equipment, each entry tagged with `origin`. These never merge into a
@@ -194,7 +200,9 @@ export function addStartingEquipment(
   items.forEach((line, i) => {
     const uid = newEntryUid(out, next);
     uids[i] = uid;
-    const entry: InventoryEntry = { uid, id: line.id, origin: { ...origin } };
+    const entry: InventoryEntry = line.name
+      ? { uid, item: { base: line.id, id: customItemId(line.name, uid), name: line.name }, origin: { ...origin } }
+      : { uid, id: line.id, origin: { ...origin } };
     if (line.quantity !== undefined && line.quantity !== 1) entry.quantity = line.quantity;
     const holder = line.within === undefined ? undefined : uids[line.within];
     if (holder) entry.container = holder;
@@ -205,7 +213,7 @@ export function addStartingEquipment(
 
 /** The fixed items of an `equipment` part, in order. Currency and gold are not entries. */
 export function startingItems(lines: EquipmentEntry[] | undefined): StartingItem[] {
-  return (lines ?? []).flatMap((l) => (l.item ? [{ id: l.item, quantity: l.quantity }] : []));
+  return (lines ?? []).flatMap((l) => (l.item ? [{ id: l.item, quantity: l.quantity, ...(l.name ? { name: l.name } : {}) }] : []));
 }
 
 export interface OriginSweep {
@@ -230,9 +238,14 @@ export function sweepOrigin(file: InventoryFile, match: OriginMatch): OriginSwee
 }
 
 /** `sweepOrigin` for any set of tagged entries, so a change to one pick leaves the rest of its choice. */
-export function sweepEntries(file: InventoryFile, pick: (entry: InventoryEntry) => boolean): OriginSweep {
+export function sweepEntries(
+  file: InventoryFile,
+  pick: (entry: InventoryEntry) => boolean,
+  /** Entries whose container is the kit's own packing, whether or not that container goes too. */
+  packed?: (entry: InventoryEntry) => boolean,
+): OriginSweep {
   const swept = new Set(file.items.filter((e) => e.origin && pick(e)).map((e) => e.uid));
-  const inUse = (e: InventoryEntry): boolean => !!e.equipped || !!e.attuned || (!!e.container && !swept.has(e.container));
+  const inUse = (e: InventoryEntry): boolean => !!e.equipped || !!e.attuned || (!!e.container && !swept.has(e.container) && !packed?.(e));
   const removed: InventoryEntry[] = [];
   const kept: InventoryEntry[] = [];
   const gone = new Set<string>();

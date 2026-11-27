@@ -305,6 +305,18 @@ for what the player picks:
   alternative: the player types or rolls X on the dice and gets X × `multiplier` gp. Without `dice`,
   `multiplier` is a fixed amount, as the 2024 rules give it. The part is also allowed on a background
   itself, for a fixed list with no alternative (the Acolyte).
+- **`name`** on an `item` line is what the source calls that item ("prayer book" for the Book). The
+  inventory entry is an instance of the item under that name (an inline item with `base`, see
+  **Custom items and `base`**), so it keeps the item's stats and tags and shows the source's word.
+  To name one alternative of a pick, make each alternative an option element with its own line.
+- **`contents`** on an *item* is what it holds when starting equipment hands it out: a pack's
+  `[{ "item": "srd:item:rope" }, { "item": "srd:item:torch", "quantity": 10 }]`. Each is put inside
+  the item (the item should be tagged `container`; a pack is its own backpack, so the backpack is
+  not listed). This applies to any way an item arrives as starting equipment, an `equipment` line
+  or a pick of a `to: "inventory"` choice, and scales with that item's quantity. One level only:
+  the contents of a packed item are not unpacked. It does nothing when the player adds the item
+  themselves. Coins are not contents: the purse is one pool, so a pouch "containing 15 gp" is a
+  pouch item plus a `currency` line.
 - **`to: "inventory"`** on a `ChoiceDef` marks a choice whose picks are items that go into the
   inventory, not only referenced. Without it a choice of items adds nothing.
 - **When it applies.** A choice declared at any level but the character's first is ignored, so
