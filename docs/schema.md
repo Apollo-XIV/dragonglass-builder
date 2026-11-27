@@ -99,6 +99,7 @@ tab for them with no plugin change.
 | `resources` | A pool with an expression `max` and a `recharge` list of rules. See **Recharge rules**. |
 | `actions` | Something the player activates: `activation`, optional `cost`, optional `applies` naming an effect, plus `range`, `target`, `damage`, `damageType`, `save`, `attack`, `recharge`. See **Attack rolls on actions**. |
 | `innateSpells` | A spell cast without preparing it or spending a slot, at will or on a pool of its own. See **Granted and innate spells**. |
+| `equipment` | What an option puts in a character's inventory and purse when it is chosen: items, currency, starting gold. See **Starting equipment**. |
 | `effects` | A named, toggleable overlay of modifiers with a `duration` and optional `concentration`. Active effects live in `state.5e`. |
 
 Any part may carry its own `text` or `notes` for the part of the rule it does not
@@ -272,6 +273,61 @@ reads, and an ability missing from it resolves as 10: in a pool method (`rolled`
 A chip naming a pool that is gone, an empty or out-of-range slot, or claimed by two abilities is
 reported as `ability-pool-invalid` (a warning) and ignored by the builder; the scores still resolve
 from `base`.
+
+### Starting equipment
+
+Starting equipment is an ordinary choice, on a class (at its first level) or a background, whose
+answer writes entries into `inventory.5e`. It reuses the choice model; nothing parallel exists.
+
+The top-level choice has two options in both rulesets: the equipment, and gold instead. Each option
+is a **bundle element** (see above), of a kind the source declares (`equipment-option` in the SRD).
+An option carries the new `equipment` part for what it gives outright, and ordinary nested `choices`
+for what the player picks:
+
+```jsonc
+{ "id": "srd:paladin:starting-equipment", "count": 1,            // on the class's level 1 entry
+  "from": { "kind": "equipment-option", "ids": ["srd:paladin:kit", "srd:paladin:gold"] } }
+
+{ "id": "srd:paladin:kit", "kind": "equipment-option", "name": "Equipment", "source": "srd",
+  "equipment": [ { "item": "srd:item:chain-mail" }, { "item": "srd:item:javelin", "quantity": 5 } ],
+  "choices": [
+    { "id": "srd:paladin:kit:weapons", "count": 1,                // an "(a) or (b)" group: more options
+      "from": { "kind": "equipment-option", "ids": ["srd:paladin:kit:martial-and-shield", "srd:paladin:kit:two-martial"] } },
+    { "id": "srd:paladin:kit:pack", "count": 1, "to": "inventory", // a category: its picks are items
+      "from": { "kind": "item", "ids": ["srd:item:priests-pack", "srd:item:explorers-pack"] } } ] }
+
+{ "id": "srd:paladin:gold", "kind": "equipment-option", "name": "Starting gold", "source": "srd",
+  "equipment": [ { "gold": { "dice": "5d4", "multiplier": 10 } } ] }
+```
+
+- **`equipment`** is a list of lines, each exactly one of `{ item, quantity? }` (an item element id),
+  `{ currency: { gp: 15 } }`, or `{ gold: { dice?, multiplier? } }`. `gold` with `dice` is the 2014
+  alternative: the player types or rolls X on the dice and gets X × `multiplier` gp. Without `dice`,
+  `multiplier` is a fixed amount, as the 2024 rules give it. The part is also allowed on a background
+  itself, for a fixed list with no alternative (the Acolyte).
+- **`to: "inventory"`** on a `ChoiceDef` marks a choice whose picks are items that go into the
+  inventory, not only referenced. Without it a choice of items adds nothing.
+- **When it applies.** A choice declared at any level but the character's first is ignored, so
+  multiclassing adds no class equipment, and the first level's class is whichever class holds it:
+  reordering levels moves the equipment exactly as changing the class does. Background equipment
+  always applies.
+- **Reconciliation.** The builder keeps the inventory in step with the build. `build.starting`
+  records what has been applied (`items` by `element|choice`, `gold` the X typed or rolled by option
+  id, `currency` by element id), so a change touches only the difference and an item the player
+  removed by hand is not added back. Gold and currency are applied to `inventory.currency` as a
+  difference, never below zero. `startingPlan` and `reconcileStarting` in
+  `src/core/starting-equipment.ts` are the whole of it.
+- **Removal.** When an answer is cleared or changed, or the class or background stops applying,
+  the entries carrying that origin go, except those the player is using: equipped, attuned, or
+  placed by the player in a container that is not part of the same origin. Notes and a changed
+  quantity protect nothing, nor does holding other entries (a kit's own packing never counts as
+  use). A kept entry loses its `origin` and is an ordinary item from then on. The builder shows
+  what will go and what will stay before it happens. Removed entries are not restored if the
+  option is chosen again; they are added afresh.
+- **Validation.** Every item id in an `equipment` line must resolve (`unresolved-reference`
+  otherwise), gold `dice` must parse, and `to: "inventory"` on a choice that is not of items is
+  warned. An item the source does not contain is minted by the converter as a minimal `gear`
+  element, so a built character has no broken rows.
 
 ### Validity is derived, never stored
 
@@ -907,6 +963,25 @@ such a character with a message saying to rebuild it. Two copies of one item are
 with a `quantity`, unless the item has charges, resources or attunement, or the entry has
 state of its own.
 
+Each entry may carry an `origin: { element, choice, option? }` naming what added it. Starting
+equipment always appends entries of its own with an origin; it never merges into a plain entry, and
+a plain add never merges into one with an origin (any extra key makes an entry non-plain). The
+export leaves `origin` out.
+
+**Custom items and `base`.** An entry's `item` is an inline element in the same format as source
+content. An inline item may carry **`base`**, the id of the item it is an instance of: the resolver
+reads that element and lays the inline item's own fields over it, a field present in the override
+replacing the base's. So a "+1 Longsword" is `{ base: "srd:item:longsword", id: "custom:item:...",
+name, modifiers }` and stays a longsword. If the base is not loaded the item resolves from its
+overrides alone and reports `unresolved-reference`. A detached copy has no `base`. A field cannot be
+overridden to "absent", so a linked item cannot drop something its base has. A magic bonus is
+written as ordinary modifiers (`attacks.<id>` and `damage.<id>` on a weapon, `ac` on armour and
+shields), marked `notes: "dg:bonus=N"` so an edit can tell them from hand-written ones.
+
+An item is a **container** the sheet's "Put in" list offers if it is tagged `container` (or has
+`itemType: "container"`), or already holds something. Content should tag bags, chests, pouches and
+the like.
+
 `hp.levels` on the resolved character lists the hit points taken at each class level
 (`resolver/hit-points.ts`), with the first-level rule applied once.
 
@@ -992,6 +1067,18 @@ interface PartProvenance { source: string; review: string }   // see "Part prove
 interface ExportCost { pool: string; amount?: number; min?: number; max?: number }
 // `amount` for a fixed cost; `min` (and an optional `max` cap) for a chosen one.
 // ExportPart.cost?: ExportCost[]; ExportPart.provenance?: PartProvenance
+
+// Starting equipment (see "Starting equipment"):
+interface EquipmentEntry {
+  item?: string; quantity?: number;                          // exactly one of these three
+  currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number };
+  gold?: { dice?: string; multiplier?: number };             // dice: 2014's X-times-multiplier; none: fixed
+}
+// Element.equipment?: EquipmentEntry[];  ChoiceDef.to?: "inventory";
+// InventoryEntry.origin?: { element: string; choice: string; option?: string };
+// ItemElement.base?: string;   // inline items only: the item this is an instance of
+// BuildFile.starting?: { items: Record<string, { id: string; quantity?: number }[]>;
+//                        gold: Record<string, { x: number }>; currency: Record<string, Currency> };
 
 interface Action {
   /* ... */

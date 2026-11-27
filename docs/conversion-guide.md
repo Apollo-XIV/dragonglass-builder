@@ -244,6 +244,40 @@ Choices that grant a proficiency are modelled as **self-granting option elements
 `tool` element carries the modifier that grants proficiency with itself. That is why
 "choose an artisan's tool" needs no special code.
 
+## 8a. Starting equipment
+
+A class's or background's "Equipment" paragraph becomes structure, not prose, so the builder can offer it
+and a class change can take it back. `docs/schema.md`, "Starting equipment", has the format; this is how to
+transcribe it.
+
+- **Keep the source's wording literal in `text`.** The structured part carries the mechanics; the paragraph
+  stays as the book printed it, on the class or background and on each option.
+- **The top-level choice** goes on the class's `levels."1"` entry (never any other level) or on the
+  background itself. Its options are two `equipment-option` elements: the kit and the gold alternative.
+  2014 says "alternatively, you may start with 5d4 × 10 gp"; 2024 says Option A (the kit and some gold)
+  or Option B (gold only). Declare the `equipment-option` kind in the source (`kind: "kind"`, key
+  `equipment-option`, untabbed, not browsable).
+- **Each "(a) ... or (b) ..." group is a nested choice** on the kit option, whose options are one
+  `equipment-option` per alternative. An alternative that is a fixed list carries `equipment`; one that is
+  "any martial weapon" carries a nested choice instead.
+- **A category is a choice of items with `to: "inventory"`** and a `from` that is an ordinary filter:
+  `{ "kind": "item", "tags": ["martial-weapon"] }`, or `allTags` for "simple melee" (`simple-weapon` and
+  `melee-weapon`, ANDed). Use `count: 2` with `repeatable: true` for "two martial weapons", which may be
+  the same weapon. Options are items, so there is nothing to mint for them.
+- **A fixed item is `{ "item": id, "quantity"? }`**, coins are `{ "currency": { "gp": 15 } }`, and gold
+  is `{ "gold": { "dice": "5d4", "multiplier": 10 } }` for 2014's X × 10, or `{ "gold": { "multiplier": 50 } }`
+  for a fixed amount. "A pouch containing 15 gp" is the pouch item and a separate currency line.
+- **Mint what the SRD lacks.** Incense, vestments, a prayer wheel: if a line names something with no item
+  element, add a minimal `gear` element to the source (`id`, `kind`, `name`, `source`, `tags: ["equipment"]`,
+  `itemType: "gear"`) rather than leaving a dangling id. The validator warns on any equipment id that
+  resolves to nothing.
+- **Tag containers.** Bags, backpacks, chests, pouches, quivers, sacks, barrels and baskets carry the tag
+  `container`, which is how the sheet knows what it can put things in.
+- **Packs** are single items for now (a pack's contents cannot be expressed yet), so `Priest's Pack` stays
+  one entry.
+- **Check it** by resolving a build with each option chosen and reading the inventory:
+  `tests/srd/starting-equipment.test.ts` is the pattern.
+
 ## 9. Classes and subclasses
 
 ```json
@@ -423,6 +457,7 @@ Before you call a conversion done:
 - [ ] Every element's `source` is the sourcebook's id.
 - [ ] Every grant and choice id resolves (the validator checks this).
 - [ ] Choice points carry a class-named tag, and every option carries it too.
+- [ ] Starting equipment is structured (section 8a), on level 1 only, with every item id resolving.
 - [ ] Scaling numbers are expressions or table columns, not hardcoded.
 - [ ] "Minimum +1" wording became `max(1, …)`.
 - [ ] Every conditional benefit has a `when`, and every `when` has readable `text`.
