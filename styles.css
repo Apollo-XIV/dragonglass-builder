@@ -389,7 +389,7 @@
 }
 
 .dg-button.is-damage {
-  border-color: var(--text-error);
+  border-color: var(--text-warning);
   color: var(--text-error);
 }
 
@@ -5054,7 +5054,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* Excluded is an outline in the error colour with the name struck: it must read
    as the opposite of included without relying on colour alone. */
 .dg-layout .dg-n-chip.is-exclude {
-  border-color: var(--text-error);
+  border-color: var(--text-warning);
   color: var(--text-error);
   text-decoration: line-through;
 }
@@ -5741,6 +5741,7 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 /* -- Ability score tile and its reel --------------------------------------- */
 
 .dg-score-tile {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -5759,6 +5760,37 @@ body.is-mobile .dg-layout:not([data-layout="desktop"]) .dg-bottom-sheet {
 .dg-score-tile.is-selected {
   border-color: var(--interactive-accent);
   background: var(--background-modifier-hover);
+}
+
+/* A base the method could not have given: amber edge, and a reset icon that resets it. */
+.dg-score-tile.is-invalid,
+.dg-score-tile.is-invalid:focus-visible,
+.dg-score-tile.is-invalid.is-selected {
+  border-color: var(--text-warning);
+}
+
+.dg-score-tile .dg-score-tile-reset-button {
+  position: absolute;
+  top: var(--size-2-1);
+  left: var(--size-2-1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  color: var(--text-warning);
+  cursor: pointer;
+}
+
+.dg-score-tile .dg-score-tile-reset-button .dg-icon,
+.dg-score-tile .dg-score-tile-reset-button svg {
+  width: 1rem;
+  height: 1rem;
 }
 
 .dg-score-tile-header {

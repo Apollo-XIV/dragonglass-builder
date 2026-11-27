@@ -31,10 +31,13 @@ import {
   chipId,
   chipOf,
   chipValue,
+  isInvalidBase,
+  moveInvalid,
   parseChip,
   POOL_SIZE,
   poolsOf,
   removePool,
+  resetAbility,
   rollSlots,
   setValue,
   unassign,
@@ -62,6 +65,9 @@ export function AbilityAssign({
   };
   const [spins, setSpins] = useState<Record<string, Spin>>({});
   const [dragged, setDragged] = useState<string | null>(null);
+  // An invalid score has no chip: it is picked up, or dragged, as its tile.
+  const [heldTile, setHeldTile] = useState<Ability | null>(null);
+  const [draggedTile, setDraggedTile] = useState<Ability | null>(null);
   const [landing, setLanding] = useState<Ability | null>(null);
 
   const sensors = useSensors(
@@ -72,14 +78,21 @@ export function AbilityAssign({
 
   // A chip picked up is put down by a tap anywhere that is neither a chip nor a tile.
   const armed = focus?.mode === "arm";
+  const lifted = armed || heldTile !== null;
   useEffect(() => {
     const doc = root.current?.ownerDocument;
-    if (!armed || !doc) return;
+    if (!lifted || !doc) return;
     const away = (e: Event): void => {
-      if (!(e.target as Element | null)?.closest?.("[data-chip], [data-tile]")) setFocus(null);
+      if (!(e.target as Element | null)?.closest?.("[data-chip], [data-tile]")) {
+        setFocus(null);
+        setHeldTile(null);
+      }
     };
     const escape = (e: KeyboardEvent): void => {
-      if (e.key === "Escape") setFocus(null);
+      if (e.key === "Escape") {
+        setFocus(null);
+        setHeldTile(null);
+      }
     };
     doc.addEventListener("pointerdown", away, true);
     doc.addEventListener("keydown", escape);
@@ -87,7 +100,7 @@ export function AbilityAssign({
       doc.removeEventListener("pointerdown", away, true);
       doc.removeEventListener("keydown", escape);
     };
-  }, [armed]);
+  }, [lifted]);
 
   const build = store.data.build;
   if (!build) return null;
@@ -126,6 +139,7 @@ export function AbilityAssign({
 
   const actions: PoolActions = {
     press: (chip) => {
+      setHeldTile(null);
       const f = focusRef.current;
       const fixed = !pools.find((p) => p.id === parseChip(chip)?.pool)?.method;
       if (f?.chip === chip && f.mode === "arm") setFocus(fixed ? null : { chip, mode: "edit", draft: "" });
@@ -205,6 +219,11 @@ export function AbilityAssign({
   };
 
   const pressTile = (ability: Ability): void => {
+    if (heldTile) {
+      if (heldTile !== ability) write(moveInvalid(current(), heldTile, ability));
+      setHeldTile(null);
+      return;
+    }
     const f = focusRef.current;
     if (f?.mode === "arm") {
       setFocus(null);
@@ -212,19 +231,34 @@ export function AbilityAssign({
       return;
     }
     const chip = chipOf(abilities, ability);
-    if (chip) setFocus({ chip, mode: "arm", draft: "" });
+    if (chip && !isInvalidBase(abilities, ability)) setFocus({ chip, mode: "arm", draft: "" });
+    else if (isInvalidBase(abilities, ability)) {
+      setFocus(null);
+      setHeldTile(ability);
+    }
   };
 
   const onDragStart = (e: DragStartEvent): void => {
-    setDragged((e.active.data.current as { chip?: string } | undefined)?.chip ?? null);
+    const data = e.active.data.current as { chip?: string; invalid?: Ability } | undefined;
+    setDragged(data?.chip ?? null);
+    setDraggedTile(data?.invalid ?? null);
+    setHeldTile(null);
     if (focusRef.current?.mode === "arm") setFocus(null);
   };
 
   const onDragEnd = (e: DragEndEvent): void => {
     setDragged(null);
-    const chip = (e.active.data.current as { chip?: string } | undefined)?.chip;
+    setDraggedTile(null);
+    const data = e.active.data.current as { chip?: string; invalid?: Ability } | undefined;
+    const chip = data?.chip;
     const over = e.over ? String(e.over.id) : undefined;
-    if (!chip || !over) return;
+    if (!over) return;
+    if (data?.invalid) {
+      if (over.startsWith("drop:tile:")) write(moveInvalid(current(), data.invalid, over.slice("drop:tile:".length) as Ability));
+      else if (over === "drop:pools") write(unassign(current(), data.invalid));
+      return;
+    }
+    if (!chip) return;
     if (over.startsWith("drop:tile:")) place(chip, over.slice("drop:tile:".length) as Ability, e.active.rect.current.translated ?? undefined);
     else if (over === "drop:pools") {
       const from = usedChips(current()).get(chip);
@@ -235,10 +269,15 @@ export function AbilityAssign({
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const draggedValue = dragged ? chipValue(abilities, dragged) : null;
+  const draggedValue = dragged
+    ? chipValue(abilities, dragged)
+    : draggedTile
+      ? (abilities.base[draggedTile] ?? null)
+      : null;
   // The tile the chip in hand is already on, so it is plain where it would move from.
   const linked = focus ? used.get(focus.chip) : undefined;
   const picking = armed || dragged !== null;
+  const heldOrDragged = heldTile ?? draggedTile;
 
   const ghost = (
     <DragOverlay dropAnimation={null}>{draggedValue !== null ? <ChipGhost value={draggedValue} /> : null}</DragOverlay>
@@ -252,7 +291,10 @@ export function AbilityAssign({
         collisionDetection={pointerWithin}
         onDragStart={onDragStart}
         onDragEnd={onDragEnd}
-        onDragCancel={() => setDragged(null)}
+        onDragCancel={() => {
+          setDragged(null);
+          setDraggedTile(null);
+        }}
       >
         <Pools>
           {pools.map((pool, i) => (
@@ -279,9 +321,11 @@ export function AbilityAssign({
               value={abilities.base[ability]}
               chip={chipOf(abilities, ability)}
               picking={picking}
-              linked={linked === ability}
+              linked={linked === ability || heldOrDragged === ability}
+              invalid={isInvalidBase(abilities, ability)}
               landing={landing === ability}
               onPress={() => pressTile(ability)}
+              onReset={isInvalidBase(abilities, ability) ? () => write(resetAbility(current(), ability)) : undefined}
             />
           ))}
         </div>
@@ -308,10 +352,12 @@ function PoolTile({
   character,
   value,
   chip,
+  invalid,
   picking,
   linked,
   landing,
   onPress,
+  onReset,
 }: {
   ability: Ability;
   character: ResolvedCharacter;
@@ -319,6 +365,8 @@ function PoolTile({
   value: number | undefined;
   /** The chip the value came from. A score kept from another method has none. */
   chip: string | undefined;
+  /** The score is not one this method could give: it can be moved only onto a valid tile, or dropped. */
+  invalid: boolean;
   /** A chip is picked up, so the empty tiles show where it can go. */
   picking: boolean;
   /** The chip picked up or being edited is this tile's. */
@@ -326,9 +374,15 @@ function PoolTile({
   /** A chip is flying in: the number waits for it. */
   landing: boolean;
   onPress: () => void;
+  /** Present when the value is not one this method could have given. */
+  onReset: (() => void) | undefined;
 }): ReactNode {
   const drop = useDroppable({ id: `drop:tile:${ability}` });
-  const drag = useDraggable({ id: `tile:${ability}`, data: { chip }, disabled: !chip });
+  const drag = useDraggable({
+    id: `tile:${ability}`,
+    data: invalid ? { invalid: ability } : { chip },
+    disabled: invalid ? value === undefined : !chip,
+  });
   const block = character.abilities[ability];
   const bonus = value === undefined ? 0 : block.score.value - value;
   const sources = bonusSources(block.score.breakdown);
@@ -343,6 +397,7 @@ function PoolTile({
       modifier={block.mod}
       bonus={value === undefined ? sources.reduce((n, s) => n + s.value, 0) : bonus}
       bonusText={bonusText(sources)}
+      onReset={onReset}
       role="button"
       tabIndex={0}
       onClick={onPress}

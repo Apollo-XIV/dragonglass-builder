@@ -65,6 +65,25 @@ export function chipOf(abilities: BuildAbilities, ability: Ability): string | un
   return chip !== undefined && usedChips(abilities).get(chip) === ability ? chip : undefined;
 }
 
+/**
+ * A score carried over from manual that the pool method could not have given: out of the
+ * method's range, or not a chip of the pool at all (a standard array has no 2, or a third 15).
+ */
+export function isInvalidBase(abilities: BuildAbilities, ability: Ability): boolean {
+  const value = abilities.base[ability];
+  if (!isPoolMethod(abilities.method) || value === undefined) return false;
+  const chip = chipOf(abilities, ability);
+  if (chip === undefined) return true;
+  const method = poolsOf(abilities).find((p) => p.id === parseChip(chip)?.pool)?.method;
+  return method !== undefined && (value < method.min || value > method.max);
+}
+
+/** An invalid score goes back to empty, and the out-of-range value it was left in the pool goes with it. */
+export function resetAbility(abilities: BuildAbilities, ability: Ability): BuildAbilities {
+  const chip = chipOf(abilities, ability);
+  return chip === undefined ? unassign(abilities, ability) : setValue(abilities, chip, null);
+}
+
 function withAbility(
   abilities: BuildAbilities,
   ability: Ability,
@@ -89,10 +108,24 @@ export function assign(abilities: BuildAbilities, chip: string, ability: Ability
   if (value === null) return abilities;
   const from = usedChips(abilities).get(chip);
   if (from === ability) return abilities;
-  const held = { value: abilities.base[ability], chip: chipOf(abilities, ability) };
+  // An invalid score is not worth keeping: it is replaced rather than swapped across.
+  const held = isInvalidBase(abilities, ability)
+    ? { value: undefined, chip: undefined }
+    : { value: abilities.base[ability], chip: chipOf(abilities, ability) };
   let next = withAbility(abilities, ability, value, chip);
   if (from) next = withAbility(next, from, held.value, held.chip);
   return next;
+}
+
+/**
+ * An invalid score is picked up and put on another tile. The score there, if it is a valid
+ * one, moves to where the invalid one was, and the destination is left blank; the invalid
+ * score itself is dropped. Onto an empty or invalid tile nothing happens.
+ */
+export function moveInvalid(abilities: BuildAbilities, from: Ability, to: Ability): BuildAbilities {
+  const chip = chipOf(abilities, to);
+  if (from === to || !isInvalidBase(abilities, from) || chip === undefined || isInvalidBase(abilities, to)) return abilities;
+  return assign(unassign(abilities, from), chip, from);
 }
 
 /** The ability goes back to empty, and its chip back to the pool. */
@@ -162,7 +195,7 @@ export function removePool(abilities: BuildAbilities, id: string): BuildAbilitie
 
 /**
  * Changes the method. Scores carry over only to or from manual; going straight between two
- * other methods starts the new one clean. Into rolled, a score still holding the value of
+ * other methods starts the new one clean. Into rolled, a score the roll method cannot produce gets no chip. A score still holding the value of
  * the chip it had last time rolled was used goes back to that chip; the rest become chips of a
  * new pool, in ability order, already assigned. Into the standard array, a score takes an
  * unused value of the array if there is one, or stays in its tile until something replaces
@@ -201,9 +234,13 @@ export function switchMethod(abilities: BuildAbilities, method: AbilityMethod, r
   if (method === "rolled" && (unmatched.length || !(next.pools ?? []).length)) {
     const added = addPool(next, rollWith);
     next = added.abilities;
+    const range = poolsOf(next).find((p) => p.id === added.pool)?.method;
     unmatched.forEach((ability, slot) => {
+      const value = abilities.base[ability]!;
+      // A score the method cannot roll leaves its slot empty; its tile keeps it, flagged, until reset.
+      if (range && (value < range.min || value > range.max)) return;
       const chip = chipId(added.pool, slot);
-      next = withAbility(setValue(next, chip, abilities.base[ability]!), ability, abilities.base[ability], chip);
+      next = withAbility(setValue(next, chip, value), ability, value, chip);
     });
   }
   return next;

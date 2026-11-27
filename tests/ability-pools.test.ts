@@ -5,7 +5,10 @@ import {
   assign,
   chipId,
   chipOf,
+  isInvalidBase,
+  moveInvalid,
   removePool,
+  resetAbility,
   resetPool,
   rollSlots,
   setValue,
@@ -204,5 +207,48 @@ describe("switching method", () => {
     expect(toRolled.base).toEqual({});
     const toArray = switchMethod({ method: "point-buy", base: { ...scores } }, "standard-array", "3d6");
     expect(toArray.base).toEqual({});
+  });
+});
+
+describe("an impossible score carried over from manual", () => {
+  const scores = { str: 2, dex: 14, con: 13, int: 12, wis: 10, cha: 8 };
+
+  it("is flagged in rolled, and resetting empties the tile and its chip", () => {
+    const a = switchMethod({ method: "manual", base: scores }, "rolled", "4d6-drop-lowest");
+    expect(isInvalidBase(a, "str")).toBe(true);
+    expect(isInvalidBase(a, "dex")).toBe(false);
+    const reset = resetAbility(a, "str");
+    expect(reset.base.str).toBeUndefined();
+    expect(reset.pools?.[0]?.values[0]).toBeNull();
+    expect(isInvalidBase(reset, "str")).toBe(false);
+  });
+
+  it("is flagged in the standard array when no chip holds the value", () => {
+    const a = switchMethod({ method: "manual", base: { ...scores, str: 16 } }, "standard-array", "3d6");
+    expect(isInvalidBase(a, "str")).toBe(true);
+    expect(resetAbility(a, "str").base.str).toBeUndefined();
+  });
+
+  it("leaves the slot of an unrollable score empty when going to rolled", () => {
+    const a = switchMethod({ method: "manual", base: { ...scores, dex: 1 } }, "rolled", "4d6-drop-lowest");
+    expect(a.pools?.[0]?.values).toEqual([null, null, 13, 12, 10, 8]);
+    expect(a.base.dex).toBe(1);
+    expect(isInvalidBase(a, "dex")).toBe(true);
+  });
+
+  it("blanks the source when a valid score is dropped on an invalid one", () => {
+    const a = switchMethod({ method: "manual", base: { ...scores, str: 1 } }, "rolled", "4d6-drop-lowest");
+    const b = assign(a, "p1:1", "str");
+    expect(b.base.str).toBe(14);
+    expect(b.base.dex).toBeUndefined();
+    expect(chipOf(b, "dex")).toBeUndefined();
+  });
+
+  it("moves the valid score to an invalid tile and blanks the destination", () => {
+    const a = switchMethod({ method: "manual", base: { ...scores, str: 1 } }, "rolled", "4d6-drop-lowest");
+    const b = moveInvalid(a, "str", "dex");
+    expect(b.base.str).toBe(14);
+    expect(b.base.dex).toBeUndefined();
+    expect(moveInvalid(a, "str", "str")).toBe(a);
   });
 });

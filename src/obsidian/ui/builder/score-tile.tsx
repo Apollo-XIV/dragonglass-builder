@@ -47,6 +47,8 @@ export interface ScoreTileProps {
   onPeekEnd: () => void;
   /** When given, tapping the selected tile again types a value in; it is reported already clamped. */
   onEdit?: (value: number) => void;
+  /** Present when the value is outside min and max, which a score carried over from manual can be. */
+  onReset?: () => void;
   min?: number;
   max?: number;
 }
@@ -66,16 +68,38 @@ export interface ScoreTileFrameProps extends HTMLAttributes<HTMLDivElement> {
   bonusText: string;
   /** The id the header carries, for whatever the tile is labelled by. */
   headerId?: string;
+  /** Set when the base is impossible for the method: the tile is outlined red with a cross that calls this. */
+  onReset?: () => void;
   /** The base: a `Reel`, a `TileNumber` or a `TileCutout`. */
   children: ReactNode;
 }
 
 export const ScoreTileFrame = forwardRef<HTMLDivElement, ScoreTileFrameProps>(function ScoreTileFrame(
-  { label, total, modifier, bonus, bonusText, headerId, children, className, ...rest },
+  { label, total, modifier, bonus, bonusText, headerId, onReset, children, className, ...rest },
   ref,
 ) {
   return (
-    <div ref={ref} className={`dg-score-tile${className ? ` ${className}` : ""}`} {...rest}>
+    <div
+      ref={ref}
+      className={`dg-score-tile${onReset ? " is-invalid" : ""}${className ? ` ${className}` : ""}`}
+      {...rest}
+    >
+      {onReset ? (
+        <button
+          type="button"
+          className="dg-score-tile-reset dg-score-tile-reset-button"
+          title="Not a valid score for this method. Reset it"
+          onPointerDownCapture={(e) => e.stopPropagation()}
+          onClick={(e) => {
+            e.stopPropagation();
+            onReset();
+          }}
+          onKeyDown={(e) => e.stopPropagation()}
+        >
+          <Icon name="rotate-ccw" />
+          <span className="dg-sr-only">Reset to a valid score</span>
+        </button>
+      ) : null}
       <span id={headerId} className="dg-score-tile-header">
         {total === undefined ? `${label} —` : `${label} ${total}(${signed(modifier)})`}
       </span>
@@ -202,6 +226,7 @@ export function ScoreTile(props: ScoreTileProps): ReactNode {
       bonus={bonus}
       bonusText={bonusText}
       headerId={nameId}
+      onReset={props.onReset}
       className={selected ? "is-selected" : undefined}
       tabIndex={0}
       role="spinbutton"

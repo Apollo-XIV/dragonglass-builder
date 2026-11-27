@@ -89,6 +89,9 @@ export function AbilityTiles({
               onStep={(direction, intent) => step(ability, direction, intent)}
               onPeekEnd={() => setPeek(null)}
               onEdit={rules.peek ? undefined : (value) => commit(ability, value)}
+              onReset={
+                base[ability] < rules.min || base[ability] > rules.max ? () => commit(ability, rules.min) : undefined
+              }
               min={rules.min}
               max={rules.max}
             />
