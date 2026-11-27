@@ -19,6 +19,9 @@ import { createHoldGesture } from "../hold-gesture";
 import { useBuilderFeatures } from "../features";
 import { ScoreTile } from "../score-tile";
 
+/** How long a MIN or MAX notice stays before the reel settles back on the real value. */
+const BLOCKED_PEEK_MS = 750;
+
 export function AbilityTiles({
   store,
   character,
@@ -29,6 +32,14 @@ export function AbilityTiles({
   const features = useBuilderFeatures();
   const [selected, setSelected] = useState<Ability | null>(null);
   const [peek, setPeek] = useState<Peek | null>(null);
+
+  // MIN and MAX are only a notice that the end was reached, so they let go on their own.
+  useEffect(() => {
+    if (!peek || peek.available) return;
+    const timer = setTimeout(() => setPeek(null), BLOCKED_PEEK_MS);
+    return () => clearTimeout(timer);
+  }, [peek]);
+
   const build = store.data.build;
   if (!build) return null;
 
