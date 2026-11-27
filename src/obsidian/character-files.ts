@@ -256,7 +256,7 @@ export function blankBuild(name: string): BuildFile {
     name,
     level: 0,
     xp: 0,
-    abilities: { method: "point-buy", base: { str: 8, dex: 8, con: 8, int: 8, wis: 8, cha: 8 } },
+    abilities: { method: "manual", base: { str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10 } },
     levels: [],
     choices: {},
   };

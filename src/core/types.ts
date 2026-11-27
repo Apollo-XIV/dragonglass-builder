@@ -931,6 +931,7 @@ export type DiagnosticCode =
   | "spells-over-limit"
   | "spell-level-too-high"
   | "choice-invalid"
+  | "ability-pool-invalid"
   | "duplicate-id";
 
 export interface Diagnostic {
