@@ -499,10 +499,24 @@ export function resolveItem(
 ): Element | undefined {
   if (entry.item) {
     const inline = entry.item;
+    // Linked to a base: the base's fields, then this item's own on top. A base that is
+    // gone leaves the overrides to stand alone, and says so.
+    let base: Element | undefined;
+    if (inline.base) {
+      base = index.get(inline.base);
+      if (!base)
+        diagnostics.push({
+          severity: "warning",
+          code: "unresolved-reference",
+          message: `Custom item "${inline.name ?? `#${i + 1}`}" is based on "${inline.base}", which is not in any loaded source`,
+          subject: inline.base,
+        });
+    }
     return {
+      ...(base ?? {}),
       id: inline.id ?? `custom:item:${i}`,
       kind: inline.kind ?? "item",
-      name: inline.name ?? "Custom item",
+      name: inline.name ?? base?.name ?? "Custom item",
       source: inline.source ?? "custom",
       ...inline,
     } as Element;

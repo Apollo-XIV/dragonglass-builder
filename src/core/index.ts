@@ -55,8 +55,14 @@ export {
   isStackable,
   appendInventoryEntry,
   removeInventoryEntry,
+  addStartingEquipment,
+  startingItems,
+  sweepOrigin,
+  goldAmount,
+  goldOutOfRange,
+  applyGoldDelta,
 } from "./inventory";
-export type { UidSource } from "./inventory";
+export type { UidSource, EntryOrigin, OriginMatch, StartingItem, OriginSweep, Currency } from "./inventory";
 export { diffBuilds } from "./resolver/diff";
 export type { BuildDiff } from "./resolver/diff";
 export { weaponAttacks } from "./resolver/attacks";

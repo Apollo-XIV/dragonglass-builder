@@ -86,6 +86,25 @@ export function rollNotation(notation: string, rng: Rng = defaultRng, options: R
   };
 }
 
+/** The lowest and highest total a notation can roll; unparseable notation is 0 to 0. */
+export function diceRange(notation: string): { min: number; max: number } {
+  let min = 0;
+  let max = 0;
+  for (const match of notation.matchAll(TERM)) {
+    const sign = match[1] === "-" ? -1 : 1;
+    if (match[3]) {
+      const count = match[2] ? Number(match[2]) : 1;
+      const sides = Number(match[3]);
+      min += sign > 0 ? count : -count * sides;
+      max += sign > 0 ? count * sides : -count;
+    } else if (match[4]) {
+      min += sign * Number(match[4]);
+      max += sign * Number(match[4]);
+    }
+  }
+  return { min, max };
+}
+
 /** "d20 17 (9 dropped) + 5", for the toast's detail line. */
 export function describeRoll(result: RollResult): string {
   const parts = result.dice.map((d) =>

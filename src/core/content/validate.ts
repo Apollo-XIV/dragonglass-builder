@@ -20,7 +20,7 @@ import {
 } from "../types";
 import { checkDice, checkExpression, isDiceNotation, mentionsSpent } from "../expr/evaluate";
 
-const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions"] as const;
+const KNOWN_PARTS = ["grants", "choices", "modifiers", "resources", "actions", "effects", "innateSpells", "spellListAdditions", "equipment"] as const;
 
 /** Parts a class/subclass level entry may carry, mirroring element parts. */
 const LEVEL_PARTS = KNOWN_PARTS;
@@ -152,7 +152,51 @@ function validateChoice(c: unknown, subject: string | undefined, path: string, o
         path,
       ),
     );
+  if (ch.to !== undefined && ch.to !== "inventory")
+    out.push(warn("invalid-element", `unknown destination "${String(ch.to)}"; the picks are only referenced`, subject, `${path}.to`));
+  else if (ch.to === "inventory" && ch.from && typeof ch.from === "object" && (ch.from as { kind?: unknown }).kind !== undefined
+    && (ch.from as { kind?: unknown }).kind !== "item")
+    out.push(warn("invalid-element", "`to: \"inventory\"` only applies to a choice of items", subject, `${path}.to`));
   if (ch.requires) validateRequirement(ch.requires, subject, `${path}.requires`, out);
+}
+
+const CURRENCIES = ["cp", "sp", "ep", "gp", "pp"];
+
+function validateEquipment(e: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
+  if (!e || typeof e !== "object" || Array.isArray(e)) {
+    out.push(err("invalid-element", "equipment entry must be an object", subject, path));
+    return;
+  }
+  const entry = e as Record<string, unknown>;
+  const kinds = ["item", "currency", "gold"].filter((k) => entry[k] !== undefined);
+  if (kinds.length !== 1)
+    out.push(err("invalid-element", "an equipment entry has exactly one of item, currency and gold", subject, path));
+  if (entry.item !== undefined && (typeof entry.item !== "string" || !entry.item))
+    out.push(err("invalid-element", "equipment `item` must be an element id", subject, `${path}.item`));
+  if (entry.quantity !== undefined && (typeof entry.quantity !== "number" || !Number.isInteger(entry.quantity) || entry.quantity < 1))
+    out.push(err("invalid-element", "equipment `quantity` must be a whole number of at least 1", subject, `${path}.quantity`));
+  if (entry.currency !== undefined) {
+    const c = entry.currency;
+    if (!c || typeof c !== "object" || Array.isArray(c))
+      out.push(err("invalid-element", "equipment `currency` must be an object", subject, `${path}.currency`));
+    else
+      for (const [k, v] of Object.entries(c as Record<string, unknown>))
+        if (!CURRENCIES.includes(k) || typeof v !== "number" || v < 0)
+          out.push(err("invalid-element", `currency "${k}" must be one of ${CURRENCIES.join(", ")} with a number of at least 0`, subject, `${path}.currency.${k}`));
+  }
+  if (entry.gold !== undefined) {
+    const g = entry.gold as { dice?: unknown; multiplier?: unknown } | null;
+    if (!g || typeof g !== "object" || Array.isArray(g))
+      out.push(err("invalid-element", "equipment `gold` must be an object", subject, `${path}.gold`));
+    else {
+      if (g.dice !== undefined && (typeof g.dice !== "string" || !isDiceNotation(g.dice)))
+        out.push(err("expression-error", `gold dice "${String(g.dice)}" do not parse as dice notation`, subject, `${path}.gold.dice`));
+      if (g.multiplier !== undefined && (typeof g.multiplier !== "number" || g.multiplier <= 0))
+        out.push(err("invalid-element", "gold `multiplier` must be a number above 0", subject, `${path}.gold.multiplier`));
+      if (g.dice === undefined && g.multiplier === undefined)
+        out.push(err("invalid-element", "gold needs `dice`, `multiplier` or both", subject, `${path}.gold`));
+    }
+  }
 }
 
 function validateResource(r: unknown, subject: string | undefined, path: string, out: Diagnostic[]): void {
@@ -524,6 +568,12 @@ export function validateElement(raw: unknown): ValidationResult {
       out.push(err("invalid-element", "innateSpells must be an array", subject, "innateSpells"));
     else el.innateSpells.forEach((s, i) => validateInnate(s, declaredChoices(el), subject, `innateSpells[${i}]`, out));
   }
+  if (el.equipment !== undefined) {
+    if (!Array.isArray(el.equipment)) out.push(err("invalid-element", "equipment must be an array", subject, "equipment"));
+    else el.equipment.forEach((q, i) => validateEquipment(q, subject, `equipment[${i}]`, out));
+  }
+  if (el.kind === "item" && el.base !== undefined && (typeof el.base !== "string" || !el.base))
+    out.push(err("invalid-element", "`base` must be the id of an item", subject, "base"));
   if (el.kind === "weapon-mastery") {
     if (typeof el.mastery !== "string" || !el.mastery)
       out.push(warn("invalid-element", "a weapon mastery pick needs `mastery`, the id of its mastery-property", subject, "mastery"));
@@ -587,6 +637,7 @@ export function validateElement(raw: unknown): ValidationResult {
           if (part === "resources") v.forEach((r, i) => validateResource(r, subject, `${p}[${i}]`, out));
           if (part === "actions") v.forEach((a, i) => validateAction(a, subject, `${p}[${i}]`, out));
           if (part === "effects") v.forEach((x, i) => validateEffect(x, subject, `${p}[${i}]`, out));
+          if (part === "equipment") v.forEach((x, i) => validateEquipment(x, subject, `${p}[${i}]`, out));
           if (part === "spellListAdditions") v.forEach((x, i) => validateListAddition(x, subject, `${p}[${i}]`, out));
           if (part === "innateSpells") v.forEach((x, i) => validateInnate(x, declaredChoices(el), subject, `${p}[${i}]`, out));
         }

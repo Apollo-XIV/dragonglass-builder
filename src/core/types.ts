@@ -88,9 +88,31 @@ export interface ChoiceDef {
   mode?: SpellGrantMode;
   /** With `mode: "learned"`: whether a pick fills a slot in the class's limits. Default true. */
   counts?: boolean;
+  /**
+   * Where a pick goes. `"inventory"`: each picked item is added to `inventory.5e`,
+   * tagged with this choice as its `origin`, instead of only being referenced.
+   */
+  to?: "inventory";
   text?: string;
   notes?: string;
   provenance?: PartProvenance;
+}
+
+/**
+ * One line of starting equipment: a fixed item, some currency, or a gold alternative.
+ * Exactly one of `item`, `currency` and `gold` is set.
+ */
+export interface EquipmentEntry {
+  /** An item element id. */
+  item?: string;
+  quantity?: number;
+  /** Currency the option adds, by denomination. */
+  currency?: { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number };
+  /**
+   * Starting gold rolled or typed by the player: X is the dice's result and the
+   * amount is `X × multiplier` gp. With no `dice`, the amount is `multiplier` as given.
+   */
+  gold?: { dice?: string; multiplier?: number };
 }
 
 export const MODIFIER_OPS = [
@@ -418,6 +440,8 @@ export interface Element {
   effects?: EffectDef[];
   innateSpells?: InnateSpellDef[];
   spellListAdditions?: SpellListAddition[];
+  /** Starting equipment this element adds when it is chosen. See docs/schema.md. */
+  equipment?: EquipmentEntry[];
 
   /** Kind-specific fields and `x-` extensions. */
   [key: string]: unknown;
@@ -580,6 +604,12 @@ export interface SpellElement extends Element {
 
 export interface ItemElement extends Element {
   kind: "item";
+  /**
+   * An inline item only: the id of the item this one is an instance of. The resolver
+   * reads that element and lays this item's own fields over it; a field present here
+   * replaces the base's. See docs/schema.md.
+   */
+  base?: string;
   itemType?: string;
   /** Weight in pounds. */
   weight?: number;
@@ -847,6 +877,12 @@ export interface InventoryEntry {
   /** The `uid` of the entry that holds this one (a bag, a chest). Not an element id. */
   container?: string;
   notes?: string;
+  /**
+   * What added this entry, when it was not the player: starting equipment names the
+   * element and choice. Removed when the player takes the entry into use, so it is
+   * never swept by a later change.
+   */
+  origin?: { element: string; choice: string; option?: string };
 }
 
 export interface InventoryFile extends CharacterFile {

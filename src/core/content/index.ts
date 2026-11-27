@@ -251,6 +251,18 @@ export class ContentIndex {
           });
       }
       if (el.kind === "weapon-mastery") this.checkMasteryPick(el, where);
+      const equipment = [...(el.equipment ?? [])];
+      equipment.forEach((line, i) => {
+        if (typeof line?.item === "string" && !this.elements.has(line.item))
+          this.diagnostics.push({
+            severity: "warning",
+            code: "unresolved-reference",
+            message: `"${el.id}" lists "${line.item}" as equipment, which is not loaded`,
+            subject: el.id,
+            path: `equipment[${i}].item`,
+            ...where,
+          });
+      });
       const levels = el.levels as Record<string, { grants?: (string | { id: string })[] }> | undefined;
       for (const [lvl, entry] of Object.entries(levels ?? {})) {
         for (const grant of entry.grants ?? []) {
