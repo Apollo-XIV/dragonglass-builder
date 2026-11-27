@@ -62,7 +62,7 @@ export interface Spin {
   rank: number;
 }
 
-function wrapper(range: ValueRange): (n: number) => number {
+export function wrapper(range: ValueRange): (n: number) => number {
   const span = range.max - range.min + 1;
   return (n) => range.min + ((((n - range.min) % span) + span) % span);
 }
@@ -71,7 +71,7 @@ function wrapper(range: ValueRange): (n: number) => number {
  * Where a chip's reel stands. Without a new `spin` it is just the value; with one the reel
  * turns on from where it was, a number at a time, slowing down, and stops on the value.
  */
-function useSpin(value: number | null, spin: Spin | undefined, range: ValueRange | undefined): number | null {
+export function useSpin(value: number | null, spin: Spin | undefined, range: ValueRange | undefined): number | null {
   const [position, setPosition] = useState(value);
   const at = useRef(value);
   at.current = position;

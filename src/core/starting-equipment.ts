@@ -14,7 +14,8 @@
 import type { ContentIndex } from "./content";
 import { addStartingEquipment, applyGoldDelta, sweepEntries, type Currency, type EntryOrigin } from "./inventory";
 import { collect, type CollectResult } from "./resolver/collect";
-import type { BuildFile, InventoryEntry, InventoryFile, StartingState } from "./types";
+import type { PendingChoice } from "./resolver/resolved";
+import type { BuildFile, Element, InventoryEntry, InventoryFile, StartingState } from "./types";
 
 const COINS = ["cp", "sp", "ep", "gp", "pp"] as const;
 
@@ -168,3 +169,28 @@ export function applyStarting(
   const file = inventory ?? { kind: "inventory" as const, schemaVersion: 1, items: [] };
   return reconcileStarting(build, file, startingPlan(collect(index, build, inventory), build), next);
 }
+
+/** Whether an element, or something it offers, puts items in the inventory. */
+function givesEquipment(index: ContentIndex, el: Element | undefined, depth = 3): boolean {
+  if (!el || depth < 0) return false;
+  if (el.equipment?.length) return true;
+  return (el.choices ?? []).some(
+    (c) => c.to === "inventory" || (c.from.ids ?? []).some((id) => givesEquipment(index, index.get(id), depth - 1)),
+  );
+}
+
+/**
+ * The pending choices that are about starting equipment: the ones that put picks in the
+ * inventory, and the ones whose options lead to something that does. Only where it applies,
+ * so a later class's level one is left out.
+ */
+export function equipmentChoices(pending: PendingChoice[], index: ContentIndex): PendingChoice[] {
+  return pending.filter(
+    (c) =>
+      (c.scope === "build" || c.levelIndex === 0) &&
+      (c.definition.to === "inventory" || c.options.some((o) => givesEquipment(index, index.get(o.id)))),
+  );
+}
+
+/** The element a starting choice belongs to: the class or background it was reached from. */
+export const equipmentRoot = (c: PendingChoice): string => c.origin[0] ?? c.source;

@@ -116,5 +116,5 @@ export {
   overridesOf,
 } from "./custom-item";
 export type { ItemDraft, ItemFormType, ItemForm, FormField } from "./custom-item";
-export { startingPlan, reconcileStarting, applyStarting, groupKey } from "./starting-equipment";
+export { startingPlan, reconcileStarting, applyStarting, groupKey, equipmentChoices, equipmentRoot } from "./starting-equipment";
 export type { StartingPlan, StartingResult, PlannedGroup } from "./starting-equipment";

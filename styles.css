@@ -6427,3 +6427,52 @@ body.is-mobile .dg-ability-stepbar {
   flex: 1 1 4.5em;
   min-width: 0;
 }
+
+/* Starting equipment in the builder: a card per source, the rolled gold field. */
+.dg-layout .dg-starting {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.dg-layout .dg-starting-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m, 8px);
+}
+.dg-layout .dg-starting-card h5 {
+  margin: 0;
+}
+.dg-layout .dg-starting-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dg-layout .dg-segmented {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.dg-layout .dg-rolled {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.dg-layout .dg-rolled-input {
+  width: 4.5em;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.dg-layout .dg-rolled-value {
+  display: inline-block;
+  min-width: 2em;
+  text-align: center;
+}
+.dg-layout .dg-rolled-roll {
+  min-width: 44px;
+  min-height: 44px;
+}

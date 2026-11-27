@@ -18,6 +18,7 @@ import { addInventoryItem, isStackable, removeInventoryEntry, takeInventoryItem 
 import { useSheet } from "../../narrow/sheet";
 import { DetailBody, InfoRow } from "../detail";
 import { FacetPicker } from "../facet-picker";
+import { StartingEquipment } from "../starting-equipment";
 import { costText, ITEM_FACETS, itemRows, weightText } from "../item-adapter";
 import { useBuilderFeatures } from "../features";
 import { inheritedFilterOf, sourceRefOf } from "../model";
@@ -294,13 +295,14 @@ export function EquipmentSection({
 
   return (
     <>
+      <StartingEquipment store={store} character={character} />
       {character.inventory.map((item) => (
         <InfoRow
           key={`${item.element.id}-${item.index}`}
           title={
             item.quantity > 1 ? `${item.name} ×${item.quantity}` : item.name
           }
-          subtitle={item.equipped ? "equipped" : undefined}
+          subtitle={[item.equipped ? "equipped" : undefined, item.entry.origin ? "starting equipment" : undefined].filter(Boolean).join(" · ") || undefined}
           text={
             typeof item.element.text === "string"
               ? item.element.text

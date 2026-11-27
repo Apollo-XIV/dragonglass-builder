@@ -17,6 +17,8 @@ import {
   type ChangeReport,
   type InactivePick,
 } from "../../../core/resolver/validity";
+import { applyStarting } from "../../../core/starting-equipment";
+import type { InventoryEntry } from "../../../core/types";
 import { capBreaches, newBreaches, type CapBreach } from "../../../core/resolver/caps";
 import { resolve } from "../../../core/resolver/resolve";
 import type { CharacterStore } from "../../character-store";
@@ -49,8 +51,9 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange, opt
     // 20. Resolved from the build the change produces, so the question is about
     // the result rather than about the pick.
     const breaches = breachesFrom(store, change);
+    const gear = startingFrom(store, change);
 
-    if (isEmptyReport(report) && breaches.length === 0) {
+    if (isEmptyReport(report) && breaches.length === 0 && !gear) {
       apply();
       return "applied";
     }
@@ -58,13 +61,19 @@ export function useBuildChange(store: CharacterStore): (change: BuildChange, opt
     // One sheet, whatever the change costs. Two confirmations in a row for one
     // tap is how a builder teaches people to stop reading them.
     sheet.open({
-      title: report.removed.length || report.invalidated.length ? "This affects other choices" : "Above the usual maximum",
+      title:
+        report.removed.length || report.invalidated.length
+          ? "This affects other choices"
+          : gear
+            ? "This changes your starting equipment"
+            : "Above the usual maximum",
       subtitle: describeChange(change),
       onClose: options?.onClose,
       body: () => (
         <>
           {breaches.length > 0 ? <CapGroup breaches={breaches} /> : null}
           {isEmptyReport(report) ? null : <ReportBody report={report} />}
+          {gear ? <GearGroups gear={gear} nameOf={(e) => e.item?.name ?? (e.id ? store.index?.get(e.id)?.name : undefined) ?? e.id ?? "Item"} /> : null}
         </>
       ),
       actions: () => (
@@ -109,6 +118,56 @@ function breachesFrom(store: CharacterStore, change: BuildChange): CapBreach[] {
     spells: store.data.spells,
   });
   return newBreaches(capBreaches(before, index), capBreaches(after, index));
+}
+
+/**
+ * What a change would take out of the inventory, and what it would leave because the
+ * player is using it. Nothing when it touches no starting equipment. This is the first
+ * version of the diff: it is meant to be reviewed once it has been used.
+ */
+function startingFrom(store: CharacterStore, change: BuildChange): StartingDiff | undefined {
+  const index = store.index;
+  const build = store.data.build;
+  if (!index || !build) return undefined;
+  const next = commitChange(index, build, change).build;
+  const { removed, kept } = applyStarting(index, next, store.data.inventory);
+  return removed.length || kept.length ? { removed, kept } : undefined;
+}
+
+interface StartingDiff {
+  removed: InventoryEntry[];
+  kept: InventoryEntry[];
+}
+
+function GearGroups({ gear, nameOf }: { gear: StartingDiff; nameOf: (entry: InventoryEntry) => string }): ReactNode {
+  const list = (entries: InventoryEntry[]): ReactNode => (
+    <ul>
+      {entries.map((e) => (
+        <li key={e.uid}>
+          <strong>{nameOf(e)}</strong>
+          {e.quantity && e.quantity > 1 ? <span className="dg-muted"> ×{e.quantity}</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+  return (
+    <>
+      {gear.removed.length > 0 ? (
+        <section className="dg-change-group">
+          <h4>Will be removed from your inventory</h4>
+          <p className="dg-muted">Starting equipment you have not used. Choosing it again adds it afresh.</p>
+          {list(gear.removed)}
+        </section>
+      ) : null}
+      {gear.kept.length > 0 ? (
+        <section className="dg-change-group">
+          <h4>Will stay in your inventory</h4>
+          <p className="dg-muted">You have equipped, attuned or bagged these, so they become ordinary items.</p>
+          {list(gear.kept)}
+        </section>
+      ) : null}
+    </>
+  );
 }
 
 function CapGroup({ breaches }: { breaches: CapBreach[] }): ReactNode {

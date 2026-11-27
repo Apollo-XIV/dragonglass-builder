@@ -18,6 +18,8 @@ import { testIndex } from "./helpers";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
+import { StartingEquipment } from "../src/obsidian/ui/builder/starting-equipment";
+import { RolledField } from "../src/obsidian/ui/builder/rolled-field";
 import { CustomItemFlow } from "../src/obsidian/ui/custom-item";
 import { ItemDetail } from "../src/obsidian/ui/inventory-editor";
 import { InventoryPanel } from "../src/obsidian/ui/sheet-panels";
@@ -1063,5 +1065,53 @@ describe("custom items", () => {
     const detail = (uid: string) => render(createElement(ItemDetail, { store, uid, close: () => {} }), store);
     expect(detail("m")).toContain(">Edit<");
     expect(detail("p")).not.toContain(">Edit<");
+  });
+});
+
+describe("starting equipment in the builder", () => {
+  const EQ = "srd:paladin:starting-equipment";
+  const staged = (choices: Record<string, string[]>): CharacterStore =>
+    makeStoreWith(content, {
+      ...build,
+      starting: undefined,
+      levels: [{ ...build.levels[0], choices: { ...build.levels[0].choices, [EQ]: [], ...choices } }, ...build.levels.slice(1)],
+    });
+
+  it("has a card for the class and one for the background, with the kit chosen as a selector", () => {
+    const store = staged({ [EQ]: ["srd:paladin:kit"] });
+    const html = render(createElement(StartingEquipment, { store, character: store.resolved as ResolvedCharacter }), store);
+    expect(html).toContain("Starting equipment");
+    expect(html).toContain("<h5>Paladin</h5>");
+    expect(html).toContain("<h5>Acolyte</h5>");
+    expect(html).toContain("A martial weapon and a shield");
+    expect(html).toContain('aria-pressed="true"');
+  });
+
+  it("asks for X only once the gold option is chosen", () => {
+    const kit = staged({ [EQ]: ["srd:paladin:kit"] });
+    expect(render(createElement(StartingEquipment, { store: kit, character: kit.resolved as ResolvedCharacter }), kit)).not.toContain("dg-rolled");
+    const gold = staged({ [EQ]: ["srd:paladin:gold"] });
+    const html = render(createElement(StartingEquipment, { store: gold, character: gold.resolved as ResolvedCharacter }), gold);
+    expect(html).toContain("dg-rolled");
+    expect(html).toContain("5d4");
+  });
+
+  it("puts typed gold in the purse as the build is written, and takes it back out", () => {
+    const store = staged({ [EQ]: ["srd:paladin:gold"] });
+    store.mutateBuild((b) => b);
+    const before = store.data.inventory?.currency?.gp ?? 0;
+    store.mutateBuild((b) => ({ ...b, starting: { ...b.starting!, gold: { "srd:paladin:gold": { x: 12 } } } }));
+    expect(store.data.inventory?.currency?.gp).toBe(before + 120);
+    store.mutateBuild((b) => ({ ...b, levels: [{ ...b.levels[0], choices: { ...b.levels[0].choices, [EQ]: [] } }] }));
+    expect(store.data.inventory?.currency?.gp).toBe(before);
+  });
+});
+
+describe("the rolled field", () => {
+  it("takes a value the dice cannot roll, and says so", () => {
+    const html = (value?: number) => renderToStaticMarkup(createElement(RolledField, { dice: "5d4", value, onChange: () => {}, label: "Starting gold" }));
+    expect(html(12)).not.toContain("outside");
+    expect(html(40)).toContain("5d4 rolls 5–20; 40 is outside that.");
+    expect(html(12)).toContain('value="12"');
   });
 });
