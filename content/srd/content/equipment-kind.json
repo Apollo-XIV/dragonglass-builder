@@ -1,0 +1,15 @@
+[
+  {
+    "id": "srd:kind:equipment-option",
+    "kind": "kind",
+    "name": "Equipment option",
+    "source": "srd",
+    "key": "equipment-option",
+    "label": "Equipment option",
+    "plural": "Equipment options",
+    "tab": null,
+    "display": "list",
+    "browsable": false,
+    "text": "One of the ways a class or background starts: its kit, or gold instead. An option carries an `equipment` part for what it gives outright and choices for what the player picks."
+  }
+]

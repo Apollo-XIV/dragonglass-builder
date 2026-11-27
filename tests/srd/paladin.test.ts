@@ -23,6 +23,8 @@ function paladin(level: number, choices: Record<string, string[]> = {}): BuildFi
   }));
   // Level-scoped answers, keyed by the build level where the class reached that level.
   if (choices["srd:class:paladin:skills"]) levels[0].choices = { "srd:class:paladin:skills": choices["srd:class:paladin:skills"] };
+  if (choices["srd:paladin:starting-equipment"])
+    levels[0].choices = { ...levels[0].choices, "srd:paladin:starting-equipment": choices["srd:paladin:starting-equipment"] };
   if (level >= 2 && choices["srd:paladin:fighting-style"])
     levels[1].choices = { "srd:paladin:fighting-style": choices["srd:paladin:fighting-style"] };
   if (level >= 3 && choices["srd:paladin:sacred-oath"])
@@ -48,11 +50,14 @@ function paladin(level: number, choices: Record<string, string[]> = {}): BuildFi
     choices: {
       "srd:species:dwarf:tool-proficiency": ["srd:tool:smiths-tools"],
       "srd:background:acolyte:languages": ["srd:language:elvish", "srd:language:celestial"],
+      ...(choices["srd:background:acolyte:prayer"] ? { "srd:background:acolyte:prayer": choices["srd:background:acolyte:prayer"] } : {}),
     },
   };
 }
 
 const FULL_CHOICES = {
+  "srd:paladin:starting-equipment": ["srd:paladin:gold"],
+  "srd:background:acolyte:prayer": ["srd:item:prayer-book"],
   "srd:class:paladin:skills": ["srd:skill:athletics", "srd:skill:persuasion"],
   "srd:paladin:fighting-style": ["srd:fighting-style:defense"],
   "srd:paladin:sacred-oath": ["srd:subclass:oath-of-devotion"],

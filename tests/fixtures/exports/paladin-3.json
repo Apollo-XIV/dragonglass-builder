@@ -9,7 +9,7 @@
         "id": "srd",
         "name": "SRD 5.1 (test slice)",
         "version": "5.1",
-        "ref": "sha256:f708a4501419765e9a43f1f799567cb0ca434c064e5e8e343f244b6544b03371",
+        "ref": "sha256:04caf16efa3f9a848e735ad56c18083a7c0edcab7b6bbe002cbb44fd71baa80f",
         "refType": "hash",
         "sourcebooks": [
           "srd"
@@ -141,6 +141,14 @@
         "forced": true
       },
       "choices": [
+        {
+          "id": "srd:paladin:starting-equipment",
+          "name": "Starting equipment",
+          "declaredBy": "srd:class:paladin",
+          "count": 1,
+          "picked": [],
+          "pending": true
+        },
         {
           "id": "srd:class:paladin:skills",
           "name": "Paladin Skills",
@@ -293,6 +301,14 @@
       "name": "Acolyte Languages",
       "declaredBy": "srd:background:acolyte",
       "count": 2,
+      "picked": [],
+      "pending": true
+    },
+    {
+      "id": "srd:background:acolyte:prayer",
+      "name": "Prayer book or wheel",
+      "declaredBy": "srd:background:acolyte",
+      "count": 1,
       "picked": [],
       "pending": true
     }

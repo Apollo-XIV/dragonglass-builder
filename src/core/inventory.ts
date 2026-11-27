@@ -226,7 +226,12 @@ export interface OriginSweep {
  * Calling this and not using `file` is the preview the change's diff is drawn from.
  */
 export function sweepOrigin(file: InventoryFile, match: OriginMatch): OriginSweep {
-  const swept = new Set(file.items.filter((e) => matches(e.origin, match)).map((e) => e.uid));
+  return sweepEntries(file, (e) => matches(e.origin, match));
+}
+
+/** `sweepOrigin` for any set of tagged entries, so a change to one pick leaves the rest of its choice. */
+export function sweepEntries(file: InventoryFile, pick: (entry: InventoryEntry) => boolean): OriginSweep {
+  const swept = new Set(file.items.filter((e) => e.origin && pick(e)).map((e) => e.uid));
   const inUse = (e: InventoryEntry): boolean => !!e.equipped || !!e.attuned || (!!e.container && !swept.has(e.container));
   const removed: InventoryEntry[] = [];
   const kept: InventoryEntry[] = [];

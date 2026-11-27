@@ -1274,5 +1274,37 @@
     "itemType": "pack",
     "value": 4000,
     "text": "Includes a backpack, a book of lore, a bottle of ink, an ink pen, 10 sheets of parchment, a little bag of sand, and a small knife. This pack is cheaper to buy as a set than purchasing its contents individually."
+  },
+  {
+    "id": "srd:item:incense-stick",
+    "kind": "item",
+    "name": "Incense Stick",
+    "source": "srd",
+    "tags": ["equipment"],
+    "itemType": "gear"
+  },
+  {
+    "id": "srd:item:vestments",
+    "kind": "item",
+    "name": "Vestments",
+    "source": "srd",
+    "tags": ["equipment"],
+    "itemType": "gear"
+  },
+  {
+    "id": "srd:item:prayer-book",
+    "kind": "item",
+    "name": "Prayer Book",
+    "source": "srd",
+    "tags": ["equipment"],
+    "itemType": "gear"
+  },
+  {
+    "id": "srd:item:prayer-wheel",
+    "kind": "item",
+    "name": "Prayer Wheel",
+    "source": "srd",
+    "tags": ["equipment"],
+    "itemType": "gear"
   }
 ]

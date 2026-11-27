@@ -8,6 +8,14 @@
     "tags": ["srd-background"],
     "text": "You have spent your life in the service of a temple to a specific god or pantheon of gods. You act as an intermediary between the realm of the holy and the mortal world, performing sacred rites and offering sacrifices in order to conduct worshipers into the presence of the divine.\n\n**Skill Proficiencies:** Insight, Religion\n**Languages:** Two of your choice\n**Equipment:** A holy symbol, a prayer book or prayer wheel, 5 sticks of incense, vestments, a set of common clothes, and a pouch containing 15 gp",
     "grants": ["srd:skill:insight", "srd:skill:religion", "srd:background:shelter-of-the-faithful"],
+    "equipment": [
+      { "item": "srd:item:holy-symbol" },
+      { "item": "srd:item:incense-stick", "quantity": 5 },
+      { "item": "srd:item:vestments" },
+      { "item": "srd:item:clothes-common" },
+      { "item": "srd:item:pouch" },
+      { "currency": { "gp": 15 } }
+    ],
     "choices": [
       {
         "id": "srd:background:acolyte:languages",
@@ -15,6 +23,13 @@
         "count": 2,
         "from": { "kind": "language" },
         "text": "You know two languages of your choice."
+      },
+      {
+        "id": "srd:background:acolyte:prayer",
+        "name": "Prayer book or wheel",
+        "count": 1,
+        "to": "inventory",
+        "from": { "kind": "item", "ids": ["srd:item:prayer-book", "srd:item:prayer-wheel"] }
       }
     ]
   },

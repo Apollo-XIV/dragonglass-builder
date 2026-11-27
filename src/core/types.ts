@@ -767,8 +767,23 @@ export interface BuildFile extends CharacterFile {
    * classes, if it ever arrives, is an extra list rather than a change here.
    */
   planned?: PlannedLevel[];
+  /**
+   * What starting equipment has put in the inventory so far, so a change adds and removes
+   * only the difference and never re-adds something the player took out. See
+   * `core/starting-equipment.ts`.
+   */
+  starting?: StartingState;
   /** Free-form notes the builder never touches. */
   notes?: string;
+}
+
+export interface StartingState {
+  /** What each group has added to the inventory, by `element|choice`. */
+  items: Record<string, { id: string; quantity?: number }[]>;
+  /** The X typed or rolled for an option's starting gold, by option element id. */
+  gold: Record<string, { x: number }>;
+  /** What each element has added to the purse, by element id. */
+  currency: Record<string, { cp?: number; sp?: number; ep?: number; gp?: number; pp?: number }>;
 }
 
 export interface TempMaxHpEffect {

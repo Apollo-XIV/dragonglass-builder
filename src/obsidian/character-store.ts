@@ -9,7 +9,7 @@
 
 import { normalizePath, type App, type EventRef, type TAbstractFile } from "obsidian";
 import type { ContentIndex } from "../core/content";
-import { idProblems, resolve, type ResolvedCharacter } from "../core/index";
+import { applyStarting, idProblems, resolve, type ResolvedCharacter } from "../core/index";
 import type {
   BuildFile,
   Diagnostic,
@@ -426,7 +426,13 @@ export class CharacterStore {
 
   mutateBuild(mutate: (build: BuildFile) => BuildFile): void {
     if (!this.data.build) return;
-    this.update("build", mutate(structuredClone(this.data.build)));
+    const next = mutate(structuredClone(this.data.build));
+    // Starting equipment follows the build: what the chosen options give goes into the
+    // inventory, and what a changed option gave comes out.
+    const starting = this.index ? applyStarting(this.index, next, this.data.inventory) : undefined;
+    if (!starting?.changed) return this.update("build", next);
+    this.update("build", starting.build);
+    if (starting.inventory !== this.data.inventory) this.update("inventory", starting.inventory);
   }
 
   /** Appends a live-state event. The sheet's HP, slot and resource controls use this. */

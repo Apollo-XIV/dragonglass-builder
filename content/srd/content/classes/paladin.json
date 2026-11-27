@@ -39,6 +39,13 @@
       "grants": ["srd:paladin:divine-sense", "srd:paladin:lay-on-hands"],
       "choices": [
         {
+          "id": "srd:paladin:starting-equipment",
+          "name": "Starting equipment",
+          "count": 1,
+          "from": { "kind": "equipment-option", "ids": ["srd:paladin:kit", "srd:paladin:gold"] },
+          "text": "You start with the following equipment, in addition to the equipment granted by your background: (a) a martial weapon and a shield or (b) two martial weapons; (a) five javelins or (b) any simple melee weapon; (a) a priest's pack or (b) an explorer's pack; chain mail and a holy symbol. Alternatively, you may start with 5d4 × 10 gp and buy your own equipment."
+        },
+        {
           "id": "srd:class:paladin:skills",
           "name": "Paladin Skills",
           "count": 2,

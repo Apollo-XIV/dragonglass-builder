@@ -1,0 +1,150 @@
+[
+  {
+    "id": "srd:paladin:kit",
+    "kind": "equipment-option",
+    "name": "Equipment",
+    "source": "srd",
+    "text": "Chain mail, a holy symbol, and the choices below.",
+    "equipment": [
+      {
+        "item": "srd:item:chain-mail"
+      },
+      {
+        "item": "srd:item:holy-symbol"
+      }
+    ],
+    "choices": [
+      {
+        "id": "srd:paladin:kit:weapons",
+        "name": "Weapons",
+        "count": 1,
+        "from": {
+          "kind": "equipment-option",
+          "ids": [
+            "srd:paladin:kit:martial-and-shield",
+            "srd:paladin:kit:two-martial"
+          ]
+        }
+      },
+      {
+        "id": "srd:paladin:kit:melee",
+        "name": "Javelins or a simple weapon",
+        "count": 1,
+        "from": {
+          "kind": "equipment-option",
+          "ids": [
+            "srd:paladin:kit:javelins",
+            "srd:paladin:kit:simple-melee"
+          ]
+        }
+      },
+      {
+        "id": "srd:paladin:kit:pack",
+        "name": "Pack",
+        "count": 1,
+        "to": "inventory",
+        "from": {
+          "kind": "item",
+          "ids": [
+            "srd:item:priests-pack",
+            "srd:item:explorers-pack"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "srd:paladin:kit:martial-and-shield",
+    "kind": "equipment-option",
+    "name": "A martial weapon and a shield",
+    "source": "srd",
+    "equipment": [
+      {
+        "item": "srd:item:shield"
+      }
+    ],
+    "choices": [
+      {
+        "id": "srd:paladin:kit:martial",
+        "name": "Martial weapon",
+        "count": 1,
+        "to": "inventory",
+        "from": {
+          "kind": "item",
+          "tags": [
+            "martial-weapon"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "srd:paladin:kit:two-martial",
+    "kind": "equipment-option",
+    "name": "Two martial weapons",
+    "source": "srd",
+    "choices": [
+      {
+        "id": "srd:paladin:kit:martial-two",
+        "name": "Martial weapons",
+        "count": 2,
+        "repeatable": true,
+        "to": "inventory",
+        "from": {
+          "kind": "item",
+          "tags": [
+            "martial-weapon"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "srd:paladin:kit:javelins",
+    "kind": "equipment-option",
+    "name": "Five javelins",
+    "source": "srd",
+    "equipment": [
+      {
+        "item": "srd:item:javelin",
+        "quantity": 5
+      }
+    ]
+  },
+  {
+    "id": "srd:paladin:kit:simple-melee",
+    "kind": "equipment-option",
+    "name": "Any simple melee weapon",
+    "source": "srd",
+    "choices": [
+      {
+        "id": "srd:paladin:kit:simple",
+        "name": "Simple melee weapon",
+        "count": 1,
+        "to": "inventory",
+        "from": {
+          "kind": "item",
+          "allTags": [
+            "simple-weapon",
+            "melee-weapon"
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "id": "srd:paladin:gold",
+    "kind": "equipment-option",
+    "name": "Starting gold",
+    "source": "srd",
+    "text": "5d4 × 10 gp, to buy your own equipment.",
+    "equipment": [
+      {
+        "gold": {
+          "dice": "5d4",
+          "multiplier": 10
+        }
+      }
+    ]
+  }
+]
