@@ -417,7 +417,9 @@ function itemOf(
   const resolved = r.inventory.find((i) => i.index === index);
 
   if (entry.item) {
-    const custom = JSON.parse(JSON.stringify(entry.item)) as Record<string, unknown>;
+    // A linked item stores only its overrides; the export carries the whole item, base and all.
+    const custom = JSON.parse(JSON.stringify(entry.item.base && resolved ? resolved.element : entry.item)) as Record<string, unknown>;
+    if (entry.item.base) delete custom.base;
     return {
       ...common,
       custom,

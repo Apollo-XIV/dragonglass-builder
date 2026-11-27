@@ -518,6 +518,32 @@ describe("what the export contains", () => {
   });
 });
 
+describe("a linked custom item", () => {
+  it("is exported whole, with its base's fields, and without the link", async () => {
+    const copy = mkdtempSync(join(tmpdir(), "dg-export-"));
+    cpSync(join(FIXTURES, "characters", "paladin-3"), copy, { recursive: true });
+    const inventory = JSON.parse(readFileSync(join(copy, "inventory.5e"), "utf8"));
+    inventory.items.push({
+      uid: "inv-linked",
+      item: { base: "srd:item:longsword", id: "custom:item:sunblade-ab12", name: "Sunblade", requiresEquipped: true },
+    });
+    writeFileSync(join(copy, "inventory.5e"), JSON.stringify(inventory));
+    const doc = await exportFromDisk({
+      characterDir: copy,
+      sourceDirs: [join(CONTENT_ROOT, "srd")],
+      coreDir: join(CONTENT_ROOT, "core"),
+      exportedAt: AT,
+      pluginVersion: "test",
+    });
+    rmSync(copy, { recursive: true });
+    const linked = doc.inventory.items.find((i) => i.uid === "inv-linked")!;
+    expect(linked.name).toBe("Sunblade");
+    expect(linked.custom).toMatchObject({ name: "Sunblade", weapon: { damage: "1d8" } });
+    expect(linked.custom).not.toHaveProperty("base");
+    expect(doc.inventory.items.every((i) => !("origin" in i))).toBe(true);
+  });
+});
+
 describe("validateExport", () => {
   const base = () => run("paladin-3");
 
