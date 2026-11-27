@@ -18,7 +18,7 @@ import type { ResolvedItem } from "../../core/resolver/resolved";
 import type { InventoryEntry, InventoryFile } from "../../core/types";
 import type { CharacterStore } from "../character-store";
 import { ItemPickerSheet } from "./builder/sections/collections";
-import { CustomItemForm } from "./builder/sections/extras";
+import { CustomItemFlow } from "./custom-item";
 import { useStoreVersion } from "./context";
 import { useSheet } from "./narrow/sheet";
 
@@ -101,7 +101,7 @@ export function useInventoryEditor(store: CharacterStore): InventoryEditor {
     openCustom: () =>
       sheet.open({
         title: "Custom item",
-        body: () => <CustomItemForm store={store} close={sheet.close} />,
+        body: () => <CustomItemFlow store={store} close={sheet.close} />,
       }),
     openDetail: (uid) =>
       sheet.open({
@@ -155,6 +155,7 @@ export function ItemDetail({
 }): ReactNode {
   useStoreVersion(store);
   const editor = useInventoryEditor(store);
+  const sheet = useSheet();
   const file = store.data.inventory ?? emptyFile();
   const index = file.items.findIndex((e) => e.uid === uid);
   const item = store.resolved?.inventory.find((i) => i.entry.uid === uid);
@@ -264,6 +265,19 @@ export function ItemDetail({
             }}
           >
             Use one
+          </button>
+        ) : null}
+        {entry.item ? (
+          <button
+            className="dg-sheet-button"
+            onClick={() =>
+              sheet.open({
+                title: "Edit item",
+                body: () => <CustomItemFlow store={store} close={sheet.close} edit={uid} />,
+              })
+            }
+          >
+            Edit
           </button>
         ) : null}
         <button

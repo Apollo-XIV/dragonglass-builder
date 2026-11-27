@@ -101,3 +101,17 @@ export type { FoldRules, LiveState, PoolRule } from "./state/fold";
 export * from "./export/index";
 export * from "./state/use-action";
 export * from "./content/provenance";
+export {
+  ITEM_FORMS,
+  ITEM_FORM_TYPES,
+  DAMAGE_TYPES,
+  RARITIES,
+  CHARGE_RECHARGES,
+  blankDraft,
+  formTypeOf,
+  customItemId,
+  buildItem,
+  draftFromItem,
+  overridesOf,
+} from "./custom-item";
+export type { ItemDraft, ItemFormType, ItemForm, FormField } from "./custom-item";

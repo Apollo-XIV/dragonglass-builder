@@ -18,6 +18,8 @@ import { testIndex } from "./helpers";
 import { CharacterStore, type StoreHost } from "../src/obsidian/character-store";
 import { PluginContext, StoreContext } from "../src/obsidian/ui/context";
 import { DesktopSheet } from "../src/obsidian/ui/desktop/DesktopSheet";
+import { CustomItemFlow } from "../src/obsidian/ui/custom-item";
+import { ItemDetail } from "../src/obsidian/ui/inventory-editor";
 import { InventoryPanel } from "../src/obsidian/ui/sheet-panels";
 import { DesktopBuilder } from "../src/obsidian/ui/desktop/DesktopBuilder";
 import { CharacterApp } from "../src/obsidian/ui/CharacterApp";
@@ -1029,5 +1031,37 @@ describe("inventory editing on the sheet", () => {
       expect(html).toContain("+ Custom Item");
       expect(html).not.toContain("builder");
     }
+  });
+});
+
+describe("custom items", () => {
+  const store = makeStore({
+    inventory: {
+      kind: "inventory",
+      schemaVersion: 1,
+      items: [
+        { uid: "m", item: { id: "custom:item:sun-ab12", kind: "item", name: "Sunblade", source: "custom", itemType: "weapon", weapon: { damage: "1d8" } } },
+        { uid: "p", id: "srd:item:backpack" },
+      ],
+    },
+  });
+
+  it("opens on a menu of every basic type, From Existing Item and From Scratch", () => {
+    const html = render(createElement(CustomItemFlow, { store, close: () => {} }), store);
+    for (const label of ["Weapon", "Armour", "Shield", "Tool", "Consumable", "Magic item", "Gear", "From Existing Item", "From Scratch"])
+      expect(html).toContain(label);
+  });
+
+  it("edits a custom item in the same form, prefilled", () => {
+    const html = render(createElement(CustomItemFlow, { store, close: () => {}, edit: "m" }), store);
+    expect(html).toContain('value="Sunblade"');
+    expect(html).toContain("Damage dice");
+    expect(html).toContain(">Save<");
+  });
+
+  it("offers Edit on a custom entry only", () => {
+    const detail = (uid: string) => render(createElement(ItemDetail, { store, uid, close: () => {} }), store);
+    expect(detail("m")).toContain(">Edit<");
+    expect(detail("p")).not.toContain(">Edit<");
   });
 });

@@ -22,7 +22,8 @@ import { costText, ITEM_FACETS, itemRows, weightText } from "../item-adapter";
 import { useBuilderFeatures } from "../features";
 import { inheritedFilterOf, sourceRefOf } from "../model";
 import { usePicker, usePickerSlot, type PickerOption } from "../picker";
-import { CustomItemForm, XpHint } from "./extras";
+import { XpHint } from "./extras";
+import { CustomItemFlow } from "../../custom-item";
 
 /** "Level 11: choose 1 spell of level 6" — what a class level unlocked outside its counts. */
 function describePick(pick: ExtraSpellPick): string {
@@ -282,7 +283,7 @@ export function EquipmentSection({
   const addCustom = (): void =>
     sheet.open({
       title: "Custom item",
-      body: () => <CustomItemForm store={store} close={sheet.close} />,
+      body: () => <CustomItemFlow store={store} close={sheet.close} />,
     });
 
   const add = (): void =>
